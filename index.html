@@ -1739,6 +1739,7 @@
           <select id="docTipo">
             <option value="politica">Política de Seguridad y Salud en el Trabajo</option>
             <option value="procedimiento">Procedimiento</option>
+            <option value="manual">Manual</option>
             <option value="matriz">Matriz de riesgos (documento formal)</option>
             <option value="otro">Otro documento</option>
           </select>
@@ -1767,8 +1768,17 @@
         </div>
         <div style="grid-column:1/-1;"><label>Observaciones</label><textarea id="docObservaciones" rows="2" placeholder="Notas adicionales (opcional)"></textarea></div>
         <div style="grid-column:1/-1;" id="docContenidoWrap">
-          <label>Contenido del documento (política, procedimiento o instructivo)</label>
+          <label>Contenido del documento (política, procedimiento, manual o instructivo)</label>
           <div class="desc">Este contenido se usa para generar automáticamente el PDF y/o el Word del documento, junto con la portada, control de versiones, riesgos principales asociados (cruzados con la Matriz de riesgos, cuando corresponde a un Procedimiento/Instructivo) y la hoja de firmas de aprobación.</div>
+          <div id="docIaWrap" class="desc" style="background:#f5f8fc; border:1px solid #cfe0f5; border-radius:6px; padding:10px; margin-bottom:8px;">
+            <label>Redactar con IA (opcional): contexto adicional para el borrador</label>
+            <input id="docIaContexto" placeholder="Ej: enfocarlo en riesgo eléctrico y trabajo en altura, mencionar el uso de arnés certificado...">
+            <div class="toolbar" style="margin-top:6px;">
+              <button class="btn secondary" id="docIaRedactarBtn" type="button">Redactar borrador con IA</button>
+              <span id="docIaEstado" class="kv"></span>
+            </div>
+            <div class="desc" style="margin-top:4px;">La IA usa como contexto el nombre del documento, el rubro y las áreas ya cargadas de la empresa. El borrador se coloca abajo, en "Contenido del documento", y siempre se puede revisar y editar antes de guardar — no reemplaza la revisión y aprobación de un profesional.</div>
+          </div>
           <textarea id="docContenido" rows="6" placeholder="Ej: 1. Objetivo... 2. Alcance... 3. Desarrollo / pasos..."></textarea>
         </div>
       </div>
@@ -1791,6 +1801,7 @@
             <option value="">Todos</option>
             <option value="politica">Política de SST</option>
             <option value="procedimiento">Procedimiento</option>
+            <option value="manual">Manual</option>
             <option value="matriz">Matriz de riesgos</option>
             <option value="otro">Otro documento</option>
           </select>
@@ -3538,7 +3549,7 @@ function renderRiohys(){
    subtipo ("procedimiento"|"instructivo", solo si tipo==="procedimiento"),
    archivoNombre, archivoData}.
    ========================================================= */
-const TIPO_DOC_LABEL = {politica:"Política de SST", procedimiento:"Procedimiento", matriz:"Matriz de riesgos", otro:"Otro documento"};
+const TIPO_DOC_LABEL = {politica:"Política de SST", procedimiento:"Procedimiento", manual:"Manual", matriz:"Matriz de riesgos", otro:"Otro documento"};
 const SUBTIPO_DOC_LABEL = {procedimiento:"Procedimiento de trabajo seguro", instructivo:"Instructivo de trabajo"};
 /* Devuelve la etiqueta a mostrar para el tipo de un documento, usando el subtipo
    (Procedimiento/Instructivo) cuando corresponde en vez del genérico "Procedimiento". */
@@ -3631,7 +3642,9 @@ document.getElementById("docArchivoInput").addEventListener("change", async (e)=
 function actualizarVisibilidadSubtipoDoc(){
   const tipo = document.getElementById("docTipo").value;
   const esProcedimiento = tipo === "procedimiento";
-  const mostrarContenido = tipo === "procedimiento" || tipo === "politica";
+  const mostrarContenido = tipo === "procedimiento" || tipo === "politica" || tipo === "manual";
+  const iaWrap = document.getElementById("docIaWrap");
+  if(iaWrap) iaWrap.style.display = (mostrarContenido && storageMode === "api") ? "" : "none";
   document.getElementById("docSubtipoWrap").style.display = esProcedimiento ? "" : "none";
   document.getElementById("docContenidoWrap").style.display = mostrarContenido ? "" : "none";
 }
@@ -3747,6 +3760,27 @@ on(document.getElementById("generarDocumentoWordFormBtn"), "click", ()=>{
   const anterior = documentoEditingId ? CACHE.documentos.find(d=>d.id===documentoEditingId) : null;
   generarDocumentoWord(leerDocumentoDelFormulario(anterior));
 });
+/* Redacción automática de documentos con IA (v1.74, solo disponible en modo
+   API porque requiere el backend real con la clave de Anthropic configurada).
+   El borrador que devuelve la IA se coloca en "Contenido del documento" para
+   que el usuario lo revise y edite antes de guardar; nunca se guarda solo. */
+on(document.getElementById("docIaRedactarBtn"), "click", async ()=>{
+  const tipo = document.getElementById("docTipo").value;
+  const nombre = document.getElementById("docNombre").value.trim();
+  const contextoAdicional = document.getElementById("docIaContexto").value.trim();
+  const estadoEl = document.getElementById("docIaEstado");
+  if(!nombre){ alert('Indica el "Nombre del documento" antes de redactar con IA, para que el borrador tenga un título claro sobre qué tratar.'); return; }
+  if(storageMode !== "api"){ alert("La redacción con IA solo está disponible cuando la app está conectada al backend real."); return; }
+  estadoEl.textContent = "Redactando con IA… puede tardar unos segundos.";
+  try{
+    const respuesta = await apiFetch("POST", "/api/ia/redactar-documento", {tipo, nombre, contextoAdicional});
+    document.getElementById("docContenido").value = respuesta.contenido;
+    estadoEl.textContent = "Borrador generado. Revísalo y edítalo antes de guardar.";
+  }catch(err){
+    estadoEl.textContent = "";
+    alert("No se pudo redactar el documento con IA: " + err.message);
+  }
+});
 function renderDocumentosTable(){
   const filtroTipo = document.getElementById("filterDocTipo").value;
   const vigentesMap = documentosVigentesMap();
@@ -3764,7 +3798,7 @@ function renderDocumentosTable(){
       <td>
         <button class="subtle-btn" data-documento-editar="${d.id}">Editar</button>
         <button class="subtle-btn" data-documento-pdf="${d.id}">Generar PDF</button>
-        ${(d.tipo==="politica"||d.tipo==="procedimiento") ? `<button class="subtle-btn" data-documento-word="${d.id}">Generar Word</button>` : ""}
+        ${(d.tipo==="politica"||d.tipo==="procedimiento"||d.tipo==="manual") ? `<button class="subtle-btn" data-documento-word="${d.id}">Generar Word</button>` : ""}
         <button class="subtle-btn" data-documento-eliminar="${d.id}">Eliminar</button>
       </td>
     </tr>`;
@@ -4021,8 +4055,8 @@ function construirHtmlDocumentoWord(docRec){
 }
 function generarDocumentoWord(docRec){
   if(!docRec.nombre){ alert("Indica al menos el nombre del documento para poder generar el Word."); return; }
-  if(docRec.tipo !== "politica" && docRec.tipo !== "procedimiento"){
-    alert("La generación automática en Word está disponible para documentos de tipo Política de SST o Procedimiento/Instructivo.");
+  if(docRec.tipo !== "politica" && docRec.tipo !== "procedimiento" && docRec.tipo !== "manual"){
+    alert("La generación automática en Word está disponible para documentos de tipo Política de SST, Procedimiento/Instructivo o Manual.");
     return;
   }
   const html = construirHtmlDocumentoWord(docRec);
