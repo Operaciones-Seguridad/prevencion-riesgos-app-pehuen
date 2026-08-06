@@ -12334,7 +12334,6 @@ function parseMatrizIperCorporativa(sheet, defaultAreaId){
 
   const dataStart = headerRow + 2;
   let lastProceso = "", lastActividad = "";
-  let consecutivasVacias = 0;
   const out = [];
   for(let r=dataStart; r<aoa.length; r++){
     const row = aoa[r] || [];
@@ -12344,11 +12343,13 @@ function parseMatrizIperCorporativa(sheet, defaultAreaId){
     if(actividadCell) lastActividad = actividadCell;
     const peligro = colPeligro>=0 && row[colPeligro]!=null ? String(row[colPeligro]).trim() : "";
     if(!peligro){
-      consecutivasVacias++;
-      if(consecutivasVacias>=2 && out.length) break; // fin de la tabla de datos
+      // Fila vacía o separadora entre procesos/áreas dentro de la tabla:
+      // se omite pero NO se corta la importación acá. Muchas matrices reales
+      // (como esta) tienen varios bloques de filas en blanco intercalados
+      // entre secciones, no solo al final; cortar ahí truncaba la matriz a
+      // mitad de camino (v1.74 solo llegaba a la primera fila 48 de 175).
       continue;
     }
-    consecutivasVacias = 0;
 
     let p, c;
     const pRes = colProbResidual>=0? row[colProbResidual] : null;
