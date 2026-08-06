@@ -1175,6 +1175,10 @@
           <label>Relator</label>
           <input id="capRelator" placeholder="Nombre relator / organismo">
         </div>
+        <div>
+          <label>Procedimiento / documento asociado (opcional)</label>
+          <select id="capDocumento"><option value="">Sin documento asociado</option></select>
+        </div>
       </div>
       <div style="margin-top:16px;">
         <button class="btn" id="saveCapBtn">Agregar al plan</button>
@@ -1187,6 +1191,7 @@
         <div class="field"><label>Filtrar por tipo</label><select id="filterCapTipo"><option value="">Todos</option></select></div>
         <div class="field"><label>Filtrar por mes</label><select id="filterCapMes"><option value="">Todos los meses</option></select></div>
         <div class="field"><label>Filtrar por responsable (relator)</label><select id="filterCapResponsable"><option value="">Todos los responsables</option></select></div>
+        <div class="field"><label>Filtrar por documento</label><select id="filterCapDocumento"><option value="">Todos</option></select></div>
       </div>
       <div id="capacitacionesList"></div>
       <div style="margin-top:14px;"><button class="btn secondary" id="descargarCapacitacionPdfBtn">Descargar PDF (según filtros)</button></div>
@@ -1809,7 +1814,7 @@
         </div>
       </div>
       <table>
-        <thead><tr><th>Tipo</th><th>Nombre</th><th>Versión</th><th>Fecha actualización</th><th>Descripción</th><th>Archivo</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>Tipo</th><th>Nombre</th><th>Versión</th><th>Fecha actualización</th><th>Descripción</th><th>Archivo</th><th>Capacitación</th><th>Acciones</th></tr></thead>
         <tbody id="documentosTable"></tbody>
       </table>
       </div>
@@ -3770,6 +3775,7 @@ on(document.getElementById("saveDocumentoBtn"), "click", async ()=>{
   await loadCache();
   resetDocumentoForm();
   renderControlDocumental();
+  renderCommonSelects(); // refresca el selector "Procedimiento / documento asociado" del Plan de capacitación
 });
 on(document.getElementById("generarDocumentoPdfFormBtn"), "click", ()=>{
   const nombre = document.getElementById("docNombre").value.trim();
@@ -3804,6 +3810,24 @@ on(document.getElementById("docIaRedactarBtn"), "click", async ()=>{
     alert("No se pudo redactar el documento con IA: " + err.message);
   }
 });
+/* Capacitaciones (store "capacitaciones") vinculadas a un documento de
+   Control Documental mediante c.documentoId, usadas para mostrar en la
+   tabla de documentos cuántos trabajadores fueron capacitados/aprobados
+   en cada procedimiento/política/manual y cuándo fue la última vez. */
+function capacitacionesDeDocumento(docId){
+  return (CACHE.capacitaciones||[]).filter(c=>c.documentoId===docId);
+}
+function resumenCapacitacionDocumento(docId){
+  const caps = capacitacionesDeDocumento(docId);
+  if(!caps.length) return null;
+  const aprobados = new Set();
+  let ultima = null;
+  caps.forEach(c=>{
+    (c.participantes||[]).forEach(p=>{ if(p.aprobado) aprobados.add(p.trabajadorId); });
+    if(c.fechaRealizada && (!ultima || c.fechaRealizada > ultima)) ultima = c.fechaRealizada;
+  });
+  return { totalCapacitaciones: caps.length, trabajadoresAprobados: aprobados.size, ultima };
+}
 function renderDocumentosTable(){
   const filtroTipo = document.getElementById("filterDocTipo").value;
   const vigentesMap = documentosVigentesMap();
@@ -3811,6 +3835,7 @@ function renderDocumentosTable(){
     .slice().sort((a,b)=> new Date(b.fechaActualizacion||b.fechaConfeccion||0) - new Date(a.fechaActualizacion||a.fechaConfeccion||0));
   document.getElementById("documentosTable").innerHTML = rows.length ? rows.map(d=>{
     const esVigente = vigentesMap.get(documentoKey(d)) === d;
+    const capResumen = resumenCapacitacionDocumento(d.id);
     return `<tr>
       <td>${tipoDocumentoLabel(d)}</td>
       <td>${d.nombre}</td>
@@ -3818,14 +3843,16 @@ function renderDocumentosTable(){
       <td>${d.fechaActualizacion? fmtDate(d.fechaActualizacion) : (d.fechaConfeccion? fmtDate(d.fechaConfeccion) : "—")}</td>
       <td>${d.descripcion || "—"}</td>
       <td>${d.archivoData? `<a href="${d.archivoData}" download="${d.archivoNombre||('Documento_v'+d.version)}" class="subtle-btn">Descargar</a>` : '<span class="empty">Sin archivo</span>'}</td>
+      <td>${capResumen ? `<span class="pill bajo">${capResumen.trabajadoresAprobados} trabajador(es) aprobados</span><div class="kv">${capResumen.totalCapacitaciones} capacitación(es)${capResumen.ultima?` · última: ${fmtDate(capResumen.ultima)}`:""}</div>` : '<span class="pill" style="opacity:.6;">Sin capacitación registrada</span>'}</td>
       <td>
         <button class="subtle-btn" data-documento-editar="${d.id}">Editar</button>
         <button class="subtle-btn" data-documento-pdf="${d.id}">Generar PDF</button>
         ${(d.tipo==="politica"||d.tipo==="procedimiento"||d.tipo==="manual") ? `<button class="subtle-btn" data-documento-word="${d.id}">Generar Word</button>` : ""}
+        ${(d.tipo==="politica"||d.tipo==="procedimiento"||d.tipo==="manual") ? `<button class="subtle-btn" data-documento-capacitar="${d.id}">Capacitar</button>` : ""}
         <button class="subtle-btn" data-documento-eliminar="${d.id}">Eliminar</button>
       </td>
     </tr>`;
-  }).join("") : `<tr><td class="empty" colspan="7">Sin documentos registrados todavía</td></tr>`;
+  }).join("") : `<tr><td class="empty" colspan="8">Sin documentos registrados todavía</td></tr>`;
 }
 on(document.getElementById("documentosTable"), "click", async (e) => {
   const editBtn = e.target.closest("[data-documento-editar]");
@@ -3840,6 +3867,18 @@ on(document.getElementById("documentosTable"), "click", async (e) => {
   if(wordBtn){
     const rec = CACHE.documentos.find(d=>d.id===wordBtn.dataset.documentoWord);
     if(rec) generarDocumentoWord(rec);
+    return;
+  }
+  const capacitarBtn = e.target.closest("[data-documento-capacitar]");
+  if(capacitarBtn){
+    const rec = CACHE.documentos.find(d=>d.id===capacitarBtn.dataset.documentoCapacitar);
+    if(rec){
+      irAVista("capacitacion");
+      document.getElementById("capNombre").value = `Capacitación: ${rec.nombre}`;
+      renderCommonSelects();
+      document.getElementById("capDocumento").value = rec.id;
+      document.getElementById("capNombre").scrollIntoView({behavior:"smooth", block:"center"});
+    }
     return;
   }
   const delBtn = e.target.closest("[data-documento-eliminar]");
@@ -3892,6 +3931,27 @@ function matrizLineasParaDocumento(docRec){
   const norm = s => (s||"").toLowerCase().replace(/\s+/g," ").trim();
   const keyTexto = norm(docRec.nombre);
   return (CACHE.matriz||[]).filter(m => jerarquiaDe(m).some(it=> it.jerarquia==="D" && norm(it.texto)===keyTexto));
+}
+/* jsPDF no pagina texto libre por sí solo (a diferencia de autoTable, que sí
+   agrega páginas automáticamente): doc.text() simplemente sigue dibujando
+   líneas más allá del borde inferior de la hoja si no se controla la
+   posición Y a mano. Esto hacía que el contenido largo de un documento
+   (ej. un procedimiento redactado con IA, de varios párrafos) quedara
+   cortado en la primera página del PDF. Esta función dibuja línea por línea
+   y agrega una página nueva cuando se acerca al margen inferior. */
+function escribirTextoPaginado(doc, texto, x, startY, opts={}){
+  const maxWidth = opts.maxWidth || 180;
+  const lineHeight = opts.lineHeight || 5;
+  const limiteInferior = opts.limiteInferior || 275;
+  const margenSuperior = opts.margenSuperior || 16;
+  const lineas = doc.splitTextToSize(String(texto||""), maxWidth);
+  let y = startY;
+  lineas.forEach(linea=>{
+    if(y > limiteInferior){ doc.addPage(); y = margenSuperior; }
+    doc.text(linea, x, y);
+    y += lineHeight;
+  });
+  return y;
 }
 function agregarPiePaginasPdf(doc, etiqueta){
   const total = doc.internal.getNumberOfPages();
@@ -3970,7 +4030,7 @@ function generarDocumentoAutomaticoPDF(docRec){
   doc.setFontSize(14); doc.text("Contenido", 14, 20);
   doc.setFontSize(10);
   if(docRec.contenido && docRec.contenido.trim()){
-    doc.text(doc.splitTextToSize(docRec.contenido, 180), 14, 30);
+    escribirTextoPaginado(doc, docRec.contenido, 14, 30);
   } else {
     doc.text('Sin contenido registrado todavía. Complete el campo "Contenido del procedimiento/instructivo" en Control Documental para que aparezca aquí.', 14, 30, {maxWidth:180});
   }
@@ -5280,6 +5340,22 @@ function renderCommonSelects(){
   fillSelect(filterCapTipoSel, getCatalog("capTipo").map(t=>({id:t,label:t})), false);
   filterCapTipoSel.insertAdjacentHTML("afterbegin",'<option value="">Todos</option>');
   filterCapTipoSel.value = "";
+
+  // Documentos vigentes (política/procedimiento/manual) para asociar a una capacitación.
+  const docsParaCapacitar = Array.from(documentosVigentesMap().values())
+    .filter(d=> d.tipo==="politica" || d.tipo==="procedimiento" || d.tipo==="manual")
+    .sort((a,b)=> (a.nombre||"").localeCompare(b.nombre||""))
+    .map(d=>({id:d.id, label:`${tipoDocumentoLabel(d)}: ${d.nombre}`}));
+  const capDocSel = document.getElementById("capDocumento");
+  const capDocCurrent = capDocSel.value;
+  fillSelect(capDocSel, docsParaCapacitar, false);
+  capDocSel.insertAdjacentHTML("afterbegin",'<option value="">Sin documento asociado</option>');
+  capDocSel.value = docsParaCapacitar.some(d=>d.id===capDocCurrent) ? capDocCurrent : "";
+  const filterCapDocSel = document.getElementById("filterCapDocumento");
+  const filterCapDocCurrent = filterCapDocSel.value;
+  fillSelect(filterCapDocSel, docsParaCapacitar, false);
+  filterCapDocSel.insertAdjacentHTML("afterbegin",'<option value="">Todos</option>');
+  filterCapDocSel.value = docsParaCapacitar.some(d=>d.id===filterCapDocCurrent) ? filterCapDocCurrent : "";
 
   renderInsTipoOptions();
 
@@ -9344,10 +9420,12 @@ on(document.getElementById("saveCapBtn"), "click", async () => {
   const fechaProgramada = document.getElementById("capFecha").value;
   const horas = +document.getElementById("capHoras").value || 0;
   const relator = document.getElementById("capRelator").value.trim();
+  const documentoId = document.getElementById("capDocumento").value || "";
   if(!nombre || !fechaProgramada){ alert("Complete nombre y fecha programada."); return; }
-  await put("capacitaciones", {id:uid(), nombre, tipo, fechaProgramada, fechaRealizada:null, horas, relator, participantes:[]});
+  await put("capacitaciones", {id:uid(), nombre, tipo, fechaProgramada, fechaRealizada:null, horas, relator, documentoId, participantes:[]});
   await loadCache();
   ["capNombre","capFecha","capHoras","capRelator"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("capDocumento").value = "";
   renderCapFiltros();
   renderCapacitacionesList();
   renderCapStats();
@@ -9369,9 +9447,11 @@ function renderCapFiltros(){
 function capacitacionesFiltradas(){
   const fMes = document.getElementById("filterCapMes").value;
   const fResp = document.getElementById("filterCapResponsable").value;
+  const fDoc = document.getElementById("filterCapDocumento").value;
   return CACHE.capacitaciones
     .filter(c=> !fMes || (c.fechaProgramada||"").slice(0,7)===fMes)
-    .filter(c=> !fResp || (c.relator||"").trim()===fResp);
+    .filter(c=> !fResp || (c.relator||"").trim()===fResp)
+    .filter(c=> !fDoc || c.documentoId===fDoc);
 }
 
 function renderCapacitacionesList(){
@@ -9402,6 +9482,7 @@ function renderCapacitacionesList(){
         <div>
           <strong>${c.nombre}</strong>
           <div class="kv">${CAP_TIPO_LABEL[c.tipo]||c.tipo} · Programada: ${fmtDate(c.fechaProgramada)} · ${c.horas||0} hrs · ${c.relator||"—"}</div>
+          ${c.documentoId ? (()=>{ const doc = CACHE.documentos.find(d=>d.id===c.documentoId); return doc ? `<div class="kv">Documento: <span class="pill bajo">${tipoDocumentoLabel(doc)}: ${doc.nombre}</span></div>` : `<div class="kv">Documento: <span class="pill" style="opacity:.6;">Documento eliminado</span></div>`; })() : ""}
         </div>
         <div style="text-align:right;">
           <span class="pill ${stats.pct>=80?'bajo':stats.pct>=50?'medio':'critico'}">${stats.asistieron}/${stats.convocados} asistencia confirmada (${stats.pct}%)</span>
@@ -9558,6 +9639,7 @@ on(document.getElementById("capacitacionesList"), "click", async (e) => {
 document.getElementById("filterCapTipo").addEventListener("change", renderCapacitacionesList);
 document.getElementById("filterCapMes").addEventListener("change", () => { renderCapacitacionesList(); renderCapStats(); renderCapCumplimientoPorResponsable(); });
 document.getElementById("filterCapResponsable").addEventListener("change", () => { renderCapacitacionesList(); renderCapStats(); renderCapCumplimientoPorResponsable(); });
+document.getElementById("filterCapDocumento").addEventListener("change", () => { renderCapacitacionesList(); renderCapStats(); renderCapCumplimientoPorResponsable(); });
 
 /* Estadísticas del plan: cumplimiento de programa, cumplimiento de asistencia,
    y HH capacitadas (horas x asistentes de capacitaciones realizadas) vs HH
