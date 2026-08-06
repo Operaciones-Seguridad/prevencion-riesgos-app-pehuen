@@ -737,6 +737,7 @@
       <div class="card-header-row" id="hdrMatrizVigente"><h2>Matriz de riesgos vigente</h2><button class="collapse-toggle" id="toggleMatrizVigente" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyMatrizVigente">
       <div class="toolbar">
+        <div class="field"><label>Buscar por Peligro / Riesgo</label><input type="text" id="filterMatrizPeligro" placeholder="Ej: ruido, caída, manejo manual..."></div>
         <div class="field"><label>Filtrar por área</label><select id="filterMatrizArea"><option value="">Todas</option></select></div>
         <div class="field"><label>Filtrar por categoría</label><select id="filterMatrizCategoria"><option value="">Todas</option></select></div>
         <div class="field"><label>Filtrar por nivel</label><select id="filterMatrizNivel"><option value="">Todos</option><option value="bajo">Bajo</option><option value="medio">Medio</option><option value="alto">Alto</option><option value="critico">Crítico</option></select></div>
@@ -3576,11 +3577,33 @@ function procedimientosDesdeMatriz(){
   return Array.from(map.values()).sort((a,b)=> b.count-a.count || a.texto.localeCompare(b.texto));
 }
 function documentoKey(d){ return (d.tipo||"")+"||"+(d.nombre||"").toLowerCase().replace(/\s+/g," ").trim(); }
-/* Último documento de tipo Procedimiento cuyo nombre coincide exactamente
-   (normalizado) con el texto de la medida de control D de la matriz. */
+const STOPWORDS_PROCEDIMIENTO = new Set(["de","del","la","el","en","y","para","por","a","los","las","un","una","al","con","su","sus","o","u"]);
+function palabrasClaveProcedimiento(s){
+  return quitarAcentos(String(s||"").toLowerCase())
+    .replace(/[^a-z0-9\s]/g," ")
+    .split(/\s+/)
+    .filter(w=>w && !STOPWORDS_PROCEDIMIENTO.has(w));
+}
+/* Compara el texto de la medida de control D) de la matriz con el nombre de
+   un documento de tipo Procedimiento. No exige coincidencia exacta: en la
+   práctica el nombre del documento suele ser una versión abreviada del texto
+   de la matriz (ej. la matriz dice "Difusión de procedimiento de manejo de
+   animales en área de tránsito" y el documento se llama "Procedimiento de
+   manejo de animales en área de tránsito"). Se considera coincidencia si al
+   menos el 70% de las palabras clave del más corto de los dos textos
+   aparece en el otro. */
+function coincideProcedimiento(textoMatriz, nombreDoc){
+  const wa = palabrasClaveProcedimiento(textoMatriz);
+  const wb = palabrasClaveProcedimiento(nombreDoc);
+  if(!wa.length || !wb.length) return false;
+  const [corto, largo] = wa.length <= wb.length ? [wa, new Set(wb)] : [wb, new Set(wa)];
+  const coincidencias = corto.filter(w=>largo.has(w)).length;
+  return (coincidencias / corto.length) >= 0.7;
+}
+/* Último documento de tipo Procedimiento cuyo nombre coincide (según
+   coincideProcedimiento) con el texto de la medida de control D de la matriz. */
 function documentoProcedimientoPara(texto){
-  const key = "procedimiento||"+texto.toLowerCase().replace(/\s+/g," ").trim();
-  const candidatos = (CACHE.documentos||[]).filter(d=> documentoKey(d)===key);
+  const candidatos = (CACHE.documentos||[]).filter(d=> (d.tipo||"")==="procedimiento" && coincideProcedimiento(texto, d.nombre||""));
   if(!candidatos.length) return null;
   return candidatos.slice().sort((a,b)=> new Date(b.fechaActualizacion||b.fechaConfeccion||0) - new Date(a.fechaActualizacion||a.fechaConfeccion||0))[0];
 }
@@ -7164,9 +7187,11 @@ function renderMatrizTable(){
   const fCategoria = document.getElementById("filterMatrizCategoria").value;
   const fEstado = document.getElementById("filterMatrizEstado").value;
   const fSensible = document.getElementById("filterMatrizSensible").value;
+  const fPeligro = quitarAcentos(document.getElementById("filterMatrizPeligro").value||"").toLowerCase().trim();
   const rows = CACHE.matriz
     .map(m=>({...m, nivel: nivelRiesgo(m.probabilidad,m.consecuencia)}))
-    .filter(m=> (!fArea || m.areaId===fArea) && (!fNivel || m.nivel===fNivel) && (!fCategoria || m.categoria===fCategoria) && (!fEstado || (m.estado||"pendiente")===fEstado) && (!fSensible || (fSensible==="si"?!!m.sensible:!m.sensible)))
+    .filter(m=> (!fArea || m.areaId===fArea) && (!fNivel || m.nivel===fNivel) && (!fCategoria || m.categoria===fCategoria) && (!fEstado || (m.estado||"pendiente")===fEstado) && (!fSensible || (fSensible==="si"?!!m.sensible:!m.sensible))
+      && (!fPeligro || quitarAcentos(((m.peligro||"")+" "+(m.riesgo||"")+" "+(m.efecto||"")).toLowerCase()).includes(fPeligro)))
     .sort((a,b)=> (b.probabilidad*b.consecuencia)-(a.probabilidad*a.consecuencia));
   document.getElementById("matrizTable").innerHTML = rows.map(m=>`
     <tr>
@@ -7223,6 +7248,7 @@ document.getElementById("filterMatrizNivel").addEventListener("change", renderMa
 document.getElementById("filterMatrizCategoria").addEventListener("change", renderMatrizTable);
 document.getElementById("filterMatrizEstado").addEventListener("change", renderMatrizTable);
 document.getElementById("filterMatrizSensible").addEventListener("change", renderMatrizTable);
+document.getElementById("filterMatrizPeligro").addEventListener("input", renderMatrizTable);
 
 /* =========================================================
    LEVANTAMIENTO DE RIESGOS (IPER) POR ÁREA DE TRABAJO
@@ -8172,9 +8198,11 @@ on(document.getElementById("exportMatrizBtn"), "click", async () => {
   const fCategoria = document.getElementById("filterMatrizCategoria").value;
   const fEstado = document.getElementById("filterMatrizEstado").value;
   const fSensible = document.getElementById("filterMatrizSensible").value;
+  const fPeligro = quitarAcentos(document.getElementById("filterMatrizPeligro").value||"").toLowerCase().trim();
   const rows = CACHE.matriz
     .map(m=>({...m, nivel: nivelRiesgo(m.probabilidad,m.consecuencia)}))
-    .filter(m=> (!fArea || m.areaId===fArea) && (!fNivel || m.nivel===fNivel) && (!fCategoria || m.categoria===fCategoria) && (!fEstado || (m.estado||"pendiente")===fEstado) && (!fSensible || (fSensible==="si"?!!m.sensible:!m.sensible)))
+    .filter(m=> (!fArea || m.areaId===fArea) && (!fNivel || m.nivel===fNivel) && (!fCategoria || m.categoria===fCategoria) && (!fEstado || (m.estado||"pendiente")===fEstado) && (!fSensible || (fSensible==="si"?!!m.sensible:!m.sensible))
+      && (!fPeligro || quitarAcentos(((m.peligro||"")+" "+(m.riesgo||"")+" "+(m.efecto||"")).toLowerCase()).includes(fPeligro)))
     .sort((a,b)=> (b.probabilidad*b.consecuencia)-(a.probabilidad*a.consecuencia));
   if(!rows.length){ alert("No hay líneas para exportar con el filtro actual."); return; }
   if(typeof XLSX === "undefined"){ alert("No se pudo cargar el generador de Excel (revisa tu conexión a internet e intenta de nuevo)."); return; }
