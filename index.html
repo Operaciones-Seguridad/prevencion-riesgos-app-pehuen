@@ -862,7 +862,7 @@
 
     <div class="card">
       <h2>Plan de Acción — Matriz de Riesgos</h2>
-      <div class="desc">Para cada riesgo Alto o Crítico, define qué se va a hacer, quién es responsable y con qué plazo, y hazle seguimiento hasta cerrarlo registrando el riesgo residual alcanzado. Metodología: Revisión y Priorización → Definición de Acciones y Controles → Asignación de Recursos y Responsables → Seguimiento y Monitoreo → Actualización Continua.</div>
+      <div class="desc">Para todo riesgo que no sea Bajo (Medio, Alto o Crítico), define qué se va a hacer, quién es responsable y con qué plazo, y hazle seguimiento hasta cerrarlo registrando el riesgo residual alcanzado. Metodología: Revisión y Priorización → Definición de Acciones y Controles → Asignación de Recursos y Responsables → Seguimiento y Monitoreo → Actualización Continua.</div>
       <div class="toolbar">
         <div class="field"><label>Próxima revisión anual de la matriz</label><input type="date" id="paRevisionAnual"></div>
         <div><button class="btn secondary small" id="paGuardarRevisionAnualBtn" style="margin-top:20px;">Guardar</button></div>
@@ -8985,8 +8985,8 @@ on(document.getElementById("printPlanoRiesgosBtn"), "click", async () => { impri
    (logHistorial), el mismo que ya se revisa por línea de matriz.
    ========================================================= */
 const PA_TIPO_LABEL = { mitigar:"Mitigar", evitar:"Evitar", transferir:"Transferir", aceptar:"Aceptar" };
-function paLineasAltoCritico(){
-  return CACHE.matriz.filter(m => ["alto","critico"].includes(nivelRiesgo(m.probabilidad, m.consecuencia)));
+function paLineasRequierenAccion(){
+  return CACHE.matriz.filter(m => nivelRiesgo(m.probabilidad, m.consecuencia) !== "bajo");
 }
 function paMatrizLinea(matrizId){
   return CACHE.matriz.find(m=>m.id===matrizId) || null;
@@ -9007,7 +9007,7 @@ function paClamp15(v, fallback){
 }
 function renderPaPendientes(){
   const cubiertas = new Set((CACHE.planAccionMatriz||[]).map(p=>p.matrizId));
-  const pendientes = paLineasAltoCritico().filter(m=>!cubiertas.has(m.id));
+  const pendientes = paLineasRequierenAccion().filter(m=>!cubiertas.has(m.id));
   document.getElementById("paPendientesTable").innerHTML = pendientes.length
     ? pendientes.map(m=>{
         const n = nivelRiesgo(m.probabilidad, m.consecuencia);
@@ -9018,11 +9018,11 @@ function renderPaPendientes(){
           <td><button class="btn secondary small" data-pa-nueva="${m.id}">Definir acción</button></td>
         </tr>`;
       }).join("")
-    : `<tr><td colspan="4" class="empty">No hay líneas alto/crítico sin plan de acción</td></tr>`;
+    : `<tr><td colspan="4" class="empty">No hay líneas medio/alto/crítico sin plan de acción</td></tr>`;
 }
 function paFillMatrizSelect(){
   const sel = document.getElementById("paMatrizId");
-  const items = paLineasAltoCritico().map(m=>{
+  const items = paLineasRequierenAccion().map(m=>{
     const n = nivelRiesgo(m.probabilidad, m.consecuencia);
     return { id: m.id, label: `${areaName(m.areaId)} — ${m.peligro} (${nivelLabel(n)})` };
   });
@@ -9066,7 +9066,7 @@ on(document.getElementById("paCancelarBtn"), "click", paResetForm);
 on(document.getElementById("paGuardarBtn"), "click", async ()=>{
   const matrizId = document.getElementById("paMatrizId").value;
   const m = paMatrizLinea(matrizId);
-  if(!m){ alert("Selecciona una línea de la matriz (alto o crítico)."); return; }
+  if(!m){ alert("Selecciona una línea de la matriz (medio, alto o crítico)."); return; }
   const actividad = document.getElementById("paActividad").value.trim();
   const responsable = document.getElementById("paResponsable").value.trim();
   const plazo = document.getElementById("paPlazo").value;
@@ -9226,7 +9226,7 @@ on(document.getElementById("paGuardarRevisionAnualBtn"), "click", async ()=>{
 
 // Impresión: una hoja por área (mismo mecanismo que imprimirMapaRiesgos),
 // con las acciones de esa área agrupadas por las 5 fases de la
-// metodología, más las líneas alto/crítico todavía pendientes.
+// metodología, más las líneas medio/alto/crítico todavía pendientes.
 function imprimirPlanAccion(){
   const cubiertas = new Set((CACHE.planAccionMatriz||[]).map(p=>p.matrizId));
   const porArea = new Map();
@@ -9238,13 +9238,13 @@ function imprimirPlanAccion(){
     if(!porArea.has(key)) porArea.set(key, { nombre: areaName(key), acciones:[], pendientes:[] });
     porArea.get(key).acciones.push({p,m});
   });
-  paLineasAltoCritico().filter(m=>!cubiertas.has(m.id)).forEach(m=>{
+  paLineasRequierenAccion().filter(m=>!cubiertas.has(m.id)).forEach(m=>{
     const key = m.areaId || "";
     if(!porArea.has(key)) porArea.set(key, { nombre: areaName(key), acciones:[], pendientes:[] });
     porArea.get(key).pendientes.push(m);
   });
   const bloques = Array.from(porArea.values()).filter(b=>b.acciones.length||b.pendientes.length);
-  if(!bloques.length){ alert("No hay acciones ni riesgos alto/crítico pendientes para imprimir."); return; }
+  if(!bloques.length){ alert("No hay acciones ni riesgos medio/alto/crítico pendientes para imprimir."); return; }
   const empresaNombre = (CACHE.empresa && CACHE.empresa.razonSocial) || "—";
   const fecha = new Date().toISOString().slice(0,10);
   document.getElementById("valePrintArea").innerHTML = `
