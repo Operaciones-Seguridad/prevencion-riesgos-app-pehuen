@@ -1296,6 +1296,11 @@
       <div style="margin-top:16px;">
         <button class="btn" id="saveCapBtn">Agregar al plan</button>
       </div>
+      <div class="desc" style="margin-top:14px;">Importar varias capacitaciones desde un Excel con columnas <strong>Nombre</strong>, <strong>Tipo</strong>, <strong>Fecha programada</strong>, <strong>Duración (horas)</strong> y <strong>Relator</strong> (opcionalmente también <strong>Fecha de realización</strong>, para cargar de una vez capacitaciones ya realizadas). Un Tipo que todavía no exista se agrega automáticamente al catálogo, igual que al escribirlo a mano en el campo Tipo de arriba.</div>
+      <div class="toolbar">
+        <div class="field"><label>Archivo Excel (.xlsx)</label><input type="file" id="importCapFile" accept=".xlsx,.xls"></div>
+        <div><button class="btn small secondary" id="importCapBtn" style="margin-top:20px;">Importar desde Excel</button></div>
+      </div>
     </div>
 
     <div class="card">
@@ -10330,6 +10335,54 @@ on(document.getElementById("saveCapBtn"), "click", async () => {
 });
 
 const CAP_TIPO_LABEL = {induccion:"Inducción", especifica:"Específica por riesgo del puesto", ds44:"Obligatoria DS 44", refuerzo:"Refuerzo / recapacitación"};
+
+/* Importación masiva de capacitaciones desde Excel (columnas Nombre, Tipo,
+   Fecha programada, Duración (horas), Relator y, opcionalmente, Fecha de
+   realización). Mismo patrón que la importación del Programa de seguridad:
+   no bloquea el archivo por filas imperfectas y reporta un resumen al
+   final. Un Tipo nuevo se agrega al catálogo (capTipo), igual que al
+   escribirlo a mano en el formulario de arriba. */
+on(document.getElementById("importCapBtn"), "click", async () => {
+  const fileInput = document.getElementById("importCapFile");
+  const file = fileInput.files[0];
+  if(!file){ alert("Selecciona un archivo Excel (.xlsx) para importar."); return; }
+  if(typeof XLSX === "undefined"){ alert("No se pudo cargar el lector de Excel (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const buffer = await file.arrayBuffer();
+  const wb = XLSX.read(buffer, {type:"array", cellDates:true});
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet, {defval:""});
+  if(!rows.length){ alert("El archivo no tiene filas de datos."); return; }
+  const norm = s => String(s||"").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  let importadas = 0, omitidas = 0;
+  for(const row of rows){
+    const keys = Object.keys(row);
+    const kNombre = keys.find(k=>["nombre","nombre de la capacitacion","capacitacion","actividad"].includes(norm(k)));
+    const kTipo = keys.find(k=>norm(k)==="tipo");
+    const kFecha = keys.find(k=>["fecha programada","fecha prog","fecha"].includes(norm(k)));
+    const kHoras = keys.find(k=>["duracion (horas)","duracion","horas"].includes(norm(k)));
+    const kRelator = keys.find(k=>norm(k)==="relator");
+    const kFechaReal = keys.find(k=>["fecha de realizacion","fecha realizada","fecha realizacion","fecha real"].includes(norm(k)));
+    const nombre = kNombre? String(row[kNombre]).trim() : "";
+    const fechaProgramada = kFecha? excelFechaToIso(row[kFecha]) : "";
+    if(!nombre || !fechaProgramada){ omitidas++; continue; }
+    const tipo = kTipo? String(row[kTipo]).trim() : "";
+    if(tipo) await addCatalogValue("capTipo", tipo);
+    const horas = kHoras? (+row[kHoras] || 0) : 0;
+    const relator = kRelator? String(row[kRelator]).trim() : "";
+    const fechaRealizada = kFechaReal? (excelFechaToIso(row[kFechaReal]) || null) : null;
+    await put("capacitaciones", {id:uid(), nombre, tipo, fechaProgramada, fechaRealizada, horas, relator, documentoId:"", participantes:[]});
+    importadas++;
+  }
+  await loadCache();
+  fileInput.value = "";
+  renderCommonSelects();
+  renderCapFiltros();
+  renderCapacitacionesList();
+  renderCapStats();
+  renderCapCumplimientoPorResponsable();
+  if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
+  alert(`Importación completa: ${importadas} capacitación(es) agregada(s) al plan${omitidas? `, ${omitidas} fila(s) omitida(s) por no tener Nombre o Fecha programada válida`:""}.`);
+});
 
 /* Repuebla los filtros de mes y responsable (relator) del plan de
    capacitación con los valores realmente presentes en los datos. */
