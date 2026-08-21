@@ -747,6 +747,29 @@
       </div>
     </div>
 
+    <div class="card" id="matrizIaWrap" style="display:none;">
+      <h2>Sugerir líneas con IA</h2>
+      <div class="desc">La IA propone líneas nuevas de peligro/riesgo/controles para el rubro y las áreas de esta empresa, evitando repetir lo que ya está cargado en la matriz (si la matriz está vacía, las genera desde cero). Las sugerencias se muestran abajo para revisarlas y elegir cuáles agregar — nunca se guardan solas.</div>
+      <div class="form-grid" style="margin-top:8px;">
+        <div><label>Cantidad de líneas a sugerir</label><input type="number" id="matrizIaCantidad" value="8" min="1" max="20"></div>
+        <div style="grid-column:1/-1;"><label>Contexto adicional (opcional)</label><input id="matrizIaContexto" placeholder="Ej: enfócate en riesgos de trabajo en altura y eléctricos"></div>
+      </div>
+      <div class="toolbar" style="margin-top:8px;">
+        <button class="btn secondary" id="matrizIaSugerirBtn" type="button">Sugerir líneas con IA</button>
+        <span id="matrizIaEstado" class="kv"></span>
+      </div>
+      <div id="matrizIaPreviewWrap" style="display:none;margin-top:14px;">
+        <table>
+          <thead><tr><th></th><th>Área</th><th>Proceso / Actividad</th><th>Categoría</th><th>Peligro / Riesgo</th><th>Nivel</th><th>Medidas de control (DS 44)</th></tr></thead>
+          <tbody id="matrizIaPreviewTable"></tbody>
+        </table>
+        <div class="toolbar" style="margin-top:10px;">
+          <button class="btn" id="matrizIaAgregarBtn" type="button">Agregar seleccionadas a la Matriz</button>
+          <button class="btn secondary" id="matrizIaDescartarBtn" type="button">Descartar sugerencias</button>
+        </div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-header-row" id="hdrMatrizVigente"><h2>Matriz de riesgos vigente</h2><button class="collapse-toggle" id="toggleMatrizVigente" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyMatrizVigente">
@@ -7373,6 +7396,99 @@ on(document.getElementById("saveMatrizBtn"), "click", async () => {
   alert("Línea agregada a la matriz de riesgos.");
 });
 
+/* --- Sugerencia de líneas nuevas para la Matriz de riesgos con IA ---
+   Le pide al backend (que a su vez usa Claude) líneas nuevas de peligro/
+   riesgo/controles para el rubro y áreas de la empresa, evitando repetir lo
+   ya cargado (si la matriz está vacía, las genera desde cero). Las
+   sugerencias NUNCA se guardan solas: se muestran en una previsualización
+   con checkbox y el usuario elige cuáles agregar de verdad. */
+let matrizSugerenciasIA = [];
+function renderMatrizIaPreview(){
+  const wrap = document.getElementById("matrizIaPreviewWrap");
+  if(!matrizSugerenciasIA.length){ wrap.style.display = "none"; return; }
+  wrap.style.display = "";
+  document.getElementById("matrizIaPreviewTable").innerHTML = matrizSugerenciasIA.map((m,i)=>{
+    const nivel = nivelRiesgo(m.probabilidad, m.consecuencia);
+    const items = m.controlesJerarquizados||[];
+    const warn = items.length && items.every(it=>it.jerarquia==="E") ? `<div style="margin-bottom:5px;"><span class="pill critico">Solo EPP</span></div>` : "";
+    const controlesHtml = items.length ? warn + items.map(c=>`<div style="margin-bottom:5px;">${jerarquiaChipHtml(c.jerarquia)} ${c.texto}</div>`).join("") : "—";
+    return `<tr>
+      <td><input type="checkbox" data-matriz-ia-check="${i}" checked></td>
+      <td>${areaName(m.areaId)}</td>
+      <td>${m.proceso?`<div class="kv">${m.proceso}</div>`:""}${m.actividad||"—"}</td>
+      <td>${m.categoria||"—"}</td>
+      <td><strong>${m.peligro||"—"}</strong><div class="kv">${m.riesgo||"—"}</div></td>
+      <td><span class="pill ${nivel}">${nivelLabel(nivel)}</span></td>
+      <td>${controlesHtml}</td>
+    </tr>`;
+  }).join("");
+}
+on(document.getElementById("matrizIaSugerirBtn"), "click", async () => {
+  const cantidad = +document.getElementById("matrizIaCantidad").value || 8;
+  const contextoAdicional = document.getElementById("matrizIaContexto").value.trim();
+  const estadoEl = document.getElementById("matrizIaEstado");
+  estadoEl.textContent = "Consultando a la IA… puede tardar unos segundos.";
+  try{
+    const respuesta = await apiFetch("POST", "/api/ia/sugerir-matriz", {cantidad, contextoAdicional});
+    matrizSugerenciasIA = respuesta.sugerencias || [];
+    estadoEl.textContent = matrizSugerenciasIA.length
+      ? `${matrizSugerenciasIA.length} línea(s) sugerida(s). Revísalas abajo antes de agregarlas.`
+      : "La IA no devolvió ninguna sugerencia. Intenta de nuevo.";
+    renderMatrizIaPreview();
+  }catch(err){
+    estadoEl.textContent = "";
+    alert("No se pudo obtener sugerencias con IA: " + err.message);
+  }
+});
+on(document.getElementById("matrizIaDescartarBtn"), "click", () => {
+  matrizSugerenciasIA = [];
+  document.getElementById("matrizIaEstado").textContent = "";
+  renderMatrizIaPreview();
+});
+on(document.getElementById("matrizIaAgregarBtn"), "click", async () => {
+  const checks = [...document.querySelectorAll("#matrizIaPreviewTable [data-matriz-ia-check]:checked")];
+  if(!checks.length){ alert("Selecciona al menos una línea para agregar."); return; }
+  const seleccionadas = checks.map(c=>matrizSugerenciasIA[+c.dataset.matrizIaCheck]);
+  for(const m of seleccionadas){
+    const controlesJerarquizados = m.controlesJerarquizados||[];
+    const rec = {
+      id: uid(),
+      areaId: m.areaId || (CACHE.areas[0] && CACHE.areas[0].id) || "",
+      proceso: m.proceso, actividad: m.actividad, categoria: m.categoria,
+      peligro: m.peligro, riesgo: m.riesgo,
+      hombres: 0, mujeres: 0, otros: 0, efecto: "",
+      sensible: false, gruposSensibles: [],
+      probabilidad: m.probabilidad, consecuencia: m.consecuencia,
+      controlesJerarquizados,
+      controles: controlesTextoPlano(controlesJerarquizados),
+      responsable: responsableTextoPlano(controlesJerarquizados),
+      plazo: plazoResumenControles(controlesJerarquizados),
+      estado: "pendiente",
+      fechaCreacion: new Date().toISOString(),
+    };
+    if(rec.proceso) await addCatalogValue("proceso", rec.proceso);
+    if(rec.actividad) await addCatalogValue("actividad", rec.actividad);
+    if(rec.categoria) await addCatalogValue("categoria", rec.categoria);
+    if(rec.peligro) await addCatalogValue("peligro", rec.peligro);
+    await put("matriz", rec);
+    await loadCache();
+    await logHistorial(rec.id, matrizLineLabel(rec), "Línea creada", "", "Sugerida por IA y agregada por el usuario");
+  }
+  matrizSugerenciasIA = [];
+  document.getElementById("matrizIaEstado").textContent = "";
+  renderMatrizIaPreview();
+  renderMatrizTable();
+  renderEquidadGenero();
+  renderMatrizCharts();
+  renderJerarquiaControles();
+  renderEppEstudioCobertura();
+  renderEppEstPeligroOptions();
+  renderMapaRiesgos();
+  renderPlanoRiesgos();
+  renderMatrizHistorialTable();
+  alert(`${seleccionadas.length} línea(s) agregada(s) a la matriz de riesgos.`);
+});
+
 function renderMatrizTable(){
   const fArea = document.getElementById("filterMatrizArea").value;
   const fNivel = document.getElementById("filterMatrizNivel").value;
@@ -12883,6 +12999,8 @@ function aplicarPermisosSesion(){
   const mostrarEmpresasWrap = esAdmin && storageMode==="api";
   if(empresasWrap) empresasWrap.style.display = mostrarEmpresasWrap ? "" : "none";
   if(mostrarEmpresasWrap) renderEmpresasTable();
+  const matrizIaWrap = document.getElementById("matrizIaWrap");
+  if(matrizIaWrap) matrizIaWrap.style.display = storageMode==="api" ? "" : "none";
   /* Permiso a nivel de acción (no solo de pestaña): si el perfil del
      usuario en sesión tiene descargaDashboard=false, se ocultan los
      botones de descarga del Dashboard (PDF/PPT para gerencia), aunque el
