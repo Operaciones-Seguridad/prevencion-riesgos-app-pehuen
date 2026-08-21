@@ -476,6 +476,19 @@
         <div><button class="btn small secondary" id="importFmtBtn" style="margin-top:20px;">Importar ítems</button></div>
       </div>
 
+      <div id="fmtIaWrap" class="desc" style="background:#f5f8fc; border:1px solid #cfe0f5; border-radius:6px; padding:10px; margin-top:14px;">
+        <label>Sugerir ítems con IA (opcional)</label>
+        <div class="form-grid">
+          <div><label>Contexto adicional (opcional)</label><input id="fmtIaContexto" placeholder="Ej: incluir el uso de línea de vida certificada y anclaje doble"></div>
+          <div><label>Cantidad de ítems a sugerir</label><input id="fmtIaCantidad" type="number" min="1" max="20" value="8"></div>
+        </div>
+        <div class="toolbar" style="margin-top:6px;">
+          <button class="btn secondary" id="fmtIaSugerirBtn" type="button">✨ Sugerir ítems con IA</button>
+          <span id="fmtIaEstado" class="kv"></span>
+        </div>
+        <div class="desc" style="margin-top:4px;">La IA usa como tema el "Nombre del formato" de arriba, junto con el rubro de la empresa y el perfil de riesgos real de la Matriz de riesgos, para proponer ítems concretos evitando repetir los que ya están en la tabla. Los ítems sugeridos se agregan a la tabla de abajo para que los revises, edites o quites antes de crear o guardar el formato — nunca se guardan solos.</div>
+      </div>
+
       <h2 style="margin-top:22px;">Formatos ya creados</h2>
       <table>
         <thead><tr><th>Nombre</th><th>Se usa para</th><th>Ítems</th><th>Acciones</th></tr></thead>
@@ -793,6 +806,17 @@
       <table>
         <thead><tr><th>Área</th><th>Proceso / Actividad</th><th>Categoría</th><th>Peligro / Riesgo</th><th>P x C</th><th>Nivel</th><th>Equidad de género</th><th>Especialmente sensible</th><th>Medidas de control (DS 44)</th><th>Estado</th><th></th></tr></thead>
         <tbody id="matrizTable"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrTraspasosPendientes"><h2>Traspasos pendientes desde la Matriz</h2><button class="collapse-toggle" id="toggleTraspasosPendientes" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyTraspasosPendientes">
+      <div class="desc">Medidas de control cuyo texto suena a una actividad de seguimiento real (capacitar, inspeccionar, observar, verificar...) y todavía no se traspasaron a Programa de seguridad ni a Plan de capacitación, ni se descartaron. Incluye tanto líneas nuevas como las ya cargadas antes de tener esta función.</div>
+      <table>
+        <thead><tr><th>Área</th><th>Línea</th><th>Medida de control</th><th>Destino</th><th>Responsable</th><th>Fecha programada</th><th></th></tr></thead>
+        <tbody id="traspasosPendientesTable"></tbody>
       </table>
       </div>
     </div>
@@ -2874,6 +2898,7 @@ function setupCollapsible(headerId, bodyId, toggleId, storageKey){
   header.addEventListener("click", (e)=>{ if(e.target.closest("select,input,button,a,label")) return; toggle(); });
 }
 setupCollapsible("hdrMatrizVigente", "bodyMatrizVigente", "toggleMatrizVigente", "collapsed_matrizVigente");
+setupCollapsible("hdrTraspasosPendientes", "bodyTraspasosPendientes", "toggleTraspasosPendientes", "collapsed_traspasosPendientes");
 setupCollapsible("hdrLevantamiento", "bodyLevantamiento", "toggleLevantamiento", "collapsed_levantamiento");
 setupCollapsible("hdrCompromisosItems", "bodyCompromisosItems", "toggleCompromisosItems", "collapsed_compromisosItems");
 setupCollapsible("hdrEquidadGenero", "bodyEquidadGenero", "toggleEquidadGenero", "collapsed_equidadGenero");
@@ -3310,6 +3335,62 @@ function parseControlesBullets(controlesTxt, responsableTxt){
 function jerarquiaDe(m){
   if(Array.isArray(m.controlesJerarquizados) && m.controlesJerarquizados.length) return m.controlesJerarquizados;
   return parseControlesBullets(m.controles, m.responsable);
+}
+
+/* =========================================================
+   TRASPASO AUTOMÁTICO DE CONTROLES A PROGRAMA/CAPACITACIÓN
+   Si el texto de una medida de control (de cualquier letra de la
+   jerarquía DS44) suena a una actividad de seguimiento real, se ofrece
+   traspasarla a Plan de capacitación o a Programa de seguridad según
+   corresponda. m.controlesTraspasos (objeto, clave = claveControlTraspaso)
+   guarda qué controles ya se traspasaron o se descartaron, para no
+   volver a ofrecer lo mismo dos veces.
+   ========================================================= */
+const TRASPASO_KEYWORDS = {
+  capacitacion: ["capacitar","capacitacion","instruir","entrenar","entrenamiento","induccion"],
+  programa: ["inspeccionar","inspeccion","observar","observacion","verificar","revisar","supervisar","fiscalizar"],
+};
+const TRASPASO_DESTINO_LABEL = { capacitacion: "Plan de capacitación", programa: "Programa de seguridad" };
+function normTraspaso(s){ return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""); }
+function destinoTraspasoDeTexto(texto){
+  const t = normTraspaso(texto);
+  if(TRASPASO_KEYWORDS.capacitacion.some(k=>t.includes(k))) return "capacitacion";
+  if(TRASPASO_KEYWORDS.programa.some(k=>t.includes(k))) return "programa";
+  return null;
+}
+function claveControlTraspaso(item){ return (item.jerarquia||"") + "::" + normTraspaso(item.texto); }
+/* Ítems de control de una línea todavía sin traspasar ni descartar, con su
+   destino detectado y la clave para marcarlos una vez procesados. */
+function controlesPendientesDeLinea(m){
+  const revisados = m.controlesTraspasos || {};
+  return jerarquiaDe(m)
+    .map(item => ({ item, clave: claveControlTraspaso(item), destino: destinoTraspasoDeTexto(item.texto) }))
+    .filter(x => x.destino && x.item.texto && !revisados[x.clave]);
+}
+function todosLosTraspasosPendientes(){
+  return (CACHE.matriz||[]).flatMap(m => controlesPendientesDeLinea(m).map(x => ({ m, ...x })));
+}
+/* Crea el registro en "programa" o "capacitaciones" según destino, marca el
+   control como traspasado en la línea de origen y deja rastro en su
+   histórico. Reutilizada tanto por el modal al guardar como por la card de
+   traspasos pendientes -- misma lógica, sin duplicarla. */
+async function ejecutarTraspaso(m, item, clave, destino, responsable, fecha){
+  let destinoId = uid();
+  if(destino === "capacitacion"){
+    const tipoCap = "General";
+    await addCatalogValue("capTipo", tipoCap);
+    await put("capacitaciones", { id: destinoId, nombre: item.texto, tipo: tipoCap, fechaProgramada: fecha, fechaRealizada: null, horas: 0, relator: responsable, documentoId: "", participantes: [] });
+  } else {
+    await put("programa", { id: destinoId, nombre: item.texto, tipo: "inspeccion", areaId: m.areaId, responsable, fechaProgramada: fecha, fechaRealizada: null });
+  }
+  m.controlesTraspasos = m.controlesTraspasos || {};
+  m.controlesTraspasos[clave] = { estado: "traspasado", destino, destinoId, fecha };
+  await logHistorial(m.id, matrizLineLabel(m), "Control transferido", "", `${TRASPASO_DESTINO_LABEL[destino]}: "${item.texto}"`);
+  return destinoId;
+}
+async function descartarTraspaso(m, clave){
+  m.controlesTraspasos = m.controlesTraspasos || {};
+  m.controlesTraspasos[clave] = { estado: "descartado" };
 }
 /* Una línea "depende solo de EPP" si TODAS sus medidas clasificadas son E
    (y hay al menos una) — el caso que el DS 44 pide evitar como única barrera. */
@@ -6067,7 +6148,7 @@ function drawFindings(){
   document.getElementById("findingsWrap").innerHTML = currentFindings.map((f,idx)=>`
     <div class="finding">
       <div class="form-grid">
-        <div><label>Descripción</label><textarea data-f="desc" data-idx="${idx}">${f.desc||""}</textarea></div>
+        <div><label style="display:flex;justify-content:space-between;align-items:center;gap:8px;">Descripción <button type="button" class="subtle-btn" data-iafinding="${idx}">✨ Redactar con IA</button></label><textarea data-f="desc" data-idx="${idx}">${f.desc||""}</textarea></div>
         <div>
           <label>Nivel de riesgo</label>
           <select data-f="nivel" data-idx="${idx}">
@@ -6132,6 +6213,33 @@ document.getElementById("findingsWrap").addEventListener("click",(e)=>{
   if(!btn) return;
   currentFindings.splice(+btn.dataset.remove,1);
   drawFindings();
+});
+/* Redactar hallazgo con IA (a partir de la nota breve que el inspector ya
+   escribió en Descripción, usando como contexto lo ya visible en el
+   formulario: área, tipo de registro, formato y descripción general). */
+on(document.getElementById("findingsWrap"), "click", async (e) => {
+  const btn = e.target.closest("button[data-iafinding]");
+  if(!btn) return;
+  const idx = +btn.dataset.iafinding;
+  const notaBreve = (currentFindings[idx].desc||"").trim();
+  if(!notaBreve){ alert("Escribe primero una nota breve en Descripción (aunque sea informal) para que la IA la redacte en forma más formal."); return; }
+  if(storageMode !== "api"){ alert("Redactar con IA solo está disponible cuando la app está conectada al backend real."); return; }
+  const areaNombre = areaName(document.getElementById("insArea").value);
+  const tipoRegistro = document.getElementById("insTipoRegistro").value;
+  const formatoSel = document.getElementById("insTipo");
+  const formatoNombre = (formatoSel.options[formatoSel.selectedIndex] && formatoSel.options[formatoSel.selectedIndex].text) || "";
+  const descripcionInspeccion = document.getElementById("insDescripcion").value.trim();
+  const nivel = currentFindings[idx].nivel || "bajo";
+  const textoOriginal = btn.textContent;
+  btn.textContent = "Redactando…"; btn.disabled = true;
+  try{
+    const respuesta = await apiFetch("POST", "/api/ia/redactar-hallazgo", {notaBreve, nivel, areaNombre, tipoRegistro, formatoNombre, descripcionInspeccion});
+    currentFindings[idx].desc = respuesta.descripcion;
+    drawFindings();
+  }catch(err){
+    alert("No se pudo redactar el hallazgo con IA: " + err.message);
+    btn.textContent = textoOriginal; btn.disabled = false;
+  }
 });
 
 /* La app no tiene backend/servidor de correo: "enviar correo" abre el cliente de correo
@@ -6398,6 +6506,33 @@ on(document.getElementById("importFmtBtn"), "click", async () => {
   drawFmtItems();
   fileInput.value = "";
   alert(`Importación completa: ${agregados} ítem(s) agregado(s) al formato${omitidos? `, ${omitidos} fila(s) omitida(s) por no tener texto de ítem`:""}. Revisa la tabla de ítems y luego crea o guarda el formato.`);
+});
+
+/* Sugerir ítems del formato con IA (mismo mecanismo exacto que la
+   importación desde Excel de arriba: los ítems sugeridos se agregan a
+   currentFmtItems, que es la misma tabla editable usada tanto para crear
+   un formato nuevo como para completar uno ya existente en edición, así
+   que un solo botón cubre los dos casos sin pantallas separadas). */
+on(document.getElementById("fmtIaSugerirBtn"), "click", async () => {
+  const tema = document.getElementById("fmtNombre").value.trim();
+  const categoria = document.getElementById("fmtCategoria").value;
+  const contextoAdicional = document.getElementById("fmtIaContexto").value.trim();
+  const cantidad = +document.getElementById("fmtIaCantidad").value || 8;
+  const estadoEl = document.getElementById("fmtIaEstado");
+  if(!tema){ alert('Indica el "Nombre del formato" antes de sugerir ítems con IA, para que la IA sepa sobre qué tema proponerlos.'); return; }
+  if(storageMode !== "api"){ alert("Sugerir ítems con IA solo está disponible cuando la app está conectada al backend real."); return; }
+  estadoEl.textContent = "Consultando IA… puede tardar unos segundos.";
+  try{
+    const itemsExistentes = currentFmtItems.map(it=>it.text);
+    const respuesta = await apiFetch("POST", "/api/ia/sugerir-formato-inspeccion", {tema, categoria, contextoAdicional, itemsExistentes, cantidad});
+    const nuevos = respuesta.sugerencias || [];
+    nuevos.forEach(it=>{ if(it.text) currentFmtItems.push({text: it.text, tipo: it.tipo==="texto"?"texto":"check"}); });
+    drawFmtItems();
+    estadoEl.textContent = nuevos.length ? `${nuevos.length} ítem(s) sugerido(s) agregado(s) a la tabla. Revísalos antes de crear o guardar el formato.` : "La IA no devolvió ítems nuevos.";
+  }catch(err){
+    estadoEl.textContent = "";
+    alert("No se pudo sugerir ítems con IA: " + err.message);
+  }
 });
 
 /* Alta y edición de inspecciones/observaciones */
@@ -7472,6 +7607,61 @@ function resetMatrizForm(){
 }
 on(document.getElementById("cancelEditMatrizBtn"), "click", async () => { resetMatrizForm(); });
 
+/* Al guardar una línea de la matriz, si alguno de sus controles todavía no
+   revisados suena a una actividad de seguimiento, se ofrece traspasarla en
+   vez del alert normal de "línea guardada". Devuelve true si mostró el
+   modal (para que el llamador se salte el alert de siempre). */
+function ofrecerTraspasosDetectados(matrizId){
+  const rec = CACHE.matriz.find(m=>m.id===matrizId);
+  if(!rec) return false;
+  const pendientes = controlesPendientesDeLinea(rec);
+  if(!pendientes.length) return false;
+  const filaHtml = (x, idx) => `
+    <div class="finding" style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px;">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:700;">
+        <input type="checkbox" data-traspasomodal-check="${idx}" checked style="width:auto;min-height:auto;">
+        ${TRASPASO_DESTINO_LABEL[x.destino]}
+      </label>
+      <div class="kv" style="margin:4px 0 8px;">"${x.item.texto}"</div>
+      <div class="form-grid">
+        <div><label>Responsable</label><input data-traspasomodal-resp="${idx}" value="${x.item.responsable||""}" placeholder="Nombre / cargo"></div>
+        <div><label>Fecha programada</label><input type="date" data-traspasomodal-fecha="${idx}" value="${x.item.plazo||""}"></div>
+      </div>
+    </div>`;
+  openModal(`
+    <h3>Actividades detectadas en los controles de esta línea</h3>
+    <div class="desc" style="margin-bottom:10px;">La línea "${matrizLineLabel(rec)}" se guardó correctamente. Se detectaron ${pendientes.length} medida(s) de control que suenan a una actividad de seguimiento — puedes traspasarlas ahora a Programa de seguridad o Plan de capacitación, o dejarlas pendientes (quedan disponibles en la card "Traspasos pendientes desde la Matriz").</div>
+    ${pendientes.map(filaHtml).join("")}
+    <div class="toolbar" style="margin-top:10px;">
+      <button class="btn" id="traspasoModalConfirmarBtn">Traspasar seleccionados</button>
+      <button class="btn secondary" id="traspasoModalOmitirBtn">Omitir por ahora</button>
+    </div>
+  `);
+  on(document.getElementById("traspasoModalOmitirBtn"), "click", () => closeModal());
+  on(document.getElementById("traspasoModalConfirmarBtn"), "click", async () => {
+    const marcados = pendientes
+      .map((x, idx) => ({ ...x, idx }))
+      .filter(x => document.querySelector(`[data-traspasomodal-check="${x.idx}"]`).checked);
+    if(marcados.some(x => !document.querySelector(`[data-traspasomodal-fecha="${x.idx}"]`).value)){
+      alert("Indica la fecha programada de cada actividad marcada (o destíldala si quieres dejarla pendiente).");
+      return;
+    }
+    for(const x of marcados){
+      const responsable = document.querySelector(`[data-traspasomodal-resp="${x.idx}"]`).value.trim();
+      const fecha = document.querySelector(`[data-traspasomodal-fecha="${x.idx}"]`).value;
+      await ejecutarTraspaso(rec, x.item, x.clave, x.destino, responsable, fecha);
+    }
+    await put("matriz", rec);
+    await loadCache();
+    closeModal();
+    renderProgramaTable(); renderPgFiltros();
+    renderCapacitacionesList(); renderCapFiltros(); renderCommonSelects();
+    renderTraspasosPendientes();
+    alert(`${marcados.length} actividad(es) traspasada(s).`);
+  });
+  return true;
+}
+
 on(document.getElementById("saveMatrizBtn"), "click", async () => {
   const areaId = document.getElementById("mArea").value;
   const proceso = document.getElementById("mProceso").value.trim();
@@ -7551,7 +7741,8 @@ on(document.getElementById("saveMatrizBtn"), "click", async () => {
     renderPlanoRiesgos();
     renderPlanAccion();
     renderMatrizHistorialTable();
-    alert("Línea de la matriz de riesgos actualizada.");
+    renderTraspasosPendientes();
+    if(!ofrecerTraspasosDetectados(rec.id)) alert("Línea de la matriz de riesgos actualizada.");
     return;
   }
 
@@ -7580,7 +7771,8 @@ on(document.getElementById("saveMatrizBtn"), "click", async () => {
   renderPlanoRiesgos();
   renderPlanAccion();
   renderMatrizHistorialTable();
-  alert("Línea agregada a la matriz de riesgos.");
+  renderTraspasosPendientes();
+  if(!ofrecerTraspasosDetectados(rec.id)) alert("Línea agregada a la matriz de riesgos.");
 });
 
 /* --- Sugerencia de líneas nuevas para la Matriz de riesgos con IA ---
@@ -9083,6 +9275,64 @@ function renderPlanAccion(){
   renderPaTable();
 }
 
+/* Card "Traspasos pendientes desde la Matriz": lista, para todas las
+   líneas (nuevas y ya existentes), los controles todavía sin traspasar ni
+   descartar. Cada fila permite editar el destino sugerido, completar
+   responsable/fecha y traspasar o descartar ahí mismo. */
+function renderTraspasosPendientes(){
+  const tbody = document.getElementById("traspasosPendientesTable");
+  if(!tbody) return;
+  const pendientes = todosLosTraspasosPendientes();
+  tbody.innerHTML = pendientes.length ? pendientes.map((x,idx)=>`
+    <tr data-traspaso-idx="${idx}">
+      <td>${areaName(x.m.areaId)}</td>
+      <td>${x.m.peligro||"—"} → ${x.m.riesgo||"—"}</td>
+      <td>"${x.item.texto}"</td>
+      <td><select data-traspasofila-destino="${idx}">
+        <option value="programa" ${x.destino==="programa"?"selected":""}>Programa de seguridad</option>
+        <option value="capacitacion" ${x.destino==="capacitacion"?"selected":""}>Plan de capacitación</option>
+      </select></td>
+      <td><input data-traspasofila-resp="${idx}" value="${x.item.responsable||""}" placeholder="Nombre / cargo"></td>
+      <td><input type="date" data-traspasofila-fecha="${idx}" value="${x.item.plazo||""}"></td>
+      <td style="white-space:nowrap;">
+        <button class="subtle-btn" data-traspasofila-ir="${idx}">Traspasar</button>
+        <button class="subtle-btn" data-traspasofila-descartar="${idx}">Descartar</button>
+      </td>
+    </tr>
+  `).join("") : `<tr><td class="empty" colspan="7">Sin traspasos pendientes</td></tr>`;
+  window.__traspasosPendientesActuales = pendientes;
+}
+on(document.getElementById("traspasosPendientesTable"), "click", async (e) => {
+  const pendientes = window.__traspasosPendientesActuales || [];
+  const irBtn = e.target.closest("[data-traspasofila-ir]");
+  if(irBtn){
+    const idx = +irBtn.dataset.traspasofilaIr;
+    const x = pendientes[idx];
+    if(!x) return;
+    const destino = document.querySelector(`[data-traspasofila-destino="${idx}"]`).value;
+    const responsable = document.querySelector(`[data-traspasofila-resp="${idx}"]`).value.trim();
+    const fecha = document.querySelector(`[data-traspasofila-fecha="${idx}"]`).value;
+    if(!fecha){ alert("Indica la fecha programada antes de traspasar."); return; }
+    await ejecutarTraspaso(x.m, x.item, x.clave, destino, responsable, fecha);
+    await put("matriz", x.m);
+    await loadCache();
+    renderProgramaTable(); renderPgFiltros();
+    renderCapacitacionesList(); renderCapFiltros(); renderCommonSelects();
+    renderTraspasosPendientes();
+    return;
+  }
+  const descartarBtn = e.target.closest("[data-traspasofila-descartar]");
+  if(descartarBtn){
+    const idx = +descartarBtn.dataset.traspasofilaDescartar;
+    const x = pendientes[idx];
+    if(!x) return;
+    if(!confirm(`¿Descartar este control como actividad de seguimiento? "${x.item.texto}" no se volverá a ofrecer, y no se crea ninguna actividad.`)) return;
+    await descartarTraspaso(x.m, x.clave);
+    await put("matriz", x.m);
+    await loadCache();
+    renderTraspasosPendientes();
+  }
+});
 
 
 function renderMatrizHistorialTable(){
@@ -13529,7 +13779,7 @@ on(document.getElementById("importMatrizBtn"), "click", async () => {
   await loadCache();
   fileInput.value = "";
   document.getElementById("importMatrizReplace").checked = false;
-  renderMatrizTable(); renderEquidadGenero(); renderMatrizCharts(); renderJerarquiaControles(); renderEppEstudioCobertura(); renderEppEstPeligroOptions(); renderMapaRiesgos(); renderPlanoRiesgos(); renderPlanAccion(); renderMatrizHistorialTable(); renderCommonSelects(); renderCatList();
+  renderMatrizTable(); renderEquidadGenero(); renderMatrizCharts(); renderJerarquiaControles(); renderEppEstudioCobertura(); renderEppEstPeligroOptions(); renderMapaRiesgos(); renderPlanoRiesgos(); renderPlanAccion(); renderTraspasosPendientes(); renderMatrizHistorialTable(); renderCommonSelects(); renderCatList();
   alert(`Importación completa (formato ${formato}): ${importadas} línea(s) ${reemplazar? "cargadas":"agregadas"} en la Matriz de riesgos.`);
 });
 
@@ -14403,6 +14653,7 @@ async function refreshAll(){
   renderMapaRiesgos();
   renderPlanoRiesgos();
   renderPlanAccion();
+  renderTraspasosPendientes();
   renderMatrizHistorialTable();
   renderProtocolosAplicaTable();
   renderVsMatrizProtocoloOptions();
