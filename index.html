@@ -837,6 +837,69 @@
     </div>
 
     <div class="card">
+      <h2>Plan de Acción — Matriz de Riesgos</h2>
+      <div class="desc">Para cada riesgo Alto o Crítico, define qué se va a hacer, quién es responsable y con qué plazo, y hazle seguimiento hasta cerrarlo registrando el riesgo residual alcanzado. Metodología: Revisión y Priorización → Definición de Acciones y Controles → Asignación de Recursos y Responsables → Seguimiento y Monitoreo → Actualización Continua.</div>
+      <div class="toolbar">
+        <div class="field"><label>Próxima revisión anual de la matriz</label><input type="date" id="paRevisionAnual"></div>
+        <div><button class="btn secondary small" id="paGuardarRevisionAnualBtn" style="margin-top:20px;">Guardar</button></div>
+      </div>
+
+      <h2 style="margin-top:22px;font-size:15px;">Pendientes de plan de acción</h2>
+      <div class="desc">Líneas de la matriz calificadas Alto o Crítico que todavía no tienen ninguna acción definida.</div>
+      <table>
+        <thead><tr><th>Área</th><th>Peligro / Riesgo</th><th>Nivel</th><th></th></tr></thead>
+        <tbody id="paPendientesTable"></tbody>
+      </table>
+
+      <h2 id="paFormTitle" style="margin-top:22px;font-size:15px;">Nueva acción</h2>
+      <div class="form-grid">
+        <div><label>Línea de la matriz (Alto o Crítico)</label><select id="paMatrizId"></select></div>
+      </div>
+      <div id="paLineaContexto" class="desc" style="margin-top:6px;">Selecciona una línea de la matriz.</div>
+      <div class="form-grid" style="margin-top:10px;">
+        <div>
+          <label style="display:flex;align-items:center;gap:8px;font-weight:400;"><input type="checkbox" id="paControlesValidados" style="width:auto;min-height:auto;"> ¿Los controles actuales son reales y funcionan?</label>
+        </div>
+        <div><label>Observación de la validación</label><input id="paObservacionValidacion" placeholder="Ej: se verificó en terreno el 20-08-2026"></div>
+        <div><label>Tipo de acción</label>
+          <select id="paTipoAccion">
+            <option value="mitigar">Mitigar</option>
+            <option value="evitar">Evitar</option>
+            <option value="transferir">Transferir</option>
+            <option value="aceptar">Aceptar</option>
+          </select>
+        </div>
+        <div style="grid-column:1/-1;"><label>Actividad específica</label><textarea id="paActividad" placeholder="Qué se va a hacer concretamente..."></textarea></div>
+        <div><label>Plazo de ejecución</label><input type="date" id="paPlazo"></div>
+        <div><label>Responsable / dueño del proceso</label><input id="paResponsable" placeholder="Nombre / cargo"></div>
+        <div><label>Presupuesto estimado (opcional)</label><input type="number" id="paPresupuesto" min="0" placeholder="$"></div>
+        <div><label>Recursos necesarios (opcional)</label><input id="paRecursos" placeholder="Materiales, tecnología, etc."></div>
+        <div><label>Próxima revisión de avance</label><input type="date" id="paProximaRevision"></div>
+      </div>
+      <div class="toolbar" style="margin-top:10px;">
+        <button class="btn" id="paGuardarBtn">Guardar acción</button>
+        <button class="btn secondary" id="paCancelarBtn" style="display:none;">Cancelar edición</button>
+      </div>
+
+      <h2 style="margin-top:22px;font-size:15px;">Seguimiento</h2>
+      <div class="toolbar">
+        <div class="field"><label>Filtrar por área</label><select id="paFilterArea"></select></div>
+        <div class="field"><label>Filtrar por estado</label>
+          <select id="paFilterEstado"><option value="">Todos</option><option value="pendiente">Pendiente</option><option value="proceso">En proceso</option><option value="cumplida">Cumplida</option><option value="atrasada">Atrasada</option></select>
+        </div>
+        <div class="field"><label>Filtrar por tipo de acción</label>
+          <select id="paFilterTipo"><option value="">Todos</option><option value="mitigar">Mitigar</option><option value="evitar">Evitar</option><option value="transferir">Transferir</option><option value="aceptar">Aceptar</option></select>
+        </div>
+        <div><button class="btn secondary small" id="printPlanAccionBtn" style="margin-top:20px;">Imprimir Plan de Acción</button></div>
+      </div>
+      <table>
+        <thead><tr><th>Área</th><th>Peligro / Riesgo</th><th>Nivel</th><th>Tipo</th><th>Actividad</th><th>Responsable</th><th>Plazo</th><th>Próx. revisión</th><th>Estado</th><th></th></tr></thead>
+        <tbody id="paTable"></tbody>
+      </table>
+    </div>
+
+
+    <div class="card">
       <h2>Jerarquía de controles (DS 44)</h2>
       <div class="desc">El DS 44 exige aplicar los controles en este orden de prioridad: <strong>A) Eliminación → B) Sustitución → C) Control de ingeniería → D) Control administrativo → E) Elementos de Protección Personal (EPP)</strong>. El EPP debe ser la última barrera, no la primera ni la única. Este resumen incluye tanto las medidas cargadas con el nuevo formulario jerarquizado como las de líneas más antiguas, interpretando el mismo convenio de viñetas ("• A)", "• B)"...) ya usado en la matriz real de la empresa.</div>
       <div id="chartJerarquiaWrap"></div>
@@ -2495,8 +2558,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 23;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros"];
+const DB_VERSION = 24;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -5479,6 +5542,10 @@ function renderCommonSelects(){
   fillSelect(filterMatrizAreaSel, areaOpts, false);
   filterMatrizAreaSel.insertAdjacentHTML("afterbegin",'<option value="">Todas</option>');
   filterMatrizAreaSel.value = "";
+  const paFilterAreaSel = document.getElementById("paFilterArea");
+  fillSelect(paFilterAreaSel, areaOpts, false);
+  paFilterAreaSel.insertAdjacentHTML("afterbegin",'<option value="">Todas</option>');
+  paFilterAreaSel.value = "";
   fillSelect(document.getElementById("newTrabArea"), areaOpts, true);
 
   fillDatalist(document.getElementById("dlProcesos"), getCatalog("proceso"));
@@ -7472,6 +7539,7 @@ on(document.getElementById("saveMatrizBtn"), "click", async () => {
     renderEppEstPeligroOptions();
     renderMapaRiesgos();
     renderPlanoRiesgos();
+    renderPlanAccion();
     renderMatrizHistorialTable();
     alert("Línea de la matriz de riesgos actualizada.");
     return;
@@ -7500,6 +7568,7 @@ on(document.getElementById("saveMatrizBtn"), "click", async () => {
   renderEppEstPeligroOptions();
   renderMapaRiesgos();
   renderPlanoRiesgos();
+  renderPlanAccion();
   renderMatrizHistorialTable();
   alert("Línea agregada a la matriz de riesgos.");
 });
@@ -7593,6 +7662,7 @@ on(document.getElementById("matrizIaAgregarBtn"), "click", async () => {
   renderEppEstPeligroOptions();
   renderMapaRiesgos();
   renderPlanoRiesgos();
+  renderPlanAccion();
   renderMatrizHistorialTable();
   alert(`${seleccionadas.length} línea(s) agregada(s) a la matriz de riesgos.`);
 });
@@ -7652,6 +7722,7 @@ on(document.getElementById("matrizTable"), "change", async (e) => {
   renderEppEstPeligroOptions();
   renderMapaRiesgos();
   renderPlanoRiesgos();
+  renderPlanAccion();
   renderMatrizHistorialTable();
 });
 on(document.getElementById("matrizTable"), "click", async (e) => {
@@ -7837,6 +7908,7 @@ on(document.getElementById("levantamientosTable"), "click", async (e) => {
     renderMatrizCharts();
     renderMapaRiesgos();
     renderPlanoRiesgos();
+    renderPlanAccion();
     alert(`Se generaron ${nuevosIds.length} línea(s) nueva(s) en la Matriz de riesgos. Revíselas y ajuste categoría, probabilidad, consecuencia y medidas de control según corresponda (quedaron con valores por defecto).`);
     return;
   }
@@ -8666,6 +8738,311 @@ function imprimirPlanoRiesgos(){
   window.print();
 }
 on(document.getElementById("printPlanoRiesgosBtn"), "click", async () => { imprimirPlanoRiesgos(); });
+
+
+/* =========================================================
+   PLAN DE ACCIÓN DE LA MATRIZ DE RIESGOS
+   Para cada línea calificada Alto o Crítico, define y hace
+   seguimiento de una acción concreta (mitigar/evitar/transferir/
+   aceptar), su responsable, plazo y recursos, hasta cerrarla
+   registrando el riesgo residual alcanzado. No es 1:1 con la
+   matriz: una línea puede tener más de una acción a lo largo del
+   tiempo (ej. una cerrada y otra nueva tras la revisión anual).
+   El historial de eficacia/avance se registra en matrizHistorial
+   (logHistorial), el mismo que ya se revisa por línea de matriz.
+   ========================================================= */
+const PA_TIPO_LABEL = { mitigar:"Mitigar", evitar:"Evitar", transferir:"Transferir", aceptar:"Aceptar" };
+function paLineasAltoCritico(){
+  return CACHE.matriz.filter(m => ["alto","critico"].includes(nivelRiesgo(m.probabilidad, m.consecuencia)));
+}
+function paMatrizLinea(matrizId){
+  return CACHE.matriz.find(m=>m.id===matrizId) || null;
+}
+// "Atrasada" es un estado derivado (plazo vencido y no cumplida), no un
+// valor guardado -- mismo criterio que ya usa estadoPrograma() en GRD.
+function paEstadoMostrado(p){
+  if(p.estado === "cumplida") return "cumplida";
+  const hoy = new Date().toISOString().slice(0,10);
+  if(p.plazo && p.plazo < hoy) return "atrasada";
+  return p.estado || "pendiente";
+}
+const PA_ESTADO_MOSTRADO_LABEL = { pendiente:"Pendiente", proceso:"En proceso", cumplida:"Cumplida", atrasada:"Atrasada" };
+function paEstadoLabel(p){ return PA_ESTADO_MOSTRADO_LABEL[paEstadoMostrado(p)] || "Pendiente"; }
+function paClamp15(v, fallback){
+  const n = Math.round(+v);
+  return Number.isFinite(n) ? Math.min(5, Math.max(1, n)) : fallback;
+}
+function renderPaPendientes(){
+  const cubiertas = new Set((CACHE.planAccionMatriz||[]).map(p=>p.matrizId));
+  const pendientes = paLineasAltoCritico().filter(m=>!cubiertas.has(m.id));
+  document.getElementById("paPendientesTable").innerHTML = pendientes.length
+    ? pendientes.map(m=>{
+        const n = nivelRiesgo(m.probabilidad, m.consecuencia);
+        return `<tr>
+          <td>${areaName(m.areaId)}</td>
+          <td><strong>${m.peligro}</strong><div class="kv">${m.riesgo}</div></td>
+          <td><span class="pill ${n}">${nivelLabel(n)}</span></td>
+          <td><button class="btn secondary small" data-pa-nueva="${m.id}">Definir acción</button></td>
+        </tr>`;
+      }).join("")
+    : `<tr><td colspan="4" class="empty">No hay líneas alto/crítico sin plan de acción</td></tr>`;
+}
+function paFillMatrizSelect(){
+  const sel = document.getElementById("paMatrizId");
+  const items = paLineasAltoCritico().map(m=>{
+    const n = nivelRiesgo(m.probabilidad, m.consecuencia);
+    return { id: m.id, label: `${areaName(m.areaId)} — ${m.peligro} (${nivelLabel(n)})` };
+  });
+  fillSelect(sel, items, true);
+}
+function paActualizarContexto(){
+  const m = paMatrizLinea(document.getElementById("paMatrizId").value);
+  const wrap = document.getElementById("paLineaContexto");
+  if(!m){ wrap.textContent = "Selecciona una línea de la matriz."; return; }
+  const n = nivelRiesgo(m.probabilidad, m.consecuencia);
+  const controles = jerarquiaDe(m);
+  wrap.innerHTML = `<strong>${areaName(m.areaId)}</strong> — ${m.peligro} → ${m.riesgo} · <span class="pill ${n}">${nivelLabel(n)}</span><br>
+    Controles actuales: ${controles.length ? controles.map(c=>`${c.jerarquia}) ${c.texto}`).join("; ") : "sin controles registrados"}`;
+}
+on(document.getElementById("paMatrizId"), "change", paActualizarContexto);
+
+let paEditingId = null;
+function paResetForm(){
+  paEditingId = null;
+  ["paObservacionValidacion","paActividad","paPlazo","paResponsable","paPresupuesto","paRecursos","paProximaRevision"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("paControlesValidados").checked = false;
+  document.getElementById("paTipoAccion").value = "mitigar";
+  document.getElementById("paMatrizId").disabled = false;
+  paFillMatrizSelect();
+  document.getElementById("paMatrizId").value = "";
+  paActualizarContexto();
+  document.getElementById("paFormTitle").textContent = "Nueva acción";
+  document.getElementById("paGuardarBtn").textContent = "Guardar acción";
+  document.getElementById("paCancelarBtn").style.display = "none";
+}
+on(document.getElementById("paPendientesTable"), "click", (e)=>{
+  const btn = e.target.closest("[data-pa-nueva]");
+  if(!btn) return;
+  paResetForm();
+  document.getElementById("paMatrizId").value = btn.dataset.paNueva;
+  paActualizarContexto();
+  document.getElementById("paFormTitle").scrollIntoView({behavior:"smooth", block:"start"});
+});
+on(document.getElementById("paCancelarBtn"), "click", paResetForm);
+
+on(document.getElementById("paGuardarBtn"), "click", async ()=>{
+  const matrizId = document.getElementById("paMatrizId").value;
+  const m = paMatrizLinea(matrizId);
+  if(!m){ alert("Selecciona una línea de la matriz (alto o crítico)."); return; }
+  const actividad = document.getElementById("paActividad").value.trim();
+  const responsable = document.getElementById("paResponsable").value.trim();
+  const plazo = document.getElementById("paPlazo").value;
+  if(!actividad || !responsable || !plazo){ alert("Completa actividad, responsable y plazo de ejecución."); return; }
+  const anterior = paEditingId ? (CACHE.planAccionMatriz||[]).find(p=>p.id===paEditingId) : null;
+  const presupuestoVal = document.getElementById("paPresupuesto").value;
+  const rec = {
+    id: paEditingId || uid(),
+    matrizId,
+    controlesValidados: document.getElementById("paControlesValidados").checked,
+    observacionValidacion: document.getElementById("paObservacionValidacion").value.trim(),
+    tipoAccion: document.getElementById("paTipoAccion").value,
+    actividad, plazo, responsable,
+    presupuesto: presupuestoVal ? +presupuestoVal : null,
+    recursos: document.getElementById("paRecursos").value.trim(),
+    proximaRevision: document.getElementById("paProximaRevision").value,
+    estado: (anterior && anterior.estado) || "pendiente",
+    probAntes: anterior ? anterior.probAntes : m.probabilidad,
+    consAntes: anterior ? anterior.consAntes : m.consecuencia,
+    probDespues: anterior ? (anterior.probDespues ?? null) : null,
+    consDespues: anterior ? (anterior.consDespues ?? null) : null,
+    eficaciaObservacion: (anterior && anterior.eficaciaObservacion) || "",
+    fechaCreacion: (anterior && anterior.fechaCreacion) || new Date().toISOString(),
+  };
+  const esNueva = !paEditingId;
+  await put("planAccionMatriz", rec);
+  await logHistorial(matrizId, matrizLineLabel(m), "Plan de acción", "", `${esNueva?"Creada":"Editada"}: ${PA_TIPO_LABEL[rec.tipoAccion]} — ${actividad}`);
+  await loadCache();
+  paResetForm();
+  renderPlanAccion();
+  alert(esNueva ? "Acción agregada al plan." : "Acción actualizada.");
+});
+
+function renderPaTable(){
+  const fArea = document.getElementById("paFilterArea").value;
+  const fEstado = document.getElementById("paFilterEstado").value;
+  const fTipo = document.getElementById("paFilterTipo").value;
+  const rows = (CACHE.planAccionMatriz||[]).map(p=>({ p, m: paMatrizLinea(p.matrizId), estadoMostrado: paEstadoMostrado(p) }))
+    .filter(({p,m,estadoMostrado})=>{
+      if(fArea && (!m || m.areaId!==fArea)) return false;
+      if(fEstado && estadoMostrado!==fEstado) return false;
+      if(fTipo && p.tipoAccion!==fTipo) return false;
+      return true;
+    })
+    .sort((a,b)=> (a.p.plazo||"").localeCompare(b.p.plazo||""));
+  document.getElementById("paTable").innerHTML = rows.length ? rows.map(({p,m,estadoMostrado})=>{
+    const n = m ? nivelRiesgo(m.probabilidad, m.consecuencia) : null;
+    return `<tr>
+      <td>${m ? areaName(m.areaId) : "—"}</td>
+      <td>${m ? `<strong>${m.peligro}</strong><div class="kv">${m.riesgo}</div>` : "(línea eliminada)"}</td>
+      <td>${n ? `<span class="pill ${n}">${nivelLabel(n)}</span>` : "—"}</td>
+      <td>${PA_TIPO_LABEL[p.tipoAccion]||"—"}</td>
+      <td>${p.actividad||"—"}</td>
+      <td>${p.responsable||"—"}</td>
+      <td>${p.plazo?fmtDate(p.plazo):"—"}</td>
+      <td>${p.proximaRevision?fmtDate(p.proximaRevision):"—"}</td>
+      <td>
+        <select data-pa-estado="${p.id}">
+          <option value="pendiente" ${p.estado==='pendiente'?'selected':''}>Pendiente</option>
+          <option value="proceso" ${p.estado==='proceso'?'selected':''}>En proceso</option>
+          <option value="cumplida" ${p.estado==='cumplida'?'selected':''}>Cumplida</option>
+        </select>
+        ${estadoMostrado==='atrasada' ? '<div class="kv" style="margin-top:4px;"><span class="pill critico">Atrasada</span></div>' : ""}
+      </td>
+      <td><button class="btn secondary small" data-pa-editar="${p.id}">Editar</button> <button class="subtle-btn" data-pa-eliminar="${p.id}">Eliminar</button></td>
+    </tr>`;
+  }).join("") : `<tr><td colspan="10" class="empty">Sin acciones registradas para el filtro seleccionado</td></tr>`;
+}
+on(document.getElementById("paFilterArea"), "change", renderPaTable);
+on(document.getElementById("paFilterEstado"), "change", renderPaTable);
+on(document.getElementById("paFilterTipo"), "change", renderPaTable);
+
+on(document.getElementById("paTable"), "click", async (e) => {
+  const editBtn = e.target.closest("[data-pa-editar]");
+  if(editBtn){
+    const p = (CACHE.planAccionMatriz||[]).find(x=>x.id===editBtn.dataset.paEditar);
+    if(!p) return;
+    paEditingId = p.id;
+    paFillMatrizSelect();
+    const sel = document.getElementById("paMatrizId");
+    if(![...sel.options].some(o=>o.value===p.matrizId)){
+      const m = paMatrizLinea(p.matrizId);
+      const label = m ? `${areaName(m.areaId)} — ${m.peligro}` : "(línea eliminada de la matriz)";
+      sel.insertAdjacentHTML("beforeend", `<option value="${p.matrizId}">${label}</option>`);
+    }
+    sel.value = p.matrizId;
+    sel.disabled = true;
+    paActualizarContexto();
+    document.getElementById("paControlesValidados").checked = !!p.controlesValidados;
+    document.getElementById("paObservacionValidacion").value = p.observacionValidacion||"";
+    document.getElementById("paTipoAccion").value = p.tipoAccion||"mitigar";
+    document.getElementById("paActividad").value = p.actividad||"";
+    document.getElementById("paPlazo").value = p.plazo||"";
+    document.getElementById("paResponsable").value = p.responsable||"";
+    document.getElementById("paPresupuesto").value = p.presupuesto ?? "";
+    document.getElementById("paRecursos").value = p.recursos||"";
+    document.getElementById("paProximaRevision").value = p.proximaRevision||"";
+    document.getElementById("paFormTitle").textContent = "Editando acción";
+    document.getElementById("paGuardarBtn").textContent = "Guardar cambios";
+    document.getElementById("paCancelarBtn").style.display = "";
+    document.getElementById("paFormTitle").scrollIntoView({behavior:"smooth", block:"start"});
+    return;
+  }
+  const delBtn = e.target.closest("[data-pa-eliminar]");
+  if(delBtn){
+    const p = (CACHE.planAccionMatriz||[]).find(x=>x.id===delBtn.dataset.paEliminar);
+    if(!p) return;
+    if(!confirm("¿Eliminar esta acción del plan? Esta acción no se puede deshacer.")) return;
+    await deleteRecord("planAccionMatriz", p.id);
+    const m = paMatrizLinea(p.matrizId);
+    await logHistorial(p.matrizId, m?matrizLineLabel(m):p.matrizId, "Plan de acción", `${PA_TIPO_LABEL[p.tipoAccion]} — ${p.actividad}`, "Eliminada");
+    await loadCache();
+    renderPlanAccion();
+    return;
+  }
+});
+// Cambiar el estado a "cumplida" pide el riesgo residual alcanzado
+// (Seguimiento y Monitoreo: medir la reducción del riesgo) y deja
+// registro de la eficacia en el historial de la línea de matriz
+// (Actualización Continua).
+on(document.getElementById("paTable"), "change", async (e) => {
+  const sel = e.target.closest("select[data-pa-estado]");
+  if(!sel) return;
+  const p = (CACHE.planAccionMatriz||[]).find(x=>x.id===sel.dataset.paEstado);
+  if(!p) return;
+  const anterior = p.estado;
+  if(sel.value === "cumplida" && anterior !== "cumplida"){
+    const probStr = prompt("Probabilidad DESPUÉS de implementar la acción (1-5):", String(p.probAntes||3));
+    if(probStr===null){ sel.value = anterior; return; }
+    const consStr = prompt("Consecuencia DESPUÉS de implementar la acción (1-5):", String(p.consAntes||3));
+    if(consStr===null){ sel.value = anterior; return; }
+    const obs = prompt("Observación sobre la eficacia de la acción implementada (opcional):", "") || "";
+    p.probDespues = paClamp15(probStr, p.probAntes||3);
+    p.consDespues = paClamp15(consStr, p.consAntes||3);
+    p.eficaciaObservacion = obs;
+    const nivelAntes = nivelRiesgo(p.probAntes, p.consAntes);
+    const nivelDespues = nivelRiesgo(p.probDespues, p.consDespues);
+    const m = paMatrizLinea(p.matrizId);
+    await logHistorial(p.matrizId, m?matrizLineLabel(m):p.matrizId, "Eficacia de la acción (Plan de Acción)", nivelLabel(nivelAntes), `${nivelLabel(nivelDespues)}${obs?" — "+obs:""}`);
+  }
+  p.estado = sel.value;
+  await put("planAccionMatriz", p);
+  if(anterior !== p.estado){
+    const m = paMatrizLinea(p.matrizId);
+    await logHistorial(p.matrizId, m?matrizLineLabel(m):p.matrizId, "Estado del plan de acción", anterior, p.estado);
+  }
+  await loadCache();
+  renderPlanAccion();
+});
+
+on(document.getElementById("paGuardarRevisionAnualBtn"), "click", async ()=>{
+  const rec = Object.assign({id:"empresa-1"}, CACHE.empresa||{}, { proximaRevisionMatriz: document.getElementById("paRevisionAnual").value });
+  await put("empresa", rec);
+  await loadCache();
+  alert("Fecha de próxima revisión guardada.");
+});
+
+// Impresión: una hoja por área (mismo mecanismo que imprimirMapaRiesgos),
+// con las acciones de esa área agrupadas por las 5 fases de la
+// metodología, más las líneas alto/crítico todavía pendientes.
+function imprimirPlanAccion(){
+  const cubiertas = new Set((CACHE.planAccionMatriz||[]).map(p=>p.matrizId));
+  const porArea = new Map();
+  CACHE.areas.forEach(a=> porArea.set(a.id, { nombre:a.nombre, acciones:[], pendientes:[] }));
+  (CACHE.planAccionMatriz||[]).forEach(p=>{
+    const m = paMatrizLinea(p.matrizId);
+    if(!m) return;
+    const key = m.areaId || "";
+    if(!porArea.has(key)) porArea.set(key, { nombre: areaName(key), acciones:[], pendientes:[] });
+    porArea.get(key).acciones.push({p,m});
+  });
+  paLineasAltoCritico().filter(m=>!cubiertas.has(m.id)).forEach(m=>{
+    const key = m.areaId || "";
+    if(!porArea.has(key)) porArea.set(key, { nombre: areaName(key), acciones:[], pendientes:[] });
+    porArea.get(key).pendientes.push(m);
+  });
+  const bloques = Array.from(porArea.values()).filter(b=>b.acciones.length||b.pendientes.length);
+  if(!bloques.length){ alert("No hay acciones ni riesgos alto/crítico pendientes para imprimir."); return; }
+  const empresaNombre = (CACHE.empresa && CACHE.empresa.razonSocial) || "—";
+  const fecha = new Date().toISOString().slice(0,10);
+  document.getElementById("valePrintArea").innerHTML = `
+    <div class="vale-print">
+      ${bloques.map((b,i)=>{
+        const quiebre = i===bloques.length-1 ? "" : "page-break-after:always;";
+        return `<div style="${quiebre}break-inside:avoid;">
+          <h2>Plan de Acción — ${b.nombre}</h2>
+          <div>${empresaNombre} · Generado el ${fmtDate(fecha)}</div>
+          ${b.acciones.length ? `<table><thead><tr><th>Peligro / Riesgo</th><th>Nivel</th><th>Tipo</th><th>Actividad</th><th>Responsable</th><th>Plazo</th><th>Estado</th></tr></thead>
+          <tbody>${b.acciones.map(({p,m})=>{
+            const n = nivelRiesgo(m.probabilidad, m.consecuencia);
+            return `<tr><td>${m.peligro}<br>${m.riesgo}</td><td>${nivelLabel(n)}</td><td>${PA_TIPO_LABEL[p.tipoAccion]||"—"}</td><td>${p.actividad||"—"}</td><td>${p.responsable||"—"}</td><td>${p.plazo?fmtDate(p.plazo):"—"}</td><td>${paEstadoLabel(p)}</td></tr>`;
+          }).join("")}</tbody></table>` : `<div style="color:#777;font-size:13px;margin-top:10px;">Sin acciones registradas todavía en esta área.</div>`}
+          ${b.pendientes.length ? `<div style="margin-top:14px;"><strong>Pendientes de definir acción:</strong><br>${b.pendientes.map(m=>`• ${m.peligro} → ${m.riesgo}`).join("<br>")}</div>` : ""}
+        </div>`;
+      }).join("")}
+    </div>
+  `;
+  window.print();
+}
+on(document.getElementById("printPlanAccionBtn"), "click", async () => { imprimirPlanAccion(); });
+
+function renderPlanAccion(){
+  document.getElementById("paRevisionAnual").value = (CACHE.empresa && CACHE.empresa.proximaRevisionMatriz) || "";
+  renderPaPendientes();
+  if(!paEditingId) paFillMatrizSelect();
+  renderPaTable();
+}
+
+
 
 function renderMatrizHistorialTable(){
   const rows = (CACHE.matrizHistorial||[]).slice().sort((a,b)=> new Date(b.fecha)-new Date(a.fecha)).slice(0,100);
@@ -12993,7 +13370,7 @@ on(document.getElementById("importMatrizBtn"), "click", async () => {
   await loadCache();
   fileInput.value = "";
   document.getElementById("importMatrizReplace").checked = false;
-  renderMatrizTable(); renderEquidadGenero(); renderMatrizCharts(); renderJerarquiaControles(); renderEppEstudioCobertura(); renderEppEstPeligroOptions(); renderMapaRiesgos(); renderPlanoRiesgos(); renderMatrizHistorialTable(); renderCommonSelects(); renderCatList();
+  renderMatrizTable(); renderEquidadGenero(); renderMatrizCharts(); renderJerarquiaControles(); renderEppEstudioCobertura(); renderEppEstPeligroOptions(); renderMapaRiesgos(); renderPlanoRiesgos(); renderPlanAccion(); renderMatrizHistorialTable(); renderCommonSelects(); renderCatList();
   alert(`Importación completa (formato ${formato}): ${importadas} línea(s) ${reemplazar? "cargadas":"agregadas"} en la Matriz de riesgos.`);
 });
 
@@ -13866,6 +14243,7 @@ async function refreshAll(){
   renderEppEstudioCobertura();
   renderMapaRiesgos();
   renderPlanoRiesgos();
+  renderPlanAccion();
   renderMatrizHistorialTable();
   renderProtocolosAplicaTable();
   renderVsMatrizProtocoloOptions();
