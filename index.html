@@ -1359,7 +1359,7 @@
       </table>
     </div>
 
-    <div class="card">
+    <div class="card" id="cardIapForm">
       <div class="card-header-row" id="hdrIap"><h2 id="iapFormTitle">Incidentes de Alto Potencial (IAP) de otras empresas</h2><button class="collapse-toggle" id="toggleIap" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyIap">
       <div class="desc">Registra los Incidentes de Alto Potencial (IAP) ocurridos en <strong>otras empresas</strong> (alertas de seguridad del mandante, de la mutualidad, del rubro, de otras faenas del grupo, etc.): eventos cuyo resultado real pudo haber sido menor, pero cuyo <strong>potencial</strong> de daño era grave o fatal. El objetivo es difundir la lección aprendida a todo nuestro personal antes de que un evento similar ocurra en nuestra empresa, y llevar control de que la difusión llegue al <strong>100% de los trabajadores</strong>.</div>
@@ -1404,7 +1404,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="cardIapListado">
       <div class="card-header-row" id="hdrIapListado"><h2>Registro y control de difusión de IAP</h2><button class="collapse-toggle" id="toggleIapListado" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyIapListado">
       <div class="grid-tiles" id="iapStatsTiles"></div>
@@ -2386,6 +2386,9 @@
       <div id="cfgLogoPreviewWrap" class="kv" style="margin-top:6px;"></div>
       <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin-top:14px;">
         <input type="checkbox" id="cfgUsarRirdaLdr" style="width:auto;min-height:auto;"> Usar indicadores RIRDA / LDR además de los indicadores DS 67 chilenos, en Accidentabilidad
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin-top:6px;">
+        <input type="checkbox" id="cfgIapHabilitado" style="width:auto;min-height:auto;"> Mostrar el módulo de Incidentes de Alto Potencial (IAP) de otras empresas, en Capacitación
       </label>
       <div style="margin-top:14px;"><button class="btn small" id="saveEmpresaBtn">Guardar</button></div>
     </div>
@@ -5740,6 +5743,7 @@ function poblarFormConfigEmpresa(){
   document.getElementById("cfgOrganismoAdm").value = e.organismoAdministrador || "";
   document.getElementById("cfgNumAdherente").value = e.numAdherente || "";
   document.getElementById("cfgUsarRirdaLdr").checked = !!e.usarRirdaLdr;
+  document.getElementById("cfgIapHabilitado").checked = e.iapHabilitado !== false;
   document.getElementById("cfgMetaFrecuencia").value = e.metaFrecuencia ?? "";
   document.getElementById("cfgMetaGravedad").value = e.metaGravedad ?? "";
   document.getElementById("cfgMetaAccidentabilidad").value = e.metaAccidentabilidad ?? "";
@@ -5749,6 +5753,17 @@ function poblarFormConfigEmpresa(){
   logoPreview.innerHTML = e.logo
     ? `<img src="${e.logo}" style="max-height:60px;max-width:160px;border-radius:6px;display:block;margin-bottom:4px;"> Logo actual (se mantiene si no subes uno nuevo)`
     : "Sin logo cargado";
+}
+/* No todas las empresas necesitan el módulo de IAP de otras empresas
+   (Capacitación) -- se puede ocultar por empresa desde Configuración.
+   Por defecto queda visible (iapHabilitado !== false), para no esconder
+   de golpe datos ya cargados en empresas que nunca guardaron este campo. */
+function aplicarVisibilidadIap(){
+  const visible = !(CACHE.empresa && CACHE.empresa.iapHabilitado === false);
+  const cardForm = document.getElementById("cardIapForm");
+  const cardListado = document.getElementById("cardIapListado");
+  if(cardForm) cardForm.style.display = visible ? "" : "none";
+  if(cardListado) cardListado.style.display = visible ? "" : "none";
 }
 
 /* =========================================================
@@ -10995,6 +11010,7 @@ function renderIapStatsTiles(){
   ].join("");
 }
 function renderIap(){
+  aplicarVisibilidadIap();
   renderIapStatsTiles();
   const rows = (CACHE.iapRegistros||[]).slice().sort((a,b)=> new Date(b.fecha||0)-new Date(a.fecha||0));
   const trabajadores = iapTrabajadoresVigentes();
@@ -13260,6 +13276,7 @@ on(document.getElementById("saveEmpresaBtn"), "click", async () => {
     organismoAdministrador: document.getElementById("cfgOrganismoAdm").value.trim(),
     numAdherente: document.getElementById("cfgNumAdherente").value.trim(),
     usarRirdaLdr: document.getElementById("cfgUsarRirdaLdr").checked,
+    iapHabilitado: document.getElementById("cfgIapHabilitado").checked,
     logo: cfgLogoPendiente || anterior.logo || null,
   };
   await put("empresa", rec);
@@ -13268,6 +13285,7 @@ on(document.getElementById("saveEmpresaBtn"), "click", async () => {
   document.getElementById("cfgLogoInput").value = "";
   renderCommonSelects();
   renderAccidentabilidad();
+  aplicarVisibilidadIap();
   alert("Datos de la empresa guardados.");
 });
 
