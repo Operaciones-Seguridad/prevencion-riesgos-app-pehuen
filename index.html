@@ -8552,7 +8552,7 @@ async function intentarDetectarNombresEnArchivo(file, trabajadoresCandidatos){
 }
 function planoConfigActual(){
   const rec = (CACHE.planoRiesgos && CACHE.planoRiesgos[0]);
-  return rec ? {...rec, marcas: rec.marcas||{}} : {id:"config", imagen:null, marcas:{}};
+  return rec ? {...rec, marcas: rec.marcas||{}, iconos: rec.iconos||{}} : {id:"config", imagen:null, marcas:{}, iconos:{}};
 }
 async function savePlanoConfig(rec){
   rec.id = "config";
@@ -8580,14 +8580,19 @@ function planoIconosHtml(rows, size){
     return `<span title="${c.categoria} — ${nivelLabel(c.nivel)} (${c.count} línea(s))" style="display:inline-flex;align-items:center;justify-content:center;width:${s}px;height:${s}px;border-radius:50%;background:${color};font-size:${Math.round(s*0.52)}px;margin:3px;border:2px solid #fff;box-shadow:0 0 0 1px ${color};">${iconoCategoria(c.categoria)}</span>`;
   }).join("");
 }
-function planoMarkerIconosHtml(rows, size){
-  const s = size || 18;
-  const cats = categoriasDeFilas(rows);
-  if(!cats.length) return "";
-  return `<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:2px;margin-top:3px;max-width:92px;">${cats.map(c=>{
-    const color = NIVEL_CHART_COLORS[c.nivel];
-    return `<span title="${c.categoria} — ${nivelLabel(c.nivel)} (${c.count} línea(s))" style="display:inline-flex;align-items:center;justify-content:center;width:${s}px;height:${s}px;border-radius:50%;background:${color};font-size:${Math.round(s*0.55)}px;border:1.5px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.35);">${iconoCategoria(c.categoria)}</span>`;
-  }).join("")}</div>`;
+/* Ícono de peligro independiente: se dibuja como marca propia, arrastrable
+   por separado de la marca de área (a diferencia de la versión anterior,
+   que los mostraba agrupados y pegados a la marca de área). areaPos es la
+   posición actual (guardada o por defecto) de la marca de área, usada solo
+   como punto de partida para la posición por defecto de este ícono. */
+function planoIconoMarkerHtml(area, catInfo, areaPos, cfg, offsetIdx, offsetTotal, size){
+  const key = area.id + "::" + catInfo.categoria;
+  const s = size || 26;
+  const defaultX = Math.max(2, Math.min(98, areaPos.x + (offsetIdx - (offsetTotal - 1) / 2) * 4.5));
+  const defaultY = Math.max(2, Math.min(98, areaPos.y + 9));
+  const pos = cfg.iconos[key] || { x: defaultX, y: defaultY };
+  const color = NIVEL_CHART_COLORS[catInfo.nivel];
+  return `<div class="plano-icono-marker" data-icono-key="${key}" title="${area.nombre} — ${catInfo.categoria} — ${nivelLabel(catInfo.nivel)} (${catInfo.count} línea(s))" style="position:absolute;left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);cursor:grab;touch-action:none;display:flex;align-items:center;justify-content:center;width:${s}px;height:${s}px;border-radius:50%;background:${color};font-size:${Math.round(s*0.55)}px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);">${iconoCategoria(catInfo.categoria)}</div>`;
 }
 function planoBoxHtml(nombre, rows){
   return `<div style="border:2px solid #333;border-radius:8px;padding:10px 8px;min-height:110px;background:#fff;">
@@ -8615,8 +8620,14 @@ function planoMarkerHtml(bloque, idx){
   return `<div class="plano-marker" data-area-id="${area.id}" style="position:absolute;left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);cursor:grab;text-align:center;touch-action:none;">
     <div style="width:38px;height:38px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;margin:0 auto;">${rows.length}</div>
     <div style="font-size:10.5px;font-weight:700;background:#fff;border-radius:4px;padding:1px 5px;margin-top:3px;display:inline-block;box-shadow:0 1px 3px rgba(0,0,0,.3);white-space:nowrap;">${area.nombre}</div>
-    ${planoMarkerIconosHtml(rows)}
   </div>`;
+}
+function planoIconosDeArea(cfg, bloques){
+  return bloques.flatMap((b,i)=>{
+    const areaPos = cfg.marcas[b.area.id] || { x: 12 + (i % 4) * 24, y: 15 + Math.floor(i / 4) * 28 };
+    const cats = categoriasDeFilas(b.rows);
+    return cats.map((c,ci)=>planoIconoMarkerHtml(b.area, c, areaPos, cfg, ci, cats.length));
+  }).join("");
 }
 function renderPlanoRiesgos(){
   const wrap = document.getElementById("planoRiesgosWrap");
@@ -8630,8 +8641,9 @@ function renderPlanoRiesgos(){
     wrap.innerHTML = `<div id="planoImgWrap" style="position:relative;display:inline-block;max-width:100%;touch-action:none;">
       <img src="${cfg.imagen}" style="display:block;max-width:100%;border:1px solid var(--border);border-radius:8px;">
       ${bloques.map((b,i)=>planoMarkerHtml(b,i)).join("")}
+      ${planoIconosDeArea(cfg, bloques)}
     </div>
-    <div class="kv" style="margin-top:8px;">Puedes arrastrar cada marca hasta la ubicación real del área en el plano.</div>`;
+    <div class="kv" style="margin-top:8px;">Puedes arrastrar la marca de cada área y cada ícono de peligro por separado, para distribuirlos en su ubicación real dentro del plano.</div>`;
     attachPlanoDrag();
   } else {
     wrap.innerHTML = `<div class="grid-tiles" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
@@ -8651,18 +8663,20 @@ function renderPlanoRiesgos(){
   </div>`;
 }
 let planoDragState = null;
-function attachPlanoDrag(){
-  const wrap = document.getElementById("planoImgWrap");
-  if(!wrap) return;
-  wrap.querySelectorAll(".plano-marker").forEach(marker=>{
+/* selector+datasetKey+targetProp permiten reusar el mismo arrastre tanto
+   para la marca de área (data-area-id -> cfg.marcas) como para cada ícono
+   de peligro suelto (data-icono-key -> cfg.iconos), guardando cada uno en
+   su propio mapa de posiciones dentro de la misma config. */
+function attachPlanoDragPara(wrap, selector, datasetKey, targetProp){
+  wrap.querySelectorAll(selector).forEach(marker=>{
     marker.addEventListener("pointerdown", (e)=>{
       e.preventDefault();
-      planoDragState = { areaId: marker.dataset.areaId, rect: wrap.getBoundingClientRect(), x:null, y:null };
+      planoDragState = { key: marker.dataset[datasetKey], target: targetProp, rect: wrap.getBoundingClientRect(), x:null, y:null };
       marker.style.cursor = "grabbing";
       try{ marker.setPointerCapture(e.pointerId); }catch(err){}
     });
     marker.addEventListener("pointermove", (e)=>{
-      if(!planoDragState || planoDragState.areaId !== marker.dataset.areaId) return;
+      if(!planoDragState || planoDragState.target !== targetProp || planoDragState.key !== marker.dataset[datasetKey]) return;
       const rect = planoDragState.rect;
       let x = ((e.clientX - rect.left) / rect.width) * 100;
       let y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -8673,17 +8687,23 @@ function attachPlanoDrag(){
       planoDragState.x = x; planoDragState.y = y;
     });
     marker.addEventListener("pointerup", async (e)=>{
-      if(!planoDragState || planoDragState.areaId !== marker.dataset.areaId) return;
+      if(!planoDragState || planoDragState.target !== targetProp || planoDragState.key !== marker.dataset[datasetKey]) return;
       marker.style.cursor = "grab";
-      const {areaId, x, y} = planoDragState;
+      const {key, x, y} = planoDragState;
       planoDragState = null;
       if(x!=null && y!=null){
         const cfg = planoConfigActual();
-        cfg.marcas[areaId] = {x, y};
+        cfg[targetProp][key] = {x, y};
         await savePlanoConfig(cfg);
       }
     });
   });
+}
+function attachPlanoDrag(){
+  const wrap = document.getElementById("planoImgWrap");
+  if(!wrap) return;
+  attachPlanoDragPara(wrap, ".plano-marker", "areaId", "marcas");
+  attachPlanoDragPara(wrap, ".plano-icono-marker", "iconoKey", "iconos");
 }
 on(document.getElementById("planoUploadInput"), "change", async (e) => {
   const file = e.target.files[0];
@@ -8722,15 +8742,15 @@ function imprimirPlanoRiesgos(){
     ? `<div style="position:relative;display:inline-block;max-width:100%;">
         <img src="${cfg.imagen}" style="display:block;max-width:100%;border:1px solid #ccc;">
         ${bloques.map((b,i)=>{
-          const posCfg = planoConfigActual().marcas[b.area.id] || { x: 12 + (i % 4) * 24, y: 15 + Math.floor(i / 4) * 28 };
+          const posCfg = cfg.marcas[b.area.id] || { x: 12 + (i % 4) * 24, y: 15 + Math.floor(i / 4) * 28 };
           const nMax = b.rows.length ? nivelMasAlto(b.rows) : null;
           const color = nMax ? NIVEL_CHART_COLORS[nMax] : "#9aa0a6";
           return `<div style="position:absolute;left:${posCfg.x}%;top:${posCfg.y}%;transform:translate(-50%,-50%);text-align:center;">
             <div style="width:30px;height:30px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;margin:0 auto;">${b.rows.length}</div>
             <div style="font-size:9.5px;font-weight:700;background:#fff;border-radius:3px;padding:1px 4px;margin-top:2px;display:inline-block;">${b.area.nombre}</div>
-            ${planoMarkerIconosHtml(b.rows, 15)}
           </div>`;
         }).join("")}
+        ${planoIconosDeArea(cfg, bloques)}
       </div>`
     : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
         ${bloques.map(b=>`<div style="border:2px solid #333;border-radius:8px;padding:10px;">
