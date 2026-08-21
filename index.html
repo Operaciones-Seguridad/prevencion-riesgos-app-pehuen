@@ -2399,9 +2399,18 @@
     <div class="card" id="empresasAdminWrap" style="display:none;">
       <div class="card-header-row" id="hdrEmpresas"><h2>Empresas (multi-empresa)</h2><button class="collapse-toggle" id="toggleEmpresas" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyEmpresas">
-      <div class="desc">Esta instalación puede atender a varias empresas a la vez, cada una con sus propios datos y usuarios, sin que se mezclen entre sí. Desde aquí puedes agregar una empresa nueva (sin necesidad de crear un servidor o base de datos aparte) y respaldar o trasladar los datos de la empresa actual.</div>
+      <div class="desc">Esta instalación puede atender a varias empresas a la vez, cada una con sus propios datos y usuarios, sin que se mezclen entre sí. Desde aquí puedes agregar una empresa nueva (sin necesidad de crear un servidor o base de datos aparte), eliminar una que ya no necesites, y respaldar o trasladar los datos de la empresa actual.</div>
 
-      <h2 style="margin-top:6px;">Agregar una empresa nueva</h2>
+      <h2 style="margin-top:6px;">Empresas existentes</h2>
+      <div class="toolbar" style="margin-top:4px;">
+        <button class="btn secondary small" id="refrescarEmpresasBtn">↻ Actualizar listado</button>
+      </div>
+      <table style="margin-top:10px;">
+        <thead><tr><th>Nombre</th><th style="width:180px;">Acciones</th></tr></thead>
+        <tbody id="empresasTable"><tr><td colspan="2">Cargando…</td></tr></tbody>
+      </table>
+
+      <h2 style="margin-top:24px;">Agregar una empresa nueva</h2>
       <div class="form-grid">
         <div><label>Nombre / razón social</label><input id="nuevaEmpresaNombre" placeholder="Ej: Constructora Ejemplo Ltda."></div>
         <div><label>RUT</label><input id="nuevaEmpresaRut" placeholder="Ej: 76.123.456-7"></div>
@@ -12682,7 +12691,53 @@ on(document.getElementById("resetDataBtn"), "click", async () => {
   alert("Datos de ejemplo restaurados.");
 });
 
-/* --- Multi-empresa: crear empresa nueva, exportar/importar respaldo --- */
+/* --- Multi-empresa: listar/eliminar empresas, crear empresa nueva, exportar/importar respaldo --- */
+async function renderEmpresasTable(){
+  const tbody = document.getElementById("empresasTable");
+  if(!tbody) return;
+  const empresas = await cargarEmpresasPublicas();
+  if(empresas === null){
+    tbody.innerHTML = '<tr><td colspan="2">No se pudo cargar el listado de empresas.</td></tr>';
+    return;
+  }
+  if(!empresas.length){
+    tbody.innerHTML = '<tr><td colspan="2">No hay empresas registradas todavía.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = empresas.map(e => {
+    const esActual = !!(activeEmpresa && e.id === activeEmpresa.id);
+    const nombreEscapado = String(e.nombre).replace(/"/g,"&quot;");
+    return `<tr>
+      <td>${e.nombre}${esActual ? ' <span class="desc" style="display:inline;margin:0;">(empresa actual)</span>' : ""}</td>
+      <td>${esActual
+        ? '<span class="desc" style="display:inline;margin:0;">No puedes eliminar la empresa con la que iniciaste sesión</span>'
+        : `<button class="btn small danger" data-eliminar-empresa="${e.id}" data-nombre-empresa="${nombreEscapado}">Eliminar</button>`
+      }</td>
+    </tr>`;
+  }).join("");
+}
+on(document.getElementById("refrescarEmpresasBtn"), "click", renderEmpresasTable);
+on(document.getElementById("empresasTable"), "click", async (ev) => {
+  const btn = ev.target.closest("[data-eliminar-empresa]");
+  if(!btn) return;
+  const id = btn.dataset.eliminarEmpresa;
+  const nombre = btn.dataset.nombreEmpresa || "esta empresa";
+  const escrito = prompt(`Esto elimina para siempre la empresa "${nombre}" y TODOS sus datos (trabajadores, accidentes, EPP, usuarios, documentos, todo). No se puede deshacer.\n\nPara confirmar, escribe exactamente el nombre de la empresa:`);
+  if(escrito === null) return;
+  if(escrito.trim() !== nombre){
+    alert("El nombre escrito no coincide. No se eliminó ninguna empresa.");
+    return;
+  }
+  btn.disabled = true;
+  try{
+    await apiFetch("DELETE", "/api/empresas/" + encodeURIComponent(id));
+    alert(`Empresa "${nombre}" eliminada correctamente.`);
+    await renderEmpresasTable();
+  }catch(e){
+    alert("No se pudo eliminar la empresa: " + e.message);
+    btn.disabled = false;
+  }
+});
 on(document.getElementById("crearEmpresaBtn"), "click", async () => {
   const nombre = document.getElementById("nuevaEmpresaNombre").value.trim();
   const rut = document.getElementById("nuevaEmpresaRut").value.trim();
@@ -12700,6 +12755,7 @@ on(document.getElementById("crearEmpresaBtn"), "click", async () => {
     document.getElementById("nuevaEmpresaNombre").value = "";
     document.getElementById("nuevaEmpresaRut").value = "";
     document.getElementById("nuevaEmpresaRubro").value = "";
+    await renderEmpresasTable();
   }catch(e){
     alert("No se pudo crear la empresa: " + e.message);
   }finally{
@@ -12824,7 +12880,9 @@ function aplicarPermisosSesion(){
   const accesosWrap = document.getElementById("accesosAdminWrap");
   if(accesosWrap) accesosWrap.style.display = esAdmin ? "" : "none";
   const empresasWrap = document.getElementById("empresasAdminWrap");
-  if(empresasWrap) empresasWrap.style.display = (esAdmin && storageMode==="api") ? "" : "none";
+  const mostrarEmpresasWrap = esAdmin && storageMode==="api";
+  if(empresasWrap) empresasWrap.style.display = mostrarEmpresasWrap ? "" : "none";
+  if(mostrarEmpresasWrap) renderEmpresasTable();
   /* Permiso a nivel de acción (no solo de pestaña): si el perfil del
      usuario en sesión tiene descargaDashboard=false, se ocultan los
      botones de descarga del Dashboard (PDF/PPT para gerencia), aunque el
