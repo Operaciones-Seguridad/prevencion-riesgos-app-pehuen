@@ -1230,6 +1230,11 @@
       <div style="margin-top:16px;">
         <button class="btn" id="savePgBtn">Agregar al programa</button>
       </div>
+      <div class="desc" style="margin-top:14px;">Importar varias actividades desde un Excel con columnas <strong>Actividad</strong>, <strong>Tipo</strong>, <strong>Área</strong>, <strong>Responsable</strong> y <strong>Fecha programada</strong> (opcionalmente también <strong>Fecha de realización</strong>, para cargar de una vez actividades que ya se cumplieron). El Tipo debe ser uno de: Capacitación, Inspección, Simulacro / emergencia, Difusión de protocolos, Comité paritario u Otro — si el texto de una fila no coincide con ninguno, esa actividad queda como "Otro". El Área de cada fila se asigna según el nombre que traiga esa columna; si no coincide con ninguna de las áreas ya creadas en "Áreas / procesos", esa actividad queda sin área asignada y se puede corregir después editándola.</div>
+      <div class="toolbar">
+        <div class="field"><label>Archivo Excel (.xlsx)</label><input type="file" id="importPgFile" accept=".xlsx,.xls"></div>
+        <div><button class="btn small secondary" id="importPgBtn" style="margin-top:20px;">Importar desde Excel</button></div>
+      </div>
     </div>
 
     <div class="card">
@@ -10063,6 +10068,76 @@ on(document.getElementById("savePgBtn"), "click", async () => {
 });
 
 const PG_TIPO_LABEL = {capacitacion:"Capacitación", inspeccion:"Inspección", simulacro:"Simulacro / emergencia", difusion:"Difusión de protocolos", comite:"Comité paritario", otro:"Otro"};
+
+/* Convierte una celda de fecha de Excel (Date, cuando se lee con cellDates:true,
+   o texto en formato dd-mm-yyyy / dd/mm/yyyy / yyyy-mm-dd) a "yyyy-mm-dd".
+   Devuelve "" si no se pudo reconocer. */
+function excelFechaToIso(val){
+  if(val instanceof Date && !isNaN(val)) return val.toISOString().slice(0,10);
+  const s = String(val||"").trim();
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if(m) return `${m[1]}-${m[2].padStart(2,"0")}-${m[3].padStart(2,"0")}`;
+  m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if(m) return `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+  return "";
+}
+
+/* Importación masiva de actividades del Programa de seguridad desde Excel
+   (columnas Actividad, Tipo, Área, Responsable, Fecha programada y,
+   opcionalmente, Fecha de realización). Mismo patrón que la importación de
+   trabajadores: no bloquea el archivo completo por filas imperfectas, cuenta
+   omitidas/sin área/tipo no reconocido y reporta el resumen al final. */
+on(document.getElementById("importPgBtn"), "click", async () => {
+  const fileInput = document.getElementById("importPgFile");
+  const file = fileInput.files[0];
+  if(!file){ alert("Selecciona un archivo Excel (.xlsx) para importar."); return; }
+  if(typeof XLSX === "undefined"){ alert("No se pudo cargar el lector de Excel (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const buffer = await file.arrayBuffer();
+  const wb = XLSX.read(buffer, {type:"array", cellDates:true});
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet, {defval:""});
+  if(!rows.length){ alert("El archivo no tiene filas de datos."); return; }
+  const norm = s => String(s||"").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  const tipoPorTexto = {};
+  Object.entries(PG_TIPO_LABEL).forEach(([clave, etiqueta])=>{ tipoPorTexto[norm(etiqueta)] = clave; tipoPorTexto[norm(clave)] = clave; });
+  let importados = 0, omitidos = 0, sinArea = 0, tipoNoReconocido = 0;
+  for(const row of rows){
+    const keys = Object.keys(row);
+    const kNombre = keys.find(k=>["actividad","nombre","nombre de la actividad"].includes(norm(k)));
+    const kTipo = keys.find(k=>norm(k)==="tipo");
+    const kArea = keys.find(k=>["area","área"].includes(norm(k)));
+    const kResp = keys.find(k=>norm(k)==="responsable");
+    const kFecha = keys.find(k=>["fecha programada","fecha prog","fecha"].includes(norm(k)));
+    const kFechaReal = keys.find(k=>["fecha de realizacion","fecha realizada","fecha realizacion","fecha real"].includes(norm(k)));
+    const nombre = kNombre? String(row[kNombre]).trim() : "";
+    const fechaProgramada = kFecha? excelFechaToIso(row[kFecha]) : "";
+    if(!nombre || !fechaProgramada){ omitidos++; continue; }
+    let tipo = "otro";
+    if(kTipo){
+      const tRaw = norm(row[kTipo]);
+      if(tipoPorTexto[tRaw]) tipo = tipoPorTexto[tRaw];
+      else if(tRaw) tipoNoReconocido++;
+    }
+    let areaId = "";
+    if(kArea){
+      const areaNombre = String(row[kArea]).trim();
+      const match = CACHE.areas.find(a=>norm(a.nombre)===norm(areaNombre));
+      if(match) areaId = match.id;
+    }
+    if(!areaId) sinArea++;
+    const responsable = kResp? String(row[kResp]).trim() : "";
+    const fechaRealizada = kFechaReal? (excelFechaToIso(row[kFechaReal]) || null) : null;
+    await put("programa", {id:uid(), nombre, tipo, areaId, responsable, fechaProgramada, fechaRealizada});
+    importados++;
+  }
+  await loadCache();
+  fileInput.value = "";
+  renderPgFiltros();
+  renderProgramaTable();
+  renderProgramaCumplimientoPorResponsable();
+  if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
+  alert(`Importación completa: ${importados} actividad(es) agregada(s) al programa de seguridad${omitidos? `, ${omitidos} fila(s) omitida(s) por no tener Actividad o Fecha programada válida`:""}${sinArea? `, ${sinArea} sin área asignada (por no traer columna Área o no coincidir con ninguna área ya creada)`:""}${tipoNoReconocido? `, ${tipoNoReconocido} con Tipo no reconocido (asignado como "Otro")`:""}.`);
+});
 
 /* Repuebla los filtros de mes y responsable del programa de seguridad con los
    valores realmente presentes en los datos, preservando la selección actual. */
