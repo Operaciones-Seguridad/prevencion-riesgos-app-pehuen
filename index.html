@@ -5411,6 +5411,17 @@ async function addCatalogValue(tipo, value){
   await loadCache();
   return true;
 }
+// Solo se puede quitar un valor agregado por el usuario (nunca uno del
+// catálogo base): no borra ni modifica las líneas que ya lo usan, solo
+// deja de sugerirse en los desplegables/datalists de aquí en adelante.
+async function removeCatalogValue(tipo, value){
+  const rec = (CACHE.catalogosExtra||[]).find(c=>c.id===tipo);
+  if(!rec || !(rec.valores||[]).includes(value)) return false;
+  rec.valores = rec.valores.filter(v=>v!==value);
+  await put("catalogosExtra", rec);
+  await loadCache();
+  return true;
+}
 
 /* =========================================================
    HISTÓRICO DE MODIFICACIONES DE LA MATRIZ DE RIESGOS
@@ -7381,6 +7392,15 @@ on(document.getElementById("saveMatrizBtn"), "click", async () => {
   const sensible = document.getElementById("mSensible").checked;
   const gruposSensibles = sensible ? leerGruposSensibles() : [];
   if(sensible && !gruposSensibles.length){ alert("Marcaste que este riesgo expone a trabajadores/as especialmente sensibles: indica al menos un grupo."); return; }
+
+  // Registra en el catálogo cualquier Proceso/Actividad/Categoría/Peligro
+  // escrito directo en el formulario (mismo criterio que ya usa el import
+  // de Excel), para que quede disponible como sugerencia la próxima vez.
+  if(proceso) await addCatalogValue("proceso", proceso);
+  if(actividad) await addCatalogValue("actividad", actividad);
+  if(categoria) await addCatalogValue("categoria", categoria);
+  if(peligro) await addCatalogValue("peligro", peligro);
+  renderCommonSelects();
 
   const controlesJerarquizados = currentControles.slice();
   const controlesTxt = controlesTextoPlano(controlesJerarquizados);
@@ -12525,13 +12545,28 @@ function renderCatList(){
   const extraRec = (CACHE.catalogosExtra||[]).find(c=>c.id===tipo);
   const extra = (extraRec && extraRec.valores) || [];
   const base = CATALOG_BASE[tipo] || [];
+  const agregadas = extra.filter(v=>!base.includes(v));
   document.getElementById("catListWrap").innerHTML = `
-    <div class="desc" style="margin-top:12px;margin-bottom:6px;">Lista completa de <strong>${CATALOG_LABELS[tipo]}</strong> (${base.length + extra.filter(v=>!base.includes(v)).length} opciones, ${extra.filter(v=>!base.includes(v)).length} agregadas por el usuario):</div>
+    <div class="desc" style="margin-top:12px;margin-bottom:6px;">Lista completa de <strong>${CATALOG_LABELS[tipo]}</strong> (${base.length + agregadas.length} opciones, ${agregadas.length} agregadas por el usuario). Los valores del catálogo base no se pueden eliminar; los agregados por el usuario sí, sin afectar las líneas que ya los usan.</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;">
       ${base.map(v=>`<span class="pill" style="background:var(--grid);color:var(--text-secondary);">${v}</span>`).join("")}
-      ${extra.filter(v=>!base.includes(v)).map(v=>`<span class="pill bajo">${v} (agregada)</span>`).join("")}
+      ${agregadas.map((v,i)=>`<span class="pill bajo" style="display:inline-flex;align-items:center;gap:6px;">${v} (agregada) <button type="button" class="subtle-btn" data-cat-eliminar-idx="${i}" title="Eliminar de la lista" style="line-height:1;padding:0 2px;">✕</button></span>`).join("")}
     </div>`;
 }
+on(document.getElementById("catListWrap"), "click", async (e) => {
+  const btn = e.target.closest("[data-cat-eliminar-idx]");
+  if(!btn) return;
+  const tipo = document.getElementById("catTipo").value;
+  const extraRec = (CACHE.catalogosExtra||[]).find(c=>c.id===tipo);
+  const base = CATALOG_BASE[tipo] || [];
+  const agregadas = ((extraRec && extraRec.valores) || []).filter(v=>!base.includes(v));
+  const valor = agregadas[+btn.dataset.catEliminarIdx];
+  if(!valor) return;
+  if(!confirm(`¿Eliminar "${valor}" de la lista de ${CATALOG_LABELS[tipo]}? Las líneas que ya usan este valor no se modifican, solo deja de aparecer como sugerencia.`)) return;
+  await removeCatalogValue(tipo, valor);
+  renderCommonSelects();
+  renderCatList();
+});
 on(document.getElementById("addTrabBtn"), "click", async () => {
   const nombre = document.getElementById("newTrabName").value.trim();
   const rut = document.getElementById("newTrabRut").value.trim();
