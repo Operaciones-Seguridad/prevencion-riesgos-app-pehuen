@@ -8580,6 +8580,15 @@ function planoIconosHtml(rows, size){
     return `<span title="${c.categoria} — ${nivelLabel(c.nivel)} (${c.count} línea(s))" style="display:inline-flex;align-items:center;justify-content:center;width:${s}px;height:${s}px;border-radius:50%;background:${color};font-size:${Math.round(s*0.52)}px;margin:3px;border:2px solid #fff;box-shadow:0 0 0 1px ${color};">${iconoCategoria(c.categoria)}</span>`;
   }).join("");
 }
+function planoMarkerIconosHtml(rows, size){
+  const s = size || 18;
+  const cats = categoriasDeFilas(rows);
+  if(!cats.length) return "";
+  return `<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:2px;margin-top:3px;max-width:92px;">${cats.map(c=>{
+    const color = NIVEL_CHART_COLORS[c.nivel];
+    return `<span title="${c.categoria} — ${nivelLabel(c.nivel)} (${c.count} línea(s))" style="display:inline-flex;align-items:center;justify-content:center;width:${s}px;height:${s}px;border-radius:50%;background:${color};font-size:${Math.round(s*0.55)}px;border:1.5px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.35);">${iconoCategoria(c.categoria)}</span>`;
+  }).join("")}</div>`;
+}
 function planoBoxHtml(nombre, rows){
   return `<div style="border:2px solid #333;border-radius:8px;padding:10px 8px;min-height:110px;background:#fff;">
     <div style="font-weight:700;text-align:center;margin-bottom:6px;font-size:13px;">${nombre}</div>
@@ -8604,8 +8613,9 @@ function planoMarkerHtml(bloque, idx){
   const nMax = rows.length ? nivelMasAlto(rows) : null;
   const color = nMax ? NIVEL_CHART_COLORS[nMax] : "#9aa0a6";
   return `<div class="plano-marker" data-area-id="${area.id}" style="position:absolute;left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);cursor:grab;text-align:center;touch-action:none;">
-    <div style="width:38px;height:38px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;">${rows.length}</div>
+    <div style="width:38px;height:38px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;margin:0 auto;">${rows.length}</div>
     <div style="font-size:10.5px;font-weight:700;background:#fff;border-radius:4px;padding:1px 5px;margin-top:3px;display:inline-block;box-shadow:0 1px 3px rgba(0,0,0,.3);white-space:nowrap;">${area.nombre}</div>
+    ${planoMarkerIconosHtml(rows)}
   </div>`;
 }
 function renderPlanoRiesgos(){
@@ -8718,6 +8728,7 @@ function imprimirPlanoRiesgos(){
           return `<div style="position:absolute;left:${posCfg.x}%;top:${posCfg.y}%;transform:translate(-50%,-50%);text-align:center;">
             <div style="width:30px;height:30px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;margin:0 auto;">${b.rows.length}</div>
             <div style="font-size:9.5px;font-weight:700;background:#fff;border-radius:3px;padding:1px 4px;margin-top:2px;display:inline-block;">${b.area.nombre}</div>
+            ${planoMarkerIconosHtml(b.rows, 15)}
           </div>`;
         }).join("")}
       </div>`
