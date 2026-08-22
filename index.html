@@ -2756,6 +2756,7 @@
         <div><label>Cargo</label><input id="usuarioCargo" placeholder="Ej: Jefe de Obra, Bodeguero..."></div>
         <div><label>Perfil</label><select id="usuarioPerfil"></select></div>
         <div><label>Clave de acceso</label><input type="text" id="usuarioClave" placeholder="Clave de acceso"></div>
+        <div><label>Correo (opcional)</label><input type="email" id="usuarioEmail" placeholder="Para ingresar con correo+clave"></div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:22px;"><input type="checkbox" id="usuarioActivo" style="width:auto;" checked><label style="margin:0;">Usuario activo</label></div>
       </div>
       <div class="toolbar" style="margin-top:12px;">
@@ -2763,7 +2764,7 @@
         <button class="btn secondary" id="cancelEditUsuarioBtn" style="display:none;">Cancelar edición</button>
       </div>
       <table style="margin-top:14px;">
-        <thead><tr><th>Nombre</th><th>Cargo</th><th>Perfil</th><th>Clave</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>Nombre</th><th>Cargo</th><th>Perfil</th><th>Correo</th><th>Clave</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody id="usuariosTable"></tbody>
       </table>
       </div>
@@ -16216,6 +16217,7 @@ function resetUsuarioForm(){
   document.getElementById("usuarioCargo").value = "";
   fillSelect(document.getElementById("usuarioPerfil"), (CACHE.accesoPerfiles||[]).map(p=>({id:p.id,label:p.nombre})), true);
   document.getElementById("usuarioClave").value = "";
+  document.getElementById("usuarioEmail").value = "";
   document.getElementById("usuarioActivo").checked = true;
   document.getElementById("saveUsuarioBtn").textContent = "Guardar usuario";
   document.getElementById("cancelEditUsuarioBtn").style.display = "none";
@@ -16230,6 +16232,7 @@ function startEditUsuario(id){
   fillSelect(document.getElementById("usuarioPerfil"), (CACHE.accesoPerfiles||[]).map(p=>({id:p.id,label:p.nombre})), true);
   document.getElementById("usuarioPerfil").value = rec.perfilId || "";
   document.getElementById("usuarioClave").value = rec.clave || "";
+  document.getElementById("usuarioEmail").value = rec.email || "";
   document.getElementById("usuarioActivo").checked = rec.activo!==false;
   document.getElementById("saveUsuarioBtn").textContent = "Guardar cambios";
   document.getElementById("cancelEditUsuarioBtn").style.display = "";
@@ -16239,10 +16242,12 @@ on(document.getElementById("saveUsuarioBtn"), "click", async () => {
   const nombre = document.getElementById("usuarioNombre").value.trim();
   const perfilId = document.getElementById("usuarioPerfil").value;
   const clave = document.getElementById("usuarioClave").value;
+  const email = document.getElementById("usuarioEmail").value.trim().toLowerCase();
   if(!nombre || !perfilId || !clave){ alert("Completa el nombre, el perfil y la clave de acceso."); return; }
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert("El correo no tiene un formato válido."); return; }
   const rec = {
     id: usuarioEditingId || uid(),
-    nombre, perfilId, clave,
+    nombre, perfilId, clave, email,
     cargo: document.getElementById("usuarioCargo").value.trim(),
     activo: document.getElementById("usuarioActivo").checked,
   };
@@ -16260,6 +16265,7 @@ function renderUsuariosTable(){
       <td>${u.nombre}</td>
       <td>${u.cargo||"—"}</td>
       <td>${perfil?perfil.nombre:"(perfil eliminado)"}</td>
+      <td>${u.email||"—"}</td>
       <td>${u.clave||"—"}</td>
       <td><span class="pill ${u.activo!==false?'vigente':'critico'}">${u.activo!==false?'Activo':'Inactivo'}</span></td>
       <td style="white-space:nowrap;">
@@ -16267,7 +16273,7 @@ function renderUsuariosTable(){
         <button class="subtle-btn" data-usuario-eliminar="${u.id}">Eliminar</button>
       </td>
     </tr>`;
-  }).join("") : `<tr><td class="empty" colspan="6">Aún no hay usuarios registrados</td></tr>`;
+  }).join("") : `<tr><td class="empty" colspan="7">Aún no hay usuarios registrados</td></tr>`;
 }
 on(document.getElementById("usuariosTable"), "click", async (e) => {
   const editBtn = e.target.closest("button[data-usuario-editar]");
