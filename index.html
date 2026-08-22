@@ -1729,6 +1729,20 @@
   <!-- ENTREGA EPP -->
   <div class="view" id="view-epp">
     <div class="card">
+      <h2>Control de stock de EPP</h2>
+      <div class="desc">Carga aquí la cantidad disponible de cada elemento de protección personal. Un elemento sin stock cargado se puede seguir entregando sin límite (como hasta ahora); un elemento con stock cargado no se puede entregar por una cantidad mayor a la disponible.</div>
+      <div class="toolbar">
+        <div class="field"><label>Elemento de protección personal (EPP)</label><input id="eppStockInput" list="dlEpp" placeholder="Ej: Casco de seguridad"></div>
+        <div class="field" style="min-width:100px;"><label>Cantidad a ingresar</label><input id="eppStockCantidad" type="number" min="1" value="1"></div>
+        <div><button class="btn small secondary" id="addEppStockBtn" style="margin-top:20px;">+ Ingresar stock</button></div>
+      </div>
+      <table>
+        <thead><tr><th>Elemento</th><th>Stock actual</th><th></th></tr></thead>
+        <tbody id="eppStockTable"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
       <h2 id="valeFormTitle">Emitir vale de entrega de EPP</h2>
       <div class="desc">Cada vale queda numerado con un folio correlativo automático. Selecciona el trabajador y la fecha de entrega, agrega uno o más elementos de protección personal con su cantidad, y emite el vale. El vale se puede editar después para corregir un error.</div>
       <div class="form-grid">
@@ -1740,6 +1754,7 @@
         <div class="field"><label>Elemento de protección personal (EPP)</label><input id="valeEppInput" list="dlEpp" placeholder="Ej: Casco de seguridad"></div>
         <div class="field" style="min-width:100px;"><label>Cantidad</label><input id="valeCantidad" type="number" min="1" value="1"></div>
         <div><button class="btn small secondary" id="addValeItemBtn" style="margin-top:20px;">+ Agregar</button></div>
+        <div class="kv" id="valeStockHint" style="margin-top:26px;"></div>
       </div>
       <datalist id="dlEpp"></datalist>
       <div id="valeItemsWrap"></div>
@@ -2595,8 +2610,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 24;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz"];
+const DB_VERSION = 25;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -13009,6 +13024,94 @@ function renderVelocidad(){
    de todos los vales guardados, sin necesidad de mantenerlo
    aparte.
    ========================================================= */
+/* =========================================================
+   CONTROL DE STOCK DE EPP
+   Primer concepto de inventario de la app: un elemento sin registro en
+   "eppStock" queda sin límite (se comporta como hasta ahora); uno con
+   registro no se puede entregar por más de lo disponible. Se identifica
+   por nombre normalizado porque el catálogo "epp" es texto libre sin id
+   (getCatalog("epp")), igual que los ítems de un vale ({epp, cantidad}).
+   ========================================================= */
+function normEpp(s){ return String(s||"").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""); }
+function eppStockRecord(elemento){ return (CACHE.eppStock||[]).find(s=>normEpp(s.elemento)===normEpp(elemento)) || null; }
+function stockDisponible(elemento){ const r = eppStockRecord(elemento); return r ? (r.cantidad||0) : null; }
+/* Diferencia neta por elemento entre dos listas de ítems de vale (nuevo vs
+   anterior) -- positivo = se necesita MÁS stock del ya reservado, negativo
+   = se libera stock. Sirve para crear (viejos=[]), editar (viejos=
+   anterior.items) y eliminar (nuevos=[]) con la misma lógica. */
+function deltasDeVale(nuevosItems, viejosItems){
+  const delta = new Map();
+  (viejosItems||[]).forEach(it=> delta.set(normEpp(it.epp), (delta.get(normEpp(it.epp))||0) - it.cantidad));
+  (nuevosItems||[]).forEach(it=> delta.set(normEpp(it.epp), (delta.get(normEpp(it.epp))||0) + it.cantidad));
+  return delta;
+}
+/* Aplica los deltas ya validados: descuenta (delta>0) o devuelve (delta<0)
+   stock solo de los elementos que están controlados (tienen registro). */
+async function aplicarDeltasStock(deltas){
+  for(const [elementoNorm, delta] of deltas){
+    if(!delta) continue;
+    const rec = (CACHE.eppStock||[]).find(s=>normEpp(s.elemento)===elementoNorm);
+    if(!rec) continue;
+    rec.cantidad = Math.max(0, (rec.cantidad||0) - delta);
+    await put("eppStock", rec);
+  }
+}
+function renderEppStock(){
+  const tbody = document.getElementById("eppStockTable");
+  if(!tbody) return;
+  const rows = (CACHE.eppStock||[]).slice().sort((a,b)=>a.elemento.localeCompare(b.elemento));
+  tbody.innerHTML = rows.length ? rows.map(r=>`
+    <tr>
+      <td>${r.elemento}</td>
+      <td><input type="number" min="0" data-eppstock-cant="${r.id}" value="${r.cantidad||0}" style="width:90px;"></td>
+      <td style="white-space:nowrap;">
+        <button class="subtle-btn" data-eppstock-guardar="${r.id}">Guardar</button>
+        <button class="subtle-btn" data-eppstock-eliminar="${r.id}">Dejar de controlar</button>
+      </td>
+    </tr>
+  `).join("") : `<tr><td class="empty" colspan="3">Sin elementos con stock cargado (todos se entregan sin límite)</td></tr>`;
+}
+on(document.getElementById("addEppStockBtn"), "click", async ()=>{
+  const elementoInput = document.getElementById("eppStockInput");
+  const cantInput = document.getElementById("eppStockCantidad");
+  const elemento = elementoInput.value.trim();
+  const cantidad = Math.max(1, +cantInput.value || 1);
+  if(!elemento){ alert("Indica el elemento de protección personal."); return; }
+  await addCatalogValue("epp", elemento);
+  fillDatalist(document.getElementById("dlEpp"), getCatalog("epp"));
+  const existente = eppStockRecord(elemento);
+  if(existente) existente.cantidad = (existente.cantidad||0) + cantidad;
+  await put("eppStock", existente || {id: uid(), elemento, cantidad});
+  await loadCache();
+  elementoInput.value = ""; cantInput.value = "1";
+  renderEppStock();
+  alert(`Stock de "${elemento}" actualizado.`);
+});
+on(document.getElementById("eppStockTable"), "click", async (e)=>{
+  const guardarBtn = e.target.closest("[data-eppstock-guardar]");
+  if(guardarBtn){
+    const id = guardarBtn.dataset.eppstockGuardar;
+    const rec = (CACHE.eppStock||[]).find(s=>s.id===id);
+    const input = document.querySelector(`[data-eppstock-cant="${id}"]`);
+    if(!rec || !input) return;
+    rec.cantidad = Math.max(0, +input.value || 0);
+    await put("eppStock", rec);
+    await loadCache();
+    renderEppStock();
+    return;
+  }
+  const eliminarBtn = e.target.closest("[data-eppstock-eliminar]");
+  if(eliminarBtn){
+    const id = eliminarBtn.dataset.eppstockEliminar;
+    const rec = (CACHE.eppStock||[]).find(s=>s.id===id);
+    if(!rec) return;
+    if(!confirm(`¿Dejar de controlar el stock de "${rec.elemento}"? Volverá a poder entregarse sin límite, como los elementos que nunca se cargaron.`)) return;
+    await deleteRecord("eppStock", id);
+    await loadCache();
+    renderEppStock();
+  }
+});
+
 let valeEditingId = null;
 let currentValeItems = []; // [{epp, cantidad}]
 
@@ -13046,6 +13149,16 @@ on(document.getElementById("valeItemsWrap"), "click", async (e)=>{
   currentValeItems.splice(+btn.dataset.valeItemQuitar, 1);
   drawValeItems();
 });
+/* Aviso informativo (no bloqueante -- el bloqueo real ocurre al emitir el
+   vale) de cuánto stock queda del elemento que se está por agregar. */
+function mostrarStockHintVale(){
+  const elemento = document.getElementById("valeEppInput").value.trim();
+  const hint = document.getElementById("valeStockHint");
+  if(!elemento){ hint.textContent = ""; return; }
+  const disponible = stockDisponible(elemento);
+  hint.textContent = disponible===null ? "" : `Stock disponible: ${disponible}`;
+}
+document.getElementById("valeEppInput").addEventListener("input", mostrarStockHintVale);
 
 function resetValeForm(){
   valeEditingId = null;
@@ -13084,14 +13197,26 @@ on(document.getElementById("saveValeBtn"), "click", async ()=>{
   if(!trabajadorId){ alert("Selecciona el trabajador que recibe el EPP."); return; }
   if(!currentValeItems.length){ alert("Agrega al menos un elemento de protección personal al vale."); return; }
 
+  const anteriorParaDelta = valeEditingId ? CACHE.epp.find(v=>v.id===valeEditingId) : null;
+  const deltas = deltasDeVale(currentValeItems, anteriorParaDelta ? anteriorParaDelta.items : []);
+  const insuficientes = [];
+  for(const [elementoNorm, delta] of deltas){
+    if(delta<=0) continue;
+    const item = currentValeItems.find(it=>normEpp(it.epp)===elementoNorm);
+    const disponible = stockDisponible(item.epp);
+    if(disponible!==null && disponible < delta) insuficientes.push(`${item.epp}: quedan ${disponible}, se necesitan ${delta} más`);
+  }
+  if(insuficientes.length){ alert("No hay stock suficiente para emitir este vale:\n" + insuficientes.join("\n")); return; }
+
   if(valeEditingId){
     const anterior = CACHE.epp.find(v=>v.id===valeEditingId);
     if(!anterior){ alert("El vale que estabas editando ya no existe."); resetValeForm(); return; }
     const rec = { ...anterior, trabajadorId, fecha, observaciones, items: currentValeItems.slice(), fechaModificacion: new Date().toISOString() };
     await put("epp", rec);
+    await aplicarDeltasStock(deltas);
     await loadCache();
     resetValeForm();
-    renderValesTable(); renderEppPorTrabajador();
+    renderValesTable(); renderEppPorTrabajador(); renderEppStock();
     alert(`Vale ${fmtFolio(rec.folio)} actualizado.`);
     return;
   }
@@ -13104,9 +13229,10 @@ on(document.getElementById("saveValeBtn"), "click", async ()=>{
     fechaCreacion: new Date().toISOString(),
   };
   await put("epp", rec);
+  await aplicarDeltasStock(deltas);
   await loadCache();
   resetValeForm();
-  renderValesTable(); renderEppPorTrabajador();
+  renderValesTable(); renderEppPorTrabajador(); renderEppStock();
   alert(`Vale ${fmtFolio(rec.folio)} emitido.`);
 });
 
@@ -13165,9 +13291,11 @@ on(document.getElementById("valesTable"), "click", async (e)=>{
     const rec = CACHE.epp.find(v=>v.id===delBtn.dataset.valeEliminar);
     if(!rec) return;
     if(!confirm(`¿Eliminar el vale ${fmtFolio(rec.folio)} de ${trabName(rec.trabajadorId)}? Esta acción no se puede deshacer.`)) return;
+    const deltas = deltasDeVale([], rec.items||[]);
     await deleteRecord("epp", rec.id);
+    await aplicarDeltasStock(deltas);
     await loadCache();
-    renderValesTable(); renderEppPorTrabajador();
+    renderValesTable(); renderEppPorTrabajador(); renderEppStock();
   }
 });
 
@@ -14722,6 +14850,7 @@ async function refreshAll(){
   }
   renderValesTable();
   renderEppPorTrabajador();
+  renderEppStock();
   updateMatrizPreview();
   if(!matrizEditingId) drawControles();
   drawChecklist();
