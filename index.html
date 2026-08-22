@@ -713,7 +713,8 @@
             <option value="E">E · Elementos de protección personal (EPP)</option>
           </select>
         </div>
-        <div class="field" style="flex:2;min-width:240px;"><label>Medida de control</label><input id="mcTexto" placeholder="Ej: Instalación de barandas perimetrales"></div>
+        <div class="field" style="flex:2;min-width:240px;"><label>Medida de control</label><input id="mcTexto" list="dlDocumentosProcedimiento" placeholder="Ej: Instalación de barandas perimetrales"></div>
+        <datalist id="dlDocumentosProcedimiento"></datalist>
         <div class="field"><label>Responsable</label><input id="mcResp" placeholder="Nombre / cargo"></div>
         <div class="field"><label>Fecha de implementación</label><input id="mcFecha" type="date"></div>
         <div><button class="btn small secondary" id="addControlBtn" style="margin-top:20px;">+ Agregar medida</button></div>
@@ -4277,10 +4278,11 @@ function procedimientosDesdeMatriz(){
       const texto = (it.texto||"").trim();
       if(!texto) return;
       const key = texto.toLowerCase().replace(/\s+/g," ");
-      if(!map.has(key)) map.set(key, {texto, count:0, procesos:new Set()});
+      if(!map.has(key)) map.set(key, {texto, count:0, procesos:new Set(), documentoId:null});
       const e = map.get(key);
       e.count++;
       if(m.proceso) e.procesos.add(m.proceso);
+      if(!e.documentoId && it.documentoId) e.documentoId = it.documentoId; // representativo del bucket
     });
   });
   return Array.from(map.values()).sort((a,b)=> b.count-a.count || a.texto.localeCompare(b.texto));
@@ -4316,6 +4318,18 @@ function documentoProcedimientoPara(texto){
   if(!candidatos.length) return null;
   return candidatos.slice().sort((a,b)=> new Date(b.fechaActualizacion||b.fechaConfeccion||0) - new Date(a.fechaActualizacion||a.fechaConfeccion||0))[0];
 }
+/* Resolución única del documento que cubre un ítem de control D: prioriza
+   el vínculo estructural (documentoId) por sobre el matcheo difuso de
+   texto, que solo se usa como respaldo para ítems todavía sin vincular.
+   Reemplaza depender solo de documentoProcedimientoPara(texto) en los
+   lugares donde ya se tiene el ítem completo (no solo su texto). */
+function documentoDeControl(item){
+  if(item.documentoId){
+    const doc = (CACHE.documentos||[]).find(d=>d.id===item.documentoId);
+    if(doc) return doc;
+  }
+  return documentoProcedimientoPara(item.texto);
+}
 /* Para cada combinación tipo+nombre, el documento vigente es el de fecha
    de actualización (o confección) más reciente; las demás versiones
    quedan marcadas como "Anterior" en el historial. */
@@ -4331,12 +4345,13 @@ function documentosVigentesMap(){
 }
 function renderProcedimientosMatriz(){
   const items = procedimientosDesdeMatriz();
-  document.getElementById("procedimientosMatrizTable").innerHTML = items.length ? items.map(it=>{
-    const doc = documentoProcedimientoPara(it.texto);
-    const estadoHtml = doc ? `<span class="pill vigente">Confeccionado (v.${doc.version||"—"})</span>` : `<span class="pill pendiente">Pendiente</span>`;
-    const accionHtml = doc
+  document.getElementById("procedimientosMatrizTable").innerHTML = items.length ? items.map((it,idx)=>{
+    const doc = documentoDeControl(it);
+    const estadoHtml = doc ? `<span class="pill vigente">Confeccionado (v.${doc.version||"—"})${it.documentoId?" 🔗":""}</span>` : `<span class="pill pendiente">Pendiente</span>`;
+    const accionHtml = (doc
       ? `<button class="subtle-btn" data-doc-ver="${doc.id}">Ver versión</button>`
-      : `<button class="subtle-btn" data-doc-crear="${encodeURIComponent(it.texto)}">Registrar procedimiento</button>`;
+      : `<button class="subtle-btn" data-doc-crear="${encodeURIComponent(it.texto)}">Registrar procedimiento</button>`)
+      + ` <button class="subtle-btn" data-doc-vincular="${idx}">Vincular a documento</button>`;
     return `<tr>
       <td>${it.texto}</td>
       <td>${it.count} línea(s)${it.procesos.size? `<div class="kv">${Array.from(it.procesos).join(", ")}</div>`:""}</td>
@@ -4344,12 +4359,44 @@ function renderProcedimientosMatriz(){
       <td>${accionHtml}</td>
     </tr>`;
   }).join("") : `<tr><td class="empty" colspan="4">No hay medidas de control administrativas (D) cargadas en la Matriz de riesgos</td></tr>`;
-  const pendientes = items.filter(it=>!documentoProcedimientoPara(it.texto)).length;
+  const pendientes = items.filter(it=>!documentoDeControl(it)).length;
   document.getElementById("procedimientosMatrizTiles").innerHTML = [
     tile("Procedimientos identificados en la Matriz", items.length, "medidas de control administrativas (D) distintas"),
     tile("Confeccionados", items.length-pendientes, "con documento de tipo Procedimiento registrado"),
     tile("Pendientes de confeccionar", pendientes, "sin documento registrado todavía"),
   ].join("");
+  window.__procedimientosMatrizActuales = items;
+}
+/* Vincula TODAS las líneas de la matriz cuyo control D tenga el mismo texto
+   (normalizado) que este bucket a un documento elegido -- resuelve de una
+   vez el caso típico de "el mismo procedimiento repetido en N líneas". */
+function vincularBucketADocumento(bucket, documentoId){
+  const doc = (CACHE.documentos||[]).find(d=>d.id===documentoId);
+  if(!doc) return Promise.resolve(0);
+  const normTexto = s => (s||"").toLowerCase().replace(/\s+/g," ").trim();
+  const keyTexto = normTexto(bucket.texto);
+  const cambios = [];
+  (CACHE.matriz||[]).forEach(m=>{
+    let cambio = false;
+    const controles = jerarquiaDe(m);
+    controles.forEach(it=>{
+      if(it.jerarquia==="D" && normTexto(it.texto)===keyTexto && it.documentoId!==documentoId){
+        it.documentoId = documentoId;
+        cambio = true;
+      }
+    });
+    if(cambio){
+      const rec = { ...m, controlesJerarquizados: controles };
+      cambios.push(rec);
+    }
+  });
+  return (async ()=>{
+    for(const rec of cambios){
+      await put("matriz", rec);
+      await logHistorial(rec.id, matrizLineLabel(rec), "Control transferido", "", `Medida de control vinculada al documento "${doc.nombre}"`);
+    }
+    return cambios.length;
+  })();
 }
 on(document.getElementById("procedimientosMatrizTable"), "click", (e) => {
   const crearBtn = e.target.closest("[data-doc-crear]");
@@ -4359,7 +4406,35 @@ on(document.getElementById("procedimientosMatrizTable"), "click", (e) => {
     return;
   }
   const verBtn = e.target.closest("[data-doc-ver]");
-  if(verBtn) startEditDocumento(verBtn.dataset.docVer);
+  if(verBtn){ startEditDocumento(verBtn.dataset.docVer); return; }
+  const vincularBtn = e.target.closest("[data-doc-vincular]");
+  if(vincularBtn){
+    const bucket = (window.__procedimientosMatrizActuales||[])[+vincularBtn.dataset.docVincular];
+    if(!bucket) return;
+    const procedimientos = (CACHE.documentos||[]).filter(d=>d.tipo==="procedimiento");
+    if(!procedimientos.length){ alert("Todavía no hay ningún documento de tipo Procedimiento registrado en Control Documental."); return; }
+    openModal(`
+      <h3>Vincular a documento</h3>
+      <div class="desc">Se vincularán las ${bucket.count} línea(s) de la Matriz que tienen exactamente el texto "${bucket.texto}" como medida de control administrativa (D) al documento que elijas.</div>
+      <label>Documento (Procedimiento)</label>
+      <select id="vincularDocSel">${procedimientos.map(d=>`<option value="${d.id}">${d.nombre} (v.${d.version||"—"})</option>`).join("")}</select>
+      <div class="toolbar" style="margin-top:16px;">
+        <button class="btn" id="vincularDocConfirmarBtn">Vincular</button>
+        <button class="btn secondary" id="vincularDocCancelarBtn">Cancelar</button>
+      </div>
+    `);
+    on(document.getElementById("vincularDocCancelarBtn"), "click", ()=> closeModal());
+    on(document.getElementById("vincularDocConfirmarBtn"), "click", async ()=>{
+      const documentoId = document.getElementById("vincularDocSel").value;
+      const n = await vincularBucketADocumento(bucket, documentoId);
+      await loadCache();
+      closeModal();
+      renderProcedimientosMatriz();
+      renderMatrizTable();
+      renderMatrizHistorialTable();
+      alert(`${n} línea(s) vinculada(s).`);
+    });
+  }
 });
 
 let documentoEditingId = null;
@@ -4506,7 +4581,7 @@ on(document.getElementById("docIaRedactarBtn"), "click", async ()=>{
   if(storageMode !== "api"){ alert("La redacción con IA solo está disponible cuando la app está conectada al backend real."); return; }
   estadoEl.textContent = "Redactando con IA… puede tardar unos segundos.";
   try{
-    const respuesta = await apiFetch("POST", "/api/ia/redactar-documento", {tipo, nombre, contextoAdicional});
+    const respuesta = await apiFetch("POST", "/api/ia/redactar-documento", {tipo, nombre, contextoAdicional, documentoId: documentoEditingId||null});
     document.getElementById("docContenido").value = respuesta.contenido;
     estadoEl.textContent = "Borrador generado. Revísalo y edítalo antes de guardar.";
   }catch(err){
@@ -4631,10 +4706,15 @@ function historialVersionesDocumento(docRec){
    coincide (texto normalizado) exactamente con el nombre de este documento
    — mismo criterio de cruce que ya usa Control Documental (v1.48). */
 function matrizLineasParaDocumento(docRec){
-  if(docRec.tipo !== "procedimiento" || !docRec.nombre) return [];
+  if(docRec.tipo !== "procedimiento") return [];
   const norm = s => (s||"").toLowerCase().replace(/\s+/g," ").trim();
   const keyTexto = norm(docRec.nombre);
-  return (CACHE.matriz||[]).filter(m => jerarquiaDe(m).some(it=> it.jerarquia==="D" && norm(it.texto)===keyTexto));
+  // Cuenta tanto las líneas vinculadas por documentoId (fuente de verdad,
+  // sigue valiendo aunque el documento se haya renombrado después) como
+  // las que coinciden por texto exacto (compatibilidad con datos sin
+  // vincular todavía) -- ver documentoDeControl() para el mismo criterio
+  // aplicado a un solo ítem.
+  return (CACHE.matriz||[]).filter(m => jerarquiaDe(m).some(it=> it.jerarquia==="D" && (it.documentoId===docRec.id || (docRec.nombre && norm(it.texto)===keyTexto))));
 }
 /* jsPDF no pagina texto libre por sí solo (a diferencia de autoTable, que sí
    agrega páginas automáticamente): doc.text() simplemente sigue dibujando
@@ -6134,6 +6214,7 @@ async function logHistorial(registroId, descripcion, campo, anterior, nuevo){
 }
 
 function renderCommonSelects(){
+  fillDatalist(document.getElementById("dlDocumentosProcedimiento"), (CACHE.documentos||[]).filter(d=>d.tipo==="procedimiento").map(d=>d.nombre).filter(Boolean));
   const areaOpts = CACHE.areas.map(a=>({id:a.id,label:a.nombre}));
   fillSelect(document.getElementById("insArea"), areaOpts, true);
   const filterInsAreaSel = document.getElementById("filterInsArea");
@@ -8047,7 +8128,7 @@ function drawControles(){
     <div class="checklist-item">
       <div>
         ${jerarquiaBadgeHtml(c.jerarquia)}
-        <div style="margin-top:4px;">${c.texto}</div>
+        <div style="margin-top:4px;">${c.texto}${c.documentoId?' <span class="pill vigente" title="Vinculado a un documento de Control Documental">🔗 Vinculado</span>':""}</div>
         <div class="kv">${c.responsable?`Responsable: ${c.responsable}`:""}${c.plazo?` · Plazo: ${fmtDate(c.plazo)}`:""}</div>
       </div>
       <button class="subtle-btn" data-control-quitar="${c.idx}">Quitar</button>
@@ -8092,11 +8173,16 @@ function pintarGruposSensibles(sensible, grupos){
 on(document.getElementById("addControlBtn"), "click", async ()=>{
   const texto = document.getElementById("mcTexto").value.trim();
   if(!texto){ alert("Describe la medida de control antes de agregarla."); return; }
+  // Si el texto coincide exacto con el nombre de un Procedimiento ya
+  // registrado, se vincula solo (documentoId) -- ver documentoDeControl().
+  const normTexto = s => (s||"").toLowerCase().replace(/\s+/g," ").trim();
+  const docCoincidente = (CACHE.documentos||[]).find(d=> d.tipo==="procedimiento" && normTexto(d.nombre)===normTexto(texto));
   currentControles.push({
     jerarquia: document.getElementById("mcJerarquia").value,
     texto,
     responsable: document.getElementById("mcResp").value.trim(),
     plazo: document.getElementById("mcFecha").value,
+    documentoId: docCoincidente ? docCoincidente.id : null,
   });
   document.getElementById("mcTexto").value = "";
   document.getElementById("mcResp").value = "";
