@@ -173,6 +173,12 @@
 </head>
 <body>
 
+<!-- Aviso de modo sin conexión (solo Realizar inspecciones / Levantamiento de riesgos) -->
+<div id="offlineBanner" style="display:none;position:fixed;bottom:14px;right:14px;z-index:9999;background:#8a5a00;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.25);max-width:320px;">
+  <div id="offlineBannerText"></div>
+  <button class="btn small" id="offlineSyncNowBtn" type="button" style="margin-top:8px;">Reintentar ahora</button>
+</div>
+
 <!-- SELECCIÓN DE EMPRESA (multi-empresa) -->
 <div class="login-overlay" id="empresaOverlay">
   <div class="login-box">
@@ -2816,11 +2822,19 @@ let authToken = null;
 let activeEmpresa = null; // {id, nombre} de la empresa elegida en esta sesión de navegador
 try{ authToken = localStorage.getItem(AUTH_TOKEN_KEY) || null; }catch(e){}
 
-async function apiFetch(method, path, body){
+async function apiFetch(method, path, body, opts){
   const headers = {};
   if(authToken) headers["Authorization"] = "Bearer " + authToken;
   if(body !== undefined) headers["Content-Type"] = "application/json";
-  const res = await fetch(API_BASE_URL + path, { method, headers, body: body!==undefined ? JSON.stringify(body) : undefined });
+  const timeoutMs = opts && opts.timeoutMs;
+  const controller = timeoutMs ? new AbortController() : null;
+  const timer = controller ? setTimeout(()=>controller.abort(), timeoutMs) : null;
+  let res;
+  try{
+    res = await fetch(API_BASE_URL + path, { method, headers, body: body!==undefined ? JSON.stringify(body) : undefined, signal: controller ? controller.signal : undefined });
+  } finally {
+    if(timer) clearTimeout(timer);
+  }
   if(res.status === 401){
     authToken = null;
     try{ localStorage.removeItem(AUTH_TOKEN_KEY); }catch(e){}
@@ -3003,7 +3017,10 @@ function getAll(store){
   return Promise.resolve(memStore[store] || []);
 }
 function put(store, obj){
-  if(storageMode === "api") return apiFetch("POST", `/api/${store}`, obj);
+  if(storageMode === "api"){
+    if(OFFLINE_STORES.has(store)) return putConSoporteOffline(store, obj);
+    return apiFetch("POST", `/api/${store}`, obj);
+  }
   if(storageMode === "indexeddb"){
     return new Promise((resolve,reject)=>{
       const r = txStore(store,"readwrite").put(obj);
@@ -3052,6 +3069,132 @@ function clearStore(store){
   memStore[store] = [];
   return Promise.resolve();
 }
+
+/* =========================================================
+   MODO OFFLINE (solo "Realizar inspecciones" y "Levantamiento de
+   riesgos por área de trabajo"): pensado para el caso real de uso --
+   la pestaña ya está abierta con datos cargados (loadCache ya corrió
+   con conexión) y el inspector entra a una zona sin señal durante el
+   día, sin cerrar ni recargar la página. NO cubre abrir la app por
+   primera vez sin conexión (eso requeriría cachear la app completa
+   con un Service Worker, descartado a propósito por complejidad/riesgo
+   frente a este caso real).
+
+   Si falla la RED (no el servidor -- un error real del servidor, ej.
+   401 o un dato inválido, se sigue mostrando como error normal, nunca
+   se guarda en cola), el registro se guarda localmente en una base
+   IndexedDB chica y separada de la principal, y se reintenta solo, en
+   orden, apenas vuelva la conexión. ========================================================= */
+const OFFLINE_STORES = new Set(["inspecciones", "levantamientos"]);
+const OFFLINE_TIMEOUT_MS = 8000;
+let offlineDB = null;
+function openOfflineDB(){
+  return new Promise((resolve, reject)=>{
+    if(offlineDB) return resolve(offlineDB);
+    if(!window.indexedDB) return reject(new Error("IndexedDB no disponible"));
+    const req = indexedDB.open("pehuen_offline_queue", 1);
+    req.onupgradeneeded = ()=>{ req.result.createObjectStore("queue", {keyPath:"queueId", autoIncrement:true}); };
+    req.onsuccess = ()=>{ offlineDB = req.result; resolve(offlineDB); };
+    req.onerror = ()=>reject(req.error);
+  });
+}
+function offlineQueueAdd(store, payload){
+  return openOfflineDB().then(db=>new Promise((resolve,reject)=>{
+    const tx = db.transaction("queue","readwrite");
+    tx.objectStore("queue").add({store, payload, createdAt:Date.now()});
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = ()=>reject(tx.error);
+  }));
+}
+function offlineQueueAll(){
+  return openOfflineDB().then(db=>new Promise((resolve,reject)=>{
+    const tx = db.transaction("queue","readonly");
+    const r = tx.objectStore("queue").getAll();
+    r.onsuccess = ()=>resolve(r.result||[]);
+    r.onerror = ()=>reject(r.error);
+  })).catch(()=>[]);
+}
+function offlineQueueRemove(queueId){
+  return openOfflineDB().then(db=>new Promise((resolve,reject)=>{
+    const tx = db.transaction("queue","readwrite");
+    tx.objectStore("queue").delete(queueId);
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = ()=>reject(tx.error);
+  }));
+}
+/* fetch() rechaza con TypeError ante fallas de red reales; el timeout
+   propio (AbortController, ver apiFetch) lanza un DOMException
+   "AbortError". Un error real del servidor llega como un Error normal
+   (mensaje del backend o "Error del servidor (xxx)") y NO debe
+   tratarse como "sin conexión". */
+function esErrorDeRed(err){
+  return !!(err && (err.name === "AbortError" || err instanceof TypeError));
+}
+async function putConSoporteOffline(store, obj){
+  try{
+    return await apiFetch("POST", `/api/${store}`, obj, {timeoutMs: OFFLINE_TIMEOUT_MS});
+  }catch(err){
+    if(!esErrorDeRed(err)) throw err;
+    await offlineQueueAdd(store, obj);
+    const arr = CACHE[store] || (CACHE[store]=[]);
+    const idx = arr.findIndex(x=>x.id===obj.id);
+    if(idx>-1) arr[idx] = obj; else arr.push(obj);
+    actualizarBannerOffline();
+    return obj;
+  }
+}
+async function aplicarColaOfflinePendienteACache(){
+  let items = [];
+  try{ items = await offlineQueueAll(); }catch(e){ return; }
+  items.forEach(({store, payload})=>{
+    if(!Array.isArray(CACHE[store])) return;
+    const idx = CACHE[store].findIndex(x=>x.id===payload.id);
+    if(idx>-1) CACHE[store][idx] = payload; else CACHE[store].push(payload);
+  });
+}
+let offlineSyncEnCurso = false;
+async function intentarSincronizarOffline(){
+  if(offlineSyncEnCurso || storageMode !== "api") return;
+  offlineSyncEnCurso = true;
+  try{
+    const items = (await offlineQueueAll()).sort((a,b)=>a.queueId-b.queueId);
+    let sincronizados = 0;
+    for(const item of items){
+      try{
+        await apiFetch("POST", `/api/${item.store}`, item.payload, {timeoutMs: OFFLINE_TIMEOUT_MS});
+        await offlineQueueRemove(item.queueId);
+        sincronizados++;
+      }catch(err){
+        if(esErrorDeRed(err)) break; // sigue sin señal: se deja el resto en cola para el próximo intento
+        await offlineQueueRemove(item.queueId); // error real del servidor: no bloquear la cola para siempre
+        alert(`No se pudo sincronizar un registro guardado sin conexión (${item.store}): ${err.message}. Revísalo manualmente.`);
+      }
+    }
+    if(sincronizados){
+      await loadCache();
+      renderInspeccionesTable(); renderInsStats(); renderLevantamientosTable();
+    }
+  } finally {
+    offlineSyncEnCurso = false;
+    actualizarBannerOffline();
+  }
+}
+async function actualizarBannerOffline(){
+  const banner = document.getElementById("offlineBanner");
+  if(!banner) return;
+  let items = [];
+  try{ items = await offlineQueueAll(); }catch(e){}
+  const sinConexion = !navigator.onLine;
+  if(!items.length && !sinConexion){ banner.style.display = "none"; return; }
+  banner.style.display = "";
+  document.getElementById("offlineBannerText").textContent = items.length
+    ? `${sinConexion ? "Sin conexión. " : ""}${items.length} registro(s) de inspección/levantamiento guardados en este equipo, pendientes de sincronizar.`
+    : "Sin conexión a internet.";
+}
+window.addEventListener("online", intentarSincronizarOffline);
+window.addEventListener("offline", actualizarBannerOffline);
+setInterval(async ()=>{ const items = await offlineQueueAll(); if(items.length) intentarSincronizarOffline(); }, 20000);
+on(document.getElementById("offlineSyncNowBtn"), "click", intentarSincronizarOffline);
 
 /* Envuelve un manejador async: si algo fallara, se muestra SIEMPRE un
    aviso visible en vez de fallar en silencio (ese silencio era el bug
@@ -3715,15 +3858,29 @@ async function loadCache(){
   // modo API, esto sea 1 viaje de ida y vuelta a la red en vez de 42
   // secuenciales — antes cada guardado tardaba varios segundos extra
   // por esto mismo.
-  const resultados = await Promise.all(STORES.map((store) => getAll(store)));
+  // Promise.allSettled (no Promise.all): si una tabla falla por falta
+  // de conexión, se conserva el CACHE[store] que ya había en vez de
+  // perder toda la carga -- necesario para que "Realizar inspecciones"
+  // y "Levantamiento de riesgos" sigan funcionando sin señal (ver
+  // OFFLINE_STORES); es un cambio puramente defensivo, con conexión
+  // se comporta exactamente igual que antes.
+  const resultados = await Promise.allSettled(STORES.map((store) => getAll(store)));
   STORES.forEach((store, i) => {
-    CACHE[store] = store === "empresa" ? resultados[i][0] : resultados[i];
+    const r = resultados[i];
+    if(r.status === "fulfilled") CACHE[store] = store === "empresa" ? r.value[0] : r.value;
   });
   // Catálogo de Proceso/Actividad/Categoría/Peligro compartido por Rubro
   // (no es un store genérico por-empresa, así que no entra en STORES;
   // solo existe en modo API, donde hay un backend real que puede
   // compartir datos entre las empresas de un mismo rubro).
-  CACHE.catalogoRubro = storageMode==="api" ? (await apiFetch("GET", "/api/catalogo-rubro")) : [];
+  if(storageMode==="api"){
+    try{ CACHE.catalogoRubro = await apiFetch("GET", "/api/catalogo-rubro"); }
+    catch(e){ /* sin conexión: se conserva el CACHE.catalogoRubro anterior */ }
+  } else {
+    CACHE.catalogoRubro = [];
+  }
+  await aplicarColaOfflinePendienteACache();
+  actualizarBannerOffline();
 }
 function areaName(id){ return (CACHE.areas.find(a=>a.id===id)||{}).nombre || "—"; }
 function trabName(id){ return (CACHE.trabajadores.find(t=>t.id===id)||{}).nombre || "—"; }
