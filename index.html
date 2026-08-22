@@ -2176,6 +2176,7 @@
       <div class="toolbar" style="margin-top:10px;">
         <button class="btn" id="saveGrdAmenazaBtn">Guardar amenaza</button>
         <button class="btn secondary" id="cancelEditGrdAmenazaBtn" style="display:none;">Cancelar edición</button>
+        <button class="btn secondary" id="descargarGrdAmenazasPdfBtn">Descargar PDF de esta etapa</button>
       </div>
       <h2 style="margin-top:22px;">Amenazas diagnosticadas</h2>
       <table>
@@ -2206,6 +2207,7 @@
       <div class="toolbar" style="margin-top:10px;">
         <button class="btn" id="saveGrdComiteBtn">Guardar</button>
         <button class="btn secondary" id="cancelEditGrdComiteBtn" style="display:none;">Cancelar edición</button>
+        <button class="btn secondary" id="descargarGrdComitePdfBtn">Descargar PDF del comité</button>
       </div>
       <table style="margin-top:14px;">
         <thead><tr><th>Nombre</th><th>Cargo</th><th>Rol</th><th>Área</th><th>Contacto</th><th>Vigencia</th><th>Acciones</th></tr></thead>
@@ -2238,6 +2240,7 @@
       <div class="toolbar" style="margin-top:10px;">
         <button class="btn" id="saveGrdRespuestaBtn">Guardar plan de respuesta</button>
         <button class="btn secondary" id="cancelEditGrdRespuestaBtn" style="display:none;">Cancelar edición</button>
+        <button class="btn secondary" id="descargarGrdRespuestaPdfBtn">Descargar PDF de esta etapa</button>
       </div>
       <table style="margin-top:14px;">
         <thead><tr><th>Amenaza</th><th>Pasos ACCEDER completos</th><th>Acciones</th></tr></thead>
@@ -2268,6 +2271,7 @@
       <div class="toolbar" style="margin-top:10px;">
         <button class="btn" id="saveGrdSimBtn">Guardar ejercicio</button>
         <button class="btn secondary" id="cancelEditGrdSimBtn" style="display:none;">Cancelar edición</button>
+        <button class="btn secondary" id="descargarGrdSimulacrosPdfBtn">Descargar PDF de esta etapa</button>
       </div>
       <table style="margin-top:14px;">
         <thead><tr><th>Fecha</th><th>Tipo</th><th>Amenaza</th><th>Participantes</th><th>Acciones</th></tr></thead>
@@ -2304,6 +2308,7 @@
       <div class="toolbar" style="margin-top:10px;">
         <button class="btn" id="saveGrdAccionBtn">Guardar</button>
         <button class="btn secondary" id="cancelEditGrdAccionBtn" style="display:none;">Cancelar edición</button>
+        <button class="btn secondary" id="descargarGrdPlanAccionPdfBtn">Descargar PDF del plan de acción</button>
       </div>
       <table style="margin-top:14px;">
         <thead><tr><th>Medida</th><th>Etapa</th><th>Responsable</th><th>Fecha programada</th><th>Estado</th><th>Acciones</th></tr></thead>
@@ -5555,6 +5560,126 @@ function descargarGrdPdf(){
   doc.save(`GRD_Emergencia_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 on(document.getElementById("grdDescargarPdfBtn"), "click", () => descargarGrdPdf());
+
+/* PDF por etapa del módulo GRD (a diferencia de descargarGrdPdf, que es un
+   resumen de las 5 secciones juntas): un informe detallado de una sola
+   etapa, con el texto completo de cada campo (no solo "Completo/
+   Incompleto"). Reutiliza escribirTextoPaginado/agregarPiePaginasPdf
+   (index.html:4271-4294), ya usadas para el mismo problema en otros PDF
+   de texto libre de la app. */
+function grdPdfEncabezado(doc, titulo){
+  addLogoPdf(doc);
+  let y = 16;
+  doc.setFontSize(15);
+  doc.text(titulo, 14, y); y += 8;
+  doc.setFontSize(10);
+  doc.text(`Empresa: ${(CACHE.empresa&&CACHE.empresa.razonSocial)||"—"}`, 14, y); y += 6;
+  const lineaDatos = datosEmpresaLineaPdf();
+  if(lineaDatos){ doc.text(lineaDatos, 14, y); y += 6; }
+  doc.text(`Generado el ${fmtDate(new Date().toISOString().slice(0,10))}`, 14, y); y += 8;
+  return y;
+}
+function descargarGrdAmenazasPdf(){
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const doc = new JsPDFClass();
+  let y = grdPdfEncabezado(doc, "Etapa 1 — Diagnóstico AIDEP: amenazas y vulnerabilidad");
+  const amenazas = CACHE.grdAmenazas||[];
+  if(!amenazas.length){ doc.setFontSize(11); doc.text("Sin amenazas registradas.", 14, y); }
+  amenazas.forEach((a,idx)=>{
+    if(idx>0 && y>230){ doc.addPage(); y=16; } else if(idx>0){ y+=6; }
+    doc.setFontSize(12); doc.setFont(undefined,"bold");
+    doc.text(`${grdAmenazaNombre(a)} — Prioridad ${GRD_PRIORIDAD_LABEL[a.prioridad]||"—"} — ${a.presente!==false?"Identificada":"No identificada"} en este centro de trabajo`, 14, y);
+    doc.setFont(undefined,"normal"); y += 7;
+    [["Análisis histórico", a.analisisHistorico], ["Vulnerabilidad", a.vulnerabilidad], ["Recursos básicos disponibles", a.recursosBasicos], ["Medidas de control / prevención implementadas", a.medidasControl]].forEach(([label,valor])=>{
+      doc.setFontSize(10); doc.setFont(undefined,"bold"); doc.text(label+":", 14, y); doc.setFont(undefined,"normal"); y += 5;
+      if(y>275){ doc.addPage(); y=16; }
+      y = escribirTextoPaginado(doc, valor || "—", 14, y, {maxWidth:180}) + 2;
+    });
+  });
+  agregarPiePaginasPdf(doc, "GRD — Etapa 1 Amenazas");
+  doc.save(`GRD_Etapa1_Amenazas_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+on(document.getElementById("descargarGrdAmenazasPdfBtn"), "click", () => descargarGrdAmenazasPdf());
+
+function descargarGrdComitePdf(){
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const doc = new JsPDFClass();
+  const y = grdPdfEncabezado(doc, "Comité de Gestión del Riesgo de Desastres (CGRD)");
+  const comite = CACHE.grdComite||[];
+  doc.autoTable({ startY:y, head:[["Nombre","Cargo","Rol","Área","Contacto","Vigencia"]],
+    body: comite.length ? comite.map(m=>[m.nombre, m.cargo||"—", GRD_ROL_LABEL[m.rol]||m.rol, areaName(m.areaId)||"—", m.telefono||"—", m.vigenciaHasta?fmtDate(m.vigenciaHasta):"Indefinida"]) : [["Sin miembros registrados","","","","",""]],
+    styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]} });
+  agregarPiePaginasPdf(doc, "GRD — Comité");
+  doc.save(`GRD_Comite_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+on(document.getElementById("descargarGrdComitePdfBtn"), "click", () => descargarGrdComitePdf());
+
+const GRD_ACCEDER_LABEL = { alertaAlarma:"Alerta y Alarma (A)", comunicacion:"Comunicación e información (C)", coordinacion:"Coordinación (C)", evaluacionPreliminar:"Evaluación preliminar (E)", decisiones:"Decisiones (D)", evaluacionSecundaria:"Evaluación secundaria (E)", readecuacion:"Readecuación (R)" };
+function descargarGrdRespuestaPdf(){
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const doc = new JsPDFClass();
+  let y = grdPdfEncabezado(doc, "Etapa 2 — Planes de respuesta ACCEDER");
+  const amenazas = CACHE.grdAmenazas||[];
+  const planes = CACHE.grdPlanRespuesta||[];
+  if(!planes.length){ doc.setFontSize(11); doc.text("Sin planes de respuesta registrados.", 14, y); }
+  planes.forEach((p,idx)=>{
+    if(idx>0 && y>230){ doc.addPage(); y=16; } else if(idx>0){ y+=6; }
+    const a = amenazas.find(x=>x.id===p.amenazaId);
+    doc.setFontSize(12); doc.setFont(undefined,"bold");
+    doc.text(`Amenaza: ${a?grdAmenazaNombre(a):"(amenaza eliminada)"}`, 14, y);
+    doc.setFont(undefined,"normal"); y += 7;
+    GRD_ACCEDER_CAMPOS.forEach(campo=>{
+      doc.setFontSize(10); doc.setFont(undefined,"bold"); doc.text(GRD_ACCEDER_LABEL[campo]+":", 14, y); doc.setFont(undefined,"normal"); y += 5;
+      if(y>275){ doc.addPage(); y=16; }
+      y = escribirTextoPaginado(doc, p[campo] || "—", 14, y, {maxWidth:180}) + 2;
+    });
+  });
+  agregarPiePaginasPdf(doc, "GRD — Etapa 2 Plan de respuesta");
+  doc.save(`GRD_Etapa2_PlanRespuesta_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+on(document.getElementById("descargarGrdRespuestaPdfBtn"), "click", () => descargarGrdRespuestaPdf());
+
+function descargarGrdSimulacrosPdf(){
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const doc = new JsPDFClass();
+  let y = grdPdfEncabezado(doc, "Etapa 3 — Simulacros y simulaciones");
+  const amenazas = CACHE.grdAmenazas||[];
+  const sims = (CACHE.grdSimulacros||[]).slice().sort((a,b)=> new Date(b.fecha||0)-new Date(a.fecha||0));
+  if(!sims.length){ doc.setFontSize(11); doc.text("Sin ejercicios registrados.", 14, y); }
+  sims.forEach((s,idx)=>{
+    if(idx>0 && y>235){ doc.addPage(); y=16; } else if(idx>0){ y+=6; }
+    const a = amenazas.find(x=>x.id===s.amenazaId);
+    doc.setFontSize(12); doc.setFont(undefined,"bold");
+    doc.text(`${fmtDate(s.fecha)} — ${s.tipo==="simulacro"?"Simulacro":"Simulación"} — ${a?grdAmenazaNombre(a):"—"} — ${s.participantes||0} participante(s)`, 14, y);
+    doc.setFont(undefined,"normal"); y += 7;
+    [["Observaciones del ejercicio", s.observaciones], ["Mejoras identificadas", s.mejoras]].forEach(([label,valor])=>{
+      doc.setFontSize(10); doc.setFont(undefined,"bold"); doc.text(label+":", 14, y); doc.setFont(undefined,"normal"); y += 5;
+      if(y>275){ doc.addPage(); y=16; }
+      y = escribirTextoPaginado(doc, valor || "—", 14, y, {maxWidth:180}) + 2;
+    });
+  });
+  agregarPiePaginasPdf(doc, "GRD — Etapa 3 Simulacros");
+  doc.save(`GRD_Etapa3_Simulacros_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+on(document.getElementById("descargarGrdSimulacrosPdfBtn"), "click", () => descargarGrdSimulacrosPdf());
+
+function descargarGrdPlanAccionPdf(){
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const doc = new JsPDFClass();
+  const y = grdPdfEncabezado(doc, "Plan de acción GRD");
+  const acciones = CACHE.grdPlanAccion||[];
+  doc.autoTable({ startY:y, head:[["Medida","Etapa","Responsable","Fecha prog.","Fecha real","Estado"]],
+    body: acciones.length ? acciones.map(a=>[a.medida, GRD_ETAPA_LABEL[a.etapa]||a.etapa, a.responsable||"—", a.fechaProgramada?fmtDate(a.fechaProgramada):"—", a.fechaReal?fmtDate(a.fechaReal):"—", GRD_ACCION_ESTADO_LABEL[estadoPrograma(a)]||""]) : [["Sin medidas registradas","","","","",""]],
+    styles:{fontSize:8.5}, headStyles:{fillColor:[42,120,214]} });
+  agregarPiePaginasPdf(doc, "GRD — Plan de acción");
+  doc.save(`GRD_PlanAccion_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+on(document.getElementById("descargarGrdPlanAccionPdfBtn"), "click", () => descargarGrdPlanAccionPdf());
 
 /* =========================================================
    LISTAS DESPLEGABLES EDITABLES
