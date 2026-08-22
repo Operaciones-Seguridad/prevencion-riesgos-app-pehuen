@@ -1624,6 +1624,28 @@
     </div>
 
     <div class="card">
+      <h2>Evaluación de Siniestralidad DS 67 (cotización adicional)</h2>
+      <div class="desc">Esta es la fórmula que usa el organismo administrador para fijar la cotización adicional diferenciada de la Ley 16.744, evaluada sobre 3 "años de prevención" consecutivos de julio a junio (no años calendario). Verificada contra el simulador oficial de tu mutualidad. El factor y la tasa de siniestralidad por invalideces y muertes no se calculan aquí — son datos que el organismo administrador informa directamente; ingrésalos cuando la mutualidad te los entregue (déjalos en 0 si no aplica, como es habitual).</div>
+      <div class="toolbar">
+        <div class="field"><label>Año de evaluación</label><select id="ds67Anio"></select></div>
+        <div><button class="btn small secondary" id="downloadDs67PdfBtn" style="margin-top:20px;">Descargar PDF</button></div>
+      </div>
+      <div class="desc" style="margin-top:0;">Los días perdidos por período se pre-cargan como sugerencia desde el registro de accidentes de Pehuén, pero son editables: corrígelos con la notificación oficial de la mutualidad si no coinciden (por ejemplo, por recaídas o ajustes que solo maneja el organismo administrador), y presiona "Guardar" para que el total y la tasa se recalculen.</div>
+      <table>
+        <thead><tr><th>Período</th><th>Días perdidos AT</th><th>Días perdidos EP</th><th>Total días perdidos</th><th>Promedio trabajadores</th><th>Tasa</th></tr></thead>
+        <tbody id="ds67Tabla"></tbody>
+      </table>
+      <div id="ds67Aviso" class="pill critico" style="display:none;margin-top:10px;"></div>
+      <div class="form-grid" style="margin-top:14px;">
+        <div><label>Factor de invalideces y muertes</label><input id="ds67FactorInput" type="number" step="0.01" placeholder="0"></div>
+        <div><label>Tasa de siniestralidad por invalideces y muertes</label><input id="ds67TasaInvInput" type="number" step="0.01" placeholder="0"></div>
+      </div>
+      <div class="desc" style="margin-top:2px;">Ambos datos son informados por la mutualidad (ACHS / IST / Mutual de Seguridad), no calculados por Pehuén.</div>
+      <div style="margin-top:10px;"><button class="btn small" id="saveDs67Btn">Guardar</button></div>
+      <div class="grid-tiles" id="ds67Tiles" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card">
       <h2>Control estadístico mensual y anual</h2>
       <div class="desc">Selecciona un mes o un año con datos registrados (horas-hombre y/o accidentes) para ver la tasa de frecuencia, la tasa de gravedad, el índice de accidentabilidad y el detalle por sexo de ese período específico (no acumulado histórico). Si activaste RIRDA/LDR en Configuración, también se muestran esos indicadores con el mismo período.</div>
       <div class="row">
@@ -2763,8 +2785,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 28;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos"];
+const DB_VERSION = 29;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -12130,6 +12152,78 @@ function calcIndicadores(accidentesLista, horasHombreLista){
 }
 function accidentabilidadIndicadores(){ return calcIndicadores(CACHE.accidentes, CACHE.horasHombre); }
 
+/* ---- Evaluación de Siniestralidad DS 67 (cotización adicional) ----
+   A diferencia de calcIndicadores() (indicadores de gestión interna, por
+   millón de HH), esta es la fórmula real que usa el organismo administrador
+   para fijar la cotización adicional diferenciada de la Ley 16.744: 3 "años
+   de prevención" consecutivos de julio a junio (no años calendario).
+   Verificada celda por celda contra el simulador oficial de la mutual de
+   Carlos (Mutual de Seguridad C.Ch.C.) con datos reales de su empresa.
+   El factor y la tasa de siniestralidad por invalideces y muertes NO se
+   calculan acá -- ni la propia planilla oficial de la mutual los calcula
+   (son celdas de texto plano en el archivo real, sin fórmula): son datos
+   que el organismo administrador informa directamente cuando corresponde,
+   por eso se guardan tal cual los entrega la mutualidad.
+   Los días perdidos por período TAMPOCO son una fórmula en el archivo real
+   (también son celdas de texto plano) -- se comprobó con un caso real que
+   pueden no coincidir con la suma de los accidentes que la propia empresa
+   tiene registrados (recaídas, correcciones u otros ajustes que solo
+   maneja la mutualidad). Por eso acá se PRE-CARGAN como sugerencia desde
+   el registro de accidentes de Pehuén, pero quedan editables para que se
+   corrijan con la notificación oficial de la mutualidad cuando no calcen. */
+const ACC_TIPOS_DS67_AT = ["ctp","stp"]; // días perdidos "accidentes del trabajo" para DS67 (trayecto queda fuera)
+function ds67Periodos(anioEvaluacion){
+  const periodos = [];
+  for(let i=2; i>=0; i--){
+    const anioIni = anioEvaluacion - i - 1;
+    const anioFin = anioEvaluacion - i;
+    const meses = [];
+    for(let m=7; m<=12; m++) meses.push(`${anioIni}-${String(m).padStart(2,"0")}`);
+    for(let m=1; m<=6; m++) meses.push(`${anioFin}-${String(m).padStart(2,"0")}`);
+    periodos.push({ desde:`Jul ${anioIni}`, hasta:`Jun ${anioFin}`, meses });
+  }
+  return periodos;
+}
+function calcDs67Periodo(periodo, override){
+  const mesesSet = new Set(periodo.meses);
+  const accs = CACHE.accidentes.filter(a=> a.fecha && mesesSet.has(a.fecha.slice(0,7)));
+  const diasPerdidosATAuto = accs.filter(a=>ACC_TIPOS_DS67_AT.includes(a.tipo)).reduce((s,a)=>s+(+a.diasPerdidos||0),0);
+  const diasPerdidosEPAuto = accs.filter(a=>a.tipo==="enfermedad").reduce((s,a)=>s+(+a.diasPerdidos||0),0);
+  const nAccidentados = accs.filter(a=>a.tipo==="ctp").length;
+  const nEnfermos = accs.filter(a=>a.tipo==="enfermedad").length;
+  const tieneCorreccion = !!(override && (override.diasPerdidosAT!=null || override.diasPerdidosEP!=null));
+  const diasPerdidosAT = (override && override.diasPerdidosAT!=null) ? +override.diasPerdidosAT : diasPerdidosATAuto;
+  const diasPerdidosEP = (override && override.diasPerdidosEP!=null) ? +override.diasPerdidosEP : diasPerdidosEPAuto;
+  const totalDiasPerdidos = diasPerdidosAT + diasPerdidosEP;
+  const hhMeses = periodo.meses.map(m=> CACHE.horasHombre.find(h=>h.periodo===m)).filter(Boolean);
+  const mesesFaltantes = periodo.meses.filter(m=> !CACHE.horasHombre.some(h=>h.periodo===m));
+  const promedioTrabajadores = hhMeses.length
+    ? hhMeses.reduce((s,h)=>s+(+h.promedioTrabajadores||0),0)/hhMeses.length
+    : 0;
+  const tasa = promedioTrabajadores ? Math.round((totalDiasPerdidos/promedioTrabajadores)*100*100)/100 : null;
+  return {...periodo, diasPerdidosAT, diasPerdidosEP, diasPerdidosATAuto, diasPerdidosEPAuto, tieneCorreccion, totalDiasPerdidos, nAccidentados, nEnfermos, promedioTrabajadores, mesesFaltantes, tasa};
+}
+function ds67AniosDisponibles(){
+  const anioActual = new Date().getFullYear();
+  const anios = new Set([anioActual, anioActual+1]);
+  (CACHE.horasHombre||[]).forEach(h=>{ if(h.periodo) anios.add(+h.periodo.slice(0,4)+1); });
+  (CACHE.accidentes||[]).forEach(a=>{ if(a.fecha) anios.add(+a.fecha.slice(0,4)+1); });
+  (CACHE.ds67Evaluaciones||[]).forEach(r=>{ if(r.anioEvaluacion) anios.add(+r.anioEvaluacion); });
+  return Array.from(anios).filter(Boolean).sort((a,b)=>b-a);
+}
+function calcDs67Evaluacion(anioEvaluacion){
+  const registro = (CACHE.ds67Evaluaciones||[]).find(r=>+r.anioEvaluacion===+anioEvaluacion) || {};
+  const overrides = registro.periodosOverride || [null,null,null];
+  const periodos = ds67Periodos(anioEvaluacion).map((p,i)=>calcDs67Periodo(p, overrides[i]));
+  const tasasValidas = periodos.map(p=>p.tasa).filter(t=>t!==null);
+  const tasaPromedioIncTemporal = tasasValidas.length ? Math.round((tasasValidas.reduce((a,b)=>a+b,0)/tasasValidas.length)*100)/100 : 0;
+  const factorInvalidezMuertes = +registro.factorInvalidezMuertes || 0;
+  const tasaInvalidezMuertes = +registro.tasaInvalidezMuertes || 0;
+  const tasaSiniestralidadTotal = Math.round((factorInvalidezMuertes + tasaInvalidezMuertes + tasaPromedioIncTemporal)*100)/100;
+  const mesesFaltantes = periodos.flatMap(p=>p.mesesFaltantes);
+  return { anioEvaluacion, periodos, tasaPromedioIncTemporal, factorInvalidezMuertes, tasaInvalidezMuertes, tasaSiniestralidadTotal, mesesFaltantes, registro };
+}
+
 /* Períodos disponibles (a partir de horas-hombre y/o fechas de accidentes
    registradas) y filtro de accidentes/horas-hombre por mes o por año, para
    el control estadístico mensual/anual y el informe para gerencia. */
@@ -12287,7 +12381,70 @@ function renderAccidentabilidad(){
   renderAccMensualAnual();
 
   renderAccClasificacion();
+
+  renderDs67();
 }
+
+/* ---- UI de la evaluación DS 67 ---- */
+function renderDs67(){
+  const sel = document.getElementById("ds67Anio");
+  const anios = ds67AniosDisponibles();
+  const cur = sel.value;
+  sel.innerHTML = anios.map(a=>`<option value="${a}">${a}</option>`).join("");
+  sel.value = anios.map(String).includes(cur) ? cur : String(anios[0]||"");
+  const anioEvaluacion = +sel.value;
+  if(!anioEvaluacion){
+    document.getElementById("ds67Tabla").innerHTML = "";
+    document.getElementById("ds67Tiles").innerHTML = '<div class="empty">Sin datos</div>';
+    return;
+  }
+  const ev = calcDs67Evaluacion(anioEvaluacion);
+  const romanos = ["I","II","III"];
+
+  document.getElementById("ds67Tabla").innerHTML = ev.periodos.map((p,i)=>`
+    <tr>
+      <td>Periodo ${romanos[i]} (${p.desde} – ${p.hasta})${p.tieneCorreccion?' <span class="pill vigente" style="font-size:10px;">corregido</span>':''}</td>
+      <td><input type="number" min="0" step="1" id="ds67PerAT${i}" value="${p.diasPerdidosAT}" style="width:80px;"></td>
+      <td><input type="number" min="0" step="1" id="ds67PerEP${i}" value="${p.diasPerdidosEP}" style="width:80px;"></td>
+      <td>${p.totalDiasPerdidos}</td>
+      <td>${p.promedioTrabajadores ? p.promedioTrabajadores.toFixed(1) : "—"}</td>
+      <td>${p.tasa===null ? "—" : p.tasa.toFixed(2)}</td>
+    </tr>`).join("");
+
+  const aviso = document.getElementById("ds67Aviso");
+  if(ev.mesesFaltantes.length){
+    aviso.style.display = "";
+    aviso.textContent = `Faltan datos de horas-hombre para calcular con precisión: ${ev.mesesFaltantes.join(", ")}. Esos meses no se están promediando (no se asume dotación 0).`;
+  } else {
+    aviso.style.display = "none";
+  }
+
+  document.getElementById("ds67FactorInput").value = ev.factorInvalidezMuertes || "";
+  document.getElementById("ds67TasaInvInput").value = ev.tasaInvalidezMuertes || "";
+
+  document.getElementById("ds67Tiles").innerHTML = [
+    tile("Tasa promedio de siniestralidad por incapacidades temporales", ev.tasaPromedioIncTemporal.toFixed(2), "promedio de los 3 años de prevención"),
+    tile("Tasa de siniestralidad total", ev.tasaSiniestralidadTotal.toFixed(2), "incapacidades temporales + invalideces y muertes"),
+  ].join("");
+}
+on(document.getElementById("ds67Anio"), "change", renderDs67);
+on(document.getElementById("saveDs67Btn"), "click", async ()=>{
+  const anioEvaluacion = +document.getElementById("ds67Anio").value;
+  if(!anioEvaluacion) return;
+  const factorInvalidezMuertes = +document.getElementById("ds67FactorInput").value || 0;
+  const tasaInvalidezMuertes = +document.getElementById("ds67TasaInvInput").value || 0;
+  const periodosOverride = [0,1,2].map(i=>{
+    const atEl = document.getElementById(`ds67PerAT${i}`);
+    const epEl = document.getElementById(`ds67PerEP${i}`);
+    if(!atEl || !epEl) return null;
+    return { diasPerdidosAT: atEl.value===""?0:+atEl.value, diasPerdidosEP: epEl.value===""?0:+epEl.value };
+  });
+  const existing = CACHE.ds67Evaluaciones.find(r=>+r.anioEvaluacion===anioEvaluacion);
+  await put("ds67Evaluaciones", {id: existing?existing.id:uid(), anioEvaluacion, factorInvalidezMuertes, tasaInvalidezMuertes, periodosOverride});
+  await loadCache();
+  renderDs67();
+  alert("Datos guardados.");
+});
 
 /* Clasificación de TODOS los registros (accidentes, incidentes, enfermedades)
    por mes del año en curso, por año, por área y por tipo. */
@@ -12660,6 +12817,46 @@ on(document.getElementById("downloadAccPdfBtn"), "click", async () => {
     ]), styles:{fontSize:7.5}, headStyles:{fillColor:[236,131,90]} });
 
   doc.save(`Informe_Accidentabilidad_${new Date().toISOString().slice(0,10)}.pdf`);
+});
+
+on(document.getElementById("downloadDs67PdfBtn"), "click", () => {
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const anioEvaluacion = +document.getElementById("ds67Anio").value;
+  if(!anioEvaluacion){ alert("Selecciona un año de evaluación."); return; }
+  const ev = calcDs67Evaluacion(anioEvaluacion);
+  const romanos = ["I","II","III"];
+  const doc = new JsPDFClass();
+  addLogoPdf(doc);
+  let y = 16;
+  doc.setFontSize(15);
+  doc.text(`Evaluación de Siniestralidad DS 67 — Año ${anioEvaluacion}`, 14, y); y += 8;
+  doc.setFontSize(10);
+  doc.text(`Empresa: ${(CACHE.empresa&&CACHE.empresa.razonSocial)||"—"}`, 14, y); y += 6;
+  const lineaDatosDs67 = datosEmpresaLineaPdf();
+  if(lineaDatosDs67){ doc.text(lineaDatosDs67, 14, y); y += 6; }
+  y += 2;
+  doc.autoTable({ startY:y, head:[["Período","Días perdidos AT","Días perdidos EP","Total días perdidos","Promedio trabajadores","Tasa"]],
+    body: ev.periodos.map((p,i)=>[
+      `Periodo ${romanos[i]} (${p.desde} – ${p.hasta})${p.tieneCorreccion?" (corregido)":""}`,
+      p.diasPerdidosAT, p.diasPerdidosEP, p.totalDiasPerdidos,
+      p.promedioTrabajadores ? p.promedioTrabajadores.toFixed(1) : "—",
+      p.tasa===null ? "—" : p.tasa.toFixed(2)
+    ]), styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 8;
+  doc.autoTable({ startY:y, head:[["Resumen","Valor"]], body:[
+    ["Tasa promedio de siniestralidad por incapacidades temporales", ev.tasaPromedioIncTemporal.toFixed(2)],
+    ["Factor de invalideces y muertes (informado por la mutualidad)", ev.factorInvalidezMuertes],
+    ["Tasa de siniestralidad por invalideces y muertes (informado por la mutualidad)", ev.tasaInvalidezMuertes],
+    ["Tasa de siniestralidad total", ev.tasaSiniestralidadTotal.toFixed(2)],
+  ], styles:{fontSize:9}, headStyles:{fillColor:[236,131,90]} });
+  y = doc.lastAutoTable.finalY + 8;
+  if(ev.mesesFaltantes.length){
+    doc.setFontSize(9);
+    y = escribirTextoPaginado(doc, `Nota: faltan datos de horas-hombre para ${ev.mesesFaltantes.join(", ")}; esos meses no se promediaron (no se asumió dotación 0).`, 14, y, {maxWidth:180});
+  }
+  agregarPiePaginasPdf(doc, "Evaluación DS 67");
+  doc.save(`Evaluacion_DS67_${anioEvaluacion}.pdf`);
 });
 
 /* Informe mensual/anual "para gerencia": a diferencia del informe anterior
