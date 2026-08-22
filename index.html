@@ -886,15 +886,14 @@
 
     <div class="card">
       <h2>Mapa de riesgos — plano de planta y simbología</h2>
-      <div class="desc">Mapa de riesgos con plano de planta y su respectiva simbología: un ícono por cada tipo de peligro presente (según la categoría cargada en cada línea de la matriz), coloreado según el nivel de riesgo más alto de ese tipo en el área. Si subes una imagen del plano real de las instalaciones, puedes arrastrar la marca de cada área hasta su ubicación real; si no, se muestra como un esquema de cajas por área.</div>
+      <div class="desc">Mapa de riesgos con plano de planta y su respectiva simbología oficial (Anexo 1, DS 44): un pictograma por cada riesgo específico presente, coloreado según su nivel de riesgo. Como los mapas de riesgo suelen ser por área o proceso, puedes subir más de un plano — asigná cada área al plano que corresponda desde Configuración → Áreas. Arrastra la marca de cada área y cada ícono hasta su ubicación real; las áreas sin plano asignado se muestran como un esquema de cajas.</div>
       <div class="toolbar">
-        <div>
-          <label style="display:block;font-size:12.5px;color:var(--text-secondary);margin-bottom:4px;">Subir plano de planta (imagen, opcional)</label>
-          <input type="file" id="planoUploadInput" accept="image/*">
-        </div>
-        <div><button class="btn secondary small" id="planoQuitarBtn" style="margin-top:20px;">Quitar plano</button></div>
+        <div class="field"><label>Plano</label><select id="planoSelect"></select></div>
+        <div><button class="btn small" id="planoNuevoBtn" style="margin-top:20px;">+ Subir plano nuevo</button></div>
+        <div><button class="btn secondary small" id="planoQuitarBtn" style="margin-top:20px;">Eliminar este plano</button></div>
         <div><button class="btn secondary small" id="printPlanoRiesgosBtn" style="margin-top:20px;">Imprimir mapa de riesgos</button></div>
       </div>
+      <input type="file" id="planoUploadInput" accept="image/*" style="display:none;">
       <div id="planoRiesgosWrap"></div>
       <div id="planoLeyendaWrap" style="margin-top:16px;"></div>
     </div>
@@ -2666,8 +2665,8 @@
         <div class="field"><label>Nueva área</label><input id="newAreaName" placeholder="Ej: Bodega"></div>
         <div><button class="btn small" id="addAreaBtn" style="margin-top:20px;">+ Agregar área</button></div>
       </div>
-      <div class="desc">"Trabajadores registrados" cuenta a quienes ya están cargados en la lista de Trabajadores con esta área. "Dotación total" es un número editable manualmente, útil cuando aún no has cargado a todo el personal pero igual quieres registrar cuántas personas trabajan ahí.</div>
-      <table><thead><tr><th>Área</th><th>Trabajadores registrados</th><th>Dotación total (editable)</th><th></th></tr></thead><tbody id="areasTable"></tbody></table>
+      <div class="desc">"Trabajadores registrados" cuenta a quienes ya están cargados en la lista de Trabajadores con esta área. "Dotación total" es un número editable manualmente, útil cuando aún no has cargado a todo el personal pero igual quieres registrar cuántas personas trabajan ahí. "Plano" indica en cuál de los planos de planta (Matriz de riesgos → Mapa de riesgos) aparece esta área — como los mapas de riesgo suelen ser por área o proceso, cada área puede ir en un plano distinto.</div>
+      <table><thead><tr><th>Área</th><th>Trabajadores registrados</th><th>Dotación total (editable)</th><th>Plano</th><th></th></tr></thead><tbody id="areasTable"></tbody></table>
     </div>
     <div class="card">
       <div class="card-header-row" id="hdrTrabajadores"><h2>Trabajadores</h2><button class="collapse-toggle" id="toggleTrabajadores" type="button" aria-label="Contraer o expandir">▾</button></div>
@@ -9343,7 +9342,7 @@ function nivelMasAlto(rows){
 function claveColorNivel(tipo, nivel){
   if(tipo==="musculo" || tipo==="psicosocial"){
     if(nivel==="bajo") return "v";
-    if(nivel==="medio") return tipo==="psicosocial" ? "n" : "a";
+    if(nivel==="medio") return tipo==="psicosocial" ? "m" : "a";
     return "r";
   }
   return {bajo:"v", medio:"a", alto:"n", critico:"r"}[nivel] || "v";
@@ -9510,18 +9509,6 @@ on(document.getElementById("printMapaRiesgosBtn"), "click", async () => { imprim
    área se pueden arrastrar hasta su ubicación real; si no hay
    plano subido, se muestra un esquema de cajas por área.
    ========================================================= */
-const CATEGORIA_ICONOS = {
-  "Mecánico": "⚙️",
-  "Ergonómico": "🧍",
-  "Emergencias": "🔥",
-  "Físico": "🔊",
-  "Eléctrico": "⚡",
-  "Psicosociales": "🧠",
-  "Químico": "🧪",
-  "Biológico": "🦠",
-  "Locativo": "🏗️",
-};
-function iconoCategoria(cat){ return CATEGORIA_ICONOS[cat] || "⚠️"; }
 function readFileAsDataUrl(file){
   return new Promise((resolve, reject)=>{
     const reader = new FileReader();
@@ -9590,49 +9577,62 @@ async function intentarDetectarNombresEnArchivo(file, trabajadoresCandidatos){
   const coincidencias = trabajadoresCandidatos.filter(t=>nombreCoincideEnTexto(t.nombre, textoNorm));
   return {ok:true, motivo:null, coincidencias};
 }
+/* Multi-plano: como los mapas de riesgo suelen ser por área o proceso
+   (no uno solo para toda la empresa), planoRiesgos pasa a ser una lista
+   real -- un registro por plano subido {id,nombre,imagen,marcas,iconos}
+   -- en vez del registro único de antes (siempre CACHE.planoRiesgos[0],
+   id fijo "config"). planoActualId (variable de UI, no se guarda) indica
+   cuál plano se está viendo/editando ahora mismo. Empieza en undefined
+   (distinto de null): undefined significa "todavía no elegiste nada,
+   mostrar el primer plano si existe alguno"; null significa "elegiste
+   a propósito ver las áreas sin plano asignado" -- una vez elegido no
+   se debe pisar solo, o esas áreas quedarían inalcanzables en cuanto
+   exista al menos un plano. */
+let planoActualId;
 function planoConfigActual(){
-  const rec = (CACHE.planoRiesgos && CACHE.planoRiesgos[0]);
-  return rec ? {...rec, marcas: rec.marcas||{}, iconos: rec.iconos||{}} : {id:"config", imagen:null, marcas:{}, iconos:{}};
+  const rec = (CACHE.planoRiesgos||[]).find(p=>p.id===planoActualId);
+  return rec ? {...rec, marcas: rec.marcas||{}, iconos: rec.iconos||{}} : {id:null, nombre:"", imagen:null, marcas:{}, iconos:{}};
 }
 async function savePlanoConfig(rec){
-  rec.id = "config";
   await put("planoRiesgos", rec);
   await loadCache();
 }
-function categoriasDeFilas(rows){
-  const map = new Map();
-  rows.forEach(m=>{
-    const cat = m.categoria || "Sin categoría";
-    const nivel = nivelRiesgo(m.probabilidad, m.consecuencia);
-    if(!map.has(cat)) map.set(cat, {categoria:cat, nivel, count:0});
-    const it = map.get(cat);
-    it.count++;
-    if(NIVEL_ORDEN_VALOR[nivel] > NIVEL_ORDEN_VALOR[it.nivel]) it.nivel = nivel;
-  });
-  return Array.from(map.values()).sort((a,b)=> NIVEL_ORDEN_VALOR[b.nivel]-NIVEL_ORDEN_VALOR[a.nivel]);
+/* El plano de planta reusa la misma simbología oficial que ya arma la
+   card "Mapa de riesgos" (ANEXO1_SIMBOLOS/simbolosDeArea/claveColorNivel,
+   más arriba) en vez de la lista de emoji por categoría que tenía antes
+   -- esa lista, además, había quedado desalineada de las categorías
+   reales de la Matriz (ej. "Locativo" no existe ahí). Íconos bastante
+   más grandes (52px por defecto, antes 26-34px) a pedido del usuario,
+   que no lograba distinguirlos. */
+function simboloIconoHtml(s, size){
+  const sz = size || 52;
+  const clave = claveColorNivel(s.row.tipo, s.nivel);
+  const src = s.row.icons[clave] || s.row.icons.r;
+  const color = NIVEL_CHART_COLORS[s.nivel];
+  return `<img src="${src}" alt="${s.row.familia}" style="width:${sz}px;height:${sz}px;border-radius:10px;border:3px solid ${color};background:#fff;">`;
+}
+function tituloSimbolo(prefijo, s){
+  const detalle = s.detalles.size ? `: ${Array.from(s.detalles).join(", ")}` : "";
+  return `${prefijo}${s.row.familia}${detalle} — ${nivelLabel(s.nivel)} (${s.count} línea(s))`.replace(/"/g,"&quot;");
 }
 function planoIconosHtml(rows, size){
-  const s = size || 34;
-  const cats = categoriasDeFilas(rows);
-  if(!cats.length) return `<div style="color:#999;font-size:12.5px;">Sin líneas registradas</div>`;
-  return cats.map(c=>{
-    const color = NIVEL_CHART_COLORS[c.nivel];
-    return `<span title="${c.categoria} — ${nivelLabel(c.nivel)} (${c.count} línea(s))" style="display:inline-flex;align-items:center;justify-content:center;width:${s}px;height:${s}px;border-radius:50%;background:${color};font-size:${Math.round(s*0.52)}px;margin:3px;border:2px solid #fff;box-shadow:0 0 0 1px ${color};">${iconoCategoria(c.categoria)}</span>`;
-  }).join("");
+  const s = size || 52;
+  const simbolos = simbolosDeArea(rows);
+  if(!simbolos.length) return `<div style="color:#999;font-size:12.5px;">Sin líneas registradas</div>`;
+  return simbolos.map(sim=>`<span title="${tituloSimbolo("",sim)}" style="display:inline-flex;align-items:center;justify-content:center;margin:3px;">${simboloIconoHtml(sim, s)}</span>`).join("");
 }
 /* Ícono de peligro independiente: se dibuja como marca propia, arrastrable
    por separado de la marca de área (a diferencia de la versión anterior,
    que los mostraba agrupados y pegados a la marca de área). areaPos es la
    posición actual (guardada o por defecto) de la marca de área, usada solo
    como punto de partida para la posición por defecto de este ícono. */
-function planoIconoMarkerHtml(area, catInfo, areaPos, cfg, offsetIdx, offsetTotal, size){
-  const key = area.id + "::" + catInfo.categoria;
-  const s = size || 26;
-  const defaultX = Math.max(2, Math.min(98, areaPos.x + (offsetIdx - (offsetTotal - 1) / 2) * 4.5));
-  const defaultY = Math.max(2, Math.min(98, areaPos.y + 9));
+function planoIconoMarkerHtml(area, sim, areaPos, cfg, offsetIdx, offsetTotal, size){
+  const key = area.id + "::" + sim.row.id;
+  const s = size || 52;
+  const defaultX = Math.max(2, Math.min(98, areaPos.x + (offsetIdx - (offsetTotal - 1) / 2) * 7));
+  const defaultY = Math.max(2, Math.min(98, areaPos.y + 10));
   const pos = cfg.iconos[key] || { x: defaultX, y: defaultY };
-  const color = NIVEL_CHART_COLORS[catInfo.nivel];
-  return `<div class="plano-icono-marker" data-icono-key="${key}" title="${area.nombre} — ${catInfo.categoria} — ${nivelLabel(catInfo.nivel)} (${catInfo.count} línea(s))" style="position:absolute;left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);cursor:grab;touch-action:none;display:flex;align-items:center;justify-content:center;width:${s}px;height:${s}px;border-radius:50%;background:${color};font-size:${Math.round(s*0.55)}px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);">${iconoCategoria(catInfo.categoria)}</div>`;
+  return `<div class="plano-icono-marker" data-icono-key="${key}" title="${tituloSimbolo(area.nombre+" — ",sim)}" style="position:absolute;left:${pos.x}%;top:${pos.y}%;transform:translate(-50%,-50%);cursor:grab;touch-action:none;filter:drop-shadow(0 1px 4px rgba(0,0,0,.5));">${simboloIconoHtml(sim, s)}</div>`;
 }
 function planoBoxHtml(nombre, rows){
   return `<div style="border:2px solid #333;border-radius:8px;padding:10px 8px;min-height:110px;background:#fff;">
@@ -9640,15 +9640,20 @@ function planoBoxHtml(nombre, rows){
     <div style="display:flex;flex-wrap:wrap;justify-content:center;">${planoIconosHtml(rows)}</div>
   </div>`;
 }
-function planoBloques(){
+/* Sin planoId: áreas SIN plano asignado (esquema de cajas de respaldo).
+   Con planoId: solo las áreas asignadas a ESE plano puntual -- así cada
+   plano de planta muestra únicamente sus propias áreas, sin mezclar
+   posiciones con las de otro plano. */
+function planoBloques(planoId){
   const porArea = new Map();
   CACHE.matriz.forEach(m=>{
     const key = m.areaId || "";
     if(!porArea.has(key)) porArea.set(key, []);
     porArea.get(key).push(m);
   });
-  const bloques = CACHE.areas.map(a=>({area:a, rows: porArea.get(a.id)||[]}));
-  if(porArea.has("")) bloques.push({area:{id:"", nombre:"(sin área asignada)"}, rows: porArea.get("")});
+  const areasFiltradas = planoId ? CACHE.areas.filter(a=>a.planoId===planoId) : CACHE.areas.filter(a=>!a.planoId);
+  const bloques = areasFiltradas.map(a=>({area:a, rows: porArea.get(a.id)||[]}));
+  if(!planoId && porArea.has("")) bloques.push({area:{id:"", nombre:"(sin área asignada)"}, rows: porArea.get("")});
   return bloques;
 }
 function planoMarkerHtml(bloque, idx){
@@ -9665,40 +9670,52 @@ function planoMarkerHtml(bloque, idx){
 function planoIconosDeArea(cfg, bloques){
   return bloques.flatMap((b,i)=>{
     const areaPos = cfg.marcas[b.area.id] || { x: 12 + (i % 4) * 24, y: 15 + Math.floor(i / 4) * 28 };
-    const cats = categoriasDeFilas(b.rows);
-    return cats.map((c,ci)=>planoIconoMarkerHtml(b.area, c, areaPos, cfg, ci, cats.length));
+    const simbolos = simbolosDeArea(b.rows);
+    return simbolos.map((sim,si)=>planoIconoMarkerHtml(b.area, sim, areaPos, cfg, si, simbolos.length));
   }).join("");
 }
 function renderPlanoRiesgos(){
   const wrap = document.getElementById("planoRiesgosWrap");
   const leyendaWrap = document.getElementById("planoLeyendaWrap");
   if(!wrap) return;
+  const planos = CACHE.planoRiesgos||[];
+  if(planoActualId === undefined){
+    planoActualId = planos.length ? planos[0].id : null; // primera carga: elegir el primero si existe
+  } else if(planoActualId && !planos.some(p=>p.id===planoActualId)){
+    planoActualId = planos.length ? planos[0].id : null; // el plano que estaba viendo se eliminó
+  }
+  const sel = document.getElementById("planoSelect");
+  sel.innerHTML = planos.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("")
+    + `<option value="">Áreas sin plano asignado</option>`;
+  sel.value = planoActualId || "";
+
   const cfg = planoConfigActual();
-  const bloques = planoBloques();
+  const bloques = planoBloques(planoActualId);
   const quitarBtn = document.getElementById("planoQuitarBtn");
-  if(quitarBtn) quitarBtn.style.display = cfg.imagen ? "" : "none";
+  if(quitarBtn) quitarBtn.style.display = planoActualId ? "" : "none";
   if(cfg.imagen){
     wrap.innerHTML = `<div id="planoImgWrap" style="position:relative;display:inline-block;max-width:100%;touch-action:none;">
       <img src="${cfg.imagen}" style="display:block;max-width:100%;border:1px solid var(--border);border-radius:8px;">
       ${bloques.map((b,i)=>planoMarkerHtml(b,i)).join("")}
       ${planoIconosDeArea(cfg, bloques)}
     </div>
-    <div class="kv" style="margin-top:8px;">Puedes arrastrar la marca de cada área y cada ícono de peligro por separado, para distribuirlos en su ubicación real dentro del plano.</div>`;
+    <div class="kv" style="margin-top:8px;">Puedes arrastrar la marca de cada área y cada ícono de peligro por separado, para distribuirlos en su ubicación real dentro del plano. Asigná más áreas a este plano desde Configuración → Áreas.</div>`;
     attachPlanoDrag();
   } else {
     wrap.innerHTML = `<div class="grid-tiles" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
       ${bloques.map(b=>planoBoxHtml(b.area.nombre, b.rows)).join("") || '<div class="empty">Sin áreas ni líneas registradas</div>'}
-    </div>`;
+    </div>
+    ${planos.length ? '' : '<div class="kv" style="margin-top:8px;">Las áreas sin plano asignado se muestran acá. Usá "+ Subir plano nuevo" para agregar el primero.</div>'}`;
   }
-  const categoriasTodas = categoriasDeFilas(CACHE.matriz);
+  const simbolosTodos = simbolosDeArea(CACHE.matriz);
   leyendaWrap.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
     <div>
       <div class="kv" style="font-weight:700;margin-bottom:6px;">Nivel de riesgo</div>
       ${["critico","alto","medio","bajo"].map(n=>`<div class="kv" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span style="width:16px;height:16px;border-radius:50%;background:${NIVEL_CHART_COLORS[n]};display:inline-block;"></span>${nivelLabel(n)}</div>`).join("")}
     </div>
     <div>
-      <div class="kv" style="font-weight:700;margin-bottom:6px;">Simbología por tipo de peligro (categoría)</div>
-      ${categoriasTodas.length ? categoriasTodas.map(c=>`<div class="kv" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span style="font-size:16px;">${iconoCategoria(c.categoria)}</span>${c.categoria}</div>`).join("") : '<div class="kv">Sin categorías registradas</div>'}
+      <div class="kv" style="font-weight:700;margin-bottom:6px;">Simbología oficial (Anexo 1, DS 44)</div>
+      ${simbolosTodos.length ? simbolosTodos.map(sim=>`<div class="kv" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">${simboloIconoHtml(sim, 22)}${sim.row.familia}${sim.detalles.size?": "+Array.from(sim.detalles).join(", "):""}</div>`).join("") : '<div class="kv">Sin líneas registradas</div>'}
     </div>
   </div>`;
 }
@@ -9745,37 +9762,56 @@ function attachPlanoDrag(){
   attachPlanoDragPara(wrap, ".plano-marker", "areaId", "marcas");
   attachPlanoDragPara(wrap, ".plano-icono-marker", "iconoKey", "iconos");
 }
+let planoNombrePendiente = null;
+on(document.getElementById("planoSelect"), "change", (e) => {
+  planoActualId = e.target.value || null;
+  renderPlanoRiesgos();
+});
+on(document.getElementById("planoNuevoBtn"), "click", () => {
+  const nombre = prompt("Nombre del plano (ej: \"Planta 1\", \"Bodega central\", el área o proceso que representa):");
+  if(nombre === null) return;
+  if(!nombre.trim()){ alert("Indica un nombre para el plano."); return; }
+  planoNombrePendiente = nombre.trim();
+  document.getElementById("planoUploadInput").click();
+});
 on(document.getElementById("planoUploadInput"), "change", async (e) => {
   const file = e.target.files[0];
-  if(!file) return;
-  const dataUrl = await readFileAsDataUrl(file);
-  const cfg = planoConfigActual();
-  cfg.imagen = dataUrl;
-  await savePlanoConfig(cfg);
-  renderPlanoRiesgos();
   e.target.value = "";
+  if(!file || !planoNombrePendiente) return;
+  const dataUrl = await readFileAsDataUrl(file);
+  const nuevo = { id:uid(), nombre: planoNombrePendiente, imagen: dataUrl, marcas:{}, iconos:{} };
+  planoNombrePendiente = null;
+  await savePlanoConfig(nuevo);
+  planoActualId = nuevo.id;
+  renderPlanoRiesgos();
+  renderAreasTable();
 });
 on(document.getElementById("planoQuitarBtn"), "click", async () => {
-  if(!confirm("¿Quitar el plano de planta subido? Se volverá al esquema de cajas por área.")) return;
   const cfg = planoConfigActual();
-  cfg.imagen = null;
-  await savePlanoConfig(cfg);
+  if(!cfg.id) return;
+  if(!confirm(`¿Eliminar el plano "${cfg.nombre}"? Las áreas asignadas a este plano quedarán sin plano (esquema de cajas), no se eliminan.`)) return;
+  await deleteRecord("planoRiesgos", cfg.id);
+  const areasAfectadas = CACHE.areas.filter(a=>a.planoId===cfg.id);
+  for(const a of areasAfectadas){ a.planoId = null; await put("areas", a); }
+  planoActualId = null;
+  await loadCache();
   renderPlanoRiesgos();
+  renderAreasTable();
 });
 function imprimirPlanoRiesgos(){
   const cfg = planoConfigActual();
-  const bloques = planoBloques();
+  const bloques = planoBloques(planoActualId);
   const empresaNombre = (CACHE.empresa && CACHE.empresa.razonSocial) || "—";
   const fecha = new Date().toISOString().slice(0,10);
-  const categoriasTodas = categoriasDeFilas(CACHE.matriz);
+  const simbolosTodos = simbolosDeArea(CACHE.matriz);
   const leyendaHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;font-size:12.5px;">
     <div>
       <strong>Nivel de riesgo</strong><br>
       ${["critico","alto","medio","bajo"].map(n=>`<div style="display:flex;align-items:center;gap:6px;margin-top:4px;"><span style="width:13px;height:13px;border-radius:50%;background:${NIVEL_CHART_COLORS[n]};display:inline-block;"></span>${nivelLabel(n)}</div>`).join("")}
     </div>
     <div>
-      <strong>Simbología por tipo de peligro</strong><br>
-      ${categoriasTodas.map(c=>`<div style="display:flex;align-items:center;gap:6px;margin-top:4px;"><span>${iconoCategoria(c.categoria)}</span>${c.categoria}</div>`).join("")}
+      <strong>Simbología oficial (Anexo 1, DS 44)</strong><br>
+      ${simbolosTodos.map(sim=>`<div style="display:flex;align-items:center;gap:6px;margin-top:4px;">${simboloIconoHtml(sim, 18)}${sim.row.familia}${sim.detalles.size?": "+Array.from(sim.detalles).join(", "):""}</div>`).join("")}
     </div>
   </div>`;
   const cuerpoHtml = cfg.imagen
@@ -9800,7 +9836,7 @@ function imprimirPlanoRiesgos(){
       </div>`;
   document.getElementById("valePrintArea").innerHTML = `
     <div class="vale-print" style="max-width:960px;">
-      <h2>Mapa de riesgos — plano de planta y simbología</h2>
+      <h2>Mapa de riesgos — plano de planta y simbología${cfg.nombre ? " — " + cfg.nombre : ""}</h2>
       <div>${empresaNombre} · Generado el ${fmtDate(fecha)}</div>
       ${cuerpoHtml}
       ${leyendaHtml}
@@ -15140,23 +15176,40 @@ on(document.getElementById("addAreaBtn"), "click", async () => {
   renderCommonSelects(); renderAreasTable();
 });
 function renderAreasTable(){
+  const planoOpts = (CACHE.planoRiesgos||[]).map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
   document.getElementById("areasTable").innerHTML = CACHE.areas.map(a=>`
     <tr>
       <td>${a.nombre}</td>
       <td>${CACHE.trabajadores.filter(t=>t.areaId===a.id).length}</td>
       <td><input type="number" min="0" step="1" value="${a.dotacion??""}" placeholder="Ej: 25" data-area-dotacion="${a.id}" style="max-width:120px;"></td>
+      <td><select data-area-plano="${a.id}" style="max-width:160px;"><option value="">(sin plano)</option>${planoOpts}</select></td>
       <td><button class="subtle-btn" data-area-del="${a.id}">Eliminar</button></td>
     </tr>
-  `).join("") || `<tr><td class="empty" colspan="4">Sin áreas</td></tr>`;
+  `).join("") || `<tr><td class="empty" colspan="5">Sin áreas</td></tr>`;
+  CACHE.areas.forEach(a=>{
+    const sel = document.querySelector(`select[data-area-plano="${a.id}"]`);
+    if(sel) sel.value = a.planoId || "";
+  });
 }
 on(document.getElementById("areasTable"), "change", async (e) => {
   const inp = e.target.closest("input[data-area-dotacion]");
-  if(!inp) return;
-  const area = CACHE.areas.find(a=>a.id===inp.dataset.areaDotacion);
-  if(!area) return;
-  area.dotacion = inp.value===""? null : Math.max(0, +inp.value || 0);
-  await put("areas", area);
-  await loadCache();
+  if(inp){
+    const area = CACHE.areas.find(a=>a.id===inp.dataset.areaDotacion);
+    if(!area) return;
+    area.dotacion = inp.value===""? null : Math.max(0, +inp.value || 0);
+    await put("areas", area);
+    await loadCache();
+    return;
+  }
+  const sel = e.target.closest("select[data-area-plano]");
+  if(sel){
+    const area = CACHE.areas.find(a=>a.id===sel.dataset.areaPlano);
+    if(!area) return;
+    area.planoId = sel.value || null;
+    await put("areas", area);
+    await loadCache();
+    renderPlanoRiesgos();
+  }
 });
 on(document.getElementById("areasTable"), "click", async (e) => {
   const btn = e.target.closest("button[data-area-del]");
