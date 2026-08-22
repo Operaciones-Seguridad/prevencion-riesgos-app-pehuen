@@ -13799,14 +13799,14 @@ on(document.getElementById("arbolTable"), "click", async (e) => {
   const pdfBtn = e.target.closest("button[data-arbol-pdf]");
   if(pdfBtn){
     const rec = CACHE.arbolesCausales.find(r=>r.id===pdfBtn.dataset.arbolPdf);
-    if(rec) descargarArbolPdf(rec);
+    if(rec) await descargarArbolPdf(rec);
   }
 });
-on(document.getElementById("arbolDescargarPdfBtn"), "click", () => {
+on(document.getElementById("arbolDescargarPdfBtn"), "click", async () => {
   const accidenteId = document.getElementById("arbolAccidenteSel").value;
   const hechoCentral = document.getElementById("arbolHechoCentral").value.trim();
   if(!accidenteId || !hechoCentral){ alert("Selecciona el accidente/incidente y completa el hecho central antes de descargar el PDF."); return; }
-  descargarArbolPdf({
+  await descargarArbolPdf({
     accidenteId, hechoCentral,
     responsable: document.getElementById("arbolResponsable").value.trim(),
     fechaAnalisis: document.getElementById("arbolFecha").value || new Date().toISOString().slice(0,10),
@@ -13832,7 +13832,7 @@ function arbolAplanar(hechos){
     });
   return lineas;
 }
-function descargarArbolPdf(rec){
+async function descargarArbolPdf(rec){
   const JsPDFClass = getJsPDF();
   if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
   const doc = new JsPDFClass();
@@ -13866,6 +13866,17 @@ function descargarArbolPdf(rec){
   doc.setFontSize(9);
   const hechoCentralLines = doc.splitTextToSize(rec.hechoCentral || "—", 182);
   doc.text(hechoCentralLines, 14, y); y += hechoCentralLines.length*4.5 + 6;
+
+  const mapaImg = (rec.hechos||[]).length ? await capturarArbolMapaImagen(rec.hechoCentral, rec.hechos||[]) : null;
+  if(mapaImg){
+    const maxImgW = 182, maxImgH = 150;
+    let imgW = maxImgW, imgH = imgW * (mapaImg.h/mapaImg.w);
+    if(imgH > maxImgH){ imgH = maxImgH; imgW = imgH * (mapaImg.w/mapaImg.h); }
+    if(y + imgH > 280){ doc.addPage(); y = 16; }
+    doc.setFontSize(12); doc.text("Mapa del árbol de causas", 14, y); y += 6;
+    doc.addImage(mapaImg.dataUrl, "PNG", 14, y, imgW, imgH);
+    y += imgH + 8;
+  }
 
   if(y > 240){ doc.addPage(); y = 16; }
   doc.setFontSize(12); doc.text("Árbol de causas (de las causas raíz al hecho central)", 14, y); y += 6;
