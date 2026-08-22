@@ -1411,6 +1411,100 @@
       <div id="iapListWrap" style="margin-top:10px;"></div>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrCursosDs44"><h2>Cursos obligatorios (DS 44)</h2><button class="collapse-toggle" id="toggleCursosDs44" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyCursosDs44">
+      <div class="desc">Catálogo de cursos exigidos por la Guía Técnica de Capacitación del DS 44, según el tramo de tamaño de la empresa (Configuración → Empresa) y el rol de cada trabajador. Administra el catálogo aquí; el registro de quién completó cada curso se hace más abajo.</div>
+      <div id="cursosCargarCatalogoWrap"></div>
+      <div class="form-grid">
+        <div><label>Nombre del curso</label><input id="cursoNombre" placeholder="Ej: Capacitación Comité Paritario"></div>
+        <div><label>Tema / categoría</label><input id="cursoTema" placeholder="Ej: Gestión preventiva"></div>
+        <div><label>Duración (horas)</label><input id="cursoHoras" placeholder="Ej: 8, o 'Según ChileValora'"></div>
+        <div><label>Metodología</label>
+          <select id="cursoMetodologia">
+            <option value="presencial">Presencial</option>
+            <option value="online_sincronico">Online sincrónico</option>
+            <option value="online_asincronico">Online asincrónico</option>
+            <option value="mixto">Mixto</option>
+          </select>
+        </div>
+        <div><label>Tipo de certificación</label><input id="cursoCertificacion" placeholder="Ej: Certificado de participación"></div>
+        <div><label>Vigencia (años, 0 = no vence)</label><input id="cursoVigencia" type="number" min="0" step="0.5" value="0"></div>
+        <div><label>Tramo mínimo de empresa</label>
+          <select id="cursoTramo">
+            <option value="todas">Todas las empresas</option>
+            <option value="10-25-sin-comite">10 a 25 trabajadores (sin Comité Paritario)</option>
+            <option value="mas-25">Más de 25 trabajadores</option>
+            <option value="mas-100">Más de 100 trabajadores</option>
+          </select>
+        </div>
+      </div>
+      <label>Aplica a</label>
+      <div class="toolbar" style="margin-top:2px;">
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="checkbox" id="cursoAplicaTodos" style="width:auto;min-height:auto;"> Todos los trabajadores</label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="checkbox" id="cursoAplicaComite" style="width:auto;min-height:auto;"> Comité Paritario</label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="checkbox" id="cursoAplicaDelegado" style="width:auto;min-height:auto;"> Delegado de Seguridad</label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="checkbox" id="cursoAplicaPrevencionista" style="width:auto;min-height:auto;"> Prevencionista</label>
+      </div>
+      <div class="toolbar" style="margin-top:10px;">
+        <button class="btn small" id="cursoGuardarBtn">+ Agregar curso</button>
+        <button class="btn small secondary" id="cursoCancelarBtn" style="display:none;">Cancelar edición</button>
+      </div>
+      <table style="margin-top:14px;">
+        <thead><tr><th>Nombre</th><th>Horas</th><th>Vigencia</th><th>Tramo mínimo</th><th>Aplica a</th><th></th></tr></thead>
+        <tbody id="cursosObligatoriosTable"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Registro de cursos completados</h2>
+      <div class="desc">Registra, por trabajador, qué curso del catálogo completó, en qué fecha, y adjunta el certificado.</div>
+      <div class="form-grid">
+        <div><label>Trabajador</label><select id="trabCursoTrabajador"></select></div>
+        <div><label>Curso</label><select id="trabCursoCurso"></select></div>
+        <div><label>Fecha de aprobación</label><input type="date" id="trabCursoFecha"></div>
+      </div>
+      <label>Certificado (PDF o imagen)</label>
+      <input type="file" id="trabCursoCertificado" accept="image/*,application/pdf">
+      <div style="margin-top:14px;"><button class="btn small" id="trabCursoGuardarBtn">Registrar curso completado</button></div>
+      <div class="toolbar" style="margin-top:14px;">
+        <div class="field"><label>Filtrar por trabajador</label><select id="filterTrabCursoTrabajador"><option value="">Todos</option></select></div>
+        <div class="field"><label>Filtrar por curso</label><select id="filterTrabCursoCurso"><option value="">Todos</option></select></div>
+      </div>
+      <table>
+        <thead><tr><th>Trabajador</th><th>Curso</th><th>Fecha aprobación</th><th>Vencimiento</th><th>Certificado</th><th></th></tr></thead>
+        <tbody id="trabajadorCursosTable"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Alertas de vencimiento</h2>
+      <div class="desc">Cursos vencidos, próximos a vencer (60 días) o nunca completados, entre los que aplican a cada trabajador según su rol y el tramo actual de la empresa.</div>
+      <table>
+        <thead><tr><th>Trabajador</th><th>Curso</th><th>Estado</th><th>Vencimiento</th></tr></thead>
+        <tbody id="cursosAlertasTable"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Reporte de cumplimiento — Cursos DS 44</h2>
+      <div class="toolbar">
+        <div class="field"><label>Filtrar por curso</label><select id="filterReporteCurso"><option value="">Todos</option></select></div>
+        <div class="field"><label>Filtrar por rol</label><select id="filterReporteRol">
+          <option value="">Todos</option>
+          <option value="comite_paritario">Comité Paritario</option>
+          <option value="delegado">Delegado</option>
+          <option value="prevencionista">Prevencionista</option>
+        </select></div>
+      </div>
+      <div class="field" style="min-width:220px;margin-bottom:10px;"><div class="kv">Cumplimiento global de la empresa</div><div id="reporteCumplimientoEmpresa" style="font-size:26px;font-weight:800;"></div></div>
+      <table>
+        <thead><tr><th>Trabajador</th><th>Cursos aplicables</th><th>Vigentes</th><th>% Cumplimiento</th></tr></thead>
+        <tbody id="reporteCumplimientoTable"></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- ACCIDENTABILIDAD -->
@@ -1799,7 +1893,8 @@
   <!-- CUMPLIMIENTO LEGAL -->
   <div class="view" id="view-cumplimiento">
     <div class="card">
-      <h2>Formulario Único de Fiscalización (FUF) — DS N°44/2024</h2>
+      <div class="card-header-row" id="hdrFuf"><h2>Formulario Único de Fiscalización (FUF) — DS N°44/2024</h2><button class="collapse-toggle" id="toggleFuf" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyFuf">
       <div class="desc">Los 62 ítems del FUF vigente, agrupados por materia. Por cada ítem se registra el nivel de cumplimiento, la fecha de evaluación, observaciones y evidencia de respaldo (documento o fotografía).</div>
       <div class="toolbar">
         <div class="field" style="min-width:170px;"><div class="kv">Cumplimiento total</div><div id="fufCumplimientoTotal" style="font-size:26px;font-weight:800;"></div></div>
@@ -1824,6 +1919,7 @@
         <thead><tr><th style="width:40px;">N°</th><th>Ítem del FUF</th><th style="width:150px;">Nivel de cumplimiento</th><th style="width:130px;">Fecha evaluación</th><th style="width:220px;">Observaciones</th><th style="width:210px;">Evidencia</th></tr></thead>
         <tbody id="fufTable"></tbody>
       </table>
+      </div>
     </div>
 
     <div class="card">
@@ -2506,6 +2602,13 @@
         <div class="field"><label>Cargo</label><input id="newTrabCargo" placeholder="Cargo"></div>
         <div class="field"><label>Área</label><select id="newTrabArea"></select></div>
         <div><button class="btn small" id="addTrabBtn" style="margin-top:20px;">+ Agregar</button></div>
+        <div><button class="btn small secondary" id="cancelEditTrabBtn" style="margin-top:20px;display:none;">Cancelar edición</button></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin-top:4px;">Roles (para saber qué cursos obligatorios de Capacitación le corresponden):</label>
+      <div class="toolbar" style="margin-top:2px;">
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="checkbox" id="newTrabRolComite" style="width:auto;min-height:auto;"> Comité Paritario</label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="checkbox" id="newTrabRolDelegado" style="width:auto;min-height:auto;"> Delegado de Seguridad</label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="checkbox" id="newTrabRolPrevencionista" style="width:auto;min-height:auto;"> Prevencionista</label>
       </div>
       <div class="desc" style="margin-top:14px;">Importar varios trabajadores desde un Excel con columnas <strong>Nombre</strong>, <strong>RUT</strong>, <strong>Cargo</strong> y <strong>Área</strong> (el área de cada fila se asigna según el nombre de área que traiga esa columna; si una fila no trae área o no coincide con ninguna de las áreas ya creadas en "Áreas / procesos", ese trabajador queda "Sin asignar" y se puede corregir después editándolo).</div>
       <div class="toolbar">
@@ -2520,7 +2623,7 @@
       <div class="toolbar" style="justify-content:flex-end;">
         <div><button class="btn small danger" id="deleteAllTrabBtn">🗑 Eliminar todos los trabajadores</button></div>
       </div>
-      <table><thead><tr><th>Nombre</th><th>RUT</th><th>Cargo</th><th>Área</th><th></th></tr></thead><tbody id="trabajadoresTable"></tbody></table>
+      <table><thead><tr><th>Nombre</th><th>RUT</th><th>Cargo</th><th>Área</th><th>Roles</th><th></th></tr></thead><tbody id="trabajadoresTable"></tbody></table>
       </div>
     </div>
     <div class="card">
@@ -2659,8 +2762,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 27;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento"];
+const DB_VERSION = 28;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -2967,6 +3070,8 @@ function setupCollapsible(headerId, bodyId, toggleId, storageKey){
 setupCollapsible("hdrMatrizVigente", "bodyMatrizVigente", "toggleMatrizVigente", "collapsed_matrizVigente");
 setupCollapsible("hdrTraspasosPendientes", "bodyTraspasosPendientes", "toggleTraspasosPendientes", "collapsed_traspasosPendientes");
 setupCollapsible("hdrDs44Catalogo", "bodyDs44Catalogo", "toggleDs44Catalogo", "collapsed_ds44Catalogo");
+setupCollapsible("hdrFuf", "bodyFuf", "toggleFuf", "collapsed_fuf");
+setupCollapsible("hdrCursosDs44", "bodyCursosDs44", "toggleCursosDs44", "collapsed_cursosDs44");
 setupCollapsible("hdrLevantamiento", "bodyLevantamiento", "toggleLevantamiento", "collapsed_levantamiento");
 setupCollapsible("hdrCompromisosItems", "bodyCompromisosItems", "toggleCompromisosItems", "collapsed_compromisosItems");
 setupCollapsible("hdrEquidadGenero", "bodyEquidadGenero", "toggleEquidadGenero", "collapsed_equidadGenero");
@@ -3791,12 +3896,17 @@ const DS44_OBLIGACIONES_DEFECTO = [
   { nombre:"Comité Paritario de Higiene y Seguridad", descripcion:"Comité constituido por representantes de la empresa y de los trabajadores.", referenciaNormativa:"DS 44/2024, art. 23", tramoMinimo:"mas-25" },
   { nombre:"Departamento de Prevención de Riesgos Laborales", descripcion:"Departamento dirigido por un experto en prevención de riesgos, inscrito en la Seremi de Salud.", referenciaNormativa:"DS 44/2024, art. 50", tramoMinimo:"mas-100" },
 ];
-function obligacionAplica(ob, numTrabajadores){
+/* Regla de tramo compartida por Obligaciones DS44 y por los Cursos
+   obligatorios de Capacitación (mismos 4 umbrales en ambos catálogos). */
+function tramoMinimoAplica(tramoMinimo, numTrabajadores){
   const n = numTrabajadores||0;
-  if(ob.tramoMinimo==="10-25-sin-comite") return n>=10 && n<=25;
-  if(ob.tramoMinimo==="mas-25") return n>25;
-  if(ob.tramoMinimo==="mas-100") return n>100;
+  if(tramoMinimo==="10-25-sin-comite") return n>=10 && n<=25;
+  if(tramoMinimo==="mas-25") return n>25;
+  if(tramoMinimo==="mas-100") return n>100;
   return true; // "todas" o valor desconocido: no se oculta por defecto
+}
+function obligacionAplica(ob, numTrabajadores){
+  return tramoMinimoAplica(ob.tramoMinimo, numTrabajadores);
 }
 function ds44CumplimientoDe(obligacionId){
   return (CACHE.ds44Cumplimiento||[]).find(r=>r.obligacionId===obligacionId) || null;
@@ -11074,6 +11184,298 @@ on(document.getElementById("importCapBtn"), "click", async () => {
   alert(`Importación completa: ${importadas} capacitación(es) agregada(s) al plan${omitidas? `, ${omitidas} fila(s) omitida(s) por no tener Nombre o Fecha programada válida`:""}.`);
 });
 
+/* =========================================================
+   CURSOS OBLIGATORIOS DE CAPACITACIÓN (DS 44)
+   Distinto del Plan de capacitación de arriba (que es por sesión
+   dictada, con lista de asistentes): esto es por trabajador -- qué
+   curso del catálogo completó, cuándo, con qué certificado, y
+   cuándo vence. Catálogo (cursosObligatorios) filtrado por tramo de
+   empresa (tramoMinimoAplica, compartida con Obligaciones DS44 de
+   Cumplimiento legal) y por rol del trabajador (trabajador.roles).
+   ========================================================= */
+const CURSOS_DS44_DEFECTO = [
+  { nombre:"Capacitación general del trabajador", tema:"Prevención de riesgos general", horas:"8", metodologia:"presencial", tipoCertificacion:"Certificado de participación", vigenciaAnios:2, aplicaA:["todos"], tramoMinimo:"todas" },
+  { nombre:"Uso de elementos de protección personal (EPP)", tema:"EPP", horas:"1", metodologia:"presencial", tipoCertificacion:"Certificado de capacitación EPP", vigenciaAnios:1, aplicaA:["todos"], tramoMinimo:"todas" },
+  { nombre:"Inducción / orientación en prevención de riesgos", tema:"Inducción", horas:"8", metodologia:"presencial", tipoCertificacion:"Certificado de inducción", vigenciaAnios:0, aplicaA:["todos"], tramoMinimo:"todas" },
+  { nombre:"Capacitación Comité Paritario", tema:"Comité Paritario de Higiene y Seguridad", horas:"20", metodologia:"presencial", tipoCertificacion:"Certificado curso Organismo Administrador", vigenciaAnios:2, aplicaA:["comite_paritario"], tramoMinimo:"mas-25" },
+  { nombre:"Capacitación de Delegados", tema:"Delegado de Seguridad y Salud en el Trabajo", horas:"8", metodologia:"presencial", tipoCertificacion:"Certificado curso Organismo Administrador", vigenciaAnios:2, aplicaA:["delegado"], tramoMinimo:"10-25-sin-comite" },
+  { nombre:"Programa de Prevencionista", tema:"Formación de Prevencionista de Riesgos", horas:"Según ChileValora", metodologia:"mixto", tipoCertificacion:"Certificación ChileValora", vigenciaAnios:0, aplicaA:["prevencionista"], tramoMinimo:"todas" },
+];
+function cursoAplicaATrabajador(curso, trabajador, numTrabajadores){
+  if(!tramoMinimoAplica(curso.tramoMinimo, numTrabajadores)) return false;
+  if((curso.aplicaA||[]).includes("todos")) return true;
+  return (curso.aplicaA||[]).some(r => (trabajador.roles||[]).includes(r));
+}
+function cursosAplicablesA(trabajador){
+  const n = (CACHE.empresa && CACHE.empresa.numTrabajadores) || 0;
+  return (CACHE.cursosObligatorios||[]).filter(c=>cursoAplicaATrabajador(c, trabajador, n));
+}
+/* El registro más reciente (por fecha de aprobación) de un trabajador para
+   un curso -- un trabajador puede recursar el mismo curso más de una vez. */
+function ultimoCursoDe(trabajadorId, cursoId){
+  const regs = (CACHE.trabajadorCursos||[]).filter(r=>r.trabajadorId===trabajadorId && r.cursoId===cursoId);
+  if(!regs.length) return null;
+  return regs.slice().sort((a,b)=> new Date(b.fechaAprobacion||0) - new Date(a.fechaAprobacion||0))[0];
+}
+function estadoVencimientoCurso(reg){
+  if(!reg) return "nunca";
+  if(!reg.fechaVencimiento) return "vigente"; // no vence
+  const d = daysUntil(reg.fechaVencimiento);
+  if(d < 0) return "vencido";
+  if(d <= 60) return "proximo";
+  return "vigente";
+}
+const CURSO_ESTADO_LABEL = { vencido:"Vencido", proximo:"Próximo a vencer", vigente:"Vigente", nunca:"Nunca completado" };
+const CURSO_ESTADO_PILL = { vencido:"vencido", proximo:"proximo", vigente:"vigente", nunca:"critico" };
+
+/* --- Catálogo (administración) --- */
+const CURSO_APLICA_CHECKS = { todos:"cursoAplicaTodos", comite_paritario:"cursoAplicaComite", delegado:"cursoAplicaDelegado", prevencionista:"cursoAplicaPrevencionista" };
+let cursoEditingId = null;
+function resetCursoForm(){
+  cursoEditingId = null;
+  ["cursoNombre","cursoTema","cursoHoras","cursoCertificacion"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("cursoMetodologia").value = "presencial";
+  document.getElementById("cursoVigencia").value = "0";
+  document.getElementById("cursoTramo").value = "todas";
+  Object.values(CURSO_APLICA_CHECKS).forEach(id=>document.getElementById(id).checked=false);
+  document.getElementById("cursoGuardarBtn").textContent = "+ Agregar curso";
+  document.getElementById("cursoCancelarBtn").style.display = "none";
+}
+function renderCursosObligatoriosTable(){
+  const tbody = document.getElementById("cursosObligatoriosTable");
+  if(!tbody) return;
+  const rows = (CACHE.cursosObligatorios||[]).slice().sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  tbody.innerHTML = rows.length ? rows.map(c=>`
+    <tr>
+      <td>${c.nombre}</td>
+      <td>${c.horas||"—"}</td>
+      <td>${c.vigenciaAnios ? c.vigenciaAnios+" año(s)" : "No vence"}</td>
+      <td>${DS44_OB_TRAMO_LABEL[c.tramoMinimo]||c.tramoMinimo}</td>
+      <td>${(c.aplicaA||[]).map(r=>r==="todos"?"Todos":(TRAB_ROL_LABEL[r]||r)).join(", ")||"—"}</td>
+      <td style="white-space:nowrap;">
+        <button class="subtle-btn" data-curso-editar="${c.id}">Editar</button>
+        <button class="subtle-btn" data-curso-eliminar="${c.id}">Eliminar</button>
+      </td>
+    </tr>
+  `).join("") : `<tr><td class="empty" colspan="6">Sin cursos en el catálogo</td></tr>`;
+  const cargarWrap = document.getElementById("cursosCargarCatalogoWrap");
+  if(cargarWrap) cargarWrap.innerHTML = rows.length ? "" : `<div class="toolbar"><button class="btn small secondary" id="cursosCargarCatalogoBtn" type="button">Cargar catálogo inicial de cursos DS 44</button></div>`;
+  const cargarBtn = document.getElementById("cursosCargarCatalogoBtn");
+  if(cargarBtn) on(cargarBtn, "click", async ()=>{
+    for(const c of CURSOS_DS44_DEFECTO) await put("cursosObligatorios", {id:uid(), ...c});
+    await loadCache();
+    renderCursosObligatoriosTable();
+    renderCursosSelects();
+    renderCursosAlertas();
+    renderReporteCumplimiento();
+  });
+}
+on(document.getElementById("cursoGuardarBtn"), "click", async ()=>{
+  const nombre = document.getElementById("cursoNombre").value.trim();
+  if(!nombre){ alert("Indica el nombre del curso."); return; }
+  const aplicaA = Object.keys(CURSO_APLICA_CHECKS).filter(r=>document.getElementById(CURSO_APLICA_CHECKS[r]).checked);
+  if(!aplicaA.length){ alert('Marca a quién aplica el curso (al menos "Todos" u otro rol).'); return; }
+  const rec = {
+    id: cursoEditingId || uid(),
+    nombre,
+    tema: document.getElementById("cursoTema").value.trim(),
+    horas: document.getElementById("cursoHoras").value.trim(),
+    metodologia: document.getElementById("cursoMetodologia").value,
+    tipoCertificacion: document.getElementById("cursoCertificacion").value.trim(),
+    vigenciaAnios: +document.getElementById("cursoVigencia").value || 0,
+    tramoMinimo: document.getElementById("cursoTramo").value,
+    aplicaA,
+  };
+  await put("cursosObligatorios", rec);
+  await loadCache();
+  resetCursoForm();
+  renderCursosObligatoriosTable();
+  renderCursosSelects();
+  renderCursosAlertas();
+  renderReporteCumplimiento();
+});
+on(document.getElementById("cursoCancelarBtn"), "click", ()=> resetCursoForm());
+on(document.getElementById("cursosObligatoriosTable"), "click", async (e)=>{
+  const editBtn = e.target.closest("[data-curso-editar]");
+  if(editBtn){
+    const c = (CACHE.cursosObligatorios||[]).find(x=>x.id===editBtn.dataset.cursoEditar);
+    if(!c) return;
+    cursoEditingId = c.id;
+    document.getElementById("cursoNombre").value = c.nombre||"";
+    document.getElementById("cursoTema").value = c.tema||"";
+    document.getElementById("cursoHoras").value = c.horas||"";
+    document.getElementById("cursoMetodologia").value = c.metodologia||"presencial";
+    document.getElementById("cursoCertificacion").value = c.tipoCertificacion||"";
+    document.getElementById("cursoVigencia").value = c.vigenciaAnios||0;
+    document.getElementById("cursoTramo").value = c.tramoMinimo||"todas";
+    Object.entries(CURSO_APLICA_CHECKS).forEach(([r,id])=>{ document.getElementById(id).checked = (c.aplicaA||[]).includes(r); });
+    document.getElementById("cursoGuardarBtn").textContent = "Guardar cambios";
+    document.getElementById("cursoCancelarBtn").style.display = "";
+    return;
+  }
+  const delBtn = e.target.closest("[data-curso-eliminar]");
+  if(delBtn){
+    const c = (CACHE.cursosObligatorios||[]).find(x=>x.id===delBtn.dataset.cursoEliminar);
+    if(!c) return;
+    if(!confirm(`¿Eliminar el curso "${c.nombre}" del catálogo? Los registros ya guardados de trabajadores que lo completaron no se borran, pero el curso dejará de aparecer para nuevos registros.`)) return;
+    await deleteRecord("cursosObligatorios", c.id);
+    await loadCache();
+    if(cursoEditingId===c.id) resetCursoForm();
+    renderCursosObligatoriosTable();
+    renderCursosSelects();
+    renderCursosAlertas();
+    renderReporteCumplimiento();
+  }
+});
+
+/* --- Selects compartidos (trabajador/curso) de esta sección --- */
+function renderCursosSelects(){
+  const trabOpts = (CACHE.trabajadores||[]).map(t=>({id:t.id,label:t.nombre}));
+  const cursoOpts = (CACHE.cursosObligatorios||[]).map(c=>({id:c.id,label:c.nombre}));
+  const trabSel = document.getElementById("trabCursoTrabajador");
+  if(trabSel) fillSelect(trabSel, trabOpts, true);
+  const cursoSel = document.getElementById("trabCursoCurso");
+  if(cursoSel) fillSelect(cursoSel, cursoOpts, true);
+  const filterTrab = document.getElementById("filterTrabCursoTrabajador");
+  if(filterTrab){ const cur=filterTrab.value; fillSelect(filterTrab, trabOpts, false); filterTrab.insertAdjacentHTML("afterbegin",'<option value="">Todos</option>'); filterTrab.value=cur||""; }
+  const filterCurso = document.getElementById("filterTrabCursoCurso");
+  if(filterCurso){ const cur=filterCurso.value; fillSelect(filterCurso, cursoOpts, false); filterCurso.insertAdjacentHTML("afterbegin",'<option value="">Todos</option>'); filterCurso.value=cur||""; }
+  const filterReporte = document.getElementById("filterReporteCurso");
+  if(filterReporte){ const cur=filterReporte.value; fillSelect(filterReporte, cursoOpts, false); filterReporte.insertAdjacentHTML("afterbegin",'<option value="">Todos</option>'); filterReporte.value=cur||""; }
+}
+
+/* --- Registro de cursos completados --- */
+let trabCursoCertPendiente = null;
+document.getElementById("trabCursoCertificado").addEventListener("change", async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  trabCursoCertPendiente = {nombre:file.name, data: await readFileAsDataUrl(file)};
+});
+on(document.getElementById("trabCursoGuardarBtn"), "click", async ()=>{
+  const trabajadorId = document.getElementById("trabCursoTrabajador").value;
+  const cursoId = document.getElementById("trabCursoCurso").value;
+  const fechaAprobacion = document.getElementById("trabCursoFecha").value;
+  if(!trabajadorId || !cursoId || !fechaAprobacion){ alert("Selecciona el trabajador, el curso y la fecha de aprobación."); return; }
+  const curso = (CACHE.cursosObligatorios||[]).find(c=>c.id===cursoId);
+  const fechaVencimiento = curso && curso.vigenciaAnios ? addMonths(fechaAprobacion, curso.vigenciaAnios*12) : null;
+  const rec = {
+    id: uid(), trabajadorId, cursoId, fechaAprobacion, fechaVencimiento,
+    certificadoNombre: trabCursoCertPendiente ? trabCursoCertPendiente.nombre : null,
+    certificadoData: trabCursoCertPendiente ? trabCursoCertPendiente.data : null,
+    fechaCreacion: new Date().toISOString(),
+  };
+  await put("trabajadorCursos", rec);
+  await loadCache();
+  document.getElementById("trabCursoTrabajador").value = "";
+  document.getElementById("trabCursoCurso").value = "";
+  document.getElementById("trabCursoFecha").value = "";
+  document.getElementById("trabCursoCertificado").value = "";
+  trabCursoCertPendiente = null;
+  renderTrabajadorCursosTable();
+  renderCursosAlertas();
+  renderReporteCumplimiento();
+  alert("Curso completado registrado.");
+});
+function renderTrabajadorCursosTable(){
+  const tbody = document.getElementById("trabajadorCursosTable");
+  if(!tbody) return;
+  const fTrab = document.getElementById("filterTrabCursoTrabajador").value;
+  const fCurso = document.getElementById("filterTrabCursoCurso").value;
+  const rows = (CACHE.trabajadorCursos||[])
+    .filter(r=> !fTrab || r.trabajadorId===fTrab)
+    .filter(r=> !fCurso || r.cursoId===fCurso)
+    .sort((a,b)=> new Date(b.fechaAprobacion||0) - new Date(a.fechaAprobacion||0));
+  tbody.innerHTML = rows.length ? rows.map(r=>{
+    const curso = (CACHE.cursosObligatorios||[]).find(c=>c.id===r.cursoId);
+    const estado = estadoVencimientoCurso(r);
+    return `<tr>
+      <td>${trabName(r.trabajadorId)}</td>
+      <td>${curso ? curso.nombre : "(curso eliminado)"}</td>
+      <td>${fmtDate(r.fechaAprobacion)}</td>
+      <td>${r.fechaVencimiento ? `${fmtDate(r.fechaVencimiento)} <span class="pill ${CURSO_ESTADO_PILL[estado]}">${CURSO_ESTADO_LABEL[estado]}</span>` : "No vence"}</td>
+      <td>${r.certificadoNombre ? `<button class="subtle-btn" data-trabcurso-vercert="${r.id}">📎 Ver</button>` : "—"}</td>
+      <td><button class="subtle-btn" data-trabcurso-eliminar="${r.id}">Eliminar</button></td>
+    </tr>`;
+  }).join("") : `<tr><td class="empty" colspan="6">Sin cursos registrados</td></tr>`;
+}
+document.getElementById("filterTrabCursoTrabajador").addEventListener("change", renderTrabajadorCursosTable);
+document.getElementById("filterTrabCursoCurso").addEventListener("change", renderTrabajadorCursosTable);
+on(document.getElementById("trabajadorCursosTable"), "click", async (e)=>{
+  const verBtn = e.target.closest("[data-trabcurso-vercert]");
+  if(verBtn){
+    const r = (CACHE.trabajadorCursos||[]).find(x=>x.id===verBtn.dataset.trabcursoVercert);
+    if(r && r.certificadoData){
+      const w = window.open();
+      if(w) w.document.write(`<title>${r.certificadoNombre||"Certificado"}</title><body style="margin:0;background:#222;display:flex;align-items:center;justify-content:center;height:100vh;">${/^data:application\/pdf/.test(r.certificadoData) ? `<embed src="${r.certificadoData}" style="width:100%;height:100%;">` : `<img src="${r.certificadoData}" style="max-width:100%;max-height:100%;">`}</body>`);
+    }
+    return;
+  }
+  const delBtn = e.target.closest("[data-trabcurso-eliminar]");
+  if(delBtn){
+    if(!confirm("¿Eliminar este registro de curso completado?")) return;
+    await deleteRecord("trabajadorCursos", delBtn.dataset.trabcursoEliminar);
+    await loadCache();
+    renderTrabajadorCursosTable();
+    renderCursosAlertas();
+    renderReporteCumplimiento();
+  }
+});
+
+/* --- Alertas de vencimiento --- */
+function renderCursosAlertas(){
+  const tbody = document.getElementById("cursosAlertasTable");
+  if(!tbody) return;
+  const filas = [];
+  (CACHE.trabajadores||[]).forEach(t=>{
+    cursosAplicablesA(t).forEach(c=>{
+      const reg = ultimoCursoDe(t.id, c.id);
+      const estado = estadoVencimientoCurso(reg);
+      if(estado==="vencido" || estado==="proximo" || estado==="nunca") filas.push({t, c, reg, estado});
+    });
+  });
+  filas.sort((a,b)=> (a.estado==="vencido"?0:a.estado==="proximo"?1:2) - (b.estado==="vencido"?0:b.estado==="proximo"?1:2));
+  tbody.innerHTML = filas.length ? filas.map(f=>`
+    <tr>
+      <td>${f.t.nombre}</td>
+      <td>${f.c.nombre}</td>
+      <td><span class="pill ${CURSO_ESTADO_PILL[f.estado]}">${CURSO_ESTADO_LABEL[f.estado]}</span></td>
+      <td>${f.reg && f.reg.fechaVencimiento ? fmtDate(f.reg.fechaVencimiento) : "—"}</td>
+    </tr>
+  `).join("") : `<tr><td class="empty" colspan="4">Sin alertas: todos los cursos aplicables están vigentes.</td></tr>`;
+}
+
+/* --- Reporte de cumplimiento --- */
+function renderReporteCumplimiento(){
+  const tbody = document.getElementById("reporteCumplimientoTable");
+  const totalEl = document.getElementById("reporteCumplimientoEmpresa");
+  if(!tbody || !totalEl) return;
+  const fCurso = document.getElementById("filterReporteCurso").value;
+  const fRol = document.getElementById("filterReporteRol").value;
+  const trabajadores = (CACHE.trabajadores||[]).filter(t=> !fRol || (t.roles||[]).includes(fRol));
+  let totalAplicables = 0, totalVigentes = 0;
+  const filas = trabajadores.map(t=>{
+    let aplicables = cursosAplicablesA(t);
+    if(fCurso) aplicables = aplicables.filter(c=>c.id===fCurso);
+    const vigentes = aplicables.filter(c=> estadoVencimientoCurso(ultimoCursoDe(t.id,c.id))==="vigente").length;
+    totalAplicables += aplicables.length;
+    totalVigentes += vigentes;
+    const pct = aplicables.length ? Math.round(vigentes/aplicables.length*100) : 100;
+    return {t, aplicables: aplicables.length, vigentes, pct};
+  });
+  tbody.innerHTML = filas.length ? filas.map(f=>`
+    <tr>
+      <td>${f.t.nombre}</td>
+      <td>${f.aplicables}</td>
+      <td>${f.vigentes}</td>
+      <td><span class="pill ${f.pct>=100?'vigente':f.pct>=50?'proximo':'vencido'}">${f.pct}%</span></td>
+    </tr>
+  `).join("") : `<tr><td class="empty" colspan="4">Sin trabajadores para el filtro seleccionado</td></tr>`;
+  totalEl.textContent = totalAplicables ? Math.round(totalVigentes/totalAplicables*100)+"%" : "—";
+}
+["filterReporteCurso","filterReporteRol"].forEach(id=>{
+  document.getElementById(id).addEventListener("change", renderReporteCumplimiento);
+});
+
 /* Repuebla los filtros de mes y responsable (relator) del plan de
    capacitación con los valores realmente presentes en los datos. */
 function renderCapFiltros(){
@@ -14229,6 +14631,8 @@ on(document.getElementById("saveEmpresaBtn"), "click", async () => {
   renderAccidentabilidad();
   aplicarVisibilidadIap();
   renderDs44Cumplimiento();
+  renderCursosAlertas();
+  renderReporteCumplimiento();
   alert("Datos de la empresa guardados.");
 });
 
@@ -14341,24 +14745,57 @@ on(document.getElementById("catListWrap"), "click", async (e) => {
   renderCommonSelects();
   renderCatList();
 });
+const TRAB_ROLES_CHECKS = { comite_paritario:"newTrabRolComite", delegado:"newTrabRolDelegado", prevencionista:"newTrabRolPrevencionista" };
+function leerRolesTrabForm(){
+  return Object.keys(TRAB_ROLES_CHECKS).filter(r=>document.getElementById(TRAB_ROLES_CHECKS[r]).checked);
+}
+let trabEditingId = null;
+function resetTrabForm(){
+  trabEditingId = null;
+  document.getElementById("newTrabName").value=""; document.getElementById("newTrabRut").value=""; document.getElementById("newTrabCargo").value="";
+  document.getElementById("newTrabArea").value = "";
+  Object.values(TRAB_ROLES_CHECKS).forEach(id=>document.getElementById(id).checked=false);
+  document.getElementById("addTrabBtn").textContent = "+ Agregar";
+  document.getElementById("cancelEditTrabBtn").style.display = "none";
+}
 on(document.getElementById("addTrabBtn"), "click", async () => {
   const nombre = document.getElementById("newTrabName").value.trim();
   const rut = document.getElementById("newTrabRut").value.trim();
   const cargo = document.getElementById("newTrabCargo").value.trim();
   const areaId = document.getElementById("newTrabArea").value;
   if(!nombre || !areaId) { alert("Complete nombre y área."); return; }
-  await put("trabajadores", {id:uid(), nombre, rut, cargo, areaId});
+  const roles = leerRolesTrabForm();
+  await put("trabajadores", {id: trabEditingId || uid(), nombre, rut, cargo, areaId, roles});
   await loadCache();
-  document.getElementById("newTrabName").value=""; document.getElementById("newTrabRut").value=""; document.getElementById("newTrabCargo").value="";
+  resetTrabForm();
   renderCommonSelects(); renderTrabajadoresTable();
+  renderCursosSelects(); renderCursosAlertas(); renderReporteCumplimiento();
 });
+on(document.getElementById("cancelEditTrabBtn"), "click", ()=> resetTrabForm());
+const TRAB_ROL_LABEL = { comite_paritario:"Comité Paritario", delegado:"Delegado", prevencionista:"Prevencionista" };
 function renderTrabajadoresTable(){
   document.getElementById("trabajadoresTable").innerHTML = CACHE.trabajadores.map(t=>`
     <tr><td>${t.nombre}</td><td>${t.rut||"—"}</td><td>${t.cargo||"—"}</td><td>${areaName(t.areaId)}</td>
-      <td><button class="subtle-btn" data-trab-del="${t.id}">Eliminar</button></td></tr>
-  `).join("") || `<tr><td class="empty" colspan="5">Sin trabajadores</td></tr>`;
+      <td>${(t.roles||[]).map(r=>TRAB_ROL_LABEL[r]||r).join(", ")||"—"}</td>
+      <td><button class="subtle-btn" data-trab-editar="${t.id}">Editar</button> <button class="subtle-btn" data-trab-del="${t.id}">Eliminar</button></td></tr>
+  `).join("") || `<tr><td class="empty" colspan="6">Sin trabajadores</td></tr>`;
 }
 on(document.getElementById("trabajadoresTable"), "click", async (e) => {
+  const editBtn = e.target.closest("button[data-trab-editar]");
+  if(editBtn){
+    const trab = CACHE.trabajadores.find(t=>t.id===editBtn.dataset.trabEditar);
+    if(!trab) return;
+    trabEditingId = trab.id;
+    document.getElementById("newTrabName").value = trab.nombre||"";
+    document.getElementById("newTrabRut").value = trab.rut||"";
+    document.getElementById("newTrabCargo").value = trab.cargo||"";
+    document.getElementById("newTrabArea").value = trab.areaId||"";
+    Object.entries(TRAB_ROLES_CHECKS).forEach(([rol,id])=>{ document.getElementById(id).checked = (trab.roles||[]).includes(rol); });
+    document.getElementById("addTrabBtn").textContent = "Guardar cambios";
+    document.getElementById("cancelEditTrabBtn").style.display = "";
+    document.getElementById("newTrabName").scrollIntoView({behavior:"smooth", block:"center"});
+    return;
+  }
   const btn = e.target.closest("button[data-trab-del]");
   if(!btn) return;
   const trab = CACHE.trabajadores.find(t=>t.id===btn.dataset.trabDel);
@@ -14366,7 +14803,9 @@ on(document.getElementById("trabajadoresTable"), "click", async (e) => {
   if(!confirm(`¿Eliminar a "${trab.nombre}" de la lista de trabajadores? Esto no borra su historial en capacitaciones ya registradas, pero dejará de aparecer en los listados para agregar.`)) return;
   await deleteRecord("trabajadores", trab.id);
   await loadCache();
+  if(trabEditingId===trab.id) resetTrabForm();
   renderCommonSelects(); renderTrabajadoresTable();
+  renderCursosSelects(); renderCursosAlertas(); renderReporteCumplimiento();
 });
 
 /* Nómina de responsables de cierre de hallazgos (usada como lista desplegable del campo
@@ -15636,6 +16075,11 @@ async function refreshAll(){
   renderCapacitacionesList();
   renderCapCumplimientoPorResponsable();
   renderIap();
+  renderCursosObligatoriosTable();
+  renderCursosSelects();
+  renderTrabajadorCursosTable();
+  renderCursosAlertas();
+  renderReporteCumplimiento();
   renderAreasTable();
   renderCatList();
   renderTrabajadoresTable();
