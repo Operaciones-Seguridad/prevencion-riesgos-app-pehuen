@@ -2779,8 +2779,8 @@
         <button class="btn secondary small" id="refrescarEmpresasBtn">↻ Actualizar listado</button>
       </div>
       <table style="margin-top:10px;">
-        <thead><tr><th>Nombre</th><th style="width:180px;">Acciones</th></tr></thead>
-        <tbody id="empresasTable"><tr><td colspan="2">Cargando…</td></tr></tbody>
+        <thead><tr><th>Nombre</th><th style="width:110px;">Estado</th><th style="width:220px;">Acciones</th></tr></thead>
+        <tbody id="empresasTable"><tr><td colspan="3">Cargando…</td></tr></tbody>
       </table>
 
       <h2 style="margin-top:24px;">Agregar una empresa nueva</h2>
@@ -15657,27 +15657,43 @@ async function renderEmpresasTable(){
   let empresas = null;
   try{ empresas = await apiFetch("GET", "/api/empresas"); }catch(e){ empresas = null; }
   if(empresas === null){
-    tbody.innerHTML = '<tr><td colspan="2">No se pudo cargar el listado de empresas.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3">No se pudo cargar el listado de empresas.</td></tr>';
     return;
   }
   if(!empresas.length){
-    tbody.innerHTML = '<tr><td colspan="2">No hay empresas registradas todavía.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3">No hay empresas registradas todavía.</td></tr>';
     return;
   }
   tbody.innerHTML = empresas.map(e => {
     const esActual = !!(activeEmpresa && e.id === activeEmpresa.id);
     const nombreEscapado = String(e.nombre).replace(/"/g,"&quot;");
+    const pendiente = e.aprobada === false;
+    const estadoHtml = pendiente ? '<span class="pill medio">Pendiente</span>' : '<span class="pill vigente">Activa</span>';
+    const aprobarHtml = pendiente ? `<button class="btn small" data-aprobar-empresa="${e.id}" style="margin-right:6px;">Aprobar</button>` : "";
     return `<tr>
       <td>${e.nombre}${esActual ? ' <span class="desc" style="display:inline;margin:0;">(empresa actual)</span>' : ""}</td>
-      <td>${esActual
+      <td>${estadoHtml}</td>
+      <td>${aprobarHtml}${esActual
         ? '<span class="desc" style="display:inline;margin:0;">No puedes eliminar la empresa con la que iniciaste sesión</span>'
-        : `<button class="btn small danger" data-eliminar-empresa="${e.id}" data-nombre-empresa="${nombreEscapado}">Eliminar</button>`
+        : `<button class="btn small danger" data-eliminar-empresa="${e.id}" data-nombre-empresa="${nombreEscapado}">${pendiente ? "Rechazar" : "Eliminar"}</button>`
       }</td>
     </tr>`;
   }).join("");
 }
 on(document.getElementById("refrescarEmpresasBtn"), "click", renderEmpresasTable);
 on(document.getElementById("empresasTable"), "click", async (ev) => {
+  const btnAprobar = ev.target.closest("[data-aprobar-empresa]");
+  if(btnAprobar){
+    btnAprobar.disabled = true;
+    try{
+      await apiFetch("POST", "/api/empresas/" + encodeURIComponent(btnAprobar.dataset.aprobarEmpresa) + "/aprobar");
+      await renderEmpresasTable();
+    }catch(e){
+      alert("No se pudo aprobar la empresa: " + e.message);
+      btnAprobar.disabled = false;
+    }
+    return;
+  }
   const btn = ev.target.closest("[data-eliminar-empresa]");
   if(!btn) return;
   const id = btn.dataset.eliminarEmpresa;
@@ -15990,7 +16006,9 @@ async function iniciarSesionGuardada(){
 async function completarLogin(body){
   const { ok, data } = await apiLoginRequest(body);
   if(!ok || !data || (!data.token && !data.requiereSeleccion)){
-    document.getElementById("loginError").style.display = "";
+    const box = document.getElementById("loginError");
+    box.textContent = (data && data.error) || "Correo o clave incorrectos.";
+    box.style.display = "";
     return;
   }
   if(data.requiereSeleccion){
@@ -16026,7 +16044,12 @@ on(document.getElementById("loginLegacyBtn"), "click", async () => {
   const clave = document.getElementById("loginClaveLegacy").value;
   if(!empresaId || !usuarioId || !clave){ document.getElementById("loginErrorLegacy").style.display = ""; return; }
   const { ok, data } = await apiLoginRequest({ empresaId, usuarioId, clave });
-  if(!ok || !data || !data.token){ document.getElementById("loginErrorLegacy").style.display = ""; return; }
+  if(!ok || !data || !data.token){
+    const box = document.getElementById("loginErrorLegacy");
+    box.textContent = (data && data.error) || "Empresa, usuario o clave incorrectos.";
+    box.style.display = "";
+    return;
+  }
   authToken = data.token;
   try{ localStorage.setItem(AUTH_TOKEN_KEY, authToken); }catch(e){}
   await iniciarSesionConUsuario(data.usuario.id, data.empresa, data.superAdmin);
@@ -16051,15 +16074,16 @@ on(document.getElementById("registrarEmpresaBtn"), "click", async () => {
   const adminEmail = document.getElementById("regAdminEmail").value.trim();
   const adminClave = document.getElementById("regAdminClave").value;
   const { ok, data } = await apiRegistrarEmpresa({ nombre, rut, rubro, adminNombre, adminEmail, adminClave });
-  if(!ok || !data || !data.token){
+  if(!ok || !data || !data.pendiente){
     errBox.textContent = (data && data.error) || "No se pudo registrar la empresa.";
     errBox.style.display = "";
     return;
   }
-  authToken = data.token;
-  try{ localStorage.setItem(AUTH_TOKEN_KEY, authToken); }catch(e){}
+  /* Ya no hay auto-login: la empresa nace pendiente de aprobación de un
+     superAdmin (nunca se le devuelve un token todavía). */
   document.getElementById("registroOverlay").classList.add("hidden");
-  await iniciarSesionConUsuario(data.usuario.id, data.empresa, data.superAdmin);
+  alert(`Listo, "${data.empresa.nombre}" quedó registrada. Te avisaremos apenas esté aprobada y puedas ingresar.`);
+  mostrarLogin();
 });
 on(document.getElementById("loginDevBtn"), "click", async () => {
   const usuarioId = document.getElementById("loginUsuarioSel").value;
