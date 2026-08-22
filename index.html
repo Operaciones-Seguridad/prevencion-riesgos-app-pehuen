@@ -2615,8 +2615,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 25;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock"];
+const DB_VERSION = 26;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -11792,6 +11792,7 @@ function renderAccidentesTable(){
       <td style="white-space:nowrap;">
         <button class="btn secondary small" data-acc-editar="${a.id}">Editar</button>
         <button class="btn secondary small" data-acc-pdf="${a.id}">Informe PDF</button>
+        <button class="btn secondary small" data-acc-investigacion="${a.id}">Investigación${(CACHE.accInvestigaciones||[]).some(inv=>inv.accidenteId===a.id) ? ' <span class="pill vigente" style="margin-left:4px;">✓</span>' : ""}</button>
         <button class="subtle-btn" data-acc-eliminar="${a.id}">Eliminar</button>
       </td>
     </tr>`;
@@ -11808,6 +11809,12 @@ on(document.getElementById("accidentesTable"), "click", async (e) => {
   if(pdfBtn){
     const rec = CACHE.accidentes.find(a=>a.id===pdfBtn.dataset.accPdf);
     if(rec) await descargarInformeAccidentePdf(rec);
+    return;
+  }
+  const invBtn = e.target.closest("button[data-acc-investigacion]");
+  if(invBtn){
+    const rec = CACHE.accidentes.find(a=>a.id===invBtn.dataset.accInvestigacion);
+    if(rec) abrirModalInvestigacionAccidente(rec);
     return;
   }
   const delBtn = e.target.closest("button[data-acc-eliminar]");
@@ -12754,6 +12761,402 @@ function descargarArbolPdf(rec){
   }
 
   doc.save(`Analisis_Causa_Raiz_${(rec.fechaAnalisis||"").replace(/[^0-9]/g,"")||new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+/* =========================================================
+   INVESTIGACIÓN DE ACCIDENTE (formato formal, modelo de
+   causalidad de pérdidas de Bird: identificación del accidentado,
+   información del evento, causas inmediatas -- acción/condición
+   subestándar --, causas básicas -- factores personales/del
+   trabajo --, medidas correctivas, pérdidas, revisión y firmas).
+   Informe NUEVO Y ADICIONAL al "Informe PDF" ya existente (que usa
+   el árbol causal) -- store separado accInvestigaciones, un
+   registro por accidente (accidenteId), 1:1. Los datos del
+   accidentado se congelan en el propio registro en vez de
+   referenciar en vivo a "trabajadores" (que hoy solo tiene
+   nombre/rut/cargo/areaId), igual criterio que ya usan las
+   "Personas y/o vehículos inspeccionados" de Inspecciones.
+   ========================================================= */
+const INV_TIPO_EVENTO = ["Con Incapacidad","Sin Incapacidad","Enfermedad Profesional","Incidente"];
+const INV_PARTES_CUERPO = ["Ninguno","Cabeza","Ojos","Cara","Manos","Brazo","Tronco","Piernas","Pies","Múltiples"];
+const INV_TIPO_ACCIDENTE = [
+  "Golpe con (objetos manejados por el mismo accidentado)",
+  "Golpe por (objetos o materiales ajenos al accidentado)",
+  "Golpe contra (la persona se golpea con objeto de su medio ambiente)",
+  "Caída del mismo nivel",
+  "Caída de distinto nivel",
+  "Prendimiento (retención de personas por elementos sobresalientes)",
+  "Atrapamiento (la persona es oprimida, aplastada, apretada o comprimida entre objetos)",
+  "Aprisionamiento (la persona queda encerrada en algún recinto, ej. espacio confinado)",
+  "Sobreesfuerzo (esfuerzo mal realizado o por sobre la capacidad)",
+  "Contacto por (la persona es tocada por objeto/sustancia que inflige lesión no producida por la fuerza: ácido, metal caliente, etc.)",
+  "Contacto con (la persona hace contacto con objeto/sustancia que inflige lesión no producida por la fuerza)",
+  "Contacto eléctrico",
+  "Arco eléctrico",
+  "Tránsito (choque o colisión en que la persona tuvo participación activa)",
+  "Tránsito por terceros (choque en que la persona no tuvo participación activa)",
+  "Mordedura de perros",
+  "Asalto",
+  "Otras causas",
+];
+const INV_ACCION_SUBESTANDAR = [
+  "Asumir posiciones o posturas inseguras",
+  "Dejar inoperantes los dispositivos de seguridad",
+  "Desviarse de procedimientos de trabajo recomendados",
+  "Distraerse en juegos u otros",
+  "No advertir o señalar riesgos según se requiera",
+  "No utilizar elementos de protección personal",
+  "Operar a velocidad insegura",
+  "Operar máquinas/equipos sin autorización",
+  "Reparar, conducir equipos sin considerar los riesgos",
+  "Usar en forma insegura materiales, equipos, herramientas",
+  "Usar herramientas, instrumental y/o equipos inseguros",
+  "No se detectó acción subestándar",
+];
+const INV_CONDICION_SUBESTANDAR = [
+  "Almacenamiento deficiente",
+  "Congestión y espacio libre insuficiente",
+  "Construcciones o instalaciones inseguras",
+  "Defectos de maquinarias, materiales o herramientas",
+  "Equipos sin protección",
+  "Falta de adecuados sistemas de advertencia",
+  "Falta de adecuados sistemas de seguridad",
+  "Falta de orden y aseo",
+  "Objetos que sobresalen",
+  "Propensión a arder o explotar",
+  "No se detectó condición subestándar",
+];
+const INV_FACTORES_PERSONALES = [
+  "Capacidad física disminuida",
+  "Capacidad mental / sicológica inadecuada",
+  "Tensión física o fisiológica",
+  "Tensión mental o fisiológica",
+  "Falta de conocimiento",
+  "Falta de habilidad",
+  "Motivación inadecuada",
+];
+const INV_FACTORES_TRABAJO = [
+  "Supervisión y liderazgo deficiente",
+  "Ingeniería inadecuada",
+  "Deficiencia en las adquisiciones",
+  "Mantención deficiente",
+  "Herramientas y equipos inadecuados",
+  "Estándares deficientes de trabajo",
+  "Uso y desgaste",
+  "Condiciones ambientales adversas",
+];
+function diaSemanaDe(fecha){
+  if(!fecha) return "—";
+  const d = new Date(fecha+"T00:00:00");
+  if(isNaN(d)) return "—";
+  const nombre = d.toLocaleDateString("es-CL",{weekday:"long"});
+  return nombre.charAt(0).toUpperCase()+nombre.slice(1);
+}
+function selectMultipleHtml(id, opciones, seleccionadas){
+  const sel = new Set(seleccionadas||[]);
+  const size = Math.min(10, Math.max(4, opciones.length));
+  return `<select id="${id}" multiple size="${size}">${opciones.map(op=>`<option value="${op.replace(/"/g,"&quot;")}" ${sel.has(op)?"selected":""}>${op}</option>`).join("")}</select>`;
+}
+function leerSelectMultiple(id){
+  return Array.from(document.getElementById(id).selectedOptions).map(o=>o.value);
+}
+
+let currentInvMedidas = [];
+function drawInvMedidas(){
+  const wrap = document.getElementById("invMedidasWrap");
+  if(!wrap) return;
+  wrap.innerHTML = `<table><thead><tr><th>Acción</th><th>Responsable</th><th>Fecha</th><th></th></tr></thead><tbody>
+    ${currentInvMedidas.map((m,idx)=>`<tr>
+      <td><input data-invmed-accion="${idx}" value="${m.accion||""}"></td>
+      <td><input data-invmed-resp="${idx}" value="${m.responsable||""}"></td>
+      <td><input type="date" data-invmed-fecha="${idx}" value="${m.fecha||""}"></td>
+      <td><button class="subtle-btn" data-invmed-quitar="${idx}">Quitar</button></td>
+    </tr>`).join("") || `<tr><td class="empty" colspan="4">Sin medidas agregadas</td></tr>`}
+  </tbody></table>
+  <button class="btn small secondary" id="invMedidasAgregarBtn" type="button">+ Agregar medida</button>`;
+  on(document.getElementById("invMedidasAgregarBtn"), "click", ()=>{ currentInvMedidas.push({accion:"",responsable:"",fecha:""}); drawInvMedidas(); });
+  wrap.querySelectorAll("[data-invmed-accion],[data-invmed-resp],[data-invmed-fecha]").forEach(inp=>{
+    inp.addEventListener("input", ()=>{
+      const idx = +(inp.dataset.invmedAccion ?? inp.dataset.invmedResp ?? inp.dataset.invmedFecha);
+      const campo = inp.dataset.invmedAccion!==undefined?"accion":inp.dataset.invmedResp!==undefined?"responsable":"fecha";
+      currentInvMedidas[idx][campo] = inp.value;
+    });
+  });
+  wrap.querySelectorAll("[data-invmed-quitar]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{ currentInvMedidas.splice(+btn.dataset.invmedQuitar,1); drawInvMedidas(); });
+  });
+}
+
+function abrirModalInvestigacionAccidente(accidente){
+  const existente = (CACHE.accInvestigaciones||[]).find(inv=>inv.accidenteId===accidente.id) || null;
+  const rec = existente || {};
+  currentInvMedidas = (rec.medidasCorrectivas||[]).map(m=>({...m}));
+  const trabajadoresVinculados = accTrabajadoresDe(accidente).map(id=>(CACHE.trabajadores||[]).find(t=>t.id===id)).filter(Boolean);
+  openModal(`
+    <h3>Investigación de Accidente</h3>
+    <div class="desc">${fmtDate(accidente.fecha)} — ${ACC_TIPO_LABEL[accidente.tipo]||accidente.tipo} — ${areaName(accidente.areaId)}. Descripción ya registrada: "${accidente.descripcion||"—"}"</div>
+
+    <h3 style="margin-top:14px;">Identificación del accidentado</h3>
+    ${trabajadoresVinculados.length ? `<label>Precargar desde trabajador vinculado</label><select id="invPrecargarTrab"><option value="">— Seleccionar —</option>${trabajadoresVinculados.map(t=>`<option value="${t.id}">${t.nombre}</option>`).join("")}</select>` : ""}
+    <div class="form-grid">
+      <div><label>Nombre</label><input id="invNombre" value="${rec.nombreAccidentado||""}"></div>
+      <div><label>Domicilio</label><input id="invDomicilio" value="${rec.domicilio||""}"></div>
+      <div><label>RUT</label><input id="invRut" value="${rec.rut||""}"></div>
+      <div><label>Edad</label><input id="invEdad" type="number" min="0" value="${rec.edad||""}"></div>
+      <div><label>Cargo</label><input id="invCargo" value="${rec.cargo||""}"></div>
+      <div><label>Teléfono</label><input id="invTelefono" value="${rec.telefono||""}"></div>
+      <div><label>Antigüedad en la empresa</label><input id="invAntigEmpresa" value="${rec.antiguedadEmpresa||""}"></div>
+      <div><label>Antigüedad en el cargo</label><input id="invAntigCargo" value="${rec.antiguedadCargo||""}"></div>
+    </div>
+
+    <h3 style="margin-top:14px;">Información del accidente</h3>
+    <div class="form-grid">
+      <div><label>Hora del accidente</label><input id="invHora" value="${rec.horaAccidente||""}" placeholder="Ej: 13:30 horas"></div>
+      <div><label>Día de la semana</label><input value="${diaSemanaDe(accidente.fecha)}" disabled></div>
+      <div><label>Lugar preciso del accidente</label><input id="invLugar" value="${rec.lugarPreciso||""}"></div>
+      <div><label>Horas trabajadas hasta el accidente</label><input id="invHorasTrabajadas" value="${rec.horasTrabajadasHastaAccidente||""}"></div>
+      <div><label>Accidente ocurrido</label><select id="invAccidenteOcurrido">
+        <option value="causaTrabajo" ${rec.accidenteOcurrido==="causaTrabajo"?"selected":""}>A causa del trabajo</option>
+        <option value="conOcasion" ${rec.accidenteOcurrido==="conOcasion"?"selected":""}>Con ocasión del trabajo</option>
+      </select></div>
+    </div>
+    <label>Tipo de evento (Ctrl/Cmd + clic para elegir más de uno)</label>
+    ${selectMultipleHtml("invTipoEvento", INV_TIPO_EVENTO, rec.tipoEvento)}
+
+    <h3 style="margin-top:14px;">Descripción</h3>
+    <div class="form-grid">
+      <div><label>Actividad realizada en el lugar del accidente</label><input id="invActividad" value="${rec.actividadRealizada||""}"></div>
+      <div><label>Elemento que causó la lesión</label><input id="invElemento" value="${rec.elementoCausoLesion||""}"></div>
+    </div>
+
+    <label>Partes del cuerpo lesionadas</label>
+    ${selectMultipleHtml("invPartesCuerpo", INV_PARTES_CUERPO, rec.partesCuerpo)}
+
+    <label style="margin-top:10px;">Tipo de accidente</label>
+    ${selectMultipleHtml("invTipoAccidente", INV_TIPO_ACCIDENTE, rec.tipoAccidente)}
+
+    <h3 style="margin-top:14px;">Determinación de causas inmediatas</h3>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+      <div><label>Acción subestándar</label>${selectMultipleHtml("invAccionSubestandar", INV_ACCION_SUBESTANDAR, rec.accionSubestandar)}</div>
+      <div><label>Condición subestándar</label>${selectMultipleHtml("invCondicionSubestandar", INV_CONDICION_SUBESTANDAR, rec.condicionSubestandar)}</div>
+    </div>
+
+    <h3 style="margin-top:14px;">Determinación de causas básicas (causa raíz)</h3>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+      <div><label>Factores personales</label>${selectMultipleHtml("invFactoresPersonales", INV_FACTORES_PERSONALES, rec.factoresPersonales)}</div>
+      <div><label>Factores del trabajo</label>${selectMultipleHtml("invFactoresTrabajo", INV_FACTORES_TRABAJO, rec.factoresTrabajo)}</div>
+    </div>
+
+    <h3 style="margin-top:14px;">Medidas correctivas</h3>
+    <div id="invMedidasWrap"></div>
+
+    <h3 style="margin-top:14px;">Pérdidas</h3>
+    <div class="form-grid">
+      <div><label>Tiempo perdido (ya registrado en el accidente)</label><input value="${accidente.diasPerdidos||0} día(s)" disabled></div>
+      <div><label>Tiempo de reposición de servicio</label><input id="invTiempoReposicion" value="${rec.tiempoReposicionServicio||""}"></div>
+      <div><label>Equipos o herramientas dañadas</label><input id="invEquiposDanados" value="${rec.equiposDanados||""}"></div>
+    </div>
+
+    <h3 style="margin-top:14px;">Revisión</h3>
+    <div class="form-grid">
+      <div><label>Nombre de quien investigó el accidente</label><input id="invInvestigador" value="${rec.investigadorNombre||""}"></div>
+      <div><label>Fecha de investigación</label><input type="date" id="invFechaInvestigacion" value="${rec.fechaInvestigacion||""}"></div>
+      <div><label>Verificación del cumplimiento (nombre)</label><input id="invVerificador" value="${rec.verificadorNombre||""}"></div>
+      <div><label>Fecha de cierre</label><input type="date" id="invFechaCierre" value="${rec.fechaCierre||""}"></div>
+    </div>
+
+    <div class="toolbar" style="margin-top:16px;">
+      <button class="btn" id="invGuardarBtn">Guardar investigación</button>
+      <button class="btn secondary" id="invGuardarPdfBtn">Guardar y descargar PDF</button>
+      <button class="btn secondary" id="invCancelarBtn">Cancelar</button>
+    </div>
+  `);
+  drawInvMedidas();
+  const precargarSel = document.getElementById("invPrecargarTrab");
+  if(precargarSel){
+    precargarSel.addEventListener("change", ()=>{
+      const t = trabajadoresVinculados.find(x=>x.id===precargarSel.value);
+      if(!t) return;
+      document.getElementById("invNombre").value = t.nombre||"";
+      document.getElementById("invRut").value = t.rut||"";
+      document.getElementById("invCargo").value = t.cargo||"";
+    });
+  }
+  function leerFormularioInvestigacion(){
+    return {
+      id: existente ? existente.id : uid(),
+      accidenteId: accidente.id,
+      nombreAccidentado: document.getElementById("invNombre").value.trim(),
+      domicilio: document.getElementById("invDomicilio").value.trim(),
+      rut: document.getElementById("invRut").value.trim(),
+      edad: document.getElementById("invEdad").value ? +document.getElementById("invEdad").value : null,
+      cargo: document.getElementById("invCargo").value.trim(),
+      telefono: document.getElementById("invTelefono").value.trim(),
+      antiguedadEmpresa: document.getElementById("invAntigEmpresa").value.trim(),
+      antiguedadCargo: document.getElementById("invAntigCargo").value.trim(),
+      horaAccidente: document.getElementById("invHora").value.trim(),
+      lugarPreciso: document.getElementById("invLugar").value.trim(),
+      horasTrabajadasHastaAccidente: document.getElementById("invHorasTrabajadas").value.trim(),
+      accidenteOcurrido: document.getElementById("invAccidenteOcurrido").value,
+      tipoEvento: leerSelectMultiple("invTipoEvento"),
+      actividadRealizada: document.getElementById("invActividad").value.trim(),
+      elementoCausoLesion: document.getElementById("invElemento").value.trim(),
+      partesCuerpo: leerSelectMultiple("invPartesCuerpo"),
+      tipoAccidente: leerSelectMultiple("invTipoAccidente"),
+      accionSubestandar: leerSelectMultiple("invAccionSubestandar"),
+      condicionSubestandar: leerSelectMultiple("invCondicionSubestandar"),
+      factoresPersonales: leerSelectMultiple("invFactoresPersonales"),
+      factoresTrabajo: leerSelectMultiple("invFactoresTrabajo"),
+      medidasCorrectivas: currentInvMedidas.filter(m=>m.accion||m.responsable||m.fecha),
+      tiempoReposicionServicio: document.getElementById("invTiempoReposicion").value.trim(),
+      equiposDanados: document.getElementById("invEquiposDanados").value.trim(),
+      investigadorNombre: document.getElementById("invInvestigador").value.trim(),
+      fechaInvestigacion: document.getElementById("invFechaInvestigacion").value,
+      verificadorNombre: document.getElementById("invVerificador").value.trim(),
+      fechaCierre: document.getElementById("invFechaCierre").value,
+      fechaCreacion: existente ? existente.fechaCreacion : new Date().toISOString(),
+      fechaModificacion: new Date().toISOString(),
+    };
+  }
+  on(document.getElementById("invCancelarBtn"), "click", ()=> closeModal());
+  on(document.getElementById("invGuardarBtn"), "click", async ()=>{
+    const nuevo = leerFormularioInvestigacion();
+    if(!nuevo.nombreAccidentado){ alert("Indica el nombre del accidentado."); return; }
+    await put("accInvestigaciones", nuevo);
+    await loadCache();
+    closeModal();
+    renderAccidentesTable();
+    alert("Investigación de accidente guardada.");
+  });
+  on(document.getElementById("invGuardarPdfBtn"), "click", async ()=>{
+    const nuevo = leerFormularioInvestigacion();
+    if(!nuevo.nombreAccidentado){ alert("Indica el nombre del accidentado."); return; }
+    await put("accInvestigaciones", nuevo);
+    await loadCache();
+    closeModal();
+    renderAccidentesTable();
+    descargarInvestigacionAccidentePdf(nuevo, accidente);
+  });
+}
+
+/* Casilla de verificación en PDF (sin precedente en la app -- jsPDF no trae
+   glyphs de checkbox): un cuadrado dibujado con doc.rect, marcado con una
+   "X" si la opción está en `seleccionadas`. Devuelve el Y final. */
+function dibujarCasillasPdf(doc, x, startY, opciones, seleccionadas, maxWidth){
+  const selSet = new Set(seleccionadas||[]);
+  const boxSize = 3.2, lineHeight = 4.6, indent = 6;
+  let y = startY;
+  doc.setFontSize(9);
+  opciones.forEach(op=>{
+    if(y > 272){ doc.addPage(); y = 16; }
+    doc.rect(x, y-3, boxSize, boxSize);
+    if(selSet.has(op)){ doc.setFont(undefined,"bold"); doc.text("X", x+0.6, y-0.4); doc.setFont(undefined,"normal"); }
+    const lineas = doc.splitTextToSize(op, (maxWidth||180)-indent);
+    doc.text(lineas, x+indent, y);
+    y += lineHeight*lineas.length;
+  });
+  return y;
+}
+function descargarInvestigacionAccidentePdf(rec, accidente){
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const doc = new JsPDFClass();
+  addLogoPdf(doc);
+  let y = 16;
+  doc.setFontSize(15);
+  doc.text("Investigación de Accidentes / Incidentes del Trabajo", 14, y); y += 8;
+  doc.setFontSize(10);
+  doc.text(`Empresa: ${(CACHE.empresa&&CACHE.empresa.razonSocial)||"—"}`, 14, y); y += 6;
+  const lineaDatos = datosEmpresaLineaPdf();
+  if(lineaDatos){ doc.text(lineaDatos, 14, y); y += 6; }
+  doc.text(`Generado el ${fmtDate(new Date().toISOString().slice(0,10))}`, 14, y); y += 8;
+
+  doc.autoTable({ startY:y, head:[["Identificación del accidentado",""]], body:[
+    ["Nombre", rec.nombreAccidentado||"—"],
+    ["Domicilio", rec.domicilio||"—"],
+    ["RUT", rec.rut||"—"],
+    ["Edad", rec.edad!=null?String(rec.edad):"—"],
+    ["Cargo", rec.cargo||"—"],
+    ["Teléfono", rec.telefono||"—"],
+    ["Antigüedad en la empresa", rec.antiguedadEmpresa||"—"],
+    ["Antigüedad en el cargo", rec.antiguedadCargo||"—"],
+  ], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  if(y>230){ doc.addPage(); y=16; }
+  doc.autoTable({ startY:y, head:[["Información del accidente",""]], body:[
+    ["Fecha del accidente", fmtDate(accidente.fecha)],
+    ["Día de la semana", diaSemanaDe(accidente.fecha)],
+    ["Hora del accidente", rec.horaAccidente||"—"],
+    ["Lugar preciso del accidente", rec.lugarPreciso||"—"],
+    ["Horas trabajadas hasta el accidente", rec.horasTrabajadasHastaAccidente||"—"],
+    ["Accidente ocurrido", rec.accidenteOcurrido==="conOcasion"?"Con ocasión del trabajo":rec.accidenteOcurrido==="causaTrabajo"?"A causa del trabajo":"—"],
+  ], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 6;
+  doc.setFontSize(11); doc.text("Tipo de evento", 14, y); y += 5;
+  y = dibujarCasillasPdf(doc, 14, y, INV_TIPO_EVENTO, rec.tipoEvento, 180) + 4;
+
+  if(y>250){ doc.addPage(); y=16; }
+  doc.setFontSize(12); doc.text("Descripción del accidente", 14, y); y += 5;
+  doc.setFontSize(9); doc.setFont(undefined,"bold"); doc.text("Actividad realizada:", 14, y); doc.setFont(undefined,"normal"); y += 5;
+  y = escribirTextoPaginado(doc, rec.actividadRealizada||"—", 14, y, {maxWidth:180}) + 2;
+  doc.setFont(undefined,"bold"); doc.text("Descripción detallada (registrada en el accidente):", 14, y); doc.setFont(undefined,"normal"); y += 5;
+  y = escribirTextoPaginado(doc, accidente.descripcion||"—", 14, y, {maxWidth:180}) + 2;
+  doc.setFont(undefined,"bold"); doc.text("Elemento que causó la lesión:", 14, y); doc.setFont(undefined,"normal"); y += 5;
+  y = escribirTextoPaginado(doc, rec.elementoCausoLesion||"—", 14, y, {maxWidth:180}) + 4;
+
+  if(y>250){ doc.addPage(); y=16; }
+  doc.setFontSize(11); doc.text("Partes del cuerpo lesionadas", 14, y); y += 5;
+  y = dibujarCasillasPdf(doc, 14, y, INV_PARTES_CUERPO, rec.partesCuerpo, 180) + 4;
+
+  doc.addPage(); y = 16;
+  doc.setFontSize(12); doc.text("Tipo de accidente", 14, y); y += 6;
+  y = dibujarCasillasPdf(doc, 14, y, INV_TIPO_ACCIDENTE, rec.tipoAccidente, 180) + 4;
+
+  doc.addPage(); y = 16;
+  doc.setFontSize(12); doc.text("Determinación de causas inmediatas", 14, y); y += 8;
+  doc.setFontSize(11); doc.text("Acción subestándar", 14, y);
+  const yCausasInicio = y + 5;
+  let yIzq = dibujarCasillasPdf(doc, 14, yCausasInicio, INV_ACCION_SUBESTANDAR, rec.accionSubestandar, 88);
+  doc.setFontSize(11); doc.text("Condición subestándar", 108, y);
+  let yDer = dibujarCasillasPdf(doc, 108, yCausasInicio, INV_CONDICION_SUBESTANDAR, rec.condicionSubestandar, 88);
+  y = Math.max(yIzq, yDer) + 6;
+
+  if(y>200){ doc.addPage(); y=16; }
+  doc.setFontSize(12); doc.text("Determinación de causas básicas (causa raíz)", 14, y); y += 8;
+  doc.setFontSize(11); doc.text("Factores personales", 14, y);
+  const yBasicasInicio = y + 5;
+  yIzq = dibujarCasillasPdf(doc, 14, yBasicasInicio, INV_FACTORES_PERSONALES, rec.factoresPersonales, 88);
+  doc.setFontSize(11); doc.text("Factores del trabajo", 108, y);
+  yDer = dibujarCasillasPdf(doc, 108, yBasicasInicio, INV_FACTORES_TRABAJO, rec.factoresTrabajo, 88);
+  y = Math.max(yIzq, yDer) + 8;
+
+  if(y>220){ doc.addPage(); y=16; }
+  doc.setFontSize(12); doc.text("Medidas correctivas", 14, y); y += 4;
+  doc.autoTable({ startY:y, head:[["Acción","Responsable","Fecha de ejecución"]],
+    body: (rec.medidasCorrectivas||[]).length ? rec.medidasCorrectivas.map(m=>[m.accion||"—", m.responsable||"—", m.fecha?fmtDate(m.fecha):"—"]) : [["Sin medidas registradas","",""]],
+    styles:{fontSize:8.5}, headStyles:{fillColor:[236,131,90]} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  if(y>230){ doc.addPage(); y=16; }
+  doc.autoTable({ startY:y, head:[["Pérdidas",""]], body:[
+    ["Tiempo perdido", `${accidente.diasPerdidos||0} día(s)`],
+    ["Tiempo de reposición de servicio", rec.tiempoReposicionServicio||"—"],
+    ["Equipos o herramientas dañadas", rec.equiposDanados||"—"],
+  ], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  if(y>230){ doc.addPage(); y=16; }
+  doc.autoTable({ startY:y, head:[["Revisión",""]], body:[
+    ["Nombre de quien investigó el accidente", rec.investigadorNombre||"—"],
+    ["Fecha de investigación", rec.fechaInvestigacion?fmtDate(rec.fechaInvestigacion):"—"],
+    ["Firma", ""],
+    ["Verificación del cumplimiento de las recomendaciones", rec.verificadorNombre||"—"],
+    ["Fecha de cierre", rec.fechaCierre?fmtDate(rec.fechaCierre):"—"],
+  ], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]} });
+
+  agregarPiePaginasPdf(doc, "Investigación de Accidente");
+  doc.save(`Investigacion_Accidente_${(accidente.fecha||"").replace(/[^0-9]/g,"")||new Date().toISOString().slice(0,10)}_${(rec.nombreAccidentado||"trabajador").replace(/[^a-zA-Z0-9]+/g,"_")}.pdf`);
 }
 
 /* Informe de accidente/incidente en PDF: combina los datos del registro de
