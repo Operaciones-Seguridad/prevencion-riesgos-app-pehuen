@@ -179,30 +179,75 @@
   <button class="btn small" id="offlineSyncNowBtn" type="button" style="margin-top:8px;">Reintentar ahora</button>
 </div>
 
-<!-- SELECCIÓN DE EMPRESA (multi-empresa) -->
-<div class="login-overlay" id="empresaOverlay">
-  <div class="login-box">
-    <h1>Sistema de Gestión Prevención de Riesgos</h1>
-    <div class="desc">Selecciona la empresa a la que quieres ingresar.</div>
-    <label>Empresa</label>
-    <select id="empresaSel"></select>
-    <div id="empresaError" style="display:none;color:#8f1f1f;font-size:12.5px;margin-top:6px;">No se pudo cargar el listado de empresas. Verifica tu conexión e inténtalo nuevamente.</div>
-    <button class="btn" id="empresaContinuarBtn" style="margin-top:14px;width:100%;">Continuar</button>
-  </div>
-</div>
-
-<!-- INICIO DE SESIÓN (v1.63) -->
+<!-- INICIO DE SESIÓN -->
 <div class="login-overlay hidden" id="loginOverlay">
   <div class="login-box">
     <h1>Sistema de Gestión Prevención de Riesgos</h1>
-    <div class="desc" id="loginEmpresaDesc">Selecciona tu usuario e ingresa tu clave de acceso para continuar. El menú que verás depende del perfil asignado a tu usuario.</div>
-    <label>Usuario</label>
-    <select id="loginUsuarioSel"></select>
-    <label>Clave de acceso</label>
-    <input type="password" id="loginClave" placeholder="Clave de acceso">
-    <div id="loginError" style="display:none;color:#8f1f1f;font-size:12.5px;margin-top:6px;">Clave incorrecta. Inténtalo nuevamente.</div>
-    <button class="btn" id="loginBtn" style="margin-top:14px;width:100%;">Ingresar</button>
-    <button type="button" id="cambiarEmpresaLoginBtn" style="margin-top:10px;width:100%;background:transparent;border:1px solid var(--border);color:var(--text-secondary);">Cambiar de empresa</button>
+    <div class="desc" id="loginDesc">Ingresa con tu correo y tu clave de acceso.</div>
+
+    <!-- Modo sin backend (archivo local / demo, storageMode !== "api"): se
+         mantiene el login original por lista de usuarios, sin correo. -->
+    <div id="loginFormDev" style="display:none;">
+      <label>Usuario</label>
+      <select id="loginUsuarioSel"></select>
+      <label>Clave de acceso</label>
+      <input type="password" id="loginClaveDev" placeholder="Clave de acceso">
+      <div id="loginErrorDev" style="display:none;color:#8f1f1f;font-size:12.5px;margin-top:6px;">Clave incorrecta. Inténtalo nuevamente.</div>
+      <button class="btn" id="loginDevBtn" style="margin-top:14px;width:100%;">Ingresar</button>
+    </div>
+
+    <div id="loginFormEmail">
+      <label>Correo</label>
+      <input type="email" id="loginEmail" placeholder="tu@correo.cl" autocomplete="username">
+      <label>Clave de acceso</label>
+      <input type="password" id="loginClave" placeholder="Clave de acceso" autocomplete="current-password">
+      <div id="loginError" style="display:none;color:#8f1f1f;font-size:12.5px;margin-top:6px;">Correo o clave incorrectos.</div>
+      <button class="btn" id="loginBtn" style="margin-top:14px;width:100%;">Ingresar</button>
+      <button type="button" id="mostrarLoginLegacyBtn" style="margin-top:10px;width:100%;background:transparent;border:none;color:var(--text-secondary);text-decoration:underline;font-size:12.5px;">¿Ingresaste antes con tu empresa?</button>
+      <button type="button" id="mostrarRegistroBtn" style="margin-top:6px;width:100%;background:transparent;border:none;color:var(--text-secondary);text-decoration:underline;font-size:12.5px;">Registrar mi empresa</button>
+    </div>
+
+    <div id="loginFormLegacy" style="display:none;">
+      <div class="desc">Ingresa con los datos que ya tenías (mientras no hayas cargado un correo en tu perfil).</div>
+      <label>ID de tu empresa</label>
+      <input type="text" id="loginEmpresaId" placeholder="El identificador que te entregaron al crear tu empresa">
+      <label>ID de tu usuario</label>
+      <input type="text" id="loginUsuarioIdLegacy" placeholder="Tu identificador de usuario">
+      <label>Clave de acceso</label>
+      <input type="password" id="loginClaveLegacy" placeholder="Clave de acceso">
+      <div id="loginErrorLegacy" style="display:none;color:#8f1f1f;font-size:12.5px;margin-top:6px;">Empresa, usuario o clave incorrectos.</div>
+      <button class="btn" id="loginLegacyBtn" style="margin-top:14px;width:100%;">Ingresar</button>
+      <button type="button" id="ocultarLoginLegacyBtn" style="margin-top:10px;width:100%;background:transparent;border:none;color:var(--text-secondary);text-decoration:underline;font-size:12.5px;">Volver</button>
+    </div>
+
+    <div id="loginSeleccionEmpresa" style="display:none;">
+      <div class="desc">Tu correo está asociado a más de una empresa. Elige a cuál quieres ingresar:</div>
+      <div id="loginSeleccionEmpresaLista"></div>
+      <button type="button" id="ocultarSeleccionEmpresaBtn" style="margin-top:10px;width:100%;background:transparent;border:none;color:var(--text-secondary);text-decoration:underline;font-size:12.5px;">Volver</button>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTRO PÚBLICO DE EMPRESA (autoservicio, sin sesión previa) -->
+<div class="login-overlay hidden" id="registroOverlay">
+  <div class="login-box">
+    <h1>Registrar mi empresa</h1>
+    <div class="desc">Crea tu empresa y tu cuenta de administrador. Vas a poder ingresar de inmediato.</div>
+    <label>Nombre / razón social de tu empresa</label>
+    <input id="regEmpresaNombre" placeholder="Ej: Constructora Ejemplo Ltda.">
+    <label>RUT (opcional)</label>
+    <input id="regEmpresaRut" placeholder="Ej: 76.123.456-7">
+    <label>Rubro (opcional)</label>
+    <input id="regEmpresaRubro" placeholder="Ej: Construcción">
+    <label>Tu nombre</label>
+    <input id="regAdminNombre" placeholder="Tu nombre completo">
+    <label>Tu correo</label>
+    <input type="email" id="regAdminEmail" placeholder="tu@correo.cl">
+    <label>Elige una clave</label>
+    <input type="password" id="regAdminClave" placeholder="Al menos 8 caracteres">
+    <div id="regError" style="display:none;color:#8f1f1f;font-size:12.5px;margin-top:6px;"></div>
+    <button class="btn" id="registrarEmpresaBtn" style="margin-top:14px;width:100%;">Crear mi empresa</button>
+    <button type="button" id="ocultarRegistroBtn" style="margin-top:10px;width:100%;background:transparent;border:none;color:var(--text-secondary);text-decoration:underline;font-size:12.5px;">Volver a iniciar sesión</button>
   </div>
 </div>
 
@@ -240,6 +285,7 @@
     <div class="sidebar-footer">
       <div class="sesion-nombre" id="sesionNombre">—</div>
       <div class="sesion-cargo" id="sesionCargo">—</div>
+      <button type="button" id="miCorreoBtn" style="width:100%;background:transparent;border:none;color:var(--text-secondary);text-decoration:underline;font-size:11.5px;padding:2px 0;">Mi correo (para ingresar con correo)</button>
       <button class="btn small secondary" id="cerrarSesionBtn" style="width:100%;">Cerrar sesión</button>
       <button class="btn small secondary" id="cambiarEmpresaSidebarBtn" style="width:100%;margin-top:6px;">Cambiar de empresa</button>
     </div>
@@ -2724,9 +2770,9 @@
     </div>
 
     <div class="card" id="empresasAdminWrap" style="display:none;">
-      <div class="card-header-row" id="hdrEmpresas"><h2>Empresas (multi-empresa)</h2><button class="collapse-toggle" id="toggleEmpresas" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="card-header-row" id="hdrEmpresas"><h2>Empresas (administrador de la plataforma)</h2><button class="collapse-toggle" id="toggleEmpresas" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyEmpresas">
-      <div class="desc">Esta instalación puede atender a varias empresas a la vez, cada una con sus propios datos y usuarios, sin que se mezclen entre sí. Desde aquí puedes agregar una empresa nueva (sin necesidad de crear un servidor o base de datos aparte), eliminar una que ya no necesites, y respaldar o trasladar los datos de la empresa actual.</div>
+      <div class="desc">Solo visible para el administrador de la plataforma. Desde aquí puedes ver todas las empresas de esta instalación, agregar una nueva a mano (sin necesidad de crear un servidor o base de datos aparte) y eliminar cualquiera. Un administrador normal de una empresa ya no puede hacer esto -- solo puede eliminar su propia empresa (ver más abajo).</div>
 
       <h2 style="margin-top:6px;">Empresas existentes</h2>
       <div class="toolbar" style="margin-top:4px;">
@@ -2747,15 +2793,23 @@
         <button class="btn" id="crearEmpresaBtn">Crear empresa</button>
       </div>
       <div id="nuevaEmpresaResultado" style="display:none;background:#eaf6ea;border:1px solid #a9d8a9;border-radius:8px;padding:10px 12px;margin-top:12px;font-size:13.5px;"></div>
+      </div>
+    </div>
 
-      <h2 style="margin-top:24px;">Respaldo y migración de datos</h2>
+    <div class="card" id="eliminarMiEmpresaWrap" style="display:none;">
+      <h2>Eliminar mi empresa</h2>
+      <div class="desc">Cierra tu cuenta por completo: elimina para siempre tu empresa y TODOS sus datos (trabajadores, accidentes, EPP, usuarios, documentos, todo). No se puede deshacer. No puedes eliminar ninguna otra empresa, solo la tuya.</div>
+      <button class="btn danger small" id="eliminarMiEmpresaBtn" style="margin-top:8px;">Eliminar mi empresa</button>
+    </div>
+
+    <div class="card" id="respaldoDatosWrap" style="display:none;">
+      <h2>Respaldo y migración de datos</h2>
       <div class="desc">"Exportar" descarga todos los datos de la empresa con la que iniciaste sesión ahora mismo, en un archivo JSON. "Importar" carga un archivo así dentro de la empresa actual (útil para trasladar los datos de una instalación separada, como las versiones anteriores de ANGOLEC o Pehuén, hacia esta instalación única).</div>
       <div class="toolbar" style="margin-top:8px;">
         <button class="btn secondary small" id="exportarDatosEmpresaBtn">Exportar todos los datos (respaldo JSON)</button>
         <label class="btn secondary small" style="cursor:pointer;">Importar respaldo JSON<input type="file" id="importarDatosEmpresaInput" accept="application/json" style="display:none;"></label>
       </div>
       <div id="importarDatosResultado" style="display:none;margin-top:8px;font-size:13px;"></div>
-      </div>
     </div>
 
     <div class="card">
@@ -2817,9 +2871,8 @@ let memStore = {};
    ========================================================= */
 const API_BASE_URL = "https://prevencion-riesgos-api-pehuen.onrender.com"; // Backend real de Pehuén, ahora multi-empresa
 const AUTH_TOKEN_KEY = "cprAuthToken";
-const EMPRESA_STORAGE_KEY = "cprEmpresaId";
 let authToken = null;
-let activeEmpresa = null; // {id, nombre} de la empresa elegida en esta sesión de navegador
+let activeEmpresa = null; // {id, nombre} de la empresa actual, resuelta siempre por el servidor (login o GET /api/me), nunca de un listado público
 try{ authToken = localStorage.getItem(AUTH_TOKEN_KEY) || null; }catch(e){}
 
 async function apiFetch(method, path, body, opts){
@@ -2853,79 +2906,46 @@ async function apiFetch(method, path, body, opts){
 }
 /* Login: NO pasa por apiFetch (que trataría un 401 como "sesión
    expirada" y redirigiría al login mostrando un mensaje genérico); un
-   401 aquí simplemente significa "usuario o clave incorrectos", que ya
-   se maneja con el mensaje de error propio del formulario de acceso. */
-async function apiLogin(usuarioId, clave){
+   401/400 aquí simplemente significa "correo/usuario o clave
+   incorrectos" o un dato inválido, que ya se maneja con el mensaje de
+   error propio del formulario de acceso/registro.
+   Ya no hay un listado público de empresas ni de usuarios para elegir
+   antes de iniciar sesión (se cerró esa puerta: cualquiera sin sesión
+   podía enterarse de qué empresas/usuarios existen en la instalación).
+   El login ahora es por correo+clave (POST /api/auth/login con
+   {email, clave}, y si ese correo pertenece a más de una empresa el
+   servidor responde {requiereSeleccion:true, empresas:[...]} con SOLO
+   esas empresas -- nunca la lista completa -- para reenviar
+   {email, clave, empresaId} y terminar de entrar a esa empresa
+   puntual), con un modo alterno {empresaId, usuarioId, clave} para
+   quienes iniciaron sesión así antes de que existiera el correo. */
+async function apiLoginRequest(body){
   const res = await fetch(API_BASE_URL + "/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ empresaId: activeEmpresa && activeEmpresa.id, usuarioId, clave }),
+    body: JSON.stringify(body),
   });
-  if(!res.ok) return null;
-  return res.json();
+  let data = null;
+  try{ data = await res.json(); }catch(e){}
+  return { ok: res.ok, status: res.status, data };
 }
-async function cargarUsuariosPublicos(){
-  try{
-    if(!activeEmpresa){ CACHE.accesoUsuarios = []; return; }
-    const res = await fetch(API_BASE_URL + "/api/public/usuarios?empresaId=" + encodeURIComponent(activeEmpresa.id));
-    CACHE.accesoUsuarios = res.ok ? await res.json() : [];
-  }catch(e){ console.error(e); CACHE.accesoUsuarios = []; }
+async function apiRegistrarEmpresa(body){
+  const res = await fetch(API_BASE_URL + "/api/public/empresas/registro", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  let data = null;
+  try{ data = await res.json(); }catch(e){}
+  return { ok: res.ok, status: res.status, data };
 }
-/* Selección de empresa: se pide SIEMPRE antes del login (aunque haya
-   una empresa guardada de una visita anterior, se usa solo para
-   preseleccionarla en el listado, nunca para saltarse esta pantalla),
-   porque el listado de usuarios a mostrar en el login depende de qué
-   empresa se eligió. */
-async function cargarEmpresasPublicas(){
-  try{
-    const res = await fetch(API_BASE_URL + "/api/public/empresas");
-    return res.ok ? await res.json() : [];
-  }catch(e){ console.error(e); return null; }
+/* Estado de la sesión actual resuelto por el servidor (a qué usuario y
+   empresa pertenece el token, y si es superAdmin) -- la app ya no
+   necesita cachear esos datos en localStorage aparte del token mismo. */
+async function apiMe(){
+  try{ return await apiFetch("GET", "/api/me"); }
+  catch(e){ return null; }
 }
-async function mostrarSelectorEmpresa(){
-  document.getElementById("loginOverlay").classList.add("hidden");
-  const overlay = document.getElementById("empresaOverlay");
-  const sel = document.getElementById("empresaSel");
-  const errBox = document.getElementById("empresaError");
-  errBox.style.display = "none";
-  sel.innerHTML = '<option value="">Cargando…</option>';
-  overlay.classList.remove("hidden");
-  const empresas = await cargarEmpresasPublicas();
-  if(empresas === null){
-    sel.innerHTML = '<option value="">—</option>';
-    errBox.style.display = "";
-    return;
-  }
-  if(!empresas.length){
-    sel.innerHTML = '<option value="">No hay empresas registradas todavía</option>';
-    return;
-  }
-  let guardada = "";
-  try{ guardada = localStorage.getItem(EMPRESA_STORAGE_KEY) || ""; }catch(e){}
-  sel.innerHTML = empresas.map(e=>`<option value="${e.id}">${e.nombre}</option>`).join("");
-  if(guardada && empresas.some(e=>e.id===guardada)) sel.value = guardada;
-}
-async function elegirEmpresa(empresaId){
-  const empresas = await cargarEmpresasPublicas();
-  const empresa = (empresas||[]).find(e=>e.id===empresaId);
-  if(!empresa) return false;
-  activeEmpresa = empresa;
-  try{ localStorage.setItem(EMPRESA_STORAGE_KEY, empresa.id); }catch(e){}
-  return true;
-}
-on(document.getElementById("empresaContinuarBtn"), "click", async () => {
-  const empresaId = document.getElementById("empresaSel").value;
-  if(!empresaId) return;
-  const ok = await elegirEmpresa(empresaId);
-  if(!ok) return;
-  document.getElementById("empresaOverlay").classList.add("hidden");
-  await mostrarLogin();
-});
-on(document.getElementById("cambiarEmpresaLoginBtn"), "click", async () => {
-  activeEmpresa = null;
-  try{ localStorage.removeItem(EMPRESA_STORAGE_KEY); }catch(e){}
-  await mostrarSelectorEmpresa();
-});
 
 function openDB(){
   if(API_BASE_URL){
@@ -15630,11 +15650,12 @@ on(document.getElementById("resetDataBtn"), "click", async () => {
   alert("Datos de ejemplo restaurados.");
 });
 
-/* --- Multi-empresa: listar/eliminar empresas, crear empresa nueva, exportar/importar respaldo --- */
+/* --- Multi-empresa: listar/eliminar empresas (superAdmin), crear empresa nueva, exportar/importar respaldo --- */
 async function renderEmpresasTable(){
   const tbody = document.getElementById("empresasTable");
   if(!tbody) return;
-  const empresas = await cargarEmpresasPublicas();
+  let empresas = null;
+  try{ empresas = await apiFetch("GET", "/api/empresas"); }catch(e){ empresas = null; }
   if(empresas === null){
     tbody.innerHTML = '<tr><td colspan="2">No se pudo cargar el listado de empresas.</td></tr>';
     return;
@@ -15689,8 +15710,8 @@ on(document.getElementById("crearEmpresaBtn"), "click", async () => {
     const box = document.getElementById("nuevaEmpresaResultado");
     box.style.display = "";
     box.innerHTML = `Empresa <strong>${resp.empresa.nombre}</strong> creada correctamente.<br>
-      Usuario inicial: <strong>${resp.usuarioInicial}</strong> — Clave inicial: <strong>${resp.claveInicial}</strong><br>
-      Entrégale estos datos a esa empresa: podrán elegirla en la pantalla de inicio ("Cambiar de empresa") y cambiar la clave apenas ingresen.`;
+      ID de la empresa: <strong>${resp.empresa.id}</strong> — Usuario inicial: <strong>${resp.usuarioInicial}</strong> — Clave inicial: <strong>${resp.claveInicial}</strong><br>
+      Entrégale estos 3 datos a esa empresa: podrán ingresar desde "¿Ingresaste antes con tu empresa?" en la pantalla de inicio, y les conviene cambiar la clave y cargar su correo apenas ingresen.`;
     document.getElementById("nuevaEmpresaNombre").value = "";
     document.getElementById("nuevaEmpresaRut").value = "";
     document.getElementById("nuevaEmpresaRubro").value = "";
@@ -15698,6 +15719,31 @@ on(document.getElementById("crearEmpresaBtn"), "click", async () => {
   }catch(e){
     alert("No se pudo crear la empresa: " + e.message);
   }finally{
+    btn.disabled = false;
+  }
+});
+on(document.getElementById("eliminarMiEmpresaBtn"), "click", async () => {
+  if(!activeEmpresa){ return; }
+  const nombre = activeEmpresa.nombre;
+  const escrito = prompt(`Esto elimina para siempre tu empresa "${nombre}" y TODOS sus datos (trabajadores, accidentes, EPP, usuarios, documentos, todo). No se puede deshacer.\n\nPara confirmar, escribe exactamente el nombre de tu empresa:`);
+  if(escrito === null) return;
+  if(escrito.trim() !== nombre){
+    alert("El nombre escrito no coincide. No se eliminó tu empresa.");
+    return;
+  }
+  const btn = document.getElementById("eliminarMiEmpresaBtn");
+  btn.disabled = true;
+  try{
+    await apiFetch("DELETE", "/api/empresas/" + encodeURIComponent(activeEmpresa.id));
+    alert("Tu empresa fue eliminada. Vuelves a la pantalla de inicio.");
+    authToken = null;
+    activeEmpresa = null;
+    SESION.usuarioId = null;
+    SESION.superAdmin = false;
+    try{ localStorage.removeItem(SESION_STORAGE_KEY); localStorage.removeItem(AUTH_TOKEN_KEY); }catch(e){}
+    mostrarLogin();
+  }catch(e){
+    alert("No se pudo eliminar tu empresa: " + e.message);
     btn.disabled = false;
   }
 });
@@ -15780,7 +15826,7 @@ const APP_VISTAS = [
   {id:"compromisos", label:"Control de compromisos"},
   {id:"config", label:"Configuración"},
 ];
-let SESION = { usuarioId: null };
+let SESION = { usuarioId: null, superAdmin: false };
 const SESION_STORAGE_KEY = "cprSesionUsuarioId";
 
 function usuarioDeSesion(){ return (CACHE.accesoUsuarios||[]).find(u=>u.id===SESION.usuarioId) || null; }
@@ -15818,10 +15864,22 @@ function aplicarPermisosSesion(){
   const esAdmin = !!(perfil && perfil.esAdmin);
   const accesosWrap = document.getElementById("accesosAdminWrap");
   if(accesosWrap) accesosWrap.style.display = esAdmin ? "" : "none";
+  /* Listado completo de empresas + "Agregar una empresa nueva": ya no es
+     un privilegio de esAdmin (cualquier admin de cualquier empresa antes
+     podía crear/eliminar OTRAS empresas) -- ahora es exclusivo de
+     superAdmin (dueño de la plataforma), resuelto por el servidor vía
+     GET /api/me, nunca autoasignable por el cliente. */
   const empresasWrap = document.getElementById("empresasAdminWrap");
-  const mostrarEmpresasWrap = esAdmin && storageMode==="api";
+  const mostrarEmpresasWrap = SESION.superAdmin && storageMode==="api";
   if(empresasWrap) empresasWrap.style.display = mostrarEmpresasWrap ? "" : "none";
   if(mostrarEmpresasWrap) renderEmpresasTable();
+  /* Para un admin normal (no superAdmin): puede cerrar/eliminar SU
+     PROPIA empresa si lo decide, pero no ninguna otra -- el reverso
+     exacto de la regla anterior. */
+  const eliminarMiEmpresaWrap = document.getElementById("eliminarMiEmpresaWrap");
+  if(eliminarMiEmpresaWrap) eliminarMiEmpresaWrap.style.display = (esAdmin && !SESION.superAdmin && storageMode==="api") ? "" : "none";
+  const respaldoDatosWrap = document.getElementById("respaldoDatosWrap");
+  if(respaldoDatosWrap) respaldoDatosWrap.style.display = (esAdmin && storageMode==="api") ? "" : "none";
   const matrizIaWrap = document.getElementById("matrizIaWrap");
   if(matrizIaWrap) matrizIaWrap.style.display = storageMode==="api" ? "" : "none";
   /* Permiso a nivel de acción (no solo de pestaña): si el perfil del
@@ -15837,6 +15895,8 @@ function aplicarPermisosSesion(){
   if(pptBtn) pptBtn.style.display = puedeDescargarDashboard ? "" : "none";
   document.getElementById("sesionNombre").textContent = usuario ? usuario.nombre : "—";
   document.getElementById("sesionCargo").textContent = usuario ? (usuario.cargo || (perfil?perfil.nombre:"") || "—") : "—";
+  const miCorreoBtn = document.getElementById("miCorreoBtn");
+  if(miCorreoBtn) miCorreoBtn.style.display = storageMode==="api" ? "" : "none";
   if(typeof renderMisHallazgos === "function") renderMisHallazgos();
   if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
 }
@@ -15845,50 +15905,81 @@ function renderLoginUsuarioSelect(){
   const activos = (CACHE.accesoUsuarios||[]).filter(u=>u.activo!==false);
   sel.innerHTML = activos.map(u=>`<option value="${u.id}">${u.nombre}${u.cargo?" — "+u.cargo:""}</option>`).join("") || '<option value="">No hay usuarios activos — créalos en Configuración</option>';
 }
+function mostrarLoginFormEmail(){
+  document.getElementById("loginFormEmail").style.display = "";
+  document.getElementById("loginFormLegacy").style.display = "none";
+  document.getElementById("loginSeleccionEmpresa").style.display = "none";
+}
+function mostrarLoginFormLegacy(){
+  document.getElementById("loginFormEmail").style.display = "none";
+  document.getElementById("loginFormLegacy").style.display = "";
+  document.getElementById("loginSeleccionEmpresa").style.display = "none";
+}
+/* El selector de empresa post-login (correo asociado a más de una) solo
+   lista las empresas que YA devolvió el servidor tras validar la clave
+   -- nunca una lista pública/completa. */
+function mostrarLoginSeleccionEmpresa(empresas, email, clave){
+  document.getElementById("loginFormEmail").style.display = "none";
+  document.getElementById("loginFormLegacy").style.display = "none";
+  document.getElementById("loginSeleccionEmpresa").style.display = "";
+  const wrap = document.getElementById("loginSeleccionEmpresaLista");
+  wrap.innerHTML = empresas.map(e=>`<button type="button" class="btn secondary" style="width:100%;margin-top:8px;" data-elegir-empresa="${e.id}">${e.nombre}</button>`).join("");
+  wrap.querySelectorAll("[data-elegir-empresa]").forEach(btn=>{
+    on(btn, "click", async ()=>{ await completarLogin({ email, clave, empresaId: btn.dataset.elegirEmpresa }); });
+  });
+}
 async function mostrarLogin(){
-  if(storageMode === "api" && !activeEmpresa){ await mostrarSelectorEmpresa(); return; }
-  document.getElementById("empresaOverlay").classList.add("hidden");
-  if(activeEmpresa){
-    document.getElementById("loginEmpresaDesc").textContent = `Ingresando a ${activeEmpresa.nombre}. Selecciona tu usuario e ingresa tu clave de acceso para continuar.`;
+  document.getElementById("registroOverlay").classList.add("hidden");
+  if(storageMode === "api"){
+    document.getElementById("loginFormDev").style.display = "none";
+    mostrarLoginFormEmail();
+    document.getElementById("loginEmail").value = "";
+    document.getElementById("loginClave").value = "";
+    document.getElementById("loginError").style.display = "none";
+  } else {
+    document.getElementById("loginFormDev").style.display = "";
+    document.getElementById("loginFormEmail").style.display = "none";
+    document.getElementById("loginFormLegacy").style.display = "none";
+    document.getElementById("loginSeleccionEmpresa").style.display = "none";
+    renderLoginUsuarioSelect();
+    document.getElementById("loginClaveDev").value = "";
+    document.getElementById("loginErrorDev").style.display = "none";
   }
-  if(storageMode === "api") await cargarUsuariosPublicos();
-  renderLoginUsuarioSelect();
-  document.getElementById("loginClave").value = "";
-  document.getElementById("loginError").style.display = "none";
   document.getElementById("loginOverlay").classList.remove("hidden");
 }
-function ocultarLogin(){ document.getElementById("loginOverlay").classList.add("hidden"); document.getElementById("empresaOverlay").classList.add("hidden"); }
+function ocultarLogin(){ document.getElementById("loginOverlay").classList.add("hidden"); document.getElementById("registroOverlay").classList.add("hidden"); }
 /* En modo API, entrar a una cuenta implica volver a cargar TODO desde
-   el servidor (loadCache vía refreshAll), porque hasta este momento
-   solo se tenía la lista pública de usuarios (sin datos protegidos). */
-async function iniciarSesionConUsuario(usuarioId){
+   el servidor (loadCache vía refreshAll). "empresa" (si se pasa) viene
+   siempre de una respuesta ya autenticada del servidor (login o
+   GET /api/me) -- nunca de un listado público. */
+async function iniciarSesionConUsuario(usuarioId, empresa, superAdmin){
   SESION.usuarioId = usuarioId;
+  SESION.superAdmin = !!superAdmin;
   try{ localStorage.setItem(SESION_STORAGE_KEY, usuarioId); }catch(e){}
   if(storageMode === "api"){
+    if(empresa) activeEmpresa = empresa;
     await refreshAll();
     renderChecklistFor(document.getElementById("insTipo").value);
   }
   aplicarPermisosSesion();
   ocultarLogin();
 }
+/* Ya no se cachea en localStorage a qué empresa/usuario pertenece la
+   sesión (eso era, en parte, lo que alimentaba el selector público) --
+   con un token guardado, GET /api/me le pregunta al servidor a quién
+   pertenece y con qué empresa, siempre la fuente de verdad. */
 async function iniciarSesionGuardada(){
   let guardada = null;
   try{ guardada = localStorage.getItem(SESION_STORAGE_KEY); }catch(e){}
   if(storageMode === "api"){
-    let empresaGuardada = "";
-    try{ empresaGuardada = localStorage.getItem(EMPRESA_STORAGE_KEY) || ""; }catch(e){}
-    if(empresaGuardada && !activeEmpresa) await elegirEmpresa(empresaGuardada);
-    if(!guardada || !authToken){ await mostrarSelectorEmpresa(); return; }
+    if(!authToken){ await mostrarLogin(); return; }
     try{
-      await refreshAll();
-      renderChecklistFor(document.getElementById("insTipo").value);
-      const usuario = (CACHE.accesoUsuarios||[]).find(u=>u.id===guardada && u.activo!==false);
-      if(usuario){ SESION.usuarioId = usuario.id; aplicarPermisosSesion(); ocultarLogin(); }
-      else{ await mostrarLogin(); }
+      const me = await apiMe();
+      if(!me){ await mostrarLogin(); return; }
+      await iniciarSesionConUsuario(me.usuarioId, me.empresa, me.superAdmin);
     }catch(e){
       // Si el token guardado ya no es válido, apiFetch ya limpió la
-      // sesión y mostró el login (o el selector de empresa); no queda
-      // nada más que hacer aquí.
+      // sesión y mostró el login; no queda nada más que hacer acá.
     }
     return;
   }
@@ -15896,48 +15987,126 @@ async function iniciarSesionGuardada(){
   if(usuario){ iniciarSesionConUsuario(usuario.id); }
   else{ mostrarLogin(); }
 }
-on(document.getElementById("loginBtn"), "click", async () => {
-  const usuarioId = document.getElementById("loginUsuarioSel").value;
-  const clave = document.getElementById("loginClave").value;
-  if(storageMode === "api"){
-    if(!activeEmpresa){ await mostrarSelectorEmpresa(); return; }
-    const resp = await apiLogin(usuarioId, clave);
-    if(!resp){ document.getElementById("loginError").style.display = ""; return; }
-    authToken = resp.token;
-    try{ localStorage.setItem(AUTH_TOKEN_KEY, authToken); }catch(e){}
-    if(resp.empresa){
-      activeEmpresa = resp.empresa;
-      try{ localStorage.setItem(EMPRESA_STORAGE_KEY, resp.empresa.id); }catch(e){}
-    }
-    await iniciarSesionConUsuario(usuarioId);
+async function completarLogin(body){
+  const { ok, data } = await apiLoginRequest(body);
+  if(!ok || !data || (!data.token && !data.requiereSeleccion)){
+    document.getElementById("loginError").style.display = "";
     return;
   }
+  if(data.requiereSeleccion){
+    mostrarLoginSeleccionEmpresa(data.empresas||[], body.email, body.clave);
+    return;
+  }
+  authToken = data.token;
+  try{ localStorage.setItem(AUTH_TOKEN_KEY, authToken); }catch(e){}
+  await iniciarSesionConUsuario(data.usuario.id, data.empresa, data.superAdmin);
+}
+on(document.getElementById("loginBtn"), "click", async () => {
+  document.getElementById("loginError").style.display = "none";
+  const email = document.getElementById("loginEmail").value.trim();
+  const clave = document.getElementById("loginClave").value;
+  if(!email || !clave){ document.getElementById("loginError").style.display = ""; return; }
+  await completarLogin({ email, clave });
+});
+on(document.getElementById("loginEmail"), "keydown", (e) => { if(e.key==="Enter") document.getElementById("loginBtn").click(); });
+on(document.getElementById("loginClave"), "keydown", (e) => { if(e.key==="Enter") document.getElementById("loginBtn").click(); });
+on(document.getElementById("mostrarLoginLegacyBtn"), "click", () => {
+  mostrarLoginFormLegacy();
+  document.getElementById("loginEmpresaId").value = "";
+  document.getElementById("loginUsuarioIdLegacy").value = "";
+  document.getElementById("loginClaveLegacy").value = "";
+  document.getElementById("loginErrorLegacy").style.display = "none";
+});
+on(document.getElementById("ocultarLoginLegacyBtn"), "click", mostrarLoginFormEmail);
+on(document.getElementById("ocultarSeleccionEmpresaBtn"), "click", mostrarLoginFormEmail);
+on(document.getElementById("loginLegacyBtn"), "click", async () => {
+  document.getElementById("loginErrorLegacy").style.display = "none";
+  const empresaId = document.getElementById("loginEmpresaId").value.trim();
+  const usuarioId = document.getElementById("loginUsuarioIdLegacy").value.trim();
+  const clave = document.getElementById("loginClaveLegacy").value;
+  if(!empresaId || !usuarioId || !clave){ document.getElementById("loginErrorLegacy").style.display = ""; return; }
+  const { ok, data } = await apiLoginRequest({ empresaId, usuarioId, clave });
+  if(!ok || !data || !data.token){ document.getElementById("loginErrorLegacy").style.display = ""; return; }
+  authToken = data.token;
+  try{ localStorage.setItem(AUTH_TOKEN_KEY, authToken); }catch(e){}
+  await iniciarSesionConUsuario(data.usuario.id, data.empresa, data.superAdmin);
+});
+on(document.getElementById("loginClaveLegacy"), "keydown", (e) => { if(e.key==="Enter") document.getElementById("loginLegacyBtn").click(); });
+on(document.getElementById("mostrarRegistroBtn"), "click", () => {
+  document.getElementById("loginOverlay").classList.add("hidden");
+  document.getElementById("regError").style.display = "none";
+  document.getElementById("registroOverlay").classList.remove("hidden");
+});
+on(document.getElementById("ocultarRegistroBtn"), "click", () => {
+  document.getElementById("registroOverlay").classList.add("hidden");
+  mostrarLogin();
+});
+on(document.getElementById("registrarEmpresaBtn"), "click", async () => {
+  const errBox = document.getElementById("regError");
+  errBox.style.display = "none";
+  const nombre = document.getElementById("regEmpresaNombre").value.trim();
+  const rut = document.getElementById("regEmpresaRut").value.trim();
+  const rubro = document.getElementById("regEmpresaRubro").value.trim();
+  const adminNombre = document.getElementById("regAdminNombre").value.trim();
+  const adminEmail = document.getElementById("regAdminEmail").value.trim();
+  const adminClave = document.getElementById("regAdminClave").value;
+  const { ok, data } = await apiRegistrarEmpresa({ nombre, rut, rubro, adminNombre, adminEmail, adminClave });
+  if(!ok || !data || !data.token){
+    errBox.textContent = (data && data.error) || "No se pudo registrar la empresa.";
+    errBox.style.display = "";
+    return;
+  }
+  authToken = data.token;
+  try{ localStorage.setItem(AUTH_TOKEN_KEY, authToken); }catch(e){}
+  document.getElementById("registroOverlay").classList.add("hidden");
+  await iniciarSesionConUsuario(data.usuario.id, data.empresa, data.superAdmin);
+});
+on(document.getElementById("loginDevBtn"), "click", async () => {
+  const usuarioId = document.getElementById("loginUsuarioSel").value;
+  const clave = document.getElementById("loginClaveDev").value;
   const usuario = (CACHE.accesoUsuarios||[]).find(u=>u.id===usuarioId);
   if(!usuario || usuario.clave !== clave){
-    document.getElementById("loginError").style.display = "";
+    document.getElementById("loginErrorDev").style.display = "";
     return;
   }
   iniciarSesionConUsuario(usuario.id);
 });
-on(document.getElementById("loginClave"), "keydown", (e) => { if(e.key==="Enter") document.getElementById("loginBtn").click(); });
+on(document.getElementById("loginClaveDev"), "keydown", (e) => { if(e.key==="Enter") document.getElementById("loginDevBtn").click(); });
+on(document.getElementById("miCorreoBtn"), "click", async () => {
+  const usuario = usuarioDeSesion();
+  if(!usuario) return;
+  const nuevo = prompt("Correo para ingresar con correo+clave (en vez de ID de empresa + ID de usuario):", usuario.email || "");
+  if(nuevo === null) return;
+  const email = nuevo.trim();
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert("Indica un correo válido."); return; }
+  try{
+    await apiFetch("POST", "/api/accesoUsuarios", { ...usuario, email });
+    await loadCache();
+    alert(email ? "Correo guardado. Ya puedes ingresar con correo+clave la próxima vez." : "Correo eliminado.");
+  }catch(e){
+    alert("No se pudo guardar el correo: " + e.message);
+  }
+});
 on(document.getElementById("cerrarSesionBtn"), "click", () => {
   SESION.usuarioId = null;
+  SESION.superAdmin = false;
   authToken = null;
+  activeEmpresa = null;
   try{ localStorage.removeItem(SESION_STORAGE_KEY); localStorage.removeItem(AUTH_TOKEN_KEY); }catch(e){}
   cerrarSidebarMovil();
   mostrarLogin();
 });
-on(document.getElementById("cambiarEmpresaSidebarBtn"), "click", async () => {
+on(document.getElementById("cambiarEmpresaSidebarBtn"), "click", () => {
+  /* Ya no hay un selector de empresa por separado: al cerrar sesión y
+     volver a entrar con el mismo correo, si pertenece a más de una
+     empresa el selector aparece de nuevo dentro del propio login. */
   SESION.usuarioId = null;
+  SESION.superAdmin = false;
   authToken = null;
   activeEmpresa = null;
-  try{
-    localStorage.removeItem(SESION_STORAGE_KEY);
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-    localStorage.removeItem(EMPRESA_STORAGE_KEY);
-  }catch(e){}
+  try{ localStorage.removeItem(SESION_STORAGE_KEY); localStorage.removeItem(AUTH_TOKEN_KEY); }catch(e){}
   cerrarSidebarMovil();
-  await mostrarSelectorEmpresa();
+  mostrarLogin();
 });
 
 /* --- Perfiles por cargo --- */
