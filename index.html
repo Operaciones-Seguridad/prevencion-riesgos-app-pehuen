@@ -1559,7 +1559,7 @@
     <div class="card">
       <h2>Clasificación de accidentes e incidentes</h2>
       <div class="desc">Distribución de todos los registros (accidentes, incidentes y enfermedades profesionales) por mes del año en curso, por año, por área y por tipo.</div>
-      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));column-gap:24px;">
         <div>
           <div class="label" style="font-size:12.5px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;">Por mes (año en curso)</div>
           <div id="accClasifMesWrap"></div>
@@ -8226,15 +8226,19 @@ on(document.getElementById("equidadGeneroWrap"), "change", async (e) => {
    sobre el total de líneas registradas (no aplica los filtros de la tabla). */
 const NIVEL_CHART_COLORS = { bajo:"#0ca30c", medio:"#fab219", alto:"#ec835a", critico:"#d03b3b" };
 const AREA_CHART_PALETTE = ["#2a78d6","#eb6834","#1baf7a","#eda100","#e87ba4","#008300","#4a3aa7","#e34948"];
-function chartBarsHtml(entries, colorFor){
+function chartBarsHtml(entries, colorFor, compact){
   const total = entries.reduce((s,[,c])=>s+c, 0) || 1;
+  const rowGap = compact ? "4px" : "10px";
+  const labelGap = compact ? "2px" : "4px";
+  const barHeight = compact ? "8px" : "14px";
+  const fontSize = compact ? "11px" : "12.5px";
   return entries.map(([label,count],i)=>{
     const pct = Math.round(count/total*100);
-    return `<div style="margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-secondary);margin-bottom:4px;">
+    return `<div style="margin-bottom:${rowGap};">
+      <div style="display:flex;justify-content:space-between;font-size:${fontSize};color:var(--text-secondary);margin-bottom:${labelGap};">
         <span>${label}</span><span>${count} (${pct}%)</span>
       </div>
-      <div style="background:var(--grid);border-radius:6px;height:14px;overflow:hidden;">
+      <div style="background:var(--grid);border-radius:6px;height:${barHeight};overflow:hidden;">
         <div style="width:${pct}%;background:${colorFor(label,i)};height:100%;"></div>
       </div>
     </div>`;
@@ -11403,27 +11407,27 @@ function renderAccClasificacion(){
   });
 
   document.getElementById("accClasifMesWrap").innerHTML = CACHE.accidentes.length
-    ? chartBarsHtml(MESES.map((m,i)=>[m, porMes[i]]), ()=>"#e34948")
+    ? chartBarsHtml(MESES.map((m,i)=>[m, porMes[i]]), ()=>"#e34948", true)
     : '<div class="empty">Sin registros</div>';
 
   const aniosOrdenados = Array.from(porAnio.keys()).sort((a,b)=>b-a);
   document.getElementById("accClasifAnioWrap").innerHTML = aniosOrdenados.length
-    ? chartBarsHtml(aniosOrdenados.map(a=>[String(a), porAnio.get(a)]), (label,i)=>AREA_CHART_PALETTE[i % AREA_CHART_PALETTE.length])
+    ? chartBarsHtml(aniosOrdenados.map(a=>[String(a), porAnio.get(a)]), (label,i)=>AREA_CHART_PALETTE[i % AREA_CHART_PALETTE.length], true)
     : '<div class="empty">Sin registros</div>';
 
   const areasOrdenadas = Array.from(porArea.entries()).sort((a,b)=>b[1]-a[1]);
   document.getElementById("accClasifAreaWrap").innerHTML = areasOrdenadas.length
-    ? chartBarsHtml(areasOrdenadas, (label,i)=>AREA_CHART_PALETTE[i % AREA_CHART_PALETTE.length])
+    ? chartBarsHtml(areasOrdenadas, (label,i)=>AREA_CHART_PALETTE[i % AREA_CHART_PALETTE.length], true)
     : '<div class="empty">Sin registros</div>';
 
   const tiposOrdenados = Array.from(porTipo.entries()).sort((a,b)=>b[1]-a[1]);
   document.getElementById("accClasifTipoWrap").innerHTML = tiposOrdenados.length
-    ? chartBarsHtml(tiposOrdenados, ()=>"#eb6834")
+    ? chartBarsHtml(tiposOrdenados, ()=>"#eb6834", true)
     : '<div class="empty">Sin registros</div>';
 
   const focosOrdenados = Array.from(porFoco.entries()).sort((a,b)=>b[1]-a[1]);
   document.getElementById("accClasifFocoWrap").innerHTML = focosOrdenados.length
-    ? chartBarsHtml(focosOrdenados, (label,i)=>AREA_CHART_PALETTE[i % AREA_CHART_PALETTE.length])
+    ? chartBarsHtml(focosOrdenados, (label,i)=>AREA_CHART_PALETTE[i % AREA_CHART_PALETTE.length], true)
     : '<div class="empty">Sin registros con foco crítico asociado</div>';
 }
 
