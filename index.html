@@ -1825,6 +1825,45 @@
         <tbody id="fufTable"></tbody>
       </table>
     </div>
+
+    <div class="card">
+      <h2>Obligaciones DS 44</h2>
+      <div class="desc" id="ds44TramoDesc"></div>
+      <div id="ds44CargarCatalogoWrap"></div>
+      <table>
+        <thead><tr><th>Obligación</th><th style="width:130px;">Estado</th><th style="width:120px;">Última revisión</th><th style="width:150px;">Responsable</th><th style="width:120px;">Evidencia</th><th style="width:90px;"></th></tr></thead>
+        <tbody id="ds44CumplimientoTable"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrDs44Catalogo"><h2>Catálogo de obligaciones DS 44</h2><button class="collapse-toggle" id="toggleDs44Catalogo" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyDs44Catalogo">
+      <div class="desc">Administra el catálogo de obligaciones legales que se evalúan más arriba. Cada una aplica desde un tramo mínimo de N° de trabajadores (Configuración → Empresa).</div>
+      <div class="form-grid">
+        <div><label>Nombre de la obligación</label><input id="ds44ObNombre" placeholder="Ej: Comité Paritario de Higiene y Seguridad"></div>
+        <div><label>Referencia normativa</label><input id="ds44ObReferencia" placeholder="Ej: DS 44/2024, art. 47"></div>
+        <div><label>Tramo mínimo de empresa</label>
+          <select id="ds44ObTramo">
+            <option value="todas">Todas las empresas</option>
+            <option value="10-25-sin-comite">10 a 25 trabajadores (sin Comité Paritario)</option>
+            <option value="mas-25">Más de 25 trabajadores</option>
+            <option value="mas-100">Más de 100 trabajadores</option>
+          </select>
+        </div>
+      </div>
+      <label>Descripción</label>
+      <textarea id="ds44ObDescripcion" placeholder="En qué consiste la obligación"></textarea>
+      <div class="toolbar" style="margin-top:10px;">
+        <button class="btn small" id="ds44ObGuardarBtn">+ Agregar obligación</button>
+        <button class="btn small secondary" id="ds44ObCancelarBtn" style="display:none;">Cancelar edición</button>
+      </div>
+      <table style="margin-top:14px;">
+        <thead><tr><th>Nombre</th><th>Tramo mínimo</th><th>Referencia normativa</th><th></th></tr></thead>
+        <tbody id="ds44ObligacionesTable"></tbody>
+      </table>
+      </div>
+    </div>
   </div>
 
   <!-- RIOHyS -->
@@ -2400,6 +2439,11 @@
         <div><label>Dirección</label><input id="cfgDireccion" placeholder="Dirección de la empresa"></div>
         <div><label>Organismo administrador</label><input id="cfgOrganismoAdm" placeholder="Ej: Mutual de Seguridad, ACHS, IST, ISL..."></div>
         <div><label>N° de adherente</label><input id="cfgNumAdherente" placeholder="Número de adherente/afiliado"></div>
+        <div>
+          <label>N° de trabajadores</label>
+          <input id="cfgNumTrabajadores" type="number" min="0">
+          <div class="kv" id="cfgTramoEmpresaHint" style="margin-top:4px;"></div>
+        </div>
       </div>
       <label style="margin-top:12px;">Logo de la empresa</label>
       <input type="file" id="cfgLogoInput" accept="image/*">
@@ -2615,8 +2659,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 26;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones"];
+const DB_VERSION = 27;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -2922,6 +2966,7 @@ function setupCollapsible(headerId, bodyId, toggleId, storageKey){
 }
 setupCollapsible("hdrMatrizVigente", "bodyMatrizVigente", "toggleMatrizVigente", "collapsed_matrizVigente");
 setupCollapsible("hdrTraspasosPendientes", "bodyTraspasosPendientes", "toggleTraspasosPendientes", "collapsed_traspasosPendientes");
+setupCollapsible("hdrDs44Catalogo", "bodyDs44Catalogo", "toggleDs44Catalogo", "collapsed_ds44Catalogo");
 setupCollapsible("hdrLevantamiento", "bodyLevantamiento", "toggleLevantamiento", "collapsed_levantamiento");
 setupCollapsible("hdrCompromisosItems", "bodyCompromisosItems", "toggleCompromisosItems", "collapsed_compromisosItems");
 setupCollapsible("hdrEquidadGenero", "bodyEquidadGenero", "toggleEquidadGenero", "collapsed_equidadGenero");
@@ -3722,6 +3767,221 @@ on(document.getElementById("exportFufBtn"), "click", async () => {
   XLSX.utils.book_append_sheet(wb, ws, "Cumplimiento FUF DS44");
   const empresaNombre = (CACHE.empresa && CACHE.empresa.razonSocial) ? CACHE.empresa.razonSocial.replace(/[^a-zA-Z0-9]+/g,"_") : "Empresa";
   XLSX.writeFile(wb, `Cumplimiento_FUF_DS44_${empresaNombre}_${new Date().toISOString().slice(0,10)}.xlsx`);
+});
+
+/* =========================================================
+   OBLIGACIONES DS 44 (sección nueva y separada del FUF de arriba,
+   a pedido explícito de Carlos -- no se tocan ni se fusionan). Es
+   un catálogo configurable (ds44Obligaciones) más un registro de
+   seguimiento por obligación (ds44Cumplimiento), filtrado según el
+   tramo de tamaño de la empresa (tramoEmpresa(), definida junto a
+   Configuración). La evidencia se guarda igual que en el FUF:
+   base64 directo en el registro, no en el store "documentos" (ese
+   es para documentos versionados con aprobación, no para una foto
+   o acta de respaldo suelta).
+   ========================================================= */
+const DS44_OB_TRAMO_LABEL = {"todas":"Todas las empresas", "10-25-sin-comite":"10 a 25 trabajadores (sin Comité Paritario)", "mas-25":"Más de 25 trabajadores", "mas-100":"Más de 100 trabajadores"};
+const DS44_OB_ESTADO_LABEL = {cumple:"Cumple", no_cumple:"No cumple", en_proceso:"En proceso", no_aplica:"No aplica"};
+const DS44_OBLIGACIONES_DEFECTO = [
+  { nombre:"Encargado de Prevención de Riesgos", descripcion:"Persona designada como encargada de la gestión preventiva de riesgos laborales.", referenciaNormativa:"DS 44/2024", tramoMinimo:"todas" },
+  { nombre:"Matriz de Identificación de Peligros y Evaluación de Riesgos (IPER)", descripcion:"Matriz que identifica los peligros y evalúa los riesgos de todos los procesos, tareas y puestos de trabajo.", referenciaNormativa:"DS 44/2024, art. 7", tramoMinimo:"todas" },
+  { nombre:"Programa de Trabajo en Prevención de Riesgos Laborales", descripcion:"Programa escrito, confeccionado a partir de la matriz de riesgos, con medidas, plazos y responsables.", referenciaNormativa:"DS 44/2024, art. 8", tramoMinimo:"todas" },
+  { nombre:"Sistema de Gestión de Seguridad y Salud en el Trabajo (SG-SST)", descripcion:"Sistema de gestión que incluye política, estructura organizacional, diagnóstico/planificación, evaluación y mejora continua.", referenciaNormativa:"DS 44/2024, art. 22", tramoMinimo:"todas" },
+  { nombre:"Delegado de Seguridad y Salud en el Trabajo", descripcion:"Representante elegido por las personas trabajadoras cuando no corresponde constituir Comité Paritario.", referenciaNormativa:"DS 44/2024, art. 66", tramoMinimo:"10-25-sin-comite" },
+  { nombre:"Comité Paritario de Higiene y Seguridad", descripcion:"Comité constituido por representantes de la empresa y de los trabajadores.", referenciaNormativa:"DS 44/2024, art. 23", tramoMinimo:"mas-25" },
+  { nombre:"Departamento de Prevención de Riesgos Laborales", descripcion:"Departamento dirigido por un experto en prevención de riesgos, inscrito en la Seremi de Salud.", referenciaNormativa:"DS 44/2024, art. 50", tramoMinimo:"mas-100" },
+];
+function obligacionAplica(ob, numTrabajadores){
+  const n = numTrabajadores||0;
+  if(ob.tramoMinimo==="10-25-sin-comite") return n>=10 && n<=25;
+  if(ob.tramoMinimo==="mas-25") return n>25;
+  if(ob.tramoMinimo==="mas-100") return n>100;
+  return true; // "todas" o valor desconocido: no se oculta por defecto
+}
+function ds44CumplimientoDe(obligacionId){
+  return (CACHE.ds44Cumplimiento||[]).find(r=>r.obligacionId===obligacionId) || null;
+}
+
+/* --- Catálogo (administración: agregar/editar/quitar obligaciones) --- */
+let ds44ObEditingId = null;
+function resetDs44ObForm(){
+  ds44ObEditingId = null;
+  document.getElementById("ds44ObNombre").value = "";
+  document.getElementById("ds44ObReferencia").value = "";
+  document.getElementById("ds44ObTramo").value = "todas";
+  document.getElementById("ds44ObDescripcion").value = "";
+  document.getElementById("ds44ObGuardarBtn").textContent = "+ Agregar obligación";
+  document.getElementById("ds44ObCancelarBtn").style.display = "none";
+}
+function renderDs44ObligacionesTable(){
+  const tbody = document.getElementById("ds44ObligacionesTable");
+  if(!tbody) return;
+  const rows = (CACHE.ds44Obligaciones||[]).slice().sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  tbody.innerHTML = rows.length ? rows.map(ob=>`
+    <tr>
+      <td>${ob.nombre}</td>
+      <td>${DS44_OB_TRAMO_LABEL[ob.tramoMinimo]||ob.tramoMinimo}</td>
+      <td>${ob.referenciaNormativa||"—"}</td>
+      <td style="white-space:nowrap;">
+        <button class="subtle-btn" data-ds44ob-editar="${ob.id}">Editar</button>
+        <button class="subtle-btn" data-ds44ob-eliminar="${ob.id}">Eliminar</button>
+      </td>
+    </tr>
+  `).join("") : `<tr><td class="empty" colspan="4">Sin obligaciones en el catálogo</td></tr>`;
+  const cargarWrap = document.getElementById("ds44CargarCatalogoWrap");
+  if(cargarWrap) cargarWrap.innerHTML = rows.length ? "" : `<div class="toolbar"><button class="btn small secondary" id="ds44CargarCatalogoBtn" type="button">Cargar catálogo inicial de obligaciones DS 44</button></div>`;
+  const cargarBtn = document.getElementById("ds44CargarCatalogoBtn");
+  if(cargarBtn) on(cargarBtn, "click", async ()=>{
+    for(const ob of DS44_OBLIGACIONES_DEFECTO) await put("ds44Obligaciones", {id:uid(), ...ob});
+    await loadCache();
+    renderDs44ObligacionesTable();
+    renderDs44Cumplimiento();
+  });
+}
+on(document.getElementById("ds44ObGuardarBtn"), "click", async ()=>{
+  const nombre = document.getElementById("ds44ObNombre").value.trim();
+  if(!nombre){ alert("Indica el nombre de la obligación."); return; }
+  const rec = {
+    id: ds44ObEditingId || uid(),
+    nombre,
+    descripcion: document.getElementById("ds44ObDescripcion").value.trim(),
+    referenciaNormativa: document.getElementById("ds44ObReferencia").value.trim(),
+    tramoMinimo: document.getElementById("ds44ObTramo").value,
+  };
+  await put("ds44Obligaciones", rec);
+  await loadCache();
+  resetDs44ObForm();
+  renderDs44ObligacionesTable();
+  renderDs44Cumplimiento();
+});
+on(document.getElementById("ds44ObCancelarBtn"), "click", ()=> resetDs44ObForm());
+on(document.getElementById("ds44ObligacionesTable"), "click", async (e)=>{
+  const editBtn = e.target.closest("[data-ds44ob-editar]");
+  if(editBtn){
+    const ob = (CACHE.ds44Obligaciones||[]).find(o=>o.id===editBtn.dataset.ds44obEditar);
+    if(!ob) return;
+    ds44ObEditingId = ob.id;
+    document.getElementById("ds44ObNombre").value = ob.nombre||"";
+    document.getElementById("ds44ObReferencia").value = ob.referenciaNormativa||"";
+    document.getElementById("ds44ObTramo").value = ob.tramoMinimo||"todas";
+    document.getElementById("ds44ObDescripcion").value = ob.descripcion||"";
+    document.getElementById("ds44ObGuardarBtn").textContent = "Guardar cambios";
+    document.getElementById("ds44ObCancelarBtn").style.display = "";
+    return;
+  }
+  const delBtn = e.target.closest("[data-ds44ob-eliminar]");
+  if(delBtn){
+    const ob = (CACHE.ds44Obligaciones||[]).find(o=>o.id===delBtn.dataset.ds44obEliminar);
+    if(!ob) return;
+    if(!confirm(`¿Eliminar la obligación "${ob.nombre}" del catálogo? El seguimiento ya registrado para ella también dejará de mostrarse.`)) return;
+    await deleteRecord("ds44Obligaciones", ob.id);
+    const seguimiento = ds44CumplimientoDe(ob.id);
+    if(seguimiento) await deleteRecord("ds44Cumplimiento", seguimiento.id);
+    await loadCache();
+    if(ds44ObEditingId===ob.id) resetDs44ObForm();
+    renderDs44ObligacionesTable();
+    renderDs44Cumplimiento();
+  }
+});
+
+/* --- Seguimiento (tabla filtrada por tramo + modal de edición) --- */
+function renderDs44Cumplimiento(){
+  const tbody = document.getElementById("ds44CumplimientoTable");
+  const desc = document.getElementById("ds44TramoDesc");
+  if(!tbody || !desc) return;
+  const n = (CACHE.empresa && CACHE.empresa.numTrabajadores) || 0;
+  const tramo = tramoEmpresa(n);
+  desc.textContent = `Mostrando las obligaciones que aplican para ${n} trabajador(es) — tramo "${TRAMO_EMPRESA_LABEL[tramo]}". Ajusta el N° de trabajadores en Configuración → Empresa si no es el correcto.`;
+  const obligaciones = (CACHE.ds44Obligaciones||[]).filter(ob=>obligacionAplica(ob, n)).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  tbody.innerHTML = obligaciones.length ? obligaciones.map(ob=>{
+    const reg = ds44CumplimientoDe(ob.id);
+    const estado = reg ? reg.estado : null;
+    const cls = estado==="cumple" ? "vigente" : estado==="no_cumple" ? "vencido" : estado==="en_proceso" ? "proximo" : "";
+    return `<tr>
+      <td><strong>${ob.nombre}</strong>${ob.descripcion?`<div class="kv" style="margin-top:2px;">${ob.descripcion}</div>`:""}${ob.referenciaNormativa?`<div class="kv">${ob.referenciaNormativa}</div>`:""}</td>
+      <td>${estado ? `<span class="pill ${cls}">${DS44_OB_ESTADO_LABEL[estado]}</span>` : `<span class="pill">Sin evaluar</span>`}</td>
+      <td>${reg && reg.fechaRevision ? fmtDate(reg.fechaRevision) : "—"}</td>
+      <td>${reg && reg.responsable ? reg.responsable : "—"}</td>
+      <td>${reg && reg.evidenciaNombre ? `<button class="subtle-btn" data-ds44cump-verevidencia="${ob.id}">📎 Ver</button>` : "—"}</td>
+      <td><button class="btn small secondary" data-ds44cump-editar="${ob.id}">Editar</button></td>
+    </tr>`;
+  }).join("") : `<tr><td class="empty" colspan="6">No hay obligaciones que apliquen a este tramo de empresa (o el catálogo está vacío).</td></tr>`;
+}
+let ds44CumpFilePendiente = null;
+function abrirModalDs44Cumplimiento(obligacion){
+  const reg = ds44CumplimientoDe(obligacion.id) || {};
+  ds44CumpFilePendiente = null;
+  openModal(`
+    <h3>${obligacion.nombre}</h3>
+    <div class="desc">${obligacion.descripcion||""}${obligacion.referenciaNormativa?` (${obligacion.referenciaNormativa})`:""}</div>
+    <label>Estado</label>
+    <select id="ds44CumpEstado">
+      <option value="cumple" ${reg.estado==="cumple"?"selected":""}>Cumple</option>
+      <option value="no_cumple" ${reg.estado==="no_cumple"?"selected":""}>No cumple</option>
+      <option value="en_proceso" ${reg.estado==="en_proceso"?"selected":""}>En proceso</option>
+      <option value="no_aplica" ${reg.estado==="no_aplica"?"selected":""}>No aplica</option>
+    </select>
+    <div class="form-grid">
+      <div><label>Fecha de última revisión</label><input type="date" id="ds44CumpFecha" value="${reg.fechaRevision||""}"></div>
+      <div><label>Responsable</label><input id="ds44CumpResponsable" value="${reg.responsable||""}"></div>
+    </div>
+    <label>Notas</label>
+    <textarea id="ds44CumpNotas" placeholder="Observaciones adicionales">${reg.notas||""}</textarea>
+    <label>Evidencia (documento, acta o foto)</label>
+    ${reg.evidenciaNombre ? `<div class="kv" style="margin-top:4px;">📎 ${reg.evidenciaNombre}</div><div style="margin-top:4px;display:flex;gap:6px;"><button class="subtle-btn" id="ds44CumpVerBtn" type="button">Ver</button><button class="subtle-btn" id="ds44CumpQuitarBtn" type="button">Quitar</button></div>` : `<div class="kv">Sin evidencia adjunta</div>`}
+    <input type="file" id="ds44CumpFile" accept="image/*,application/pdf" style="margin-top:6px;">
+    <div class="toolbar" style="margin-top:16px;">
+      <button class="btn" id="ds44CumpGuardarBtn">Guardar</button>
+      <button class="btn secondary" id="ds44CumpCancelarBtn">Cancelar</button>
+    </div>
+  `);
+  document.getElementById("ds44CumpFile").addEventListener("change", async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    ds44CumpFilePendiente = {nombre:file.name, data: await readFileAsDataUrl(file)};
+  });
+  const verBtn = document.getElementById("ds44CumpVerBtn");
+  if(verBtn) verBtn.addEventListener("click", ()=>{
+    if(!reg.evidenciaData) return;
+    const w = window.open();
+    if(w) w.document.write(`<title>${reg.evidenciaNombre||"Evidencia"}</title><body style="margin:0;background:#222;display:flex;align-items:center;justify-content:center;height:100vh;">${/^data:application\/pdf/.test(reg.evidenciaData) ? `<embed src="${reg.evidenciaData}" style="width:100%;height:100%;">` : `<img src="${reg.evidenciaData}" style="max-width:100%;max-height:100%;">`}</body>`);
+  });
+  const quitarBtn = document.getElementById("ds44CumpQuitarBtn");
+  if(quitarBtn) quitarBtn.addEventListener("click", ()=>{ ds44CumpFilePendiente = {nombre:null, data:null}; alert("Se quitará la evidencia al guardar."); });
+  on(document.getElementById("ds44CumpCancelarBtn"), "click", ()=> closeModal());
+  on(document.getElementById("ds44CumpGuardarBtn"), "click", async ()=>{
+    const rec = {
+      id: reg.id || uid(),
+      obligacionId: obligacion.id,
+      estado: document.getElementById("ds44CumpEstado").value,
+      fechaRevision: document.getElementById("ds44CumpFecha").value,
+      responsable: document.getElementById("ds44CumpResponsable").value.trim(),
+      notas: document.getElementById("ds44CumpNotas").value.trim(),
+      evidenciaNombre: ds44CumpFilePendiente ? ds44CumpFilePendiente.nombre : (reg.evidenciaNombre||null),
+      evidenciaData: ds44CumpFilePendiente ? ds44CumpFilePendiente.data : (reg.evidenciaData||null),
+      fechaModificacion: new Date().toISOString(),
+    };
+    await put("ds44Cumplimiento", rec);
+    await loadCache();
+    closeModal();
+    renderDs44Cumplimiento();
+  });
+}
+on(document.getElementById("ds44CumplimientoTable"), "click", (e)=>{
+  const editBtn = e.target.closest("[data-ds44cump-editar]");
+  if(editBtn){
+    const ob = (CACHE.ds44Obligaciones||[]).find(o=>o.id===editBtn.dataset.ds44cumpEditar);
+    if(ob) abrirModalDs44Cumplimiento(ob);
+    return;
+  }
+  const verBtn = e.target.closest("[data-ds44cump-verevidencia]");
+  if(verBtn){
+    const reg = ds44CumplimientoDe(verBtn.dataset.ds44cumpVerevidencia);
+    if(reg && reg.evidenciaData){
+      const w = window.open();
+      if(w) w.document.write(`<title>${reg.evidenciaNombre||"Evidencia"}</title><body style="margin:0;background:#222;display:flex;align-items:center;justify-content:center;height:100vh;">${/^data:application\/pdf/.test(reg.evidenciaData) ? `<embed src="${reg.evidenciaData}" style="width:100%;height:100%;">` : `<img src="${reg.evidenciaData}" style="max-width:100%;max-height:100%;">`}</body>`);
+    }
+  }
 });
 
 /* =========================================================
@@ -5882,6 +6142,8 @@ function poblarFormConfigEmpresa(){
   document.getElementById("cfgDireccion").value = e.direccion || "";
   document.getElementById("cfgOrganismoAdm").value = e.organismoAdministrador || "";
   document.getElementById("cfgNumAdherente").value = e.numAdherente || "";
+  document.getElementById("cfgNumTrabajadores").value = e.numTrabajadores!=null ? e.numTrabajadores : (CACHE.trabajadores||[]).length;
+  actualizarTramoEmpresaHint();
   document.getElementById("cfgUsarRirdaLdr").checked = !!e.usarRirdaLdr;
   document.getElementById("cfgIapHabilitado").checked = e.iapHabilitado !== false;
   document.getElementById("cfgMetaFrecuencia").value = e.metaFrecuencia ?? "";
@@ -5894,6 +6156,25 @@ function poblarFormConfigEmpresa(){
     ? `<img src="${e.logo}" style="max-height:60px;max-width:160px;border-radius:6px;display:block;margin-bottom:4px;"> Logo actual (se mantiene si no subes uno nuevo)`
     : "Sin logo cargado";
 }
+/* Tramo de tamaño de empresa según N° de trabajadores -- no existía nada
+   estructurado antes (los umbrales 10/25/100 solo aparecían como texto
+   suelto en preguntas del FUF); se usa acá y para filtrar el catálogo de
+   Obligaciones DS 44 en Cumplimiento legal. */
+const TRAMO_EMPRESA_LABEL = {"1-9":"1 a 9","10-25":"10 a 25","26-100":"26 a 100","100+":"Más de 100"};
+function tramoEmpresa(n){
+  const v = n||0;
+  if(v>100) return "100+";
+  if(v>=26) return "26-100";
+  if(v>=10) return "10-25";
+  return "1-9";
+}
+function actualizarTramoEmpresaHint(){
+  const hint = document.getElementById("cfgTramoEmpresaHint");
+  if(!hint) return;
+  const n = +document.getElementById("cfgNumTrabajadores").value || 0;
+  hint.textContent = `Tramo: ${TRAMO_EMPRESA_LABEL[tramoEmpresa(n)]} trabajadores`;
+}
+document.getElementById("cfgNumTrabajadores").addEventListener("input", actualizarTramoEmpresaHint);
 /* No todas las empresas necesitan el módulo de IAP de otras empresas
    (Capacitación) -- se puede ocultar por empresa desde Configuración.
    Por defecto queda visible (iapHabilitado !== false), para no esconder
@@ -13935,6 +14216,7 @@ on(document.getElementById("saveEmpresaBtn"), "click", async () => {
     direccion: document.getElementById("cfgDireccion").value.trim(),
     organismoAdministrador: document.getElementById("cfgOrganismoAdm").value.trim(),
     numAdherente: document.getElementById("cfgNumAdherente").value.trim(),
+    numTrabajadores: +document.getElementById("cfgNumTrabajadores").value || 0,
     usarRirdaLdr: document.getElementById("cfgUsarRirdaLdr").checked,
     iapHabilitado: document.getElementById("cfgIapHabilitado").checked,
     logo: cfgLogoPendiente || anterior.logo || null,
@@ -13946,6 +14228,7 @@ on(document.getElementById("saveEmpresaBtn"), "click", async () => {
   renderCommonSelects();
   renderAccidentabilidad();
   aplicarVisibilidadIap();
+  renderDs44Cumplimiento();
   alert("Datos de la empresa guardados.");
 });
 
@@ -15344,6 +15627,8 @@ async function refreshAll(){
   renderGanttResumen();
   renderFufFiltros();
   renderFufTable();
+  renderDs44ObligacionesTable();
+  renderDs44Cumplimiento();
   renderPgFiltros();
   renderProgramaTable();
   renderProgramaCumplimientoPorResponsable();
