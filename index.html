@@ -144,6 +144,7 @@
   .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 14px;}
   .modal-bg.open{display:flex;}
   .modal{background:var(--surface-1);border-radius:var(--radius);padding:22px;max-width:560px;width:100%;}
+  .modal.modal-wide{max-width:960px;}
   .modal h3{margin-top:0;}
   .close-row{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;}
   .badge-count{background:var(--critical);color:#fff;border-radius:10px;font-size:11px;padding:1px 7px;margin-left:4px;}
@@ -7669,8 +7670,9 @@ document.getElementById("misHallazgosWrap").addEventListener("click", async (e)=
 });
 
 /* Modal genérico */
-function openModal(html){
+function openModal(html, opts){
   document.getElementById("modalBody").innerHTML = html;
+  document.getElementById("modalBody").classList.toggle("modal-wide", !!(opts && opts.wide));
   document.getElementById("modalBg").classList.add("open");
 }
 function closeModal(){
@@ -14114,7 +14116,7 @@ function abrirModalInvestigacionAccidente(accidente){
       <button class="btn secondary" id="invGuardarPdfBtn">Guardar y descargar PDF</button>
       <button class="btn secondary" id="invCancelarBtn">Cancelar</button>
     </div>
-  `);
+  `, {wide:true});
   drawInvMedidas();
   const precargarSel = document.getElementById("invPrecargarTrab");
   if(precargarSel){
