@@ -9694,12 +9694,15 @@ function renderPlanoRiesgos(){
   const quitarBtn = document.getElementById("planoQuitarBtn");
   if(quitarBtn) quitarBtn.style.display = planoActualId ? "" : "none";
   if(cfg.imagen){
+    const avisoSinAreas = !bloques.length
+      ? `<div class="kv" style="margin-top:8px;padding:8px 10px;background:#fff4de;border:1px solid #eda100;border-radius:6px;color:#8a5a00;">Este plano todavía no tiene ninguna área asignada, por eso no aparece ningún ícono. Andá a <strong>Configuración → Áreas</strong> y elegí "${cfg.nombre}" en la columna "Plano" de al menos un área (y cargá al menos una línea de esa área en la Matriz de riesgos).</div>`
+      : `<div class="kv" style="margin-top:8px;">Puedes arrastrar la marca de cada área y cada ícono de peligro por separado, para distribuirlos en su ubicación real dentro del plano. Asigná más áreas a este plano desde Configuración → Áreas.</div>`;
     wrap.innerHTML = `<div id="planoImgWrap" style="position:relative;display:inline-block;max-width:100%;touch-action:none;">
       <img src="${cfg.imagen}" style="display:block;max-width:100%;border:1px solid var(--border);border-radius:8px;">
       ${bloques.map((b,i)=>planoMarkerHtml(b,i)).join("")}
       ${planoIconosDeArea(cfg, bloques)}
     </div>
-    <div class="kv" style="margin-top:8px;">Puedes arrastrar la marca de cada área y cada ícono de peligro por separado, para distribuirlos en su ubicación real dentro del plano. Asigná más áreas a este plano desde Configuración → Áreas.</div>`;
+    ${avisoSinAreas}`;
     attachPlanoDrag();
   } else {
     wrap.innerHTML = `<div class="grid-tiles" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
