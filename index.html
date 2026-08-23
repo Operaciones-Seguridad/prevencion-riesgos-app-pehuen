@@ -3234,12 +3234,12 @@ function on(el, event, handler){
     }
   });
 }
-function setupCollapsible(headerId, bodyId, toggleId, storageKey){
+function setupCollapsible(headerId, bodyId, toggleId, storageKey, defaultOpen){
   const header = document.getElementById(headerId);
   const body = document.getElementById(bodyId);
   const btn = document.getElementById(toggleId);
   if(!header || !body || !btn) return;
-  let open = true;
+  let open = defaultOpen===undefined ? true : defaultOpen;
   try{
     const saved = localStorage.getItem(storageKey);
     if(saved !== null) open = saved === "1";
@@ -12008,37 +12008,43 @@ function renderCapacitacionesList(){
         <td><button class="subtle-btn" data-cap-quitar="${c.id}|${p.trabajadorId}">Quitar</button></td>
       </tr>`).join("");
     return `<div class="finding" style="background:var(--surface-1);">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+      <div class="card-header-row" id="capHdr_${c.id}" style="align-items:flex-start;">
         <div>
           <strong>${c.nombre}</strong>
           <div class="kv">${CAP_TIPO_LABEL[c.tipo]||c.tipo} · Programada: ${fmtDate(c.fechaProgramada)} · ${c.horas||0} hrs · ${c.relator||"—"}</div>
           ${c.documentoId ? (()=>{ const doc = CACHE.documentos.find(d=>d.id===c.documentoId); return doc ? `<div class="kv">Documento: <span class="pill bajo">${tipoDocumentoLabel(doc)}: ${doc.nombre}</span></div>` : `<div class="kv">Documento: <span class="pill" style="opacity:.6;">Documento eliminado</span></div>`; })() : ""}
         </div>
-        <div style="text-align:right;">
-          <span class="pill ${stats.pct>=80?'bajo':stats.pct>=50?'medio':'critico'}">${stats.asistieron}/${stats.convocados} asistencia confirmada (${stats.pct}%)</span>
-          <div class="kv">${c.fechaRealizada? "Realizada: "+fmtDate(c.fechaRealizada) : `<button class="subtle-btn" data-cap-done="${c.id}">Marcar realizada</button>`}</div>
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <div style="text-align:right;">
+            <span class="pill ${stats.pct>=80?'bajo':stats.pct>=50?'medio':'critico'}">${stats.asistieron}/${stats.convocados} asistencia confirmada (${stats.pct}%)</span>
+            <div class="kv">${c.fechaRealizada? "Realizada: "+fmtDate(c.fechaRealizada) : `<button class="subtle-btn" data-cap-done="${c.id}">Marcar realizada</button>`}</div>
+          </div>
+          <button class="collapse-toggle" id="capToggle_${c.id}" type="button" aria-label="Contraer o expandir">▾</button>
         </div>
       </div>
-      <label style="margin-top:10px;">Trabajadores que asistieron</label>
-      <table><thead><tr><th>Trabajador</th><th>Asistencia</th><th>Aprobación</th><th></th></tr></thead><tbody>${filaParticipantes || '<tr><td class="empty" colspan="4">Aún no se ha agregado ningún asistente</td></tr>'}</tbody></table>
-      <div class="toolbar" style="margin-top:8px;">
-        <div class="field"><label>Agregar trabajador que asistió</label>
-          <select data-cap-select-trab="${c.id}">
-            <option value="">Seleccione...</option>
-            ${disponibles.map(t=>`<option value="${t.id}">${t.label}</option>`).join("")}
-          </select>
+      <div class="collapsible-body" id="capBody_${c.id}">
+        <label style="margin-top:10px;">Trabajadores que asistieron</label>
+        <table><thead><tr><th>Trabajador</th><th>Asistencia</th><th>Aprobación</th><th></th></tr></thead><tbody>${filaParticipantes || '<tr><td class="empty" colspan="4">Aún no se ha agregado ningún asistente</td></tr>'}</tbody></table>
+        <div class="toolbar" style="margin-top:8px;">
+          <div class="field"><label>Agregar trabajador que asistió</label>
+            <select data-cap-select-trab="${c.id}">
+              <option value="">Seleccione...</option>
+              ${disponibles.map(t=>`<option value="${t.id}">${t.label}</option>`).join("")}
+            </select>
+          </div>
+          <div><button class="btn small secondary" data-cap-agregar="${c.id}" style="margin-top:20px;">+ Agregar</button></div>
         </div>
-        <div><button class="btn small secondary" data-cap-agregar="${c.id}" style="margin-top:20px;">+ Agregar</button></div>
+        <label style="margin-top:10px;">Documento probatorio de asistencia (lista de asistencia firmada, certificado, foto, etc.)</label>
+        <div class="toolbar" style="margin:4px 0;">
+          <div class="field"><input type="file" data-cap-doc="${c.id}" accept="image/*,.pdf,.doc,.docx,.txt,.csv"></div>
+          <div><button class="btn small secondary" data-cap-detectar="${c.id}" style="margin-top:0;" ${c.documento?"":"disabled"}>Detectar asistencia automáticamente en el documento</button></div>
+        </div>
+        ${c.documento? `<div class="kv" style="margin-top:4px;">Documento actual: <a href="${c.documento}" download="${c.documentoNombre||'documento'}">${c.documentoNombre||"Descargar"}</a></div>` : ""}
+        <div class="desc" style="margin-top:4px;">Esta detección funciona bien con documentos de texto (PDF generado digitalmente, o listas en .txt/.csv); <strong>no reconoce nombres manuscritos</strong> en actas escaneadas o fotografiadas a mano (como firmas de puño y letra). Siempre revise y ajuste la lista de asistentes manualmente.</div>
       </div>
-      <label style="margin-top:10px;">Documento probatorio de asistencia (lista de asistencia firmada, certificado, foto, etc.)</label>
-      <div class="toolbar" style="margin:4px 0;">
-        <div class="field"><input type="file" data-cap-doc="${c.id}" accept="image/*,.pdf,.doc,.docx,.txt,.csv"></div>
-        <div><button class="btn small secondary" data-cap-detectar="${c.id}" style="margin-top:0;" ${c.documento?"":"disabled"}>Detectar asistencia automáticamente en el documento</button></div>
-      </div>
-      ${c.documento? `<div class="kv" style="margin-top:4px;">Documento actual: <a href="${c.documento}" download="${c.documentoNombre||'documento'}">${c.documentoNombre||"Descargar"}</a></div>` : ""}
-      <div class="desc" style="margin-top:4px;">Esta detección funciona bien con documentos de texto (PDF generado digitalmente, o listas en .txt/.csv); <strong>no reconoce nombres manuscritos</strong> en actas escaneadas o fotografiadas a mano (como firmas de puño y letra). Siempre revise y ajuste la lista de asistentes manualmente.</div>
     </div>`;
   }).join("") || '<div class="empty">Sin capacitaciones registradas para el filtro seleccionado</div>';
+  list.forEach(c=> setupCollapsible(`capHdr_${c.id}`, `capBody_${c.id}`, `capToggle_${c.id}`, `collapsed_cap_${c.id}`, false));
 }
 
 /* Descarga en PDF del Plan de capacitación, respetando los filtros de
