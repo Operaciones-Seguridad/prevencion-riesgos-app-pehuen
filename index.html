@@ -2091,6 +2091,55 @@
       </table>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrIrl"><h2 id="irlFormTitle">Obligación de Informar los Riesgos Laborales (IRL) por cargo</h2><button class="collapse-toggle" id="toggleIrl" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyIrl">
+      <div class="desc">Cada trabajador debe recibir por escrito, antes de empezar a trabajar, los riesgos de su puesto, las medidas preventivas y los métodos de trabajo correcto (DS N°44/2024, Ley N°16.744 art. 66). Registra un IRL por cada cargo de la empresa — podés generar el contenido con IA a partir de los riesgos reales ya cargados en la Matriz de riesgos.</div>
+      <div class="form-grid">
+        <div><label>Cargo</label><input id="irlCargo" list="irlCargoOptions" placeholder="Ej: Operador de bodega"><datalist id="irlCargoOptions"></datalist></div>
+      </div>
+      <label style="margin-top:8px;">Áreas / procesos relacionados a este cargo</label>
+      <div class="desc">Se usan para que la IA redacte con los riesgos reales de esas áreas.</div>
+      <div id="irlAreasWrap" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;"></div>
+      <div class="form-grid" style="margin-top:10px;">
+        <div style="grid-column:1/-1;"><label>Contexto adicional para la IA (opcional)</label><input id="irlIaContexto" placeholder="Ej: incluye manejo de animales y maquinaria pesada"></div>
+      </div>
+      <div class="toolbar" style="margin-top:6px;">
+        <button class="btn secondary" id="irlIaRedactarBtn" type="button">Generar contenido con IA</button>
+        <span id="irlIaEstado" class="kv"></span>
+      </div>
+      <div class="form-grid" style="margin-top:10px;">
+        <div style="grid-column:1/-1;"><label>Contenido del IRL</label><textarea id="irlContenido" rows="10" placeholder="Escribe el contenido o generalo con IA arriba"></textarea></div>
+      </div>
+      <div class="toolbar" style="margin-top:10px;">
+        <button class="btn" id="saveIrlBtn">Guardar IRL</button>
+        <button class="btn secondary" id="cancelEditIrlBtn" style="display:none;">Cancelar edición</button>
+      </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrIrlListado"><h2>IRL registrados por cargo</h2><button class="collapse-toggle" id="toggleIrlListado" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyIrlListado">
+      <table>
+        <thead><tr><th>Cargo</th><th>Áreas</th><th>Última actualización</th><th>Acciones</th></tr></thead>
+        <tbody id="irlTable"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrCumplimientoTrabajadores"><h2>Cumplimiento de trabajadores</h2><button class="collapse-toggle" id="toggleCumplimientoTrabajadores" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyCumplimientoTrabajadores">
+      <div class="desc">Estado de entrega de EPP, RIOHyS e IRL por trabajador, y cumplimiento de cursos obligatorios DS 44.</div>
+      <div class="grid-tiles" id="cumplimientoTrabTiles"></div>
+      <table>
+        <thead><tr><th>Trabajador</th><th>Cargo</th><th>EPP</th><th>RIOHyS</th><th>IRL</th><th>Cursos DS 44</th></tr></thead>
+        <tbody id="cumplimientoTrabTable"></tbody>
+      </table>
+      </div>
+    </div>
   </div>
 
   <!-- CONTROL DOCUMENTAL -->
@@ -2867,8 +2916,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 30;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos"];
+const DB_VERSION = 31;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -3293,6 +3342,9 @@ setupCollapsible("hdrArbolCausal", "bodyArbolCausal", "toggleArbolCausal", "coll
 setupCollapsible("hdrArbolCausalListado", "bodyArbolCausalListado", "toggleArbolCausalListado", "collapsed_arbolCausalListado");
 setupCollapsible("hdrRiohys", "bodyRiohys", "toggleRiohys", "collapsed_riohys");
 setupCollapsible("hdrRiohysListado", "bodyRiohysListado", "toggleRiohysListado", "collapsed_riohysListado");
+setupCollapsible("hdrIrl", "bodyIrl", "toggleIrl", "collapsed_irl");
+setupCollapsible("hdrIrlListado", "bodyIrlListado", "toggleIrlListado", "collapsed_irlListado");
+setupCollapsible("hdrCumplimientoTrabajadores", "bodyCumplimientoTrabajadores", "toggleCumplimientoTrabajadores", "collapsed_cumplimientoTrabajadores");
 setupCollapsible("hdrProcMatriz", "bodyProcMatriz", "toggleProcMatriz", "collapsed_procMatriz");
 setupCollapsible("hdrDocumento", "bodyDocumento", "toggleDocumento", "collapsed_documento");
 setupCollapsible("hdrDocumentosListado", "bodyDocumentosListado", "toggleDocumentosListado", "collapsed_documentosListado");
@@ -4528,6 +4580,297 @@ function renderRiohys(){
     tile("Con respaldo de entrega a SEREMI de Salud", conRespaldoSeremi+" de "+rows.length, "versiones con respaldo adjunto"),
     tile("Con respaldo de entrega a Dirección del Trabajo", conRespaldoDt+" de "+rows.length, "versiones con respaldo adjunto"),
   ].join("");
+}
+
+/* =========================================================
+   IRL (Obligación de Informar los Riesgos Laborales) por cargo, y
+   cumplimiento de trabajadores (EPP, RIOHyS, IRL, cursos DS44).
+   Stores: "irlCargos" {id, cargo, areaIds[], contenido, fecha},
+   "irlEntregas" {id, trabajadorId, irlCargoId, fecha, archivoNombre,
+   archivoData}, "riohysEntregas" {id, trabajadorId, riohysId, fecha,
+   archivoNombre, archivoData}.
+   ========================================================= */
+function normCargo(s){ return String(s||"").toLowerCase().replace(/\s+/g," ").trim(); }
+function riohysVigente(){
+  return (CACHE.riohys||[]).slice().sort((a,b)=> new Date(b.fechaActualizacion||b.fechaConfeccion||0) - new Date(a.fechaActualizacion||a.fechaConfeccion||0))[0] || null;
+}
+/* El IRL se vincula al trabajador por texto de cargo (normalizado), ya que
+   "cargo" es un campo libre en Trabajadores -- no hay un catálogo de
+   cargos separado del que colgar un id. */
+function irlCargoDeTrabajador(t){
+  const key = normCargo(t.cargo);
+  if(!key) return null;
+  return (CACHE.irlCargos||[]).find(i=>normCargo(i.cargo)===key) || null;
+}
+function ultimaEntregaEppDe(trabajadorId){
+  const vales = (CACHE.epp||[]).filter(v=>v.trabajadorId===trabajadorId);
+  if(!vales.length) return null;
+  return vales.slice().sort((a,b)=> new Date(b.fecha||0)-new Date(a.fecha||0))[0];
+}
+function riohysEntregaDe(trabajadorId){
+  const rows = (CACHE.riohysEntregas||[]).filter(e=>e.trabajadorId===trabajadorId);
+  if(!rows.length) return null;
+  return rows.slice().sort((a,b)=> new Date(b.fecha||0)-new Date(a.fecha||0))[0];
+}
+function irlEntregaDe(trabajadorId, irlCargoId){
+  const rows = (CACHE.irlEntregas||[]).filter(e=>e.trabajadorId===trabajadorId && e.irlCargoId===irlCargoId);
+  if(!rows.length) return null;
+  return rows.slice().sort((a,b)=> new Date(b.fecha||0)-new Date(a.fecha||0))[0];
+}
+
+let irlEditingId = null;
+let irlAreasSeleccionadas = [];
+function drawIrlAreas(){
+  document.getElementById("irlAreasWrap").innerHTML = (CACHE.areas||[]).length
+    ? (CACHE.areas||[]).map(a=>`<label style="display:inline-flex;align-items:center;gap:6px;font-weight:400;">
+        <input type="checkbox" data-irl-area="${a.id}" ${irlAreasSeleccionadas.includes(a.id)?"checked":""} style="width:auto;min-height:auto;">${a.nombre}
+      </label>`).join("")
+    : `<div class="empty">Registra áreas en Configuración primero</div>`;
+}
+document.getElementById("irlAreasWrap").addEventListener("change",(e)=>{
+  const cb = e.target.closest("input[data-irl-area]");
+  if(!cb) return;
+  const id = cb.dataset.irlArea;
+  if(cb.checked){ if(!irlAreasSeleccionadas.includes(id)) irlAreasSeleccionadas.push(id); }
+  else { irlAreasSeleccionadas = irlAreasSeleccionadas.filter(x=>x!==id); }
+});
+function renderIrlCargoOptions(){
+  const cargos = [...new Set((CACHE.trabajadores||[]).map(t=>(t.cargo||"").trim()).filter(Boolean))];
+  document.getElementById("irlCargoOptions").innerHTML = cargos.map(c=>`<option value="${c}">`).join("");
+}
+function resetIrlForm(){
+  irlEditingId = null;
+  irlAreasSeleccionadas = [];
+  document.getElementById("irlCargo").value = "";
+  document.getElementById("irlIaContexto").value = "";
+  document.getElementById("irlContenido").value = "";
+  document.getElementById("irlIaEstado").textContent = "";
+  document.getElementById("irlFormTitle").textContent = "Obligación de Informar los Riesgos Laborales (IRL) por cargo";
+  document.getElementById("cancelEditIrlBtn").style.display = "none";
+  renderIrlCargoOptions();
+  drawIrlAreas();
+}
+function startEditIrl(id){
+  const rec = CACHE.irlCargos.find(r=>r.id===id);
+  if(!rec) return;
+  irlEditingId = id;
+  irlAreasSeleccionadas = (rec.areaIds||[]).slice();
+  document.getElementById("irlCargo").value = rec.cargo || "";
+  document.getElementById("irlContenido").value = rec.contenido || "";
+  document.getElementById("irlIaContexto").value = "";
+  document.getElementById("irlIaEstado").textContent = "";
+  document.getElementById("irlFormTitle").textContent = "Editando IRL — "+rec.cargo;
+  document.getElementById("cancelEditIrlBtn").style.display = "";
+  renderIrlCargoOptions();
+  drawIrlAreas();
+  document.getElementById("hdrIrl").scrollIntoView({behavior:"smooth", block:"start"});
+}
+on(document.getElementById("cancelEditIrlBtn"), "click", ()=> resetIrlForm());
+on(document.getElementById("irlIaRedactarBtn"), "click", async ()=>{
+  const cargo = document.getElementById("irlCargo").value.trim();
+  const contextoAdicional = document.getElementById("irlIaContexto").value.trim();
+  const estadoEl = document.getElementById("irlIaEstado");
+  if(!cargo){ alert('Indica el "Cargo" antes de generar con IA.'); return; }
+  if(storageMode !== "api"){ alert("La redacción con IA solo está disponible cuando la app está conectada al backend real."); return; }
+  estadoEl.textContent = "Redactando con IA… puede tardar unos segundos.";
+  try{
+    const respuesta = await apiFetch("POST", "/api/ia/redactar-irl", {cargo, areaIds: irlAreasSeleccionadas.slice(), contextoAdicional});
+    document.getElementById("irlContenido").value = respuesta.contenido;
+    estadoEl.textContent = "Borrador generado. Revísalo y edítalo antes de guardar.";
+  }catch(err){
+    estadoEl.textContent = "";
+    alert("No se pudo redactar el IRL con IA: " + err.message);
+  }
+});
+on(document.getElementById("saveIrlBtn"), "click", async ()=>{
+  const cargo = document.getElementById("irlCargo").value.trim();
+  if(!cargo){ alert("Indica el cargo."); return; }
+  const rec = {
+    id: irlEditingId || uid(),
+    cargo,
+    areaIds: irlAreasSeleccionadas.slice(),
+    contenido: document.getElementById("irlContenido").value.trim(),
+    fecha: new Date().toISOString().slice(0,10),
+  };
+  await put("irlCargos", rec);
+  await loadCache();
+  resetIrlForm();
+  renderIrl();
+  renderCumplimientoTrabajadores();
+});
+function renderIrlTable(){
+  const rows = (CACHE.irlCargos||[]).slice().sort((a,b)=> (a.cargo||"").localeCompare(b.cargo||""));
+  document.getElementById("irlTable").innerHTML = rows.length ? rows.map(r=>{
+    const areasTxt = (r.areaIds||[]).map(id=>areaName(id)).filter(Boolean).join(", ");
+    return `<tr>
+      <td>${r.cargo}</td>
+      <td>${areasTxt || "—"}</td>
+      <td>${r.fecha? fmtDate(r.fecha) : "—"}</td>
+      <td>
+        <button class="subtle-btn" data-irl-pdf="${r.id}">Imprimir PDF</button>
+        <button class="subtle-btn" data-irl-editar="${r.id}">Editar</button>
+        <button class="subtle-btn" data-irl-eliminar="${r.id}">Eliminar</button>
+      </td>
+    </tr>`;
+  }).join("") : `<tr><td class="empty" colspan="4">Sin IRL registrados todavía</td></tr>`;
+}
+on(document.getElementById("irlTable"), "click", async (e)=>{
+  const editBtn = e.target.closest("[data-irl-editar]");
+  if(editBtn){ startEditIrl(editBtn.dataset.irlEditar); return; }
+  const delBtn = e.target.closest("[data-irl-eliminar]");
+  if(delBtn){
+    const rec = CACHE.irlCargos.find(r=>r.id===delBtn.dataset.irlEliminar);
+    if(!rec) return;
+    if(!confirm(`¿Eliminar el IRL del cargo "${rec.cargo}"? Esta acción no se puede deshacer.`)) return;
+    await deleteRecord("irlCargos", rec.id);
+    await loadCache();
+    if(irlEditingId===rec.id) resetIrlForm();
+    renderIrl();
+    renderCumplimientoTrabajadores();
+    return;
+  }
+  const pdfBtn = e.target.closest("[data-irl-pdf]");
+  if(pdfBtn){ descargarIrlPdf(pdfBtn.dataset.irlPdf); }
+});
+function descargarIrlPdf(id){
+  const rec = (CACHE.irlCargos||[]).find(r=>r.id===id);
+  if(!rec){ alert("No se encontró el IRL."); return; }
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const doc = new JsPDFClass();
+  addLogoPdf(doc);
+  let y = 16;
+  doc.setFontSize(15);
+  doc.text("Obligación de Informar los Riesgos Laborales (IRL)", 14, y); y += 8;
+  doc.setFontSize(10);
+  doc.text(`Empresa: ${(CACHE.empresa&&CACHE.empresa.razonSocial)||"—"}`, 14, y); y += 6;
+  const lineaDatos = datosEmpresaLineaPdf();
+  if(lineaDatos){ doc.text(lineaDatos, 14, y); y += 6; }
+  doc.text(`Cargo: ${rec.cargo}`, 14, y); y += 6;
+  const areasTxt = (rec.areaIds||[]).map(id2=>areaName(id2)).filter(Boolean).join(", ");
+  if(areasTxt){ doc.text(`Áreas: ${areasTxt}`, 14, y); y += 6; }
+  y += 4;
+  doc.setFontSize(10);
+  y = escribirTextoPaginado(doc, rec.contenido || "—", 14, y, {maxWidth:180});
+  agregarPiePaginasPdf(doc, "IRL — "+rec.cargo);
+  doc.save(`IRL_${rec.cargo.replace(/[^a-zA-Z0-9]+/g,"_")}_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}.pdf`);
+}
+function renderIrl(){
+  renderIrlCargoOptions();
+  if(!irlEditingId) drawIrlAreas();
+  renderIrlTable();
+}
+
+/* --- Cumplimiento de trabajadores (EPP, RIOHyS, IRL, cursos DS44) --- */
+function renderCumplimientoTrabajadores(){
+  const trabs = CACHE.trabajadores || [];
+  const vigente = riohysVigente();
+  let conEpp=0, conRiohys=0, conIrl=0;
+  const filas = trabs.map(t=>{
+    const ultimoEpp = ultimaEntregaEppDe(t.id);
+    if(ultimoEpp) conEpp++;
+
+    const entregaRiohys = riohysEntregaDe(t.id);
+    let riohysHtml;
+    if(!vigente){ riohysHtml = `<span class="empty">Sin versión de RIOHyS registrada</span>`; }
+    else if(!entregaRiohys){ riohysHtml = `<span class="pill pendiente">Pendiente</span> <button class="subtle-btn" data-entrega-riohys="${t.id}">Registrar entrega</button>`; }
+    else if(entregaRiohys.riohysId !== vigente.id){ riohysHtml = `<span class="pill medio">Versión desactualizada</span> <button class="subtle-btn" data-entrega-riohys="${t.id}">Registrar entrega</button>`; conRiohys++; }
+    else { riohysHtml = `<span class="pill vigente">Entregado ${fmtDate(entregaRiohys.fecha)}</span>`; conRiohys++; }
+
+    const irlCargo = irlCargoDeTrabajador(t);
+    let irlHtml;
+    if(!irlCargo){ irlHtml = `<span class="empty">Sin IRL para "${t.cargo||"sin cargo"}"</span>`; }
+    else {
+      const entregaIrl = irlEntregaDe(t.id, irlCargo.id);
+      if(!entregaIrl){ irlHtml = `<span class="pill pendiente">Pendiente</span> <button class="subtle-btn" data-entrega-irl="${t.id}|${irlCargo.id}">Registrar entrega</button>`; }
+      else { irlHtml = `<span class="pill vigente">Entregado ${fmtDate(entregaIrl.fecha)}</span>`; conIrl++; }
+    }
+
+    const aplicables = cursosAplicablesA(t);
+    const cursosVigentes = aplicables.filter(c=> estadoVencimientoCurso(ultimoCursoDe(t.id,c.id))==="vigente").length;
+    const cursosPct = aplicables.length ? Math.round(cursosVigentes/aplicables.length*100) : null;
+
+    return `<tr>
+      <td>${t.nombre}</td>
+      <td>${t.cargo || "—"}</td>
+      <td>${ultimoEpp ? fmtDate(ultimoEpp.fecha) : `<span class="empty">Sin entregas</span>`}</td>
+      <td>${riohysHtml}</td>
+      <td>${irlHtml}</td>
+      <td>${cursosPct===null ? "—" : cursosPct+"% ("+cursosVigentes+"/"+aplicables.length+")"}</td>
+    </tr>`;
+  }).join("");
+  document.getElementById("cumplimientoTrabTiles").innerHTML = [
+    tile("Trabajadores", trabs.length, ""),
+    tile("Con EPP entregado", conEpp, "de "+trabs.length),
+    tile("Con RIOHyS entregado", conRiohys, "de "+trabs.length, conRiohys<trabs.length?"medio":"bajo"),
+    tile("Con IRL entregado", conIrl, "de "+trabs.length, conIrl<trabs.length?"medio":"bajo"),
+  ].join("");
+  document.getElementById("cumplimientoTrabTable").innerHTML = filas || `<tr><td class="empty" colspan="6">Sin trabajadores registrados todavía</td></tr>`;
+}
+on(document.getElementById("cumplimientoTrabTable"), "click", (e)=>{
+  const riohysBtn = e.target.closest("[data-entrega-riohys]");
+  if(riohysBtn){ abrirModalEntregaRiohys(riohysBtn.dataset.entregaRiohys); return; }
+  const irlBtn = e.target.closest("[data-entrega-irl]");
+  if(irlBtn){
+    const [trabajadorId, irlCargoId] = irlBtn.dataset.entregaIrl.split("|");
+    abrirModalEntregaIrl(trabajadorId, irlCargoId);
+  }
+});
+function abrirModalEntregaRiohys(trabajadorId){
+  const t = CACHE.trabajadores.find(x=>x.id===trabajadorId);
+  const vigente = riohysVigente();
+  if(!t || !vigente) return;
+  openModal(`
+    <h3>Registrar entrega de RIOHyS</h3>
+    <div class="kv" style="margin-bottom:10px;">${t.nombre} — versión ${vigente.version}</div>
+    <div class="form-grid">
+      <div><label>Fecha de entrega</label><input type="date" id="modalEntregaFecha" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div><label>Copia firmada (opcional)</label><input type="file" id="modalEntregaArchivo" accept="image/*,.pdf"></div>
+    </div>
+    <div class="toolbar" style="margin-top:14px;">
+      <button class="btn" id="modalEntregaGuardarBtn">Guardar</button>
+      <button class="btn secondary" id="modalCerrarVentanaBtn">Cancelar</button>
+    </div>
+  `);
+  on(document.getElementById("modalCerrarVentanaBtn"), "click", closeModal);
+  on(document.getElementById("modalEntregaGuardarBtn"), "click", async ()=>{
+    const fecha = document.getElementById("modalEntregaFecha").value;
+    if(!fecha){ alert("Indica la fecha."); return; }
+    const file = document.getElementById("modalEntregaArchivo").files[0];
+    const rec = { id: uid(), trabajadorId, riohysId: vigente.id, fecha, archivoNombre: file? file.name : null, archivoData: file? await readFileAsDataUrl(file) : null };
+    await put("riohysEntregas", rec);
+    await loadCache();
+    renderCumplimientoTrabajadores();
+    closeModal();
+  });
+}
+function abrirModalEntregaIrl(trabajadorId, irlCargoId){
+  const t = CACHE.trabajadores.find(x=>x.id===trabajadorId);
+  const irlCargo = CACHE.irlCargos.find(x=>x.id===irlCargoId);
+  if(!t || !irlCargo) return;
+  openModal(`
+    <h3>Registrar entrega de IRL</h3>
+    <div class="kv" style="margin-bottom:10px;">${t.nombre} — cargo ${irlCargo.cargo}</div>
+    <div class="form-grid">
+      <div><label>Fecha de entrega</label><input type="date" id="modalEntregaFecha" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div><label>Copia firmada (opcional)</label><input type="file" id="modalEntregaArchivo" accept="image/*,.pdf"></div>
+    </div>
+    <div class="toolbar" style="margin-top:14px;">
+      <button class="btn" id="modalEntregaGuardarBtn">Guardar</button>
+      <button class="btn secondary" id="modalCerrarVentanaBtn">Cancelar</button>
+    </div>
+  `);
+  on(document.getElementById("modalCerrarVentanaBtn"), "click", closeModal);
+  on(document.getElementById("modalEntregaGuardarBtn"), "click", async ()=>{
+    const fecha = document.getElementById("modalEntregaFecha").value;
+    if(!fecha){ alert("Indica la fecha."); return; }
+    const file = document.getElementById("modalEntregaArchivo").files[0];
+    const rec = { id: uid(), trabajadorId, irlCargoId, fecha, archivoNombre: file? file.name : null, archivoData: file? await readFileAsDataUrl(file) : null };
+    await put("irlEntregas", rec);
+    await loadCache();
+    renderCumplimientoTrabajadores();
+    closeModal();
+  });
 }
 
 /* =========================================================
@@ -17198,6 +17541,8 @@ async function refreshAll(){
   renderInfractores();
   renderVelocidad();
   renderRiohys();
+  renderIrl();
+  renderCumplimientoTrabajadores();
   renderControlDocumental();
   renderCphys();
   renderEmergencia();
