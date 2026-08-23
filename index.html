@@ -88,10 +88,14 @@
   .collapse-toggle:hover{color:var(--text-primary);border-color:var(--text-secondary);}
   .collapsible-body.collapsed{display:none;}
   .grid-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:18px;}
-  .tile{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
-  .tile .label{color:var(--text-secondary);font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
+  .tile{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;}
+  .tile .label{color:var(--text-secondary);font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;padding-right:34px;}
   .tile .value{font-size:30px;font-weight:700;margin-top:4px;}
   .tile .foot{font-size:12px;color:var(--muted);margin-top:2px;}
+  .tile-icon{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;}
+  .tile-icon svg{width:16px;height:16px;}
+  .dash-section-title{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin:22px 0 10px;}
+  .dash-section-title:first-child{margin-top:0;}
   .row{display:flex;gap:16px;flex-wrap:wrap;}
   .col{flex:1;min-width:280px;}
   table{width:100%;border-collapse:collapse;font-size:13.5px;}
@@ -6650,10 +6654,30 @@ const NIVEL_COLOR = {bajo:"#0ca30c",medio:"#fab219",alto:"#ec835a",critico:"#d03
    importante) — reutiliza los mismos colores de .pill que ya usa el
    resto de la app, para el semáforo de cumplimiento de metas de
    Accidentabilidad. Sin 4° parámetro, el tile se ve igual que siempre. */
-function tile(label, value, foot, semaforo){
+function tile(label, value, foot, semaforo, icon, accentColor){
   const borderCss = semaforo ? `border-left:5px solid ${SEMAFORO_BORDER[semaforo]};` : "";
   const pillHtml = semaforo ? ` <span class="pill ${semaforo}" style="font-size:10.5px;padding:2px 8px;">${SEMAFORO_LABEL[semaforo]}</span>` : "";
-  return `<div class="tile" style="${borderCss}"><div class="label">${label}${pillHtml}</div><div class="value">${value}</div><div class="foot">${foot||""}</div></div>`;
+  const iconHtml = icon && DASH_ICONS[icon] ? `<div class="tile-icon" style="background:${accentColor||"var(--s1)"}">${DASH_ICONS[icon]}</div>` : "";
+  return `<div class="tile" style="${borderCss}">${iconHtml}<div class="label">${label}${pillHtml}</div><div class="value">${value}</div><div class="foot">${foot||""}</div></div>`;
+}
+/* Set acotado de íconos del Dashboard (uno por sección, no por tile, para
+   no tener que dibujar uno distinto por cada indicador). Trazo simple,
+   sin librerías externas, mismo criterio que los demás gráficos hechos
+   a mano en este archivo (bar-chart, donut-chart). */
+const DASH_ICONS = {
+  alert: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3 L18 17 L2 17 Z"/><line x1="10" y1="8" x2="10" y2="12"/><circle cx="10" cy="14.5" r="0.6" fill="currentColor" stroke="none"/></svg>`,
+  shield: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2 L17 5 V10 C17 14.5 14 17.5 10 18.5 C6 17.5 3 14.5 3 10 V5 Z"/><path d="M7 10 L9 12 L13 7.5"/></svg>`,
+  document: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="12" height="16" rx="1.5"/><line x1="7" y1="6" x2="13" y2="6"/><line x1="7" y1="9.5" x2="13" y2="9.5"/><line x1="7" y1="13" x2="11" y2="13"/></svg>`,
+  health: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><line x1="10" y1="6.5" x2="10" y2="13.5"/><line x1="6.5" y1="10" x2="13.5" y2="10"/></svg>`,
+  calendar: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="1.5"/><line x1="3" y1="8" x2="17" y2="8"/><line x1="7" y1="2" x2="7" y2="5.5"/><line x1="13" y1="2" x2="13" y2="5.5"/></svg>`,
+  people: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="2.6"/><circle cx="14" cy="8" r="2.2"/><path d="M2.5 17 C2.5 13.5 4.8 12 7 12 C9.2 12 11 13.3 11.3 15.5"/><path d="M11.5 17 C11.5 14.2 12.8 12.6 14 12.6 C15.7 12.6 17.2 14 17.2 17"/></svg>`,
+};
+/* Agrupa tiles del Dashboard bajo un título de sección, para que se lean
+   como categorías en vez de una sola grilla plana. Si no hay tiles (caso
+   raro, ej. RIRDA/LDR deshabilitado deja la sección vacía) no imprime nada. */
+function tileSection(title, color, tilesArr){
+  if(!tilesArr.length) return "";
+  return `<h3 class="dash-section-title" style="color:${color};">${title}</h3><div class="grid-tiles">${tilesArr.join("")}</div>`;
 }
 const SEMAFORO_BORDER = {bajo:"#0a6b0a", medio:"#8a5a00", alto:"#a03d1a"};
 const SEMAFORO_LABEL = {bajo:"Cumple meta", medio:"Cerca del límite", alto:"Sobre la meta"};
@@ -6835,29 +6859,107 @@ function renderDashboard(){
   // con el mismo semáforo de metas ya usado en la pestaña Accidentabilidad.
   const metasAcc = CACHE.empresa || {};
   const usaRirdaDash = !!(CACHE.empresa && CACHE.empresa.usarRirdaLdr);
-  const tilesAccidentabilidad = [
-    tile("Tasa de frecuencia", indAcc.tf, periodoTexto, semaforoMeta(indAcc.tf, metasAcc.metaFrecuencia)),
-    tile("Tasa de gravedad", indAcc.tg, periodoTexto, semaforoMeta(indAcc.tg, metasAcc.metaGravedad)),
-    tile("Índice de accidentabilidad", indAcc.indiceAcc+"%", periodoTexto, semaforoMeta(indAcc.indiceAcc, metasAcc.metaAccidentabilidad)),
-  ];
-  if(usaRirdaDash){
-    tilesAccidentabilidad.push(tile("RIRDA", indAcc.rirda, periodoTexto, semaforoMeta(indAcc.rirda, metasAcc.metaRirda)));
-    tilesAccidentabilidad.push(tile("LDR", indAcc.ldr, periodoTexto, semaforoMeta(indAcc.ldr, metasAcc.metaLdr)));
-  }
 
-  document.getElementById("tiles").innerHTML = [
-    tile("Inspecciones registradas", CACHE.inspecciones.length, "histórico"),
-    tile("Hallazgos con acción abierta", accionesAbiertas, "requieren seguimiento"),
-    tile("Riesgos críticos en matriz", riesgosCriticos, "de "+CACHE.matriz.length+" líneas"),
-    tile("Cumplimiento vigilancia de salud", cumplPct+"%", vigentes+" de "+totalAsig+" vigentes"),
-    tile("Cumplimiento programa de seguridad", pgPct+"%", pgRealizadas+" de "+pgTotal+" actividades"),
-    tile("Cumplimiento plan de capacitación", capPct+"%", capAsistieron+" de "+capConvocados+" asistencias"),
-    ...tilesAccidentabilidad,
-    tile("Cumplimiento legal DS 44 (FUF)", fufPct+"%", fufCounts.cumple+" de "+fufEvaluables+" ítems evaluables"),
-    tile("Vales de EPP entregados", eppTotalVales, periodoTexto),
-    tile("Infracciones registradas", periodo.infRows.length, periodoTexto),
-    tile("Análisis de causa raíz realizados", (CACHE.arbolesCausales||[]).length, "árboles causales registrados"),
-  ].join("");
+  // DS 67 — tasa de siniestralidad total de la evaluación más reciente que
+  // tenga registro (mismo cálculo que Accidentabilidad > Evaluación DS 67).
+  const ds67AniosConDatos = (CACHE.ds67Evaluaciones||[]).map(r=>+r.anioEvaluacion).filter(Boolean).sort((a,b)=>b-a);
+  const ds67Ultimo = ds67AniosConDatos.length ? calcDs67Evaluacion(ds67AniosConDatos[0]) : null;
+
+  // Cursos DS44 — % de cumplimiento a nivel empresa (mismo cálculo que el
+  // "Reporte de cumplimiento — Cursos DS 44").
+  let cursosTotalAplicables = 0, cursosTotalVigentes = 0;
+  (CACHE.trabajadores||[]).forEach(t=>{
+    cursosAplicablesA(t).forEach(c=>{
+      cursosTotalAplicables++;
+      if(estadoVencimientoCurso(ultimoCursoDe(t.id,c.id))==="vigente") cursosTotalVigentes++;
+    });
+  });
+  const cursosPct = cursosTotalAplicables ? Math.round(cursosTotalVigentes/cursosTotalAplicables*100) : null;
+
+  // RIOHyS — última versión (mismo criterio que la pestaña RIOHyS).
+  const riohysVigente = (CACHE.riohys||[]).slice().sort((a,b)=> new Date(b.fechaActualizacion||b.fechaConfeccion||0) - new Date(a.fechaActualizacion||a.fechaConfeccion||0))[0];
+
+  // Documentos — versión vigente por documento (mismo criterio que Control documental).
+  const documentosVigentesCount = documentosVigentesMap().size;
+
+  // Compromisos — % de cumplimiento acumulado del año actual (mismo cálculo
+  // que la pestaña Compromisos en su vista anual).
+  const compAnioActual = new Date().getFullYear();
+  const compItems = CACHE.compromisosItems||[];
+  const compTranscurridos = compMesesTranscurridos(compAnioActual);
+  const compPctsPorItem = compItems.map(it=>{
+    const meta = it.metaMensual||1;
+    const mesesAplicables = compMesesDe(it);
+    let suma = 0, considerados = 0;
+    for(let mes=1; mes<=Math.max(compTranscurridos,0); mes++){
+      if(!mesesAplicables.includes(mes)) continue;
+      const reg = compRegistro(it.id, compAnioActual, mes);
+      suma += Math.min(((reg?+reg.cantidad:0)||0)/meta, 1);
+      considerados++;
+    }
+    return considerados>0 ? suma/considerados : null;
+  });
+  const compPctsValidos = compPctsPorItem.filter(p=>p!==null);
+  const compPctAnual = compPctsValidos.length ? Math.round((compPctsValidos.reduce((a,b)=>a+b,0)/compPctsValidos.length)*100) : null;
+
+  // CPHyS — días desde la última reunión ordinaria (mismo criterio que la
+  // pestaña CPHyS > Reuniones, art. 39 DS 44: periodicidad mensual).
+  const cphysOrdinarias = (CACHE.cphysReuniones||[]).filter(r=>r.tipo==="ordinaria");
+  const cphysUltimaOrdinaria = cphysOrdinarias.slice().sort((a,b)=> new Date(b.fecha)-new Date(a.fecha))[0];
+  const cphysDiasDesdeOrdinaria = cphysUltimaOrdinaria ? Math.round((new Date(new Date().toDateString()) - new Date(cphysUltimaOrdinaria.fecha)) / 86400000) : null;
+  const cphysSemaforoReunion = cphysDiasDesdeOrdinaria===null ? "alto" : (cphysDiasDesdeOrdinaria<=31 ? "bajo" : "alto");
+
+  // CPHyS — investigaciones pendientes (accidentes/incidentes sin árbol causal).
+  const cphysAccidentesAll = CACHE.accidentes || [];
+  const cphysInvestigados = cphysAccidentesAll.filter(a=>investigacionDeAccidente(a.id));
+  const cphysPendientesInvestigar = cphysAccidentesAll.length - cphysInvestigados.length;
+
+  // GRD — cumplimiento global (ya ponderado por etapa en la propia pestaña GRD).
+  const grdPct = grdCumplimientoGlobal();
+
+  // TMERT — puestos con resultado crítico entre los de trabajo repetitivo evaluado.
+  const tmertRepetitivos = (CACHE.tmertRegistros||[]).filter(r=>(r.identificacionInicial||{}).repetitivo==="SI");
+  const tmertCriticos = tmertRepetitivos.filter(r=>tmertResultadoCritica(r.avanzadaCritica||{}).startsWith("Crítico")).length;
+
+  document.getElementById("tiles").innerHTML =
+    tileSection("Accidentabilidad", "var(--s8)", [
+      tile("Tasa de frecuencia", indAcc.tf, periodoTexto, semaforoMeta(indAcc.tf, metasAcc.metaFrecuencia), "alert", "var(--s8)"),
+      tile("Tasa de gravedad", indAcc.tg, periodoTexto, semaforoMeta(indAcc.tg, metasAcc.metaGravedad), "alert", "var(--s8)"),
+      tile("Índice de accidentabilidad", indAcc.indiceAcc+"%", periodoTexto, semaforoMeta(indAcc.indiceAcc, metasAcc.metaAccidentabilidad), "alert", "var(--s8)"),
+      ...(usaRirdaDash ? [
+        tile("RIRDA", indAcc.rirda, periodoTexto, semaforoMeta(indAcc.rirda, metasAcc.metaRirda), "alert", "var(--s8)"),
+        tile("LDR", indAcc.ldr, periodoTexto, semaforoMeta(indAcc.ldr, metasAcc.metaLdr), "alert", "var(--s8)"),
+      ] : []),
+      tile("Tasa de siniestralidad total (DS 67)", ds67Ultimo ? ds67Ultimo.tasaSiniestralidadTotal.toFixed(2) : "—", ds67Ultimo ? ("evaluación "+ds67Ultimo.anioEvaluacion) : "sin evaluación DS 67 registrada", null, "alert", "var(--s8)"),
+    ]) +
+    tileSection("Matriz de riesgos", "var(--s1)", [
+      tile("Riesgos críticos en matriz", riesgosCriticos, "de "+CACHE.matriz.length+" líneas", null, "shield", "var(--s1)"),
+      tile("Hallazgos con acción abierta", accionesAbiertas, "requieren seguimiento", null, "shield", "var(--s1)"),
+      tile("Análisis de causa raíz realizados", (CACHE.arbolesCausales||[]).length, "árboles causales registrados", null, "shield", "var(--s1)"),
+    ]) +
+    tileSection("Cumplimiento legal y documental", "var(--s3)", [
+      tile("Cumplimiento legal DS 44 (FUF)", fufPct+"%", fufCounts.cumple+" de "+fufEvaluables+" ítems evaluables", null, "document", "var(--s3)"),
+      tile("Cursos DS44 — cumplimiento", cursosPct===null?"—":cursosPct+"%", cursosPct===null?"sin cursos aplicables registrados":(cursosTotalVigentes+" de "+cursosTotalAplicables+" vigentes"), null, "document", "var(--s3)"),
+      tile("RIOHyS — versión vigente", riohysVigente ? riohysVigente.version : "—", riohysVigente && riohysVigente.fechaActualizacion ? ("actualizada el "+fmtDate(riohysVigente.fechaActualizacion)) : "sin versión registrada", null, "document", "var(--s3)"),
+      tile("Documentos vigentes", documentosVigentesCount, "de "+(CACHE.documentos||[]).length+" versiones en el histórico", null, "document", "var(--s3)"),
+      tile("Compromisos — cumplimiento "+compAnioActual, compPctAnual===null?"—":compPctAnual+"%", compPctAnual===null?"sin ítems de control registrados":(compTranscurridos+" meses considerados"), null, "document", "var(--s3)"),
+    ]) +
+    tileSection("Salud y bienestar", "var(--s5)", [
+      tile("Cumplimiento vigilancia de salud", cumplPct+"%", vigentes+" de "+totalAsig+" vigentes", null, "health", "var(--s5)"),
+      tile("TMERT — puestos críticos", tmertCriticos, "de "+tmertRepetitivos.length+" con trabajo repetitivo evaluado", tmertCriticos>0?"alto":"bajo", "health", "var(--s5)"),
+    ]) +
+    tileSection("Programa, capacitación e inspecciones", "var(--s4)", [
+      tile("Cumplimiento programa de seguridad", pgPct+"%", pgRealizadas+" de "+pgTotal+" actividades", null, "calendar", "var(--s4)"),
+      tile("Cumplimiento plan de capacitación", capPct+"%", capAsistieron+" de "+capConvocados+" asistencias", null, "calendar", "var(--s4)"),
+      tile("Inspecciones registradas", CACHE.inspecciones.length, "histórico", null, "calendar", "var(--s4)"),
+    ]) +
+    tileSection("Comité paritario, emergencias, EPP y vehículos", "var(--s7)", [
+      tile("CPHyS — días desde última reunión ordinaria", cphysDiasDesdeOrdinaria===null?"—":cphysDiasDesdeOrdinaria, cphysDiasDesdeOrdinaria===null?"sin reuniones ordinarias registradas":(cphysDiasDesdeOrdinaria<=31?"dentro del plazo mensual":"sobre el plazo mensual"), cphysSemaforoReunion, "people", "var(--s7)"),
+      tile("CPHyS — investigaciones pendientes", cphysPendientesInvestigar, "de "+cphysAccidentesAll.length+" accidentes/incidentes", cphysPendientesInvestigar>0?"alto":"bajo", "people", "var(--s7)"),
+      tile("GRD — cumplimiento global", grdPct+"%", "diagnóstico, plan de respuesta y simulacros", grdEtapaSemaforo(grdPct), "people", "var(--s7)"),
+      tile("Vales de EPP entregados", eppTotalVales, periodoTexto, null, "people", "var(--s7)"),
+      tile("Infracciones registradas", periodo.infRows.length, periodoTexto, null, "people", "var(--s7)"),
+    ]);
 
   // chart 1: riesgos por nivel
   const niveles = ["bajo","medio","alto","critico"];
