@@ -4749,9 +4749,53 @@ function descargarIrlPdf(id){
   doc.text(`Cargo: ${rec.cargo}`, 14, y); y += 6;
   const areasTxt = (rec.areaIds||[]).map(id2=>areaName(id2)).filter(Boolean).join(", ");
   if(areasTxt){ doc.text(`Áreas: ${areasTxt}`, 14, y); y += 6; }
-  y += 4;
+  y += 2;
+
+  // Resumen de riesgos: tabla real de la Matriz de riesgos para las áreas de
+  // este cargo (dato real, no depende de que la IA los describa bien).
+  const lineasCargo = (rec.areaIds||[]).length ? (CACHE.matriz||[]).filter(m=>(rec.areaIds||[]).includes(m.areaId)) : [];
+  doc.setFontSize(11); doc.text("Resumen de riesgos a los que se expone (Matriz de riesgos)", 14, y); y += 2;
+  doc.autoTable({ startY:y,
+    head:[["Área","Peligro","Riesgo","Nivel","Medidas de control"]],
+    body: lineasCargo.length
+      ? lineasCargo.slice().sort((a,b)=> (b.probabilidad||0)*(b.consecuencia||0) - (a.probabilidad||0)*(a.consecuencia||0))
+          .map(m=>[areaName(m.areaId)||"—", m.peligro||"—", m.riesgo||"—", nivelLabel(nivelRiesgo(m.probabilidad,m.consecuencia)), controlesTextoPlano(jerarquiaDe(m)) || "—"])
+      : [["Sin líneas registradas en la Matriz de riesgos para las áreas de este cargo","—","—","—","—"]],
+    styles:{fontSize:8}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  // EPP requerido: tabla real del Estudio de necesidad de EPP para este
+  // cargo (mismo criterio de coincidencia de texto libre que usa
+  // irlCargoDeTrabajador para vincular IRL con Trabajadores).
+  const eppDelCargo = (CACHE.estudioEpp||[]).filter(r=>normCargo(r.cargo)===normCargo(rec.cargo));
+  if(y > 240){ doc.addPage(); y = 16; }
+  doc.setFontSize(11); doc.text("Elementos de protección personal (EPP) requeridos", 14, y); y += 2;
+  doc.autoTable({ startY:y,
+    head:[["Peligro","EPP recomendado","Certificación","Vida útil"]],
+    body: eppDelCargo.length
+      ? eppDelCargo.map(r=>[r.peligro||"—", r.epp||"—", r.certificacion||"—", r.vidaUtil||"—"])
+      : [["Sin EPP definido todavía para este cargo en el Estudio de necesidad de EPP","—","—","—"]],
+    styles:{fontSize:8.5}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  if(y > 250){ doc.addPage(); y = 16; }
   doc.setFontSize(10);
   y = escribirTextoPaginado(doc, rec.contenido || "—", 14, y, {maxWidth:180});
+  y += 6;
+
+  // Control de la inducción: campos en blanco para completar a mano al
+  // momento de entregar el IRL al trabajador -- la copia ya firmada se sube
+  // después desde "Cumplimiento de trabajadores" > Registrar entrega.
+  if(y > 235){ doc.addPage(); y = 16; }
+  doc.setFontSize(11); doc.text("Control de la inducción", 14, y); y += 8;
+  doc.setFontSize(10);
+  doc.text("Nombre del trabajador: ____________________________________  RUT: ______________________", 14, y); y += 10;
+  doc.text("Fecha de la inducción: ____ / ____ / ________", 14, y); y += 10;
+  doc.text("Inducción realizada por (nombre y cargo — Prevencionista / CPHyS / Jefe directo / Otro):", 14, y); y += 7;
+  doc.text("_______________________________________________________________________", 14, y); y += 14;
+  doc.text("Firma del trabajador: ____________________________", 14, y); y += 14;
+  doc.text("Firma de quien realizó la inducción: ____________________________", 14, y);
+
   agregarPiePaginasPdf(doc, "IRL — "+rec.cargo);
   doc.save(`IRL_${rec.cargo.replace(/[^a-zA-Z0-9]+/g,"_")}_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}.pdf`);
 }
