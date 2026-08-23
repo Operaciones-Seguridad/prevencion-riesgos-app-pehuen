@@ -415,7 +415,7 @@
        prevención de riesgos. -->
   <div class="view" id="view-realizar-inspecciones">
     <div class="card">
-      <h2 id="insFormTitle">Nueva inspección / observación en terreno</h2>
+      <div class="card-header-row" id="hdrNuevaInspeccionObservacionEnTerreno"><h2 id="insFormTitle">Nueva inspección / observación en terreno</h2><button class="collapse-toggle" id="toggleNuevaInspeccionObservacionEnTerreno" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyNuevaInspeccionObservacionEnTerreno">
       <div class="desc">Pensado para completarse desde una tablet en el mismo lugar de la inspección.</div>
       <div class="form-grid">
         <div>
@@ -465,29 +465,29 @@
         <button class="btn" id="saveInspeccionBtn">Guardar inspección</button>
         <button class="btn secondary" id="cancelEditInsBtn" style="display:none;">Cancelar edición</button>
       </div>
-    </div>
+    </div></div>
 
     <div class="card" id="cardMisActividadesMensuales">
-      <h2>Mis actividades mensuales</h2>
+      <div class="card-header-row" id="hdrMisActividadesMensuales"><h2>Mis actividades mensuales</h2><button class="collapse-toggle" id="toggleMisActividadesMensuales" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMisActividadesMensuales">
       <div class="desc">Resumen mensual de las actividades del Programa de seguridad (incluida la Capacitación) asignadas como responsable al usuario que inició sesión, indicando el tipo de cada actividad a desarrollar y el nivel de cumplimiento según su realización.</div>
       <table>
         <thead><tr><th>Mes</th><th>Actividades a desarrollar (tipo)</th><th>Programadas</th><th>Realizadas</th><th>% Cumplimiento</th></tr></thead>
         <tbody id="misActividadesMensualesTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card" id="cardMisHallazgos">
-      <h2>Mis hallazgos asignados</h2>
+      <div class="card-header-row" id="hdrMisHallazgos"><h2>Mis hallazgos asignados</h2><button class="collapse-toggle" id="toggleMisHallazgos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMisHallazgos">
       <div class="desc">Hallazgos de inspecciones y observaciones cuyo responsable coincide con el usuario que inició sesión, para que pueda cerrar sus propias acciones directamente desde aquí.</div>
       <label>Seleccionar hallazgo</label>
       <select id="misHallazgosSelect"></select>
       <div id="misHallazgosWrap"></div>
-    </div>
+    </div></div>
   </div>
 
   <div class="view" id="view-inspecciones">
     <div class="card">
-      <h2 id="fmtFormTitle">Formatos de inspección / observación</h2>
+      <div class="card-header-row" id="hdrFormatosDeInspeccionObservacion"><h2 id="fmtFormTitle">Formatos de inspección / observación</h2><button class="collapse-toggle" id="toggleFormatosDeInspeccionObservacion" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyFormatosDeInspeccionObservacion">
       <div class="desc">Crea o edita formatos (checklist) para usar en el formulario de arriba. Cada formato puede ser exclusivo para Inspección, para Observación, o servir para ambos.</div>
       <div class="form-grid">
         <div><label>Nombre del formato</label><input id="fmtNombre" placeholder="Ej: Inspección de extintores"></div>
@@ -547,10 +547,10 @@
         <thead><tr><th>Nombre</th><th>Se usa para</th><th>Ítems</th><th>Acciones</th></tr></thead>
         <tbody id="formatosTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2 id="astFormTitle">Confección de AST (Análisis de Seguridad del Trabajo)</h2>
+      <div class="card-header-row" id="hdrConfeccionDeASTAnalisisDeSeguridadDelTrabajo"><h2 id="astFormTitle">Confección de AST (Análisis de Seguridad del Trabajo)</h2><button class="collapse-toggle" id="toggleConfeccionDeASTAnalisisDeSeguridadDelTrabajo" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyConfeccionDeASTAnalisisDeSeguridadDelTrabajo">
       <div class="desc">Antes de iniciar una tarea, identifica el área y la actividad a realizar y trae automáticamente los riesgos y medidas de control ya registrados en la Matriz de riesgos para esa combinación. Luego puedes eliminar los que no apliquen a esta tarea puntual y agregar otros riesgos y medidas en forma manual.</div>
       <div class="form-grid">
         <div><label>Fecha</label><input id="astFecha" type="date"></div>
@@ -593,10 +593,10 @@
         <button class="btn secondary" id="astDescargarPdfBtn">Descargar PDF</button>
         <button class="btn secondary" id="cancelEditAstBtn" style="display:none;">Cancelar edición</button>
       </div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>AST registradas</h2>
+      <div class="card-header-row" id="hdrASTRegistradas"><h2>AST registradas</h2><button class="collapse-toggle" id="toggleASTRegistradas" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyASTRegistradas">
       <div class="toolbar">
         <div class="field"><label>Filtrar por área</label><select id="filterAstArea"><option value="">Todas</option></select></div>
       </div>
@@ -604,10 +604,10 @@
         <thead><tr><th>Fecha</th><th>Área</th><th>Actividad</th><th>Responsable</th><th>N° de riesgos</th><th>Participantes</th><th></th></tr></thead>
         <tbody id="astTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Historial de inspecciones y observaciones</h2>
+      <div class="card-header-row" id="hdrHistorialDeInspeccionesYObservaciones"><h2>Historial de inspecciones y observaciones</h2><button class="collapse-toggle" id="toggleHistorialDeInspeccionesYObservaciones" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyHistorialDeInspeccionesYObservaciones">
       <div class="toolbar">
         <div class="field"><label>Filtrar por área</label><select id="filterInsArea"><option value="">Todas</option></select></div>
         <div class="field"><label>Filtrar por tipo</label><select id="filterInsTipoRegistro"><option value="">Todos</option><option value="inspeccion">Inspección</option><option value="observacion">Observación</option></select></div>
@@ -625,11 +625,11 @@
         <thead><tr><th>Fecha</th><th>Tipo</th><th>Formato</th><th>Área</th><th>Inspector</th><th>Hallazgos</th><th>Acciones abiertas</th><th>Estado</th><th></th></tr></thead>
         <tbody id="inspeccionesTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
 
     <div class="card">
-      <h2>Descargar resúmenes en PDF</h2>
+      <div class="card-header-row" id="hdrDescargarResumenesEnPDF"><h2>Descargar resúmenes en PDF</h2><button class="collapse-toggle" id="toggleDescargarResumenesEnPDF" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyDescargarResumenesEnPDF">
       <div class="desc">Genera un resumen en PDF de todas las inspecciones/observaciones de un mes o un año, con estadísticas y top 10 de hallazgos repetitivos del período.</div>
       <div class="toolbar">
         <div class="field"><label>Período</label>
@@ -648,32 +648,32 @@
         <div class="field"><label>Año</label><input id="resAnio" type="number" style="width:110px;"></div>
         <div><button class="btn small" id="downloadResumenPdfBtn" style="margin-top:20px;">Descargar resumen PDF</button></div>
       </div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Top 10 hallazgos repetitivos</h2>
+      <div class="card-header-row" id="hdrTop10HallazgosRepetitivos"><h2>Top 10 hallazgos repetitivos</h2><button class="collapse-toggle" id="toggleTop10HallazgosRepetitivos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyTop10HallazgosRepetitivos">
       <div class="desc">Descripciones de hallazgos que más se repiten entre todas las inspecciones y observaciones registradas.</div>
       <table>
         <thead><tr><th>#</th><th>Hallazgo</th><th>N° de veces registrado</th></tr></thead>
         <tbody id="top10HallazgosTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Estadística mensual y anual por clasificación</h2>
+      <div class="card-header-row" id="hdrEstadisticaMensualYAnualPorClasificacion"><h2>Estadística mensual y anual por clasificación</h2><button class="collapse-toggle" id="toggleEstadisticaMensualYAnualPorClasificacion" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyEstadisticaMensualYAnualPorClasificacion">
       <div class="desc">N° de inspecciones y observaciones registradas por mes (año en curso) y resumen anual acumulado.</div>
       <div id="chartInsMensualWrap"></div>
       <table style="margin-top:14px;">
         <thead><tr><th>Año</th><th>Inspecciones</th><th>Observaciones</th><th>Hallazgos totales</th><th>Hallazgos alto/crítico</th></tr></thead>
         <tbody id="statsAnualTable"></tbody>
       </table>
-    </div>
+    </div></div>
   </div>
 
   <!-- MATRIZ DE RIESGOS -->
   <div class="view" id="view-matriz">
     <div class="card">
-      <h2 id="matrizFormTitle">Nueva línea de matriz de riesgos (IPER)</h2>
+      <div class="card-header-row" id="hdrNuevaLineaDeMatrizDeRiesgosIPER"><h2 id="matrizFormTitle">Nueva línea de matriz de riesgos (IPER)</h2><button class="collapse-toggle" id="toggleNuevaLineaDeMatrizDeRiesgosIPER" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyNuevaLineaDeMatrizDeRiesgosIPER">
       <div class="form-grid">
         <div>
           <label>Área</label>
@@ -782,7 +782,7 @@
         <button class="btn" id="saveMatrizBtn">Agregar a la matriz</button>
         <button class="btn secondary" id="cancelEditMatrizBtn" style="display:none;">Cancelar edición</button>
       </div>
-    </div>
+    </div></div>
 
     <div class="card">
       <div class="card-header-row" id="hdrLevantamiento"><h2>Levantamiento de riesgos (IPER) por área de trabajo</h2><button class="collapse-toggle" id="toggleLevantamiento" type="button" aria-label="Contraer o expandir">▾</button></div>
@@ -823,7 +823,7 @@
     </div>
 
     <div class="card" id="matrizIaWrap" style="display:none;">
-      <h2>Sugerir líneas con IA</h2>
+      <div class="card-header-row" id="hdrMatrizIaWrap"><h2>Sugerir líneas con IA</h2><button class="collapse-toggle" id="toggleMatrizIaWrap" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMatrizIaWrap">
       <div class="desc">La IA propone líneas nuevas de peligro/riesgo/controles para el rubro y las áreas de esta empresa, evitando repetir lo que ya está cargado en la matriz (si la matriz está vacía, las genera desde cero). Las sugerencias se muestran abajo para revisarlas y elegir cuáles agregar — nunca se guardan solas.</div>
       <div class="form-grid" style="margin-top:8px;">
         <div><label>Cantidad de líneas a sugerir</label><input type="number" id="matrizIaCantidad" value="8" min="1" max="20"></div>
@@ -843,7 +843,7 @@
           <button class="btn secondary" id="matrizIaDescartarBtn" type="button">Descartar sugerencias</button>
         </div>
       </div>
-    </div>
+    </div></div>
 
     <div class="card">
       <div class="card-header-row" id="hdrMatrizVigente"><h2>Matriz de riesgos vigente</h2><button class="collapse-toggle" id="toggleMatrizVigente" type="button" aria-label="Contraer o expandir">▾</button></div>
@@ -876,16 +876,16 @@
     </div>
 
     <div class="card">
-      <h2>Mapa de riesgos por área / proceso</h2>
+      <div class="card-header-row" id="hdrMapaDeRiesgosPorAreaProceso"><h2>Mapa de riesgos por área / proceso</h2><button class="collapse-toggle" id="toggleMapaDeRiesgosPorAreaProceso" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMapaDeRiesgosPorAreaProceso">
       <div class="desc">Resumen visual del nivel de riesgo más alto presente en cada área (y, cuando corresponde, desglosado por proceso), con sus peligros más relevantes — un mapa de riesgos general de la empresa, complementario al detalle línea por línea de la matriz.</div>
       <div class="toolbar">
         <div><button class="btn secondary small" id="printMapaRiesgosBtn">Imprimir mapa de riesgos</button></div>
       </div>
       <div class="grid-tiles" id="mapaRiesgosWrap"></div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Mapa de riesgos — plano de planta y simbología</h2>
+      <div class="card-header-row" id="hdrMapaDeRiesgosPlanoDePlantaYSimbologia"><h2>Mapa de riesgos — plano de planta y simbología</h2><button class="collapse-toggle" id="toggleMapaDeRiesgosPlanoDePlantaYSimbologia" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMapaDeRiesgosPlanoDePlantaYSimbologia">
       <div class="desc">Mapa de riesgos con plano de planta y su respectiva simbología oficial (Anexo 1, DS 44): un pictograma por cada riesgo específico presente, coloreado según su nivel de riesgo. Como los mapas de riesgo suelen ser por área o proceso, puedes subir más de un plano — asigná cada área al plano que corresponda desde Configuración → Áreas. Arrastra la marca de cada área y cada ícono hasta su ubicación real; las áreas sin plano asignado se muestran como un esquema de cajas.</div>
       <div class="toolbar">
         <div class="field"><label>Plano</label><select id="planoSelect"></select></div>
@@ -896,10 +896,10 @@
       <input type="file" id="planoUploadInput" accept="image/*" style="display:none;">
       <div id="planoRiesgosWrap"></div>
       <div id="planoLeyendaWrap" style="margin-top:16px;"></div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Matriz de riesgos por nivel y por área</h2>
+      <div class="card-header-row" id="hdrMatrizDeRiesgosPorNivelYPorArea"><h2>Matriz de riesgos por nivel y por área</h2><button class="collapse-toggle" id="toggleMatrizDeRiesgosPorNivelYPorArea" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMatrizDeRiesgosPorNivelYPorArea">
       <div class="desc">Distribución de las líneas actualmente registradas en la matriz de riesgos.</div>
       <div class="form-grid" style="grid-template-columns:1fr 1fr;">
         <div>
@@ -911,10 +911,10 @@
           <div id="chartAreaWrap"></div>
         </div>
       </div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Plan de Acción — Matriz de Riesgos</h2>
+      <div class="card-header-row" id="hdrPlanDeAccionMatrizDeRiesgos"><h2>Plan de Acción — Matriz de Riesgos</h2><button class="collapse-toggle" id="togglePlanDeAccionMatrizDeRiesgos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyPlanDeAccionMatrizDeRiesgos">
       <div class="desc">Para todo riesgo que no sea Bajo (Medio, Alto o Crítico), define qué se va a hacer, quién es responsable y con qué plazo, y hazle seguimiento hasta cerrarlo registrando el riesgo residual alcanzado. Metodología: Revisión y Priorización → Definición de Acciones y Controles → Asignación de Recursos y Responsables → Seguimiento y Monitoreo → Actualización Continua.</div>
       <div class="toolbar">
         <div class="field"><label>Próxima revisión anual de la matriz</label><input type="date" id="paRevisionAnual"></div>
@@ -973,15 +973,15 @@
         <thead><tr><th>Área</th><th>Peligro / Riesgo</th><th>Nivel</th><th>Tipo</th><th>Actividad</th><th>Responsable</th><th>Plazo</th><th>Próx. revisión</th><th>Estado</th><th></th></tr></thead>
         <tbody id="paTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
 
     <div class="card">
-      <h2>Jerarquía de controles (DS 44)</h2>
+      <div class="card-header-row" id="hdrJerarquiaDeControlesDS44"><h2>Jerarquía de controles (DS 44)</h2><button class="collapse-toggle" id="toggleJerarquiaDeControlesDS44" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyJerarquiaDeControlesDS44">
       <div class="desc">El DS 44 exige aplicar los controles en este orden de prioridad: <strong>A) Eliminación → B) Sustitución → C) Control de ingeniería → D) Control administrativo → E) Elementos de Protección Personal (EPP)</strong>. El EPP debe ser la última barrera, no la primera ni la única. Este resumen incluye tanto las medidas cargadas con el nuevo formulario jerarquizado como las de líneas más antiguas, interpretando el mismo convenio de viñetas ("• A)", "• B)"...) ya usado en la matriz real de la empresa.</div>
       <div id="chartJerarquiaWrap"></div>
       <div id="soloEppListWrap" style="margin-top:16px;"></div>
-    </div>
+    </div></div>
 
     <div class="card">
       <div class="card-header-row" id="hdrEstudioEpp"><h2>Estudio de necesidad de EPP</h2><button class="collapse-toggle" id="toggleEstudioEpp" type="button" aria-label="Contraer o expandir">▾</button></div>
@@ -1058,16 +1058,16 @@
   <!-- VIGILANCIA DE SALUD -->
   <div class="view" id="view-vigilancia">
     <div class="card">
-      <h2>Protocolos aplicables según la matriz de riesgos</h2>
+      <div class="card-header-row" id="hdrProtocolosAplicablesSegunLaMatrizDeRiesgos"><h2>Protocolos aplicables según la matriz de riesgos</h2><button class="collapse-toggle" id="toggleProtocolosAplicablesSegunLaMatrizDeRiesgos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyProtocolosAplicablesSegunLaMatrizDeRiesgos">
       <div class="desc">Un protocolo MINSAL (DS 594) se marca como "Aplica" automáticamente cuando existe al menos una línea en la matriz de riesgos vigente cuyo peligro coincide con el agente de ese protocolo (ej. PREXOR aplica si hay líneas de "Exposición a ruido"). Si no estás de acuerdo con el resultado automático, puedes forzar manualmente que un protocolo aplique o no aplique.</div>
       <table>
         <thead><tr><th>Protocolo</th><th>Agente / factor</th><th>Periodicidad</th><th>Líneas de la matriz que lo activan</th><th>¿Aplica?</th><th>Forzar manualmente</th></tr></thead>
         <tbody id="protocolosAplicaTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Matriz de riesgos por protocolo</h2>
+      <div class="card-header-row" id="hdrMatrizDeRiesgosPorProtocolo"><h2>Matriz de riesgos por protocolo</h2><button class="collapse-toggle" id="toggleMatrizDeRiesgosPorProtocolo" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMatrizDeRiesgosPorProtocolo">
       <div class="desc">Formato tipo SUSESO por protocolo: para el protocolo elegido, se listan las áreas, procesos, puestos de trabajo expuestos, el peligro concreto de la matriz que origina la obligación, el nivel de riesgo y la medida de control existente (jerarquizada según DS 44). Además se registra la evaluación cuantitativa o cualitativa coordinada con la mutualidad, propia de ese protocolo.</div>
       <div class="toolbar">
         <div class="field"><label>Protocolo</label><select id="vsMatrizProtocolo"></select></div>
@@ -1077,10 +1077,10 @@
         <thead><tr><th>Área</th><th>Proceso / Actividad</th><th>Puestos expuestos</th><th>Peligro / agente</th><th>Nivel de riesgo</th><th>Medida de control existente</th></tr></thead>
         <tbody id="vsMatrizProtocoloTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Bitácora de cumplimiento por protocolo</h2>
+      <div class="card-header-row" id="hdrBitacoraDeCumplimientoPorProtocolo"><h2>Bitácora de cumplimiento por protocolo</h2><button class="collapse-toggle" id="toggleBitacoraDeCumplimientoPorProtocolo" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyBitacoraDeCumplimientoPorProtocolo">
       <div class="desc">Registro cronológico de las actividades realizadas para dar cumplimiento a cada protocolo (evaluaciones, capacitaciones, mediciones, coordinaciones con la mutualidad, etc.).</div>
       <div class="form-grid">
         <div><label>Protocolo</label><select id="bitProtocolo"></select></div>
@@ -1111,10 +1111,10 @@
         <thead><tr><th>Fecha</th><th>Protocolo</th><th>Actividad</th><th>Responsable</th><th>Estado</th><th>Observaciones</th><th></th></tr></thead>
         <tbody id="bitacoraTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Carta Gantt de protocolos</h2>
+      <div class="card-header-row" id="hdrCartaGanttDeProtocolos"><h2>Carta Gantt de protocolos</h2><button class="collapse-toggle" id="toggleCartaGanttDeProtocolos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyCartaGanttDeProtocolos">
       <div class="desc">Actividades de implementación y seguimiento de cada protocolo, organizadas por etapa y sub-etapa (formato basado en la carta Gantt real de mutualidad), con responsable, fechas, respaldo/evidencia requerida y registro de cumplimiento.</div>
       <div class="form-grid">
         <div><label>Protocolo</label><select id="ganttProtocolo"></select></div>
@@ -1165,7 +1165,7 @@
         <thead><tr><th>Etapa / Grupo</th><th>Actividad</th><th>Responsable</th><th>Inicio</th><th>Término</th><th>Respaldo</th><th>% Avance</th><th>Estado</th><th></th></tr></thead>
         <tbody id="ganttTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card">
       <div class="card-header-row" id="hdrTmert"><h2 id="tmertFormTitle">Herramienta TMERT — Trastornos Musculoesqueléticos Relacionados al Trabajo</h2><button class="collapse-toggle" id="toggleTmert" type="button" aria-label="Contraer o expandir">▾</button></div>
@@ -1273,7 +1273,7 @@
   <!-- PROGRAMA DE SEGURIDAD -->
   <div class="view" id="view-programa">
     <div class="card">
-      <h2>Nueva actividad del programa de seguridad</h2>
+      <div class="card-header-row" id="hdrNuevaActividadDelProgramaDeSeguridad"><h2>Nueva actividad del programa de seguridad</h2><button class="collapse-toggle" id="toggleNuevaActividadDelProgramaDeSeguridad" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyNuevaActividadDelProgramaDeSeguridad">
       <div class="desc">Actividades planificadas del programa anual (capacitaciones, inspecciones, simulacros, difusión de protocolos, reuniones de comité paritario, etc.) exigidas por el DS 44.</div>
       <div class="form-grid">
         <div>
@@ -1312,10 +1312,10 @@
         <div class="field"><label>Archivo Excel (.xlsx)</label><input type="file" id="importPgFile" accept=".xlsx,.xls"></div>
         <div><button class="btn small secondary" id="importPgBtn" style="margin-top:20px;">Importar desde Excel</button></div>
       </div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Programa de seguridad — cumplimiento</h2>
+      <div class="card-header-row" id="hdrProgramaDeSeguridadCumplimiento"><h2>Programa de seguridad — cumplimiento</h2><button class="collapse-toggle" id="toggleProgramaDeSeguridadCumplimiento" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyProgramaDeSeguridadCumplimiento">
       <div class="toolbar">
         <div class="field"><label>Filtrar por estado</label><select id="filterPgEstado"><option value="">Todos</option><option value="pendiente">Pendiente</option><option value="realizada">Realizada</option><option value="atrasada">Atrasada</option></select></div>
         <div class="field"><label>Filtrar por mes</label><select id="filterPgMes"><option value="">Todos los meses</option></select></div>
@@ -1326,23 +1326,23 @@
         <tbody id="programaTable"></tbody>
       </table>
       <div style="margin-top:14px;"><button class="btn secondary" id="descargarProgramaPdfBtn">Descargar PDF (según filtros)</button></div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Estadística de cumplimiento por responsable</h2>
+      <div class="card-header-row" id="hdrEstadisticaDeCumplimientoPorResponsable"><h2>Estadística de cumplimiento por responsable</h2><button class="collapse-toggle" id="toggleEstadisticaDeCumplimientoPorResponsable" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyEstadisticaDeCumplimientoPorResponsable">
       <div class="desc">Porcentaje de actividades del programa realizadas, agrupado por responsable asignado. Se ajusta según los filtros de mes y responsable de arriba.</div>
       <div id="chartPgResponsableWrap"></div>
       <table style="margin-top:14px;">
         <thead><tr><th>Responsable</th><th>Programadas</th><th>Realizadas</th><th>% Cumplimiento</th></tr></thead>
         <tbody id="statsPgResponsableTable"></tbody>
       </table>
-    </div>
+    </div></div>
   </div>
 
   <!-- PLAN DE CAPACITACIÓN -->
   <div class="view" id="view-capacitacion">
     <div class="card">
-      <h2>Nueva capacitación</h2>
+      <div class="card-header-row" id="hdrNuevaCapacitacion"><h2>Nueva capacitación</h2><button class="collapse-toggle" id="toggleNuevaCapacitacion" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyNuevaCapacitacion">
       <div class="desc">Incluye inducciones, capacitaciones específicas por riesgo del puesto de trabajo y aquellas obligatorias según el DS 44.</div>
       <div class="form-grid">
         <div>
@@ -1378,10 +1378,10 @@
         <div class="field"><label>Archivo Excel (.xlsx)</label><input type="file" id="importCapFile" accept=".xlsx,.xls"></div>
         <div><button class="btn small secondary" id="importCapBtn" style="margin-top:20px;">Importar desde Excel</button></div>
       </div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Plan de capacitación — cumplimiento</h2>
+      <div class="card-header-row" id="hdrPlanDeCapacitacionCumplimiento"><h2>Plan de capacitación — cumplimiento</h2><button class="collapse-toggle" id="togglePlanDeCapacitacionCumplimiento" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyPlanDeCapacitacionCumplimiento">
       <div class="toolbar">
         <div class="field"><label>Filtrar por tipo</label><select id="filterCapTipo"><option value="">Todos</option></select></div>
         <div class="field"><label>Filtrar por mes</label><select id="filterCapMes"><option value="">Todos los meses</option></select></div>
@@ -1390,27 +1390,27 @@
       </div>
       <div id="capacitacionesList"></div>
       <div style="margin-top:14px;"><button class="btn secondary" id="descargarCapacitacionPdfBtn">Descargar PDF (según filtros)</button></div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Estadísticas del plan de capacitación</h2>
+      <div class="card-header-row" id="hdrEstadisticasDelPlanDeCapacitacion"><h2>Estadísticas del plan de capacitación</h2><button class="collapse-toggle" id="toggleEstadisticasDelPlanDeCapacitacion" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyEstadisticasDelPlanDeCapacitacion">
       <div class="desc">Se ajustan según los filtros de mes y responsable de arriba.</div>
       <div class="grid-tiles">
         <div class="tile"><div class="label">Cumplimiento de programa</div><div class="value" id="capStatPrograma">0%</div><div class="foot" id="capStatProgramaFoot">0 de 0 realizadas</div></div>
         <div class="tile"><div class="label">Cumplimiento de asistencia</div><div class="value" id="capStatAsistencia">0%</div><div class="foot" id="capStatAsistenciaFoot">0 de 0 asistentes registrados</div></div>
         <div class="tile"><div class="label">HH capacitadas vs HH trabajadas</div><div class="value" id="capStatHH">0%</div><div class="foot" id="capStatHHFoot">0 de 0 HH</div></div>
       </div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Cumplimiento de capacitación por responsable (relator)</h2>
+      <div class="card-header-row" id="hdrCumplimientoDeCapacitacionPorResponsableRelator"><h2>Cumplimiento de capacitación por responsable (relator)</h2><button class="collapse-toggle" id="toggleCumplimientoDeCapacitacionPorResponsableRelator" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyCumplimientoDeCapacitacionPorResponsableRelator">
       <div class="desc">Porcentaje de capacitaciones realizadas, agrupadas por relator/responsable. Se ajusta según los filtros de mes y responsable de arriba.</div>
       <div id="chartCapResponsableWrap"></div>
       <table style="margin-top:14px;">
         <thead><tr><th>Responsable (relator)</th><th>Programadas</th><th>Realizadas</th><th>% Cumplimiento</th></tr></thead>
         <tbody id="statsCapResponsableTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card" id="cardIapForm">
       <div class="card-header-row" id="hdrIap"><h2 id="iapFormTitle">Incidentes de Alto Potencial (IAP) de otras empresas</h2><button class="collapse-toggle" id="toggleIap" type="button" aria-label="Contraer o expandir">▾</button></div>
@@ -1512,7 +1512,7 @@
     </div>
 
     <div class="card">
-      <h2>Registro de cursos completados</h2>
+      <div class="card-header-row" id="hdrRegistroDeCursosCompletados"><h2>Registro de cursos completados</h2><button class="collapse-toggle" id="toggleRegistroDeCursosCompletados" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyRegistroDeCursosCompletados">
       <div class="desc">Registra, por trabajador, qué curso del catálogo completó, en qué fecha, y adjunta el certificado.</div>
       <div class="form-grid">
         <div><label>Trabajador</label><select id="trabCursoTrabajador"></select></div>
@@ -1530,19 +1530,19 @@
         <thead><tr><th>Trabajador</th><th>Curso</th><th>Fecha aprobación</th><th>Vencimiento</th><th>Certificado</th><th></th></tr></thead>
         <tbody id="trabajadorCursosTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Alertas de vencimiento</h2>
+      <div class="card-header-row" id="hdrAlertasDeVencimiento"><h2>Alertas de vencimiento</h2><button class="collapse-toggle" id="toggleAlertasDeVencimiento" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyAlertasDeVencimiento">
       <div class="desc">Cursos vencidos, próximos a vencer (60 días) o nunca completados, entre los que aplican a cada trabajador según su rol y el tramo actual de la empresa.</div>
       <table>
         <thead><tr><th>Trabajador</th><th>Curso</th><th>Estado</th><th>Vencimiento</th></tr></thead>
         <tbody id="cursosAlertasTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Reporte de cumplimiento — Cursos DS 44</h2>
+      <div class="card-header-row" id="hdrReporteDeCumplimientoCursosDS44"><h2>Reporte de cumplimiento — Cursos DS 44</h2><button class="collapse-toggle" id="toggleReporteDeCumplimientoCursosDS44" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyReporteDeCumplimientoCursosDS44">
       <div class="toolbar">
         <div class="field"><label>Filtrar por curso</label><select id="filterReporteCurso"><option value="">Todos</option></select></div>
         <div class="field"><label>Filtrar por rol</label><select id="filterReporteRol">
@@ -1557,7 +1557,7 @@
         <thead><tr><th>Trabajador</th><th>Cursos aplicables</th><th>Vigentes</th><th>% Cumplimiento</th></tr></thead>
         <tbody id="reporteCumplimientoTable"></tbody>
       </table>
-    </div>
+    </div></div>
   </div>
 
   <!-- ACCIDENTABILIDAD -->
@@ -1583,19 +1583,19 @@
 
     <div class="row">
       <div class="col card">
-        <h2>Accidentes por mes</h2>
+        <div class="card-header-row" id="hdrAccidentesPorMes"><h2>Accidentes por mes</h2><button class="collapse-toggle" id="toggleAccidentesPorMes" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyAccidentesPorMes">
         <div class="desc">Accidentes con y sin tiempo perdido registrados en los últimos 12 meses.</div>
         <div id="chartAccMes" class="bar-chart"></div>
-      </div>
+      </div></div>
       <div class="col card">
-        <h2>Accidentes por área</h2>
+        <div class="card-header-row" id="hdrAccidentesPorArea"><h2>Accidentes por área</h2><button class="collapse-toggle" id="toggleAccidentesPorArea" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyAccidentesPorArea">
         <div class="desc">Distribución de accidentes e incidentes por área.</div>
         <div id="chartAccArea" class="bar-chart"></div>
-      </div>
+      </div></div>
     </div>
 
     <div class="card">
-      <h2>Horas-hombre trabajadas por período</h2>
+      <div class="card-header-row" id="hdrHorasHombreTrabajadasPorPeriodo"><h2>Horas-hombre trabajadas por período</h2><button class="collapse-toggle" id="toggleHorasHombreTrabajadasPorPeriodo" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyHorasHombreTrabajadasPorPeriodo">
       <div class="desc">Base para calcular la tasa de frecuencia y de gravedad. Registra mensualmente las horas-hombre trabajadas y el promedio de trabajadores.</div>
       <div class="form-grid">
         <div><label>Período (mes)</label><input id="hhPeriodo" type="month"></div>
@@ -1604,10 +1604,10 @@
       </div>
       <div style="margin-top:14px;"><button class="btn small" id="saveHHBtn">Guardar período</button></div>
       <table style="margin-top:14px;"><thead><tr><th>Período</th><th>Horas-hombre</th><th>Promedio trabajadores</th></tr></thead><tbody id="hhTable"></tbody></table>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2 id="accFormTitle">Registrar accidente / incidente</h2>
+      <div class="card-header-row" id="hdrRegistrarAccidenteIncidente"><h2 id="accFormTitle">Registrar accidente / incidente</h2><button class="collapse-toggle" id="toggleRegistrarAccidenteIncidente" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyRegistrarAccidenteIncidente">
       <div class="form-grid">
         <div>
           <label>Tipo</label>
@@ -1657,10 +1657,10 @@
         <button class="btn" id="saveAccBtn">Registrar</button>
         <button class="btn secondary" id="cancelEditAccBtn" style="display:none;">Cancelar edición</button>
       </div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Indicadores de siniestralidad (DS 67) y registro histórico</h2>
+      <div class="card-header-row" id="hdrIndicadoresDeSiniestralidadDS67YRegistroHistorico"><h2>Indicadores de siniestralidad (DS 67) y registro histórico</h2><button class="collapse-toggle" id="toggleIndicadoresDeSiniestralidadDS67YRegistroHistorico" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyIndicadoresDeSiniestralidadDS67YRegistroHistorico">
       <div class="desc">La tasa de cotización adicional diferenciada definitiva la fija cada 2 años el organismo administrador (mutualidad / ISL) en base a la Ley 16.744 y el DS 67, considerando incapacidades temporales, invalideces y muertes. Esta pantalla mantiene el registro base (accidentes, días perdidos, horas-hombre) necesario para esa evaluación y calcula los indicadores de gestión de frecuencia y gravedad más utilizados para el seguimiento interno. La tasa de gravedad solo considera días perdidos de accidentes del trabajo (con y sin tiempo perdido); los accidentes de trayecto y las enfermedades profesionales no la alteran, ya que se contabilizan y reportan por separado ante el organismo administrador.</div>
       <div class="toolbar">
         <div class="field"><label>Filtrar por tipo</label><select id="filterAccTipo"><option value="">Todos</option><option value="ctp">Con tiempo perdido</option><option value="stp">Sin tiempo perdido</option><option value="trayecto">Trayecto</option><option value="incidente">Incidente</option><option value="enfermedad">Enfermedad profesional</option></select></div>
@@ -1673,10 +1673,10 @@
         <thead><tr><th>Fecha</th><th>Tipo</th><th>Sexo</th><th>Foco crítico</th><th>Trabajadores asociados</th><th>Área</th><th>Gravedad</th><th>Días perdidos</th><th>Causa</th><th>Informe / Foto</th><th></th></tr></thead>
         <tbody id="accidentesTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Evaluación de Siniestralidad DS 67 (cotización adicional)</h2>
+      <div class="card-header-row" id="hdrEvaluacionDeSiniestralidadDS67CotizacionAdicional"><h2>Evaluación de Siniestralidad DS 67 (cotización adicional)</h2><button class="collapse-toggle" id="toggleEvaluacionDeSiniestralidadDS67CotizacionAdicional" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyEvaluacionDeSiniestralidadDS67CotizacionAdicional">
       <div class="desc">Esta es la fórmula que usa el organismo administrador para fijar la cotización adicional diferenciada de la Ley 16.744, evaluada sobre 3 "años de prevención" consecutivos de julio a junio (no años calendario). Verificada contra el simulador oficial de tu mutualidad. El factor y la tasa de siniestralidad por invalideces y muertes no se calculan aquí — son datos que el organismo administrador informa directamente; ingrésalos cuando la mutualidad te los entregue (déjalos en 0 si no aplica, como es habitual).</div>
       <div class="toolbar">
         <div class="field"><label>Año de evaluación</label><select id="ds67Anio"></select></div>
@@ -1695,10 +1695,10 @@
       <div class="desc" style="margin-top:2px;">Ambos datos son informados por la mutualidad (ACHS / IST / Mutual de Seguridad), no calculados por Pehuén.</div>
       <div style="margin-top:10px;"><button class="btn small" id="saveDs67Btn">Guardar</button></div>
       <div class="grid-tiles" id="ds67Tiles" style="margin-top:14px;"></div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Control estadístico mensual y anual</h2>
+      <div class="card-header-row" id="hdrControlEstadisticoMensualYAnual"><h2>Control estadístico mensual y anual</h2><button class="collapse-toggle" id="toggleControlEstadisticoMensualYAnual" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyControlEstadisticoMensualYAnual">
       <div class="desc">Selecciona un mes o un año con datos registrados (horas-hombre y/o accidentes) para ver la tasa de frecuencia, la tasa de gravedad, el índice de accidentabilidad y el detalle por sexo de ese período específico (no acumulado histórico). Si activaste RIRDA/LDR en Configuración, también se muestran esos indicadores con el mismo período.</div>
       <div class="row">
         <div class="col">
@@ -1723,10 +1723,10 @@
         <thead><tr><th>Mes</th><th>Tasa frecuencia</th><th>Tasa gravedad</th><th>Índice accidentabilidad</th><th>CTP</th><th>STP</th><th class="rirda-ldr-col" style="display:none;">RIRDA</th><th class="rirda-ldr-col" style="display:none;">LDR</th></tr></thead>
         <tbody id="accAnioMesTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Clasificación de accidentes e incidentes</h2>
+      <div class="card-header-row" id="hdrClasificacionDeAccidentesEIncidentes"><h2>Clasificación de accidentes e incidentes</h2><button class="collapse-toggle" id="toggleClasificacionDeAccidentesEIncidentes" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyClasificacionDeAccidentesEIncidentes">
       <div class="desc">Distribución de todos los registros (accidentes, incidentes y enfermedades profesionales) por mes del año en curso, por año, por área y por tipo.</div>
       <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));column-gap:24px;">
         <div>
@@ -1750,7 +1750,7 @@
           <div id="accClasifFocoWrap"></div>
         </div>
       </div>
-    </div>
+    </div></div>
 
     <div class="card">
       <div class="card-header-row" id="hdrArbolCausal"><h2 id="arbolFormTitle">Análisis de causa raíz — Árbol causal</h2><button class="collapse-toggle" id="toggleArbolCausal" type="button" aria-label="Contraer o expandir">▾</button></div>
@@ -1824,7 +1824,7 @@
   <!-- SEGURIDAD -->
   <div class="view" id="view-seguridad">
     <div class="card">
-      <h2 id="infFormTitle">Registrar infractor</h2>
+      <div class="card-header-row" id="hdrRegistrarInfractor"><h2 id="infFormTitle">Registrar infractor</h2><button class="collapse-toggle" id="toggleRegistrarInfractor" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyRegistrarInfractor">
       <div class="desc">Registro de personas con infracciones a normas de seguridad (no exclusivo de tránsito), con el motivo, la sanción aplicada y estadística de reincidencia.</div>
       <div class="form-grid">
         <div><label>Fecha</label><input id="infFecha" type="date"></div>
@@ -1843,13 +1843,13 @@
       <div class="grid-tiles" id="infTiles" style="margin-top:18px;"></div>
       <div class="row" style="margin-top:10px;">
         <div class="col card" style="box-shadow:none;border:1px solid var(--border);">
-          <h2 style="font-size:15px;">Infracciones por motivo</h2>
+          <div class="card-header-row" id="hdrInfraccionesPorMotivo"><h2 style="font-size:15px;">Infracciones por motivo</h2><button class="collapse-toggle" id="toggleInfraccionesPorMotivo" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyInfraccionesPorMotivo">
           <div id="chartInfMotivo" class="bar-chart"></div>
-        </div>
+        </div></div>
         <div class="col card" style="box-shadow:none;border:1px solid var(--border);">
-          <h2 style="font-size:15px;">Top reincidentes</h2>
+          <div class="card-header-row" id="hdrTopReincidentes"><h2 style="font-size:15px;">Top reincidentes</h2><button class="collapse-toggle" id="toggleTopReincidentes" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyTopReincidentes">
           <div id="chartInfReincidentes" class="bar-chart"></div>
-        </div>
+        </div></div>
       </div>
 
       <div class="toolbar" style="margin-top:14px;">
@@ -1861,10 +1861,10 @@
         <tbody id="infractoresTable"></tbody>
       </table>
       <div style="margin-top:14px;"><button class="btn secondary" id="descargarInfractoresPdfBtn">Descargar PDF (según filtros)</button></div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2 id="velFormTitle">Ranking de infractores de velocidad</h2>
+      <div class="card-header-row" id="hdrRankingDeInfractoresDeVelocidad"><h2 id="velFormTitle">Ranking de infractores de velocidad</h2><button class="collapse-toggle" id="toggleRankingDeInfractoresDeVelocidad" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyRankingDeInfractoresDeVelocidad">
       <div class="desc">Registro manual de eventos de exceso de velocidad detectados (GPS/telemetría u otro control) por vehículo y conductor, ordenado como ranking según cantidad de eventos.</div>
       <div class="form-grid">
         <div><label>Fecha</label><input id="velFecha" type="date"></div>
@@ -1892,13 +1892,13 @@
         <thead><tr><th>#</th><th>Fecha</th><th>Patente</th><th>Conductor</th><th>N° eventos</th><th>Vel. máxima (km/h)</th><th></th></tr></thead>
         <tbody id="velocidadTable"></tbody>
       </table>
-    </div>
+    </div></div>
   </div>
 
   <!-- ENTREGA EPP -->
   <div class="view" id="view-epp">
     <div class="card">
-      <h2>Control de stock de EPP</h2>
+      <div class="card-header-row" id="hdrControlDeStockDeEPP"><h2>Control de stock de EPP</h2><button class="collapse-toggle" id="toggleControlDeStockDeEPP" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyControlDeStockDeEPP">
       <div class="desc">Carga aquí la cantidad disponible de cada elemento de protección personal. Un elemento sin stock cargado se puede seguir entregando sin límite (como hasta ahora); un elemento con stock cargado no se puede entregar por una cantidad mayor a la disponible.</div>
       <div class="toolbar">
         <div class="field"><label>Elemento de protección personal (EPP)</label><input id="eppStockInput" list="dlEpp" placeholder="Ej: Casco de seguridad"></div>
@@ -1909,10 +1909,10 @@
         <thead><tr><th>Elemento</th><th>Stock actual</th><th></th></tr></thead>
         <tbody id="eppStockTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2 id="valeFormTitle">Emitir vale de entrega de EPP</h2>
+      <div class="card-header-row" id="hdrEmitirValeDeEntregaDeEPP"><h2 id="valeFormTitle">Emitir vale de entrega de EPP</h2><button class="collapse-toggle" id="toggleEmitirValeDeEntregaDeEPP" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyEmitirValeDeEntregaDeEPP">
       <div class="desc">Cada vale queda numerado con un folio correlativo automático. Selecciona el trabajador y la fecha de entrega, agrega uno o más elementos de protección personal con su cantidad, y emite el vale. El vale se puede editar después para corregir un error.</div>
       <div class="form-grid">
         <div><label>Folio</label><input id="valeFolio" disabled></div>
@@ -1933,10 +1933,10 @@
         <button class="btn" id="saveValeBtn">Emitir vale</button>
         <button class="btn secondary" id="cancelEditValeBtn" style="display:none;">Cancelar edición</button>
       </div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Vales emitidos</h2>
+      <div class="card-header-row" id="hdrValesEmitidos"><h2>Vales emitidos</h2><button class="collapse-toggle" id="toggleValesEmitidos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyValesEmitidos">
       <div class="toolbar">
         <div class="field"><label>Filtrar por nombre (trabajador)</label><select id="filterValeTrabajador"></select></div>
         <div class="field"><label>Filtrar por elemento (EPP)</label><select id="filterValeElemento"><option value="">Todos</option></select></div>
@@ -1947,10 +1947,10 @@
         <thead><tr><th>Folio</th><th>Fecha</th><th>Trabajador</th><th>EPP entregados</th><th>Observaciones</th><th></th></tr></thead>
         <tbody id="valesTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Listado de EPP entregados por trabajador</h2>
+      <div class="card-header-row" id="hdrListadoDeEPPEntregadosPorTrabajador"><h2>Listado de EPP entregados por trabajador</h2><button class="collapse-toggle" id="toggleListadoDeEPPEntregadosPorTrabajador" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyListadoDeEPPEntregadosPorTrabajador">
       <div class="desc">Se genera automáticamente a partir de todos los vales emitidos, agrupado por trabajador y tipo de elemento entregado.</div>
       <div class="toolbar">
         <div class="field"><label>Filtrar por trabajador</label><select id="filterEppPorTrabTrabajador"><option value="">Todos</option></select></div>
@@ -1962,7 +1962,7 @@
         <thead><tr><th>Trabajador</th><th>Elemento EPP</th><th>Cantidad total entregada</th><th>N° de vales</th><th>Última entrega</th></tr></thead>
         <tbody id="eppPorTrabajadorTable"></tbody>
       </table>
-    </div>
+    </div></div>
   </div>
 
   <!-- CUMPLIMIENTO LEGAL -->
@@ -1998,14 +1998,14 @@
     </div>
 
     <div class="card">
-      <h2>Obligaciones DS 44</h2>
+      <div class="card-header-row" id="hdrObligacionesDS44"><h2>Obligaciones DS 44</h2><button class="collapse-toggle" id="toggleObligacionesDS44" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyObligacionesDS44">
       <div class="desc" id="ds44TramoDesc"></div>
       <div id="ds44CargarCatalogoWrap"></div>
       <table>
         <thead><tr><th>Obligación</th><th style="width:130px;">Estado</th><th style="width:120px;">Última revisión</th><th style="width:150px;">Responsable</th><th style="width:120px;">Evidencia</th><th style="width:90px;"></th></tr></thead>
         <tbody id="ds44CumplimientoTable"></tbody>
       </table>
-    </div>
+    </div></div>
 
     <div class="card">
       <div class="card-header-row" id="hdrDs44Catalogo"><h2>Catálogo de obligaciones DS 44</h2><button class="collapse-toggle" id="toggleDs44Catalogo" type="button" aria-label="Contraer o expandir">▾</button></div>
@@ -2531,7 +2531,7 @@
   <!-- CONTROL DE COMPROMISOS -->
   <div class="view" id="view-compromisos">
     <div class="card">
-      <h2>Control de compromisos (reuniones y otros)</h2>
+      <div class="card-header-row" id="hdrControlDeCompromisosReunionesYOtros"><h2>Control de compromisos (reuniones y otros)</h2><button class="collapse-toggle" id="toggleControlDeCompromisosReunionesYOtros" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyControlDeCompromisosReunionesYOtros">
       <div class="desc">Seguimiento del nivel de cumplimiento mensual de los compromisos e instancias periódicas de gestión de prevención (reportes, reuniones de comités, jornadas de seguridad, etc.). Cada ítem tiene una meta de actividad(es) por mes; para cada mes se registra cuántas veces se realizó.</div>
       <div class="toolbar" style="margin-bottom:6px;">
         <div class="field"><label>Ver indicadores</label>
@@ -2544,7 +2544,7 @@
         <div class="field"><label>Año</label><select id="compTilesAnio"></select></div>
       </div>
       <div class="grid-tiles" id="compromisosTilesWrap"></div>
-    </div>
+    </div></div>
 
     <div class="card">
       <div class="card-header-row" id="hdrCompromisosItems"><h2>Ítems de control</h2><button class="collapse-toggle" id="toggleCompromisosItems" type="button" aria-label="Contraer o expandir">▾</button></div>
@@ -2569,7 +2569,7 @@
     </div>
 
     <div class="card">
-      <h2>Cumplimiento mensual</h2>
+      <div class="card-header-row" id="hdrCumplimientoMensual"><h2>Cumplimiento mensual</h2><button class="collapse-toggle" id="toggleCumplimientoMensual" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyCumplimientoMensual">
       <div class="toolbar">
         <div class="field"><label>Año</label><select id="compAnioSel"></select></div>
       </div>
@@ -2580,10 +2580,10 @@
         <tbody id="compromisosMesesTable"></tbody>
       </table>
       </div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Informe de cumplimiento</h2>
+      <div class="card-header-row" id="hdrInformeDeCumplimiento"><h2>Informe de cumplimiento</h2><button class="collapse-toggle" id="toggleInformeDeCumplimiento" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyInformeDeCumplimiento">
       <div class="desc">Genera un informe en PDF del nivel de cumplimiento de los compromisos, ya sea de un mes puntual o del año completo, listo para compartir o archivar.</div>
       <div class="toolbar">
         <div class="field"><label>Tipo de informe</label>
@@ -2596,13 +2596,13 @@
         <div class="field" id="compInformeMesWrap"><label>Mes</label><select id="compInformeMes"></select></div>
         <div><button class="btn small secondary" id="compInformeDescargarBtn" style="margin-top:20px;">⬇ Descargar informe PDF</button></div>
       </div>
-    </div>
+    </div></div>
   </div>
 
   <!-- CONFIG -->
   <div class="view" id="view-config">
     <div class="card">
-      <h2>Empresa</h2>
+      <div class="card-header-row" id="hdrEmpresa"><h2>Empresa</h2><button class="collapse-toggle" id="toggleEmpresa" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyEmpresa">
       <div class="form-grid">
         <div><label>Razón social</label><input id="cfgEmpresa"></div>
         <div><label>RUT</label><input id="cfgRut"></div>
@@ -2626,9 +2626,9 @@
         <input type="checkbox" id="cfgIapHabilitado" style="width:auto;min-height:auto;"> Mostrar el módulo de Incidentes de Alto Potencial (IAP) de otras empresas, en Capacitación
       </label>
       <div style="margin-top:14px;"><button class="btn small" id="saveEmpresaBtn">Guardar</button></div>
-    </div>
+    </div></div>
     <div class="card">
-      <h2>Metas de indicadores de accidentabilidad</h2>
+      <div class="card-header-row" id="hdrMetasDeIndicadoresDeAccidentabilidad"><h2>Metas de indicadores de accidentabilidad</h2><button class="collapse-toggle" id="toggleMetasDeIndicadoresDeAccidentabilidad" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMetasDeIndicadoresDeAccidentabilidad">
       <div class="desc">Define las metas internas de gestión para cada indicador. En Accidentabilidad, los cuadros de estos indicadores se colorean como semáforo según el cumplimiento de la meta correspondiente: verde si el valor está dentro de la meta, amarillo si la supera levemente (hasta un 15%), y rojo si la supera de forma importante. Deja un campo vacío si no quieres definir meta para ese indicador (el cuadro se muestra sin color).</div>
       <div class="form-grid">
         <div><label>Meta tasa de frecuencia</label><input id="cfgMetaFrecuencia" type="number" min="0" step="0.1" placeholder="Ej: 20"></div>
@@ -2638,9 +2638,9 @@
         <div><label>Meta LDR</label><input id="cfgMetaLdr" type="number" min="0" step="0.1" placeholder="Ej: 40"></div>
       </div>
       <div style="margin-top:14px;"><button class="btn small" id="saveMetasBtn">Guardar metas</button></div>
-    </div>
+    </div></div>
     <div class="card">
-      <h2>Gestionar listas desplegables</h2>
+      <div class="card-header-row" id="hdrGestionarListasDesplegables"><h2>Gestionar listas desplegables</h2><button class="collapse-toggle" id="toggleGestionarListasDesplegables" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyGestionarListasDesplegables">
       <div class="desc">Agrega nuevas situaciones a las listas de Proceso, Actividad, Categoría o Peligro/Riesgo (usadas en la Matriz de riesgos), al Tipo de capacitación (usado en el Plan de capacitación), o a los Focos críticos que maneja la empresa (usados al registrar un accidente/incidente, en Accidentabilidad). Los valores que agregues aquí (o al escribirlos directo en la Matriz) quedan disponibles de inmediato en los desplegables, <strong>compartidos automáticamente con cualquier otra empresa que tenga el mismo Rubro</strong> que la tuya (así el catálogo se arma solo por rubro, en vez de mezclar actividades de rubros distintos) — configura el Rubro de tu empresa en la tarjeta "Empresa" de esta misma pantalla, más arriba. Solo lo agregado antes de este cambio (privado) se puede eliminar; lo compartido por rubro y el catálogo base no.</div>
       <div class="toolbar">
         <div class="field"><label>Lista</label>
@@ -2658,16 +2658,16 @@
         <div><button class="btn small" id="addCatBtn" style="margin-top:20px;">+ Agregar a la lista</button></div>
       </div>
       <div id="catListWrap"></div>
-    </div>
+    </div></div>
     <div class="card">
-      <h2>Áreas / procesos</h2>
+      <div class="card-header-row" id="hdrAreasProcesos"><h2>Áreas / procesos</h2><button class="collapse-toggle" id="toggleAreasProcesos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyAreasProcesos">
       <div class="toolbar">
         <div class="field"><label>Nueva área</label><input id="newAreaName" placeholder="Ej: Bodega"></div>
         <div><button class="btn small" id="addAreaBtn" style="margin-top:20px;">+ Agregar área</button></div>
       </div>
       <div class="desc">"Trabajadores registrados" cuenta a quienes ya están cargados en la lista de Trabajadores con esta área. "Dotación total" es un número editable manualmente, útil cuando aún no has cargado a todo el personal pero igual quieres registrar cuántas personas trabajan ahí. "Plano" indica en cuál de los planos de planta (Matriz de riesgos → Mapa de riesgos) aparece esta área — como los mapas de riesgo suelen ser por área o proceso, cada área puede ir en un plano distinto.</div>
       <table><thead><tr><th>Área</th><th>Trabajadores registrados</th><th>Dotación total (editable)</th><th>Plano</th><th></th></tr></thead><tbody id="areasTable"></tbody></table>
-    </div>
+    </div></div>
     <div class="card">
       <div class="card-header-row" id="hdrTrabajadores"><h2>Trabajadores</h2><button class="collapse-toggle" id="toggleTrabajadores" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyTrabajadores">
@@ -2702,7 +2702,7 @@
       </div>
     </div>
     <div class="card">
-      <h2>Responsables de cierre de hallazgos</h2>
+      <div class="card-header-row" id="hdrResponsablesDeCierreDeHallazgos"><h2>Responsables de cierre de hallazgos</h2><button class="collapse-toggle" id="toggleResponsablesDeCierreDeHallazgos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyResponsablesDeCierreDeHallazgos">
       <div class="desc">Registre aquí a todas las personas que pueden quedar como responsables de cerrar hallazgos/acciones correctivas de las inspecciones y observaciones. Esta nómina es la que alimenta la lista desplegable "Responsable acción correctiva" al registrar un hallazgo, para evitar errores de escritura al ingresar el nombre. El correo electrónico es opcional: si lo registra, además podrá abrir un correo prellenado dirigido a esa persona al ver el detalle de un hallazgo pendiente.</div>
       <div class="toolbar">
         <div class="field"><label>Nombre</label><input id="newCorreoRespNombre" placeholder="Nombre completo"></div>
@@ -2711,9 +2711,9 @@
         <div><button class="btn small" id="addCorreoRespBtn" style="margin-top:20px;">+ Agregar</button></div>
       </div>
       <table><thead><tr><th>Nombre</th><th>Cargo / área</th><th>Correo</th><th></th></tr></thead><tbody id="correosResponsablesTable"></tbody></table>
-    </div>
+    </div></div>
     <div class="card">
-      <h2>Importar Matriz de riesgos desde Excel</h2>
+      <div class="card-header-row" id="hdrImportarMatrizDeRiesgosDesdeExcel"><h2>Importar Matriz de riesgos desde Excel</h2><button class="collapse-toggle" id="toggleImportarMatrizDeRiesgosDesdeExcel" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyImportarMatrizDeRiesgosDesdeExcel">
       <div class="desc">Reconoce automáticamente dos formatos: (1) una planilla simple con columnas como Área, Proceso, Actividad, Categoría, Peligro, Riesgo asociado, Efecto, Probabilidad, Consecuencia, Controles, Responsable, Plazo, N° hombres/mujeres/otros — el mismo formato que genera el botón "Descargar Excel" de la Matriz de riesgos — o (2) la planilla corporativa de Matriz IPER con encabezado en dos filas (AREA/PROTOCOLO/PROCESO/ACTIVIDAD/CATEGORIA/PELIGRO/EFECTO... con evaluación de riesgo puro y residual), igual a la ya usada para cargar la matriz real de ANGOLEC SPA. En este segundo formato se prioriza la evaluación de riesgo <strong>residual</strong> (después de controles) sobre la de riesgo puro, y si una línea no trae Probabilidad/Consecuencia numérica se aproxima desde el nivel textual (Bajo/Medio/Alto/Muy Alto).</div>
       <div class="toolbar">
         <div class="field"><label>Área por defecto (si no se puede determinar el área de una línea)</label><select id="importMatrizArea"></select></div>
@@ -2723,7 +2723,7 @@
         <input type="checkbox" id="importMatrizReplace" style="width:auto;min-height:auto;"> Reemplazar toda la matriz actual antes de importar (si no se marca, las líneas importadas se agregan a las existentes)
       </label>
       <div style="margin-top:14px;"><button class="btn small secondary" id="importMatrizBtn">Importar matriz desde Excel</button></div>
-    </div>
+    </div></div>
     <div class="card" id="accesosAdminWrap">
       <div class="card-header-row" id="hdrAccesos"><h2>Gestión de accesos (solo Administrador)</h2><button class="collapse-toggle" id="toggleAccesos" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyAccesos">
@@ -2798,31 +2798,31 @@
     </div>
 
     <div class="card" id="eliminarMiEmpresaWrap" style="display:none;">
-      <h2>Eliminar mi empresa</h2>
+      <div class="card-header-row" id="hdrEliminarMiEmpresaWrap"><h2>Eliminar mi empresa</h2><button class="collapse-toggle" id="toggleEliminarMiEmpresaWrap" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyEliminarMiEmpresaWrap">
       <div class="desc">Cierra tu cuenta por completo: elimina para siempre tu empresa y TODOS sus datos (trabajadores, accidentes, EPP, usuarios, documentos, todo). No se puede deshacer. No puedes eliminar ninguna otra empresa, solo la tuya.</div>
       <button class="btn danger small" id="eliminarMiEmpresaBtn" style="margin-top:8px;">Eliminar mi empresa</button>
-    </div>
+    </div></div>
 
     <div class="card" id="respaldoDatosWrap" style="display:none;">
-      <h2>Respaldo y migración de datos</h2>
+      <div class="card-header-row" id="hdrRespaldoDatosWrap"><h2>Respaldo y migración de datos</h2><button class="collapse-toggle" id="toggleRespaldoDatosWrap" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyRespaldoDatosWrap">
       <div class="desc">"Exportar" descarga todos los datos de la empresa con la que iniciaste sesión ahora mismo, en un archivo JSON. "Importar" carga un archivo así dentro de la empresa actual (útil para trasladar los datos de una instalación separada, como las versiones anteriores de ANGOLEC o Pehuén, hacia esta instalación única).</div>
       <div class="toolbar" style="margin-top:8px;">
         <button class="btn secondary small" id="exportarDatosEmpresaBtn">Exportar todos los datos (respaldo JSON)</button>
         <label class="btn secondary small" style="cursor:pointer;">Importar respaldo JSON<input type="file" id="importarDatosEmpresaInput" accept="application/json" style="display:none;"></label>
       </div>
       <div id="importarDatosResultado" style="display:none;margin-top:8px;font-size:13px;"></div>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Datos de ejemplo</h2>
+      <div class="card-header-row" id="hdrDatosDeEjemplo"><h2>Datos de ejemplo</h2><button class="collapse-toggle" id="toggleDatosDeEjemplo" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyDatosDeEjemplo">
       <div class="desc">Este prototipo guarda todo localmente en el navegador (IndexedDB). Puedes reiniciar con datos de ejemplo en cualquier momento.</div>
       <button class="btn secondary small" id="resetDataBtn">Restaurar datos de ejemplo</button>
-    </div>
+    </div></div>
 
     <div class="card">
-      <h2>Propiedad intelectual</h2>
+      <div class="card-header-row" id="hdrPropiedadIntelectual"><h2>Propiedad intelectual</h2><button class="collapse-toggle" id="togglePropiedadIntelectual" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyPropiedadIntelectual">
       <div class="desc">Esta aplicación y su diseño funcional son propiedad intelectual de <strong>Carlos Crisóstomo</strong>. Este texto no forma parte de los datos del prototipo (no se guarda en una base de datos ni tiene botón de eliminar): es contenido fijo del código de la aplicación.</div>
-    </div>
+    </div></div>
   </div>
 
   </main>
@@ -3293,6 +3293,67 @@ setupCollapsible("hdrIapListado", "bodyIapListado", "toggleIapListado", "collaps
 setupCollapsible("hdrAccesos", "bodyAccesos", "toggleAccesos", "collapsed_accesos");
 setupCollapsible("hdrEmpresas", "bodyEmpresas", "toggleEmpresas", "collapsed_empresas");
 setupCollapsible("hdrTrabajadores", "bodyTrabajadores", "toggleTrabajadores", "collapsed_trabajadores");
+setupCollapsible("hdrNuevaInspeccionObservacionEnTerreno", "bodyNuevaInspeccionObservacionEnTerreno", "toggleNuevaInspeccionObservacionEnTerreno", "collapsed_nuevaInspeccionObservacionEnTerreno");
+setupCollapsible("hdrMisActividadesMensuales", "bodyMisActividadesMensuales", "toggleMisActividadesMensuales", "collapsed_misActividadesMensuales");
+setupCollapsible("hdrMisHallazgos", "bodyMisHallazgos", "toggleMisHallazgos", "collapsed_misHallazgos");
+setupCollapsible("hdrFormatosDeInspeccionObservacion", "bodyFormatosDeInspeccionObservacion", "toggleFormatosDeInspeccionObservacion", "collapsed_formatosDeInspeccionObservacion");
+setupCollapsible("hdrConfeccionDeASTAnalisisDeSeguridadDelTrabajo", "bodyConfeccionDeASTAnalisisDeSeguridadDelTrabajo", "toggleConfeccionDeASTAnalisisDeSeguridadDelTrabajo", "collapsed_confeccionDeASTAnalisisDeSeguridadDelTrabajo");
+setupCollapsible("hdrASTRegistradas", "bodyASTRegistradas", "toggleASTRegistradas", "collapsed_aSTRegistradas");
+setupCollapsible("hdrHistorialDeInspeccionesYObservaciones", "bodyHistorialDeInspeccionesYObservaciones", "toggleHistorialDeInspeccionesYObservaciones", "collapsed_historialDeInspeccionesYObservaciones");
+setupCollapsible("hdrDescargarResumenesEnPDF", "bodyDescargarResumenesEnPDF", "toggleDescargarResumenesEnPDF", "collapsed_descargarResumenesEnPDF");
+setupCollapsible("hdrTop10HallazgosRepetitivos", "bodyTop10HallazgosRepetitivos", "toggleTop10HallazgosRepetitivos", "collapsed_top10HallazgosRepetitivos");
+setupCollapsible("hdrEstadisticaMensualYAnualPorClasificacion", "bodyEstadisticaMensualYAnualPorClasificacion", "toggleEstadisticaMensualYAnualPorClasificacion", "collapsed_estadisticaMensualYAnualPorClasificacion");
+setupCollapsible("hdrNuevaLineaDeMatrizDeRiesgosIPER", "bodyNuevaLineaDeMatrizDeRiesgosIPER", "toggleNuevaLineaDeMatrizDeRiesgosIPER", "collapsed_nuevaLineaDeMatrizDeRiesgosIPER");
+setupCollapsible("hdrMatrizIaWrap", "bodyMatrizIaWrap", "toggleMatrizIaWrap", "collapsed_matrizIaWrap");
+setupCollapsible("hdrMapaDeRiesgosPorAreaProceso", "bodyMapaDeRiesgosPorAreaProceso", "toggleMapaDeRiesgosPorAreaProceso", "collapsed_mapaDeRiesgosPorAreaProceso");
+setupCollapsible("hdrMapaDeRiesgosPlanoDePlantaYSimbologia", "bodyMapaDeRiesgosPlanoDePlantaYSimbologia", "toggleMapaDeRiesgosPlanoDePlantaYSimbologia", "collapsed_mapaDeRiesgosPlanoDePlantaYSimbologia");
+setupCollapsible("hdrMatrizDeRiesgosPorNivelYPorArea", "bodyMatrizDeRiesgosPorNivelYPorArea", "toggleMatrizDeRiesgosPorNivelYPorArea", "collapsed_matrizDeRiesgosPorNivelYPorArea");
+setupCollapsible("hdrPlanDeAccionMatrizDeRiesgos", "bodyPlanDeAccionMatrizDeRiesgos", "togglePlanDeAccionMatrizDeRiesgos", "collapsed_planDeAccionMatrizDeRiesgos");
+setupCollapsible("hdrJerarquiaDeControlesDS44", "bodyJerarquiaDeControlesDS44", "toggleJerarquiaDeControlesDS44", "collapsed_jerarquiaDeControlesDS44");
+setupCollapsible("hdrProtocolosAplicablesSegunLaMatrizDeRiesgos", "bodyProtocolosAplicablesSegunLaMatrizDeRiesgos", "toggleProtocolosAplicablesSegunLaMatrizDeRiesgos", "collapsed_protocolosAplicablesSegunLaMatrizDeRiesgos");
+setupCollapsible("hdrMatrizDeRiesgosPorProtocolo", "bodyMatrizDeRiesgosPorProtocolo", "toggleMatrizDeRiesgosPorProtocolo", "collapsed_matrizDeRiesgosPorProtocolo");
+setupCollapsible("hdrBitacoraDeCumplimientoPorProtocolo", "bodyBitacoraDeCumplimientoPorProtocolo", "toggleBitacoraDeCumplimientoPorProtocolo", "collapsed_bitacoraDeCumplimientoPorProtocolo");
+setupCollapsible("hdrCartaGanttDeProtocolos", "bodyCartaGanttDeProtocolos", "toggleCartaGanttDeProtocolos", "collapsed_cartaGanttDeProtocolos");
+setupCollapsible("hdrNuevaActividadDelProgramaDeSeguridad", "bodyNuevaActividadDelProgramaDeSeguridad", "toggleNuevaActividadDelProgramaDeSeguridad", "collapsed_nuevaActividadDelProgramaDeSeguridad");
+setupCollapsible("hdrProgramaDeSeguridadCumplimiento", "bodyProgramaDeSeguridadCumplimiento", "toggleProgramaDeSeguridadCumplimiento", "collapsed_programaDeSeguridadCumplimiento");
+setupCollapsible("hdrEstadisticaDeCumplimientoPorResponsable", "bodyEstadisticaDeCumplimientoPorResponsable", "toggleEstadisticaDeCumplimientoPorResponsable", "collapsed_estadisticaDeCumplimientoPorResponsable");
+setupCollapsible("hdrNuevaCapacitacion", "bodyNuevaCapacitacion", "toggleNuevaCapacitacion", "collapsed_nuevaCapacitacion");
+setupCollapsible("hdrPlanDeCapacitacionCumplimiento", "bodyPlanDeCapacitacionCumplimiento", "togglePlanDeCapacitacionCumplimiento", "collapsed_planDeCapacitacionCumplimiento");
+setupCollapsible("hdrEstadisticasDelPlanDeCapacitacion", "bodyEstadisticasDelPlanDeCapacitacion", "toggleEstadisticasDelPlanDeCapacitacion", "collapsed_estadisticasDelPlanDeCapacitacion");
+setupCollapsible("hdrCumplimientoDeCapacitacionPorResponsableRelator", "bodyCumplimientoDeCapacitacionPorResponsableRelator", "toggleCumplimientoDeCapacitacionPorResponsableRelator", "collapsed_cumplimientoDeCapacitacionPorResponsableRelator");
+setupCollapsible("hdrRegistroDeCursosCompletados", "bodyRegistroDeCursosCompletados", "toggleRegistroDeCursosCompletados", "collapsed_registroDeCursosCompletados");
+setupCollapsible("hdrAlertasDeVencimiento", "bodyAlertasDeVencimiento", "toggleAlertasDeVencimiento", "collapsed_alertasDeVencimiento");
+setupCollapsible("hdrReporteDeCumplimientoCursosDS44", "bodyReporteDeCumplimientoCursosDS44", "toggleReporteDeCumplimientoCursosDS44", "collapsed_reporteDeCumplimientoCursosDS44");
+setupCollapsible("hdrAccidentesPorMes", "bodyAccidentesPorMes", "toggleAccidentesPorMes", "collapsed_accidentesPorMes");
+setupCollapsible("hdrAccidentesPorArea", "bodyAccidentesPorArea", "toggleAccidentesPorArea", "collapsed_accidentesPorArea");
+setupCollapsible("hdrHorasHombreTrabajadasPorPeriodo", "bodyHorasHombreTrabajadasPorPeriodo", "toggleHorasHombreTrabajadasPorPeriodo", "collapsed_horasHombreTrabajadasPorPeriodo");
+setupCollapsible("hdrRegistrarAccidenteIncidente", "bodyRegistrarAccidenteIncidente", "toggleRegistrarAccidenteIncidente", "collapsed_registrarAccidenteIncidente");
+setupCollapsible("hdrIndicadoresDeSiniestralidadDS67YRegistroHistorico", "bodyIndicadoresDeSiniestralidadDS67YRegistroHistorico", "toggleIndicadoresDeSiniestralidadDS67YRegistroHistorico", "collapsed_indicadoresDeSiniestralidadDS67YRegistroHistorico");
+setupCollapsible("hdrEvaluacionDeSiniestralidadDS67CotizacionAdicional", "bodyEvaluacionDeSiniestralidadDS67CotizacionAdicional", "toggleEvaluacionDeSiniestralidadDS67CotizacionAdicional", "collapsed_evaluacionDeSiniestralidadDS67CotizacionAdicional");
+setupCollapsible("hdrControlEstadisticoMensualYAnual", "bodyControlEstadisticoMensualYAnual", "toggleControlEstadisticoMensualYAnual", "collapsed_controlEstadisticoMensualYAnual");
+setupCollapsible("hdrClasificacionDeAccidentesEIncidentes", "bodyClasificacionDeAccidentesEIncidentes", "toggleClasificacionDeAccidentesEIncidentes", "collapsed_clasificacionDeAccidentesEIncidentes");
+setupCollapsible("hdrRegistrarInfractor", "bodyRegistrarInfractor", "toggleRegistrarInfractor", "collapsed_registrarInfractor");
+setupCollapsible("hdrInfraccionesPorMotivo", "bodyInfraccionesPorMotivo", "toggleInfraccionesPorMotivo", "collapsed_infraccionesPorMotivo");
+setupCollapsible("hdrTopReincidentes", "bodyTopReincidentes", "toggleTopReincidentes", "collapsed_topReincidentes");
+setupCollapsible("hdrRankingDeInfractoresDeVelocidad", "bodyRankingDeInfractoresDeVelocidad", "toggleRankingDeInfractoresDeVelocidad", "collapsed_rankingDeInfractoresDeVelocidad");
+setupCollapsible("hdrControlDeStockDeEPP", "bodyControlDeStockDeEPP", "toggleControlDeStockDeEPP", "collapsed_controlDeStockDeEPP");
+setupCollapsible("hdrEmitirValeDeEntregaDeEPP", "bodyEmitirValeDeEntregaDeEPP", "toggleEmitirValeDeEntregaDeEPP", "collapsed_emitirValeDeEntregaDeEPP");
+setupCollapsible("hdrValesEmitidos", "bodyValesEmitidos", "toggleValesEmitidos", "collapsed_valesEmitidos");
+setupCollapsible("hdrListadoDeEPPEntregadosPorTrabajador", "bodyListadoDeEPPEntregadosPorTrabajador", "toggleListadoDeEPPEntregadosPorTrabajador", "collapsed_listadoDeEPPEntregadosPorTrabajador");
+setupCollapsible("hdrObligacionesDS44", "bodyObligacionesDS44", "toggleObligacionesDS44", "collapsed_obligacionesDS44");
+setupCollapsible("hdrControlDeCompromisosReunionesYOtros", "bodyControlDeCompromisosReunionesYOtros", "toggleControlDeCompromisosReunionesYOtros", "collapsed_controlDeCompromisosReunionesYOtros");
+setupCollapsible("hdrCumplimientoMensual", "bodyCumplimientoMensual", "toggleCumplimientoMensual", "collapsed_cumplimientoMensual");
+setupCollapsible("hdrInformeDeCumplimiento", "bodyInformeDeCumplimiento", "toggleInformeDeCumplimiento", "collapsed_informeDeCumplimiento");
+setupCollapsible("hdrEmpresa", "bodyEmpresa", "toggleEmpresa", "collapsed_empresa");
+setupCollapsible("hdrMetasDeIndicadoresDeAccidentabilidad", "bodyMetasDeIndicadoresDeAccidentabilidad", "toggleMetasDeIndicadoresDeAccidentabilidad", "collapsed_metasDeIndicadoresDeAccidentabilidad");
+setupCollapsible("hdrGestionarListasDesplegables", "bodyGestionarListasDesplegables", "toggleGestionarListasDesplegables", "collapsed_gestionarListasDesplegables");
+setupCollapsible("hdrAreasProcesos", "bodyAreasProcesos", "toggleAreasProcesos", "collapsed_areasProcesos");
+setupCollapsible("hdrResponsablesDeCierreDeHallazgos", "bodyResponsablesDeCierreDeHallazgos", "toggleResponsablesDeCierreDeHallazgos", "collapsed_responsablesDeCierreDeHallazgos");
+setupCollapsible("hdrImportarMatrizDeRiesgosDesdeExcel", "bodyImportarMatrizDeRiesgosDesdeExcel", "toggleImportarMatrizDeRiesgosDesdeExcel", "collapsed_importarMatrizDeRiesgosDesdeExcel");
+setupCollapsible("hdrEliminarMiEmpresaWrap", "bodyEliminarMiEmpresaWrap", "toggleEliminarMiEmpresaWrap", "collapsed_eliminarMiEmpresaWrap");
+setupCollapsible("hdrRespaldoDatosWrap", "bodyRespaldoDatosWrap", "toggleRespaldoDatosWrap", "collapsed_respaldoDatosWrap");
+setupCollapsible("hdrDatosDeEjemplo", "bodyDatosDeEjemplo", "toggleDatosDeEjemplo", "collapsed_datosDeEjemplo");
+setupCollapsible("hdrPropiedadIntelectual", "bodyPropiedadIntelectual", "togglePropiedadIntelectual", "collapsed_propiedadIntelectual");
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
 
 /* =========================================================
