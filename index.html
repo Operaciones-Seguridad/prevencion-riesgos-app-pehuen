@@ -269,6 +269,7 @@
 
     <nav id="mainNav">
       <button data-view="dashboard" class="active">Dashboard</button>
+      <button data-view="diagnostico">Diagnóstico</button>
       <button data-view="realizar-inspecciones">Realizar inspecciones</button>
       <button data-view="inspecciones">Inspecciones</button>
       <button data-view="matriz">Matriz de riesgos</button>
@@ -417,6 +418,56 @@
        navegar por el resto del módulo de Inspecciones (formatos, historial,
        informes, estadística), pensado más bien para el encargado de
        prevención de riesgos. -->
+
+  <!-- DIAGNÓSTICO -->
+  <div class="view" id="view-diagnostico">
+    <div class="card">
+      <div class="card-header-row" id="hdrDiagnosticoAsistente"><h2>Obligaciones aplicables</h2><button class="collapse-toggle" id="toggleDiagnosticoAsistente" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyDiagnosticoAsistente">
+      <div class="desc">Punto de partida según lo ya cargado en el sistema: cursos DS 44 y obligaciones legales aplican según el tamaño de la empresa; los protocolos de vigilancia de salud aplican según los peligros/riesgos ya identificados en la Matriz de riesgos.</div>
+      <div id="diagCursosWrap"></div>
+      <div id="diagObligacionesWrap" style="margin-top:14px;"></div>
+      <div id="diagProtocolosWrap" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrDiagnostico"><h2 id="diagFormTitle">Registrar diagnóstico inicial</h2><button class="collapse-toggle" id="toggleDiagnostico" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyDiagnostico">
+      <div class="desc">Deja registro de la primera visita a la empresa: qué áreas se revisaron, qué se encontró, y las recomendaciones para partir.</div>
+      <div class="form-grid">
+        <div><label>Fecha de la visita</label><input type="date" id="diagFecha"></div>
+        <div><label>Responsable del diagnóstico</label><input id="diagResponsable" placeholder="Nombre y cargo"></div>
+      </div>
+      <label style="margin-top:10px;">Hallazgos por área</label>
+      <div class="toolbar" style="margin-top:6px;">
+        <div class="field"><label>Área</label><select id="diagHallazgoArea"></select></div>
+        <div style="flex:2;" class="field"><label>Descripción del hallazgo</label><input id="diagHallazgoDescripcion" placeholder="Ej: sin señalética de EPP en bodega"></div>
+        <div><button class="btn small secondary" id="addDiagHallazgoBtn" style="margin-top:20px;">+ Agregar hallazgo</button></div>
+      </div>
+      <div id="diagHallazgosWrap"></div>
+      <div class="form-grid" style="margin-top:10px;">
+        <div style="grid-column:1/-1;"><label>Observaciones generales</label><textarea id="diagObservaciones" rows="3"></textarea></div>
+        <div style="grid-column:1/-1;"><label>Recomendaciones / próximos pasos</label><textarea id="diagRecomendaciones" rows="3"></textarea></div>
+      </div>
+      <div class="toolbar" style="margin-top:10px;">
+        <button class="btn" id="saveDiagnosticoBtn">Guardar diagnóstico</button>
+        <button class="btn secondary" id="cancelEditDiagnosticoBtn" style="display:none;">Cancelar edición</button>
+      </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrDiagnosticoListado"><h2>Historial de diagnósticos</h2><button class="collapse-toggle" id="toggleDiagnosticoListado" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyDiagnosticoListado">
+      <table>
+        <thead><tr><th>Fecha</th><th>Responsable</th><th>Hallazgos</th><th>Acciones</th></tr></thead>
+        <tbody id="diagnosticoTable"></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
   <div class="view" id="view-realizar-inspecciones">
     <div class="card">
       <div class="card-header-row" id="hdrNuevaInspeccionObservacionEnTerreno"><h2 id="insFormTitle">Nueva inspección / observación en terreno</h2><button class="collapse-toggle" id="toggleNuevaInspeccionObservacionEnTerreno" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyNuevaInspeccionObservacionEnTerreno">
@@ -2916,8 +2967,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 31;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas"];
+const DB_VERSION = 32;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -3353,6 +3404,9 @@ setupCollapsible("hdrCphysMiembrosListado", "bodyCphysMiembrosListado", "toggleC
 setupCollapsible("hdrCphysReuniones", "bodyCphysReuniones", "toggleCphysReuniones", "collapsed_cphysReuniones");
 setupCollapsible("hdrCphysReunionesListado", "bodyCphysReunionesListado", "toggleCphysReunionesListado", "collapsed_cphysReunionesListado");
 setupCollapsible("hdrCphysAcuerdosSeguimiento", "bodyCphysAcuerdosSeguimiento", "toggleCphysAcuerdosSeguimiento", "collapsed_cphysAcuerdosSeguimiento");
+setupCollapsible("hdrDiagnosticoAsistente", "bodyDiagnosticoAsistente", "toggleDiagnosticoAsistente", "collapsed_diagnosticoAsistente");
+setupCollapsible("hdrDiagnostico", "bodyDiagnostico", "toggleDiagnostico", "collapsed_diagnostico");
+setupCollapsible("hdrDiagnosticoListado", "bodyDiagnosticoListado", "toggleDiagnosticoListado", "collapsed_diagnosticoListado");
 setupCollapsible("hdrCphysPrograma", "bodyCphysPrograma", "toggleCphysPrograma", "collapsed_cphysPrograma");
 setupCollapsible("hdrCphysCapacitacion", "bodyCphysCapacitacion", "toggleCphysCapacitacion", "collapsed_cphysCapacitacion");
 setupCollapsible("hdrCphysInvestigaciones", "bodyCphysInvestigaciones", "toggleCphysInvestigaciones", "collapsed_cphysInvestigaciones");
@@ -4915,6 +4969,207 @@ function abrirModalEntregaIrl(trabajadorId, irlCargoId){
     renderCumplimientoTrabajadores();
     closeModal();
   });
+}
+
+/* =========================================================
+   DIAGNÓSTICO — primera visita + asistente de obligaciones aplicables.
+   Store "diagnosticos": {id, fecha, responsable, hallazgos:[{areaId,
+   descripcion}], observaciones, recomendaciones}. El asistente
+   reutiliza la aplicabilidad ya real de la app (tramoMinimoAplica para
+   cursos DS44 y obligaciones legales, protocolosAplicables() para
+   vigilancia de salud) -- no inventa reglas de rubro que no existen
+   en el sistema.
+   ========================================================= */
+function renderDiagnosticoAsistente(){
+  const n = (CACHE.empresa && CACHE.empresa.numTrabajadores) || 0;
+  const cursos = (CACHE.cursosObligatorios||[]).filter(c=>tramoMinimoAplica(c.tramoMinimo, n));
+  document.getElementById("diagCursosWrap").innerHTML = `
+    <label>Cursos DS 44 aplicables por tamaño de empresa (${n||"—"} trabajadores)</label>
+    ${cursos.length ? `<ul style="margin:6px 0 0;padding-left:18px;">${cursos.map(c=>`<li>${c.nombre}</li>`).join("")}</ul>` : `<div class="empty">Sin cursos obligatorios cargados en el catálogo todavía.</div>`}
+  `;
+  const obligaciones = (CACHE.ds44Obligaciones||[]).filter(o=>tramoMinimoAplica(o.tramoMinimo, n));
+  document.getElementById("diagObligacionesWrap").innerHTML = `
+    <label>Obligaciones legales DS 44 aplicables por tamaño de empresa</label>
+    ${obligaciones.length ? `<ul style="margin:6px 0 0;padding-left:18px;">${obligaciones.map(o=>`<li>${o.nombre||o.descripcion||o.texto||"—"}</li>`).join("")}</ul>` : `<div class="empty">Sin catálogo de obligaciones DS 44 cargado todavía.</div>`}
+  `;
+  const protocolos = protocolosAplicables();
+  document.getElementById("diagProtocolosWrap").innerHTML = `
+    <label>Protocolos de vigilancia de salud aplicables según la Matriz de riesgos</label>
+    ${protocolos.length ? `<ul style="margin:6px 0 0;padding-left:18px;">${protocolos.map(p=>`<li>${p.nombre}</li>`).join("")}</ul>` : `<div class="empty">Aún no hay líneas en la Matriz de riesgos que activen algún protocolo -- esta lista se va a ir completando a medida que la cargues.</div>`}
+  `;
+}
+
+let diagEditingId = null;
+let diagHallazgos = [];
+function renderDiagAreaOptions(){
+  const sel = document.getElementById("diagHallazgoArea");
+  fillSelect(sel, (CACHE.areas||[]).map(a=>({id:a.id, label:a.nombre})), true);
+}
+function drawDiagHallazgos(){
+  document.getElementById("diagHallazgosWrap").innerHTML = diagHallazgos.length
+    ? diagHallazgos.map((h,idx)=>`<div class="kv" style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;">
+        <span>${areaName(h.areaId)}: ${h.descripcion}</span>
+        <button class="subtle-btn" data-diag-hallazgo-quitar="${idx}">Quitar</button>
+      </div>`).join("")
+    : `<div class="empty">Sin hallazgos agregados</div>`;
+}
+on(document.getElementById("addDiagHallazgoBtn"), "click", ()=>{
+  const areaId = document.getElementById("diagHallazgoArea").value;
+  const descripcion = document.getElementById("diagHallazgoDescripcion").value.trim();
+  if(!areaId || !descripcion){ alert("Selecciona el área y describe el hallazgo."); return; }
+  diagHallazgos.push({areaId, descripcion});
+  document.getElementById("diagHallazgoDescripcion").value = "";
+  drawDiagHallazgos();
+});
+document.getElementById("diagHallazgosWrap").addEventListener("click",(e)=>{
+  const btn = e.target.closest("button[data-diag-hallazgo-quitar]");
+  if(!btn) return;
+  diagHallazgos.splice(+btn.dataset.diagHallazgoQuitar,1);
+  drawDiagHallazgos();
+});
+function resetDiagnosticoForm(){
+  diagEditingId = null;
+  diagHallazgos = [];
+  document.getElementById("diagFecha").value = "";
+  document.getElementById("diagResponsable").value = "";
+  document.getElementById("diagHallazgoDescripcion").value = "";
+  document.getElementById("diagObservaciones").value = "";
+  document.getElementById("diagRecomendaciones").value = "";
+  document.getElementById("diagFormTitle").textContent = "Registrar diagnóstico inicial";
+  document.getElementById("cancelEditDiagnosticoBtn").style.display = "none";
+  renderDiagAreaOptions();
+  drawDiagHallazgos();
+}
+function startEditDiagnostico(id){
+  const rec = CACHE.diagnosticos.find(r=>r.id===id);
+  if(!rec) return;
+  diagEditingId = id;
+  diagHallazgos = (rec.hallazgos||[]).map(h=>({...h}));
+  document.getElementById("diagFecha").value = rec.fecha || "";
+  document.getElementById("diagResponsable").value = rec.responsable || "";
+  document.getElementById("diagObservaciones").value = rec.observaciones || "";
+  document.getElementById("diagRecomendaciones").value = rec.recomendaciones || "";
+  document.getElementById("diagFormTitle").textContent = "Editando diagnóstico del "+fmtDate(rec.fecha);
+  document.getElementById("cancelEditDiagnosticoBtn").style.display = "";
+  renderDiagAreaOptions();
+  drawDiagHallazgos();
+  document.getElementById("hdrDiagnostico").scrollIntoView({behavior:"smooth", block:"start"});
+}
+on(document.getElementById("cancelEditDiagnosticoBtn"), "click", ()=> resetDiagnosticoForm());
+on(document.getElementById("saveDiagnosticoBtn"), "click", async ()=>{
+  const fecha = document.getElementById("diagFecha").value;
+  if(!fecha){ alert("Indica la fecha de la visita."); return; }
+  const rec = {
+    id: diagEditingId || uid(),
+    fecha,
+    responsable: document.getElementById("diagResponsable").value.trim(),
+    hallazgos: diagHallazgos.slice(),
+    observaciones: document.getElementById("diagObservaciones").value.trim(),
+    recomendaciones: document.getElementById("diagRecomendaciones").value.trim(),
+  };
+  await put("diagnosticos", rec);
+  await loadCache();
+  resetDiagnosticoForm();
+  renderDiagnostico();
+});
+function renderDiagnosticoTable(){
+  const rows = (CACHE.diagnosticos||[]).slice().sort((a,b)=> new Date(b.fecha)-new Date(a.fecha));
+  document.getElementById("diagnosticoTable").innerHTML = rows.length ? rows.map(r=>`
+    <tr>
+      <td>${fmtDate(r.fecha)}</td>
+      <td>${r.responsable || "—"}</td>
+      <td>${(r.hallazgos||[]).length}</td>
+      <td>
+        <button class="subtle-btn" data-diag-pdf="${r.id}">Imprimir PDF</button>
+        <button class="subtle-btn" data-diag-editar="${r.id}">Editar</button>
+        <button class="subtle-btn" data-diag-eliminar="${r.id}">Eliminar</button>
+      </td>
+    </tr>`).join("") : `<tr><td class="empty" colspan="4">Sin diagnósticos registrados todavía</td></tr>`;
+}
+on(document.getElementById("diagnosticoTable"), "click", async (e)=>{
+  const editBtn = e.target.closest("[data-diag-editar]");
+  if(editBtn){ startEditDiagnostico(editBtn.dataset.diagEditar); return; }
+  const delBtn = e.target.closest("[data-diag-eliminar]");
+  if(delBtn){
+    const rec = CACHE.diagnosticos.find(r=>r.id===delBtn.dataset.diagEliminar);
+    if(!rec) return;
+    if(!confirm(`¿Eliminar el diagnóstico del ${fmtDate(rec.fecha)}? Esta acción no se puede deshacer.`)) return;
+    await deleteRecord("diagnosticos", rec.id);
+    await loadCache();
+    if(diagEditingId===rec.id) resetDiagnosticoForm();
+    renderDiagnostico();
+    return;
+  }
+  const pdfBtn = e.target.closest("[data-diag-pdf]");
+  if(pdfBtn){ descargarDiagnosticoPdf(pdfBtn.dataset.diagPdf); }
+});
+function descargarDiagnosticoPdf(id){
+  const rec = (CACHE.diagnosticos||[]).find(r=>r.id===id);
+  if(!rec){ alert("No se encontró el diagnóstico."); return; }
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const doc = new JsPDFClass();
+  addLogoPdf(doc);
+  let y = 16;
+  doc.setFontSize(15);
+  doc.text("Informe de Diagnóstico Inicial", 14, y); y += 8;
+  doc.setFontSize(10);
+  doc.text(`Empresa: ${(CACHE.empresa&&CACHE.empresa.razonSocial)||"—"}`, 14, y); y += 6;
+  const lineaDatos = datosEmpresaLineaPdf();
+  if(lineaDatos){ doc.text(lineaDatos, 14, y); y += 6; }
+  doc.text(`Fecha de la visita: ${fmtDate(rec.fecha)}   ·   Responsable: ${rec.responsable||"—"}`, 14, y); y += 8;
+
+  doc.setFontSize(11); doc.text("Hallazgos por área", 14, y); y += 2;
+  doc.autoTable({ startY:y, head:[["Área","Hallazgo"]],
+    body: (rec.hallazgos||[]).length ? rec.hallazgos.map(h=>[areaName(h.areaId), h.descripcion]) : [["Sin hallazgos registrados","—"]],
+    styles:{fontSize:8.5}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  const n = (CACHE.empresa && CACHE.empresa.numTrabajadores) || 0;
+  const cursos = (CACHE.cursosObligatorios||[]).filter(c=>tramoMinimoAplica(c.tramoMinimo, n));
+  if(y > 240){ doc.addPage(); y = 16; }
+  doc.setFontSize(11); doc.text("Cursos DS 44 aplicables (por tamaño de empresa)", 14, y); y += 2;
+  doc.autoTable({ startY:y, head:[["Curso"]],
+    body: cursos.length ? cursos.map(c=>[c.nombre]) : [["Sin cursos obligatorios cargados en el catálogo"]],
+    styles:{fontSize:8.5}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  const obligaciones = (CACHE.ds44Obligaciones||[]).filter(o=>tramoMinimoAplica(o.tramoMinimo, n));
+  if(y > 240){ doc.addPage(); y = 16; }
+  doc.setFontSize(11); doc.text("Obligaciones legales DS 44 aplicables", 14, y); y += 2;
+  doc.autoTable({ startY:y, head:[["Obligación"]],
+    body: obligaciones.length ? obligaciones.map(o=>[o.nombre||o.descripcion||o.texto||"—"]) : [["Sin catálogo de obligaciones DS 44 cargado"]],
+    styles:{fontSize:8.5}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  const protocolos = protocolosAplicables();
+  if(y > 240){ doc.addPage(); y = 16; }
+  doc.setFontSize(11); doc.text("Protocolos de vigilancia de salud aplicables", 14, y); y += 2;
+  doc.autoTable({ startY:y, head:[["Protocolo"]],
+    body: protocolos.length ? protocolos.map(p=>[p.nombre]) : [["Aún no hay líneas en la Matriz de riesgos que activen algún protocolo"]],
+    styles:{fontSize:8.5}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  if(rec.observaciones){
+    if(y > 250){ doc.addPage(); y = 16; }
+    doc.setFontSize(11); doc.text("Observaciones generales", 14, y); y += 6;
+    doc.setFontSize(10);
+    y = escribirTextoPaginado(doc, rec.observaciones, 14, y, {maxWidth:180}) + 6;
+  }
+  if(rec.recomendaciones){
+    if(y > 250){ doc.addPage(); y = 16; }
+    doc.setFontSize(11); doc.text("Recomendaciones / próximos pasos", 14, y); y += 6;
+    doc.setFontSize(10);
+    escribirTextoPaginado(doc, rec.recomendaciones, 14, y, {maxWidth:180});
+  }
+
+  agregarPiePaginasPdf(doc, "Diagnóstico inicial");
+  doc.save(`Diagnostico_${rec.fecha}_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}.pdf`);
+}
+function renderDiagnostico(){
+  renderDiagnosticoAsistente();
+  if(!diagEditingId){ renderDiagAreaOptions(); drawDiagHallazgos(); }
+  renderDiagnosticoTable();
 }
 
 /* =========================================================
@@ -16676,6 +16931,7 @@ on(document.getElementById("importarDatosEmpresaInput"), "change", async (ev) =>
    ========================================================= */
 const APP_VISTAS = [
   {id:"dashboard", label:"Dashboard"},
+  {id:"diagnostico", label:"Diagnóstico"},
   {id:"realizar-inspecciones", label:"Realizar inspecciones"},
   {id:"inspecciones", label:"Inspecciones"},
   {id:"matriz", label:"Matriz de riesgos"},
@@ -17587,6 +17843,7 @@ async function refreshAll(){
   renderRiohys();
   renderIrl();
   renderCumplimientoTrabajadores();
+  renderDiagnostico();
   renderControlDocumental();
   renderCphys();
   renderEmergencia();
