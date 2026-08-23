@@ -422,6 +422,14 @@
   <!-- DIAGNÓSTICO -->
   <div class="view" id="view-diagnostico">
     <div class="card">
+      <div class="card-header-row" id="hdrDiagIndicadores"><h2>Indicadores actuales</h2><button class="collapse-toggle" id="toggleDiagIndicadores" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyDiagIndicadores">
+      <div class="desc">Una foto rápida de cómo está la empresa hoy: histórico acumulado de accidentabilidad, frecuencia, gravedad y siniestralidad (DS 67).</div>
+      <div class="grid-tiles" id="diagIndicadoresTiles"></div>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-header-row" id="hdrDiagnosticoAsistente"><h2>Obligaciones aplicables</h2><button class="collapse-toggle" id="toggleDiagnosticoAsistente" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyDiagnosticoAsistente">
       <div class="desc">Punto de partida según lo ya cargado en el sistema: cursos DS 44 y obligaciones legales aplican según el tamaño de la empresa; los protocolos de vigilancia de salud aplican según los peligros/riesgos ya identificados en la Matriz de riesgos.</div>
@@ -434,10 +442,12 @@
     <div class="card">
       <div class="card-header-row" id="hdrDiagnostico"><h2 id="diagFormTitle">Registrar diagnóstico inicial</h2><button class="collapse-toggle" id="toggleDiagnostico" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyDiagnostico">
-      <div class="desc">Deja registro de la primera visita a la empresa: qué áreas se revisaron, qué se encontró, y las recomendaciones para partir.</div>
+      <div class="desc">Deja registro de la primera visita: qué áreas se revisaron, qué se encontró, y las recomendaciones para partir. Sirve también para diagnosticar un <strong>prospecto</strong> (una empresa que todavía no es cliente) sin tener que crearla como empresa nueva en la plataforma — completa los dos campos de abajo y listo.</div>
       <div class="form-grid">
         <div><label>Fecha de la visita</label><input type="date" id="diagFecha"></div>
         <div><label>Responsable del diagnóstico</label><input id="diagResponsable" placeholder="Nombre y cargo"></div>
+        <div><label>Empresa o cliente diagnosticado</label><input id="diagNombreEmpresa" placeholder="Dejar vacío si es tu propia empresa"></div>
+        <div><label>N° de trabajadores (estimado)</label><input type="number" id="diagNumTrabajadores" min="0" placeholder="Dejar vacío si es tu propia empresa"></div>
       </div>
       <label style="margin-top:14px;">Lista de chequeo</label>
       <div class="desc">Aspectos básicos a revisar en el recorrido, incluido el cumplimiento legal. Es un vistazo rápido de primera visita — no reemplaza el checklist completo de "Cumplimiento legal DS 44 (FUF)".</div>
@@ -468,7 +478,7 @@
       <div class="card-header-row" id="hdrDiagnosticoListado"><h2>Historial de diagnósticos</h2><button class="collapse-toggle" id="toggleDiagnosticoListado" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyDiagnosticoListado">
       <table>
-        <thead><tr><th>Fecha</th><th>Responsable</th><th>Hallazgos</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Empresa/cliente</th><th>Responsable</th><th>Hallazgos</th><th>Acciones</th></tr></thead>
         <tbody id="diagnosticoTable"></tbody>
       </table>
       </div>
@@ -3411,6 +3421,7 @@ setupCollapsible("hdrCphysMiembrosListado", "bodyCphysMiembrosListado", "toggleC
 setupCollapsible("hdrCphysReuniones", "bodyCphysReuniones", "toggleCphysReuniones", "collapsed_cphysReuniones");
 setupCollapsible("hdrCphysReunionesListado", "bodyCphysReunionesListado", "toggleCphysReunionesListado", "collapsed_cphysReunionesListado");
 setupCollapsible("hdrCphysAcuerdosSeguimiento", "bodyCphysAcuerdosSeguimiento", "toggleCphysAcuerdosSeguimiento", "collapsed_cphysAcuerdosSeguimiento");
+setupCollapsible("hdrDiagIndicadores", "bodyDiagIndicadores", "toggleDiagIndicadores", "collapsed_diagIndicadores");
 setupCollapsible("hdrDiagnosticoAsistente", "bodyDiagnosticoAsistente", "toggleDiagnosticoAsistente", "collapsed_diagnosticoAsistente");
 setupCollapsible("hdrDiagnostico", "bodyDiagnostico", "toggleDiagnostico", "collapsed_diagnostico");
 setupCollapsible("hdrDiagnosticoListado", "bodyDiagnosticoListado", "toggleDiagnosticoListado", "collapsed_diagnosticoListado");
@@ -5062,12 +5073,27 @@ document.getElementById("diagChecklistTable").addEventListener("input",(e)=>{
     diagChecklistEstado[numero].observacion = inp.value;
   }
 });
+/* Número de trabajadores a usar para el asistente: si se está
+   diagnosticando un prospecto (campo "Empresa o cliente diagnosticado"
+   completo), usa el número escrito ahí mismo en vez del de Configuración
+   -- así se puede diagnosticar a un tercero sin crearlo como empresa
+   nueva en la plataforma ni tocar los datos de la cuenta propia. */
+function diagNumTrabajadoresActivo(){
+  const campoEmpresa = document.getElementById("diagNombreEmpresa");
+  const campoNum = document.getElementById("diagNumTrabajadores");
+  const esProspecto = campoEmpresa && campoEmpresa.value.trim();
+  if(esProspecto && campoNum && campoNum.value !== "") return +campoNum.value;
+  if(esProspecto) return 0;
+  return (CACHE.empresa && CACHE.empresa.numTrabajadores) || 0;
+}
 function renderDiagnosticoAsistente(){
-  const n = (CACHE.empresa && CACHE.empresa.numTrabajadores) || 0;
-  const avisoSinTamano = !n ? `<div class="empty" style="margin-bottom:6px;">Todavía no se registró el número de trabajadores de la empresa (Configuración → Empresa) — por ahora solo se muestran los cursos/obligaciones que aplican a cualquier tamaño; puede haber más aplicables una vez que lo completes.</div>` : "";
+  const campoEmpresa = document.getElementById("diagNombreEmpresa");
+  const esProspecto = !!(campoEmpresa && campoEmpresa.value.trim());
+  const n = diagNumTrabajadoresActivo();
+  const avisoSinTamano = !n ? `<div class="empty" style="margin-bottom:6px;">${esProspecto ? "Escribe el número de trabajadores estimado del prospecto arriba" : "Todavía no se registró el número de trabajadores de la empresa (Configuración → Empresa)"} — por ahora solo se muestran los cursos/obligaciones que aplican a cualquier tamaño; puede haber más aplicables una vez que lo completes.</div>` : "";
   const cursos = (CACHE.cursosObligatorios||[]).filter(c=>tramoMinimoAplica(c.tramoMinimo, n));
   document.getElementById("diagCursosWrap").innerHTML = `
-    <label>Cursos DS 44 aplicables por tamaño de empresa (${n||"—"} trabajadores)</label>
+    <label>Cursos DS 44 aplicables por tamaño de empresa (${n||"—"} trabajadores${esProspecto?" — prospecto":""})</label>
     ${avisoSinTamano}
     ${cursos.length ? `<ul style="margin:6px 0 0;padding-left:18px;">${cursos.map(c=>`<li>${c.nombre}</li>`).join("")}</ul>` : `<div class="empty">Sin cursos obligatorios cargados en el catálogo todavía.</div>`}
   `;
@@ -5080,8 +5106,27 @@ function renderDiagnosticoAsistente(){
   const protocolos = protocolosAplicables();
   document.getElementById("diagProtocolosWrap").innerHTML = `
     <label>Protocolos de vigilancia de salud aplicables según la Matriz de riesgos</label>
+    ${esProspecto ? `<div class="empty" style="margin-bottom:6px;">Esto refleja la Matriz de riesgos de tu propia cuenta, no la del prospecto (todavía no existe) -- se completará de verdad cuando el prospecto se convierta en cliente y cargues su matriz.</div>` : ""}
     ${protocolos.length ? `<ul style="margin:6px 0 0;padding-left:18px;">${protocolos.map(p=>`<li>${p.nombre}</li>`).join("")}</ul>` : `<div class="empty">Aún no hay líneas en la Matriz de riesgos que activen algún protocolo -- esta lista se va a ir completando a medida que la cargues.</div>`}
   `;
+}
+on(document.getElementById("diagNombreEmpresa"), "input", renderDiagnosticoAsistente);
+on(document.getElementById("diagNumTrabajadores"), "input", renderDiagnosticoAsistente);
+
+/* Foto rápida de los indicadores de la empresa (cuenta actual, histórico
+   acumulado) -- reutiliza el mismo cálculo ya verificado que usa el
+   Dashboard/Accidentabilidad (accidentabilidadIndicadores) y el DS 67
+   (calcDs67Evaluacion), no recalcula nada nuevo. */
+function renderDiagIndicadores(){
+  const ind = accidentabilidadIndicadores();
+  const aniosDs67 = (CACHE.ds67Evaluaciones||[]).map(r=>+r.anioEvaluacion).filter(Boolean).sort((a,b)=>b-a);
+  const ds67 = aniosDs67.length ? calcDs67Evaluacion(aniosDs67[0]) : null;
+  document.getElementById("diagIndicadoresTiles").innerHTML = [
+    tile("Índice de accidentabilidad", ind.indiceAcc+"%", "histórico acumulado"),
+    tile("Tasa de frecuencia", ind.tf, "histórico acumulado"),
+    tile("Tasa de gravedad", ind.tg, "histórico acumulado"),
+    tile("Tasa de siniestralidad total (DS 67)", ds67 ? ds67.tasaSiniestralidadTotal.toFixed(2) : "—", ds67 ? ("evaluación "+ds67.anioEvaluacion) : "sin evaluación DS 67 registrada"),
+  ].join("");
 }
 
 let diagEditingId = null;
@@ -5121,6 +5166,8 @@ function resetDiagnosticoForm(){
   diagChecklistEstado = {};
   document.getElementById("diagFecha").value = "";
   document.getElementById("diagResponsable").value = "";
+  document.getElementById("diagNombreEmpresa").value = "";
+  document.getElementById("diagNumTrabajadores").value = "";
   document.getElementById("diagHallazgoDescripcion").value = "";
   document.getElementById("diagObservaciones").value = "";
   document.getElementById("diagRecomendaciones").value = "";
@@ -5129,6 +5176,7 @@ function resetDiagnosticoForm(){
   renderDiagAreaOptions();
   drawDiagHallazgos();
   drawDiagChecklist();
+  renderDiagnosticoAsistente();
 }
 function startEditDiagnostico(id){
   const rec = CACHE.diagnosticos.find(r=>r.id===id);
@@ -5139,6 +5187,8 @@ function startEditDiagnostico(id){
   (rec.checklist||[]).forEach(c=>{ diagChecklistEstado[c.numero] = {estado:c.estado||"", observacion:c.observacion||""}; });
   document.getElementById("diagFecha").value = rec.fecha || "";
   document.getElementById("diagResponsable").value = rec.responsable || "";
+  document.getElementById("diagNombreEmpresa").value = rec.nombreEmpresa || "";
+  document.getElementById("diagNumTrabajadores").value = rec.numTrabajadoresEstimado!=null ? rec.numTrabajadoresEstimado : "";
   document.getElementById("diagObservaciones").value = rec.observaciones || "";
   document.getElementById("diagRecomendaciones").value = rec.recomendaciones || "";
   document.getElementById("diagFormTitle").textContent = "Editando diagnóstico del "+fmtDate(rec.fecha);
@@ -5146,6 +5196,7 @@ function startEditDiagnostico(id){
   renderDiagAreaOptions();
   drawDiagHallazgos();
   drawDiagChecklist();
+  renderDiagnosticoAsistente();
   document.getElementById("hdrDiagnostico").scrollIntoView({behavior:"smooth", block:"start"});
 }
 on(document.getElementById("cancelEditDiagnosticoBtn"), "click", ()=> resetDiagnosticoForm());
@@ -5155,10 +5206,14 @@ on(document.getElementById("saveDiagnosticoBtn"), "click", async ()=>{
   const checklist = DIAGNOSTICO_CHECKLIST_ITEMS
     .map(it=>({numero:it.numero, estado:(diagChecklistEstado[it.numero]||{}).estado||"", observacion:(diagChecklistEstado[it.numero]||{}).observacion||""}))
     .filter(c=>c.estado || c.observacion);
+  const nombreEmpresa = document.getElementById("diagNombreEmpresa").value.trim();
+  const numTrabajadoresVal = document.getElementById("diagNumTrabajadores").value;
   const rec = {
     id: diagEditingId || uid(),
     fecha,
     responsable: document.getElementById("diagResponsable").value.trim(),
+    nombreEmpresa,
+    numTrabajadoresEstimado: nombreEmpresa && numTrabajadoresVal!=="" ? +numTrabajadoresVal : null,
     hallazgos: diagHallazgos.slice(),
     checklist,
     observaciones: document.getElementById("diagObservaciones").value.trim(),
@@ -5174,6 +5229,7 @@ function renderDiagnosticoTable(){
   document.getElementById("diagnosticoTable").innerHTML = rows.length ? rows.map(r=>`
     <tr>
       <td>${fmtDate(r.fecha)}</td>
+      <td>${r.nombreEmpresa || `<span class="kv">Propia empresa</span>`}</td>
       <td>${r.responsable || "—"}</td>
       <td>${(r.hallazgos||[]).length}</td>
       <td>
@@ -5181,7 +5237,7 @@ function renderDiagnosticoTable(){
         <button class="subtle-btn" data-diag-editar="${r.id}">Editar</button>
         <button class="subtle-btn" data-diag-eliminar="${r.id}">Eliminar</button>
       </td>
-    </tr>`).join("") : `<tr><td class="empty" colspan="4">Sin diagnósticos registrados todavía</td></tr>`;
+    </tr>`).join("") : `<tr><td class="empty" colspan="5">Sin diagnósticos registrados todavía</td></tr>`;
 }
 on(document.getElementById("diagnosticoTable"), "click", async (e)=>{
   const editBtn = e.target.closest("[data-diag-editar]");
@@ -5211,10 +5267,26 @@ function descargarDiagnosticoPdf(id){
   doc.setFontSize(15);
   doc.text("Informe de Diagnóstico Inicial", 14, y); y += 8;
   doc.setFontSize(10);
-  doc.text(`Empresa: ${(CACHE.empresa&&CACHE.empresa.razonSocial)||"—"}`, 14, y); y += 6;
-  const lineaDatos = datosEmpresaLineaPdf();
-  if(lineaDatos){ doc.text(lineaDatos, 14, y); y += 6; }
+  if(rec.nombreEmpresa){
+    doc.text(`Empresa/cliente diagnosticado: ${rec.nombreEmpresa}${rec.numTrabajadoresEstimado!=null?" ("+rec.numTrabajadoresEstimado+" trabajadores estimados)":""}`, 14, y); y += 6;
+    doc.text(`Diagnóstico realizado por: ${(CACHE.empresa&&CACHE.empresa.razonSocial)||"—"}`, 14, y); y += 6;
+  } else {
+    doc.text(`Empresa: ${(CACHE.empresa&&CACHE.empresa.razonSocial)||"—"}`, 14, y); y += 6;
+    const lineaDatos = datosEmpresaLineaPdf();
+    if(lineaDatos){ doc.text(lineaDatos, 14, y); y += 6; }
+  }
   doc.text(`Fecha de la visita: ${fmtDate(rec.fecha)}   ·   Responsable: ${rec.responsable||"—"}`, 14, y); y += 8;
+
+  if(!rec.nombreEmpresa){
+    const ind = accidentabilidadIndicadores();
+    const aniosDs67 = (CACHE.ds67Evaluaciones||[]).map(r2=>+r2.anioEvaluacion).filter(Boolean).sort((a,b)=>b-a);
+    const ds67 = aniosDs67.length ? calcDs67Evaluacion(aniosDs67[0]) : null;
+    doc.setFontSize(11); doc.text("Indicadores actuales", 14, y); y += 2;
+    doc.autoTable({ startY:y, head:[["Índice de accidentabilidad","Tasa de frecuencia","Tasa de gravedad","Tasa de siniestralidad (DS 67)"]],
+      body: [[ind.indiceAcc+"%", ind.tf, ind.tg, ds67?ds67.tasaSiniestralidadTotal.toFixed(2):"—"]],
+      styles:{fontSize:8.5}, headStyles:{fillColor:[42,120,214]} });
+    y = doc.lastAutoTable.finalY + 8;
+  }
 
   const checklistConDatos = (rec.checklist||[]).filter(c=>c.estado || c.observacion);
   if(checklistConDatos.length){
@@ -5235,7 +5307,7 @@ function descargarDiagnosticoPdf(id){
     styles:{fontSize:8.5}, headStyles:{fillColor:[42,120,214]} });
   y = doc.lastAutoTable.finalY + 8;
 
-  const n = (CACHE.empresa && CACHE.empresa.numTrabajadores) || 0;
+  const n = rec.nombreEmpresa ? (rec.numTrabajadoresEstimado||0) : ((CACHE.empresa && CACHE.empresa.numTrabajadores) || 0);
   const cursos = (CACHE.cursosObligatorios||[]).filter(c=>tramoMinimoAplica(c.tramoMinimo, n));
   if(y > 240){ doc.addPage(); y = 16; }
   doc.setFontSize(11); doc.text("Cursos DS 44 aplicables (por tamaño de empresa)", 14, y); y += 2;
@@ -5274,9 +5346,10 @@ function descargarDiagnosticoPdf(id){
   }
 
   agregarPiePaginasPdf(doc, "Diagnóstico inicial");
-  doc.save(`Diagnostico_${rec.fecha}_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}.pdf`);
+  doc.save(`Diagnostico_${rec.fecha}_${(rec.nombreEmpresa||(CACHE.empresa&&CACHE.empresa.razonSocial)||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}.pdf`);
 }
 function renderDiagnostico(){
+  renderDiagIndicadores();
   renderDiagnosticoAsistente();
   if(!diagEditingId){ renderDiagAreaOptions(); drawDiagHallazgos(); drawDiagChecklist(); }
   renderDiagnosticoTable();
