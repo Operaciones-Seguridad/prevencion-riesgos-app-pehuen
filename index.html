@@ -439,9 +439,16 @@
         <div><label>Fecha de la visita</label><input type="date" id="diagFecha"></div>
         <div><label>Responsable del diagnóstico</label><input id="diagResponsable" placeholder="Nombre y cargo"></div>
       </div>
-      <label style="margin-top:10px;">Hallazgos por área</label>
+      <label style="margin-top:14px;">Lista de chequeo</label>
+      <div class="desc">Aspectos básicos a revisar en el recorrido, incluido el cumplimiento legal. Es un vistazo rápido de primera visita — no reemplaza el checklist completo de "Cumplimiento legal DS 44 (FUF)".</div>
+      <table>
+        <thead><tr><th>Ítem</th><th>Estado</th><th>Observación</th></tr></thead>
+        <tbody id="diagChecklistTable"></tbody>
+      </table>
+      <label style="margin-top:14px;">Hallazgos por área o proceso</label>
+      <div class="desc">Escribe el área/proceso tal como lo veas en terreno — no hace falta que esté registrada todavía en Configuración → Áreas (por eso es un diagnóstico: sirve justo para empresas nuevas que recién se están cargando).</div>
       <div class="toolbar" style="margin-top:6px;">
-        <div class="field"><label>Área</label><select id="diagHallazgoArea"></select></div>
+        <div class="field"><label>Área / proceso</label><input id="diagHallazgoArea" list="diagAreasOptions" placeholder="Ej: Bodega"><datalist id="diagAreasOptions"></datalist></div>
         <div style="flex:2;" class="field"><label>Descripción del hallazgo</label><input id="diagHallazgoDescripcion" placeholder="Ej: sin señalética de EPP en bodega"></div>
         <div><button class="btn small secondary" id="addDiagHallazgoBtn" style="margin-top:20px;">+ Agregar hallazgo</button></div>
       </div>
@@ -4980,16 +4987,94 @@ function abrirModalEntregaIrl(trabajadorId, irlCargoId){
    vigilancia de salud) -- no inventa reglas de rubro que no existen
    en el sistema.
    ========================================================= */
+/* Lista de chequeo fija de primera visita -- mismo criterio de forma
+   que FUF_ITEMS (seccion/numero/texto), pero acotada a un vistazo
+   rápido de terreno, no al checklist legal completo (eso ya lo cubre
+   "Cumplimiento legal DS 44 (FUF)"). La sección "Cumplimiento legal"
+   de acá es deliberadamente corta: solo lo que se puede constatar en
+   una primera visita sin auditar documento por documento. */
+const DIAGNOSTICO_CHECKLIST_ITEMS = [
+  {seccion:"Condiciones generales del lugar", numero:"1", texto:"Orden y limpieza"},
+  {seccion:"Condiciones generales del lugar", numero:"2", texto:"Señalización de seguridad visible"},
+  {seccion:"Condiciones generales del lugar", numero:"3", texto:"Vías de evacuación despejadas"},
+  {seccion:"Condiciones generales del lugar", numero:"4", texto:"Iluminación adecuada"},
+  {seccion:"Condiciones generales del lugar", numero:"5", texto:"Ventilación adecuada"},
+  {seccion:"Riesgos mecánicos y de instalaciones", numero:"6", texto:"Máquinas y equipos con protecciones (guardas)"},
+  {seccion:"Riesgos mecánicos y de instalaciones", numero:"7", texto:"Herramientas en buen estado"},
+  {seccion:"Riesgos mecánicos y de instalaciones", numero:"8", texto:"Bodega/racks ordenados y estables"},
+  {seccion:"Riesgos mecánicos y de instalaciones", numero:"9", texto:"Trabajo en altura con protecciones"},
+  {seccion:"Riesgos mecánicos y de instalaciones", numero:"10", texto:"Espacios confinados identificados y controlados"},
+  {seccion:"Riesgos mecánicos y de instalaciones", numero:"11", texto:"Instalaciones eléctricas en buen estado"},
+  {seccion:"Riesgos ergonómicos", numero:"12", texto:"Manejo manual de carga controlado"},
+  {seccion:"Riesgos ergonómicos", numero:"13", texto:"Posturas de trabajo adecuadas"},
+  {seccion:"Riesgos ergonómicos", numero:"14", texto:"Mobiliario de oficina adecuado"},
+  {seccion:"Riesgos físicos ambientales", numero:"15", texto:"Niveles de ruido controlados"},
+  {seccion:"Riesgos físicos ambientales", numero:"16", texto:"Temperatura del ambiente adecuada"},
+  {seccion:"Riesgos químicos y biológicos", numero:"17", texto:"Sustancias peligrosas con hoja de datos de seguridad"},
+  {seccion:"Riesgos químicos y biológicos", numero:"18", texto:"Almacenamiento seguro de sustancias"},
+  {seccion:"EPP", numero:"19", texto:"EPP disponible según el riesgo"},
+  {seccion:"EPP", numero:"20", texto:"EPP en uso efectivo por los trabajadores"},
+  {seccion:"Emergencias", numero:"21", texto:"Extintores vigentes y accesibles"},
+  {seccion:"Emergencias", numero:"22", texto:"Botiquín de primeros auxilios disponible"},
+  {seccion:"Cumplimiento legal", numero:"23", texto:"RIOHyS entregado y vigente"},
+  {seccion:"Cumplimiento legal", numero:"24", texto:"Comité Paritario constituido (si corresponde por tamaño)"},
+  {seccion:"Cumplimiento legal", numero:"25", texto:"Matriz de riesgos formal existente"},
+  {seccion:"Cumplimiento legal", numero:"26", texto:"Obligación de Informar (IRL) entregada a los trabajadores"},
+  {seccion:"Cumplimiento legal", numero:"27", texto:"Registro de accidentes y declaración a la mutualidad al día"},
+  {seccion:"Cumplimiento legal", numero:"28", texto:"Exámenes ocupacionales / vigilancia de salud al día"},
+];
+const DIAG_ESTADO_LABEL = {cumple:"Cumple", no_cumple:"No cumple", na:"N/A"};
+let diagChecklistEstado = {};
+function drawDiagChecklist(){
+  let seccionAnterior = null;
+  const filas = DIAGNOSTICO_CHECKLIST_ITEMS.map(it=>{
+    const est = diagChecklistEstado[it.numero] || {estado:"", observacion:""};
+    const seccionHtml = it.seccion!==seccionAnterior ? `<tr><td colspan="3" style="background:var(--grid);font-weight:600;">${it.seccion}</td></tr>` : "";
+    seccionAnterior = it.seccion;
+    return `${seccionHtml}<tr>
+      <td>${it.texto}</td>
+      <td>
+        <select data-diag-check-estado="${it.numero}">
+          <option value="" ${est.estado===""?"selected":""}>Sin evaluar</option>
+          <option value="cumple" ${est.estado==="cumple"?"selected":""}>Cumple</option>
+          <option value="no_cumple" ${est.estado==="no_cumple"?"selected":""}>No cumple</option>
+          <option value="na" ${est.estado==="na"?"selected":""}>N/A</option>
+        </select>
+      </td>
+      <td><input data-diag-check-obs="${it.numero}" value="${(est.observacion||"").replace(/"/g,"&quot;")}" placeholder="Observación (opcional)"></td>
+    </tr>`;
+  }).join("");
+  document.getElementById("diagChecklistTable").innerHTML = filas;
+}
+document.getElementById("diagChecklistTable").addEventListener("change",(e)=>{
+  const sel = e.target.closest("select[data-diag-check-estado]");
+  if(sel){
+    const numero = sel.dataset.diagCheckEstado;
+    diagChecklistEstado[numero] = diagChecklistEstado[numero] || {estado:"",observacion:""};
+    diagChecklistEstado[numero].estado = sel.value;
+  }
+});
+document.getElementById("diagChecklistTable").addEventListener("input",(e)=>{
+  const inp = e.target.closest("input[data-diag-check-obs]");
+  if(inp){
+    const numero = inp.dataset.diagCheckObs;
+    diagChecklistEstado[numero] = diagChecklistEstado[numero] || {estado:"",observacion:""};
+    diagChecklistEstado[numero].observacion = inp.value;
+  }
+});
 function renderDiagnosticoAsistente(){
   const n = (CACHE.empresa && CACHE.empresa.numTrabajadores) || 0;
+  const avisoSinTamano = !n ? `<div class="empty" style="margin-bottom:6px;">Todavía no se registró el número de trabajadores de la empresa (Configuración → Empresa) — por ahora solo se muestran los cursos/obligaciones que aplican a cualquier tamaño; puede haber más aplicables una vez que lo completes.</div>` : "";
   const cursos = (CACHE.cursosObligatorios||[]).filter(c=>tramoMinimoAplica(c.tramoMinimo, n));
   document.getElementById("diagCursosWrap").innerHTML = `
     <label>Cursos DS 44 aplicables por tamaño de empresa (${n||"—"} trabajadores)</label>
+    ${avisoSinTamano}
     ${cursos.length ? `<ul style="margin:6px 0 0;padding-left:18px;">${cursos.map(c=>`<li>${c.nombre}</li>`).join("")}</ul>` : `<div class="empty">Sin cursos obligatorios cargados en el catálogo todavía.</div>`}
   `;
   const obligaciones = (CACHE.ds44Obligaciones||[]).filter(o=>tramoMinimoAplica(o.tramoMinimo, n));
   document.getElementById("diagObligacionesWrap").innerHTML = `
     <label>Obligaciones legales DS 44 aplicables por tamaño de empresa</label>
+    ${avisoSinTamano}
     ${obligaciones.length ? `<ul style="margin:6px 0 0;padding-left:18px;">${obligaciones.map(o=>`<li>${o.nombre||o.descripcion||o.texto||"—"}</li>`).join("")}</ul>` : `<div class="empty">Sin catálogo de obligaciones DS 44 cargado todavía.</div>`}
   `;
   const protocolos = protocolosAplicables();
@@ -5001,23 +5086,26 @@ function renderDiagnosticoAsistente(){
 
 let diagEditingId = null;
 let diagHallazgos = [];
+/* El área es texto libre (con sugerencias de las ya registradas) para que
+   el diagnóstico sirva justo en el caso típico de primera visita: una
+   empresa nueva que todavía no tiene sus áreas cargadas en Configuración. */
 function renderDiagAreaOptions(){
-  const sel = document.getElementById("diagHallazgoArea");
-  fillSelect(sel, (CACHE.areas||[]).map(a=>({id:a.id, label:a.nombre})), true);
+  fillDatalist(document.getElementById("diagAreasOptions"), (CACHE.areas||[]).map(a=>a.nombre));
 }
 function drawDiagHallazgos(){
   document.getElementById("diagHallazgosWrap").innerHTML = diagHallazgos.length
     ? diagHallazgos.map((h,idx)=>`<div class="kv" style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;">
-        <span>${areaName(h.areaId)}: ${h.descripcion}</span>
+        <span>${h.areaNombre}: ${h.descripcion}</span>
         <button class="subtle-btn" data-diag-hallazgo-quitar="${idx}">Quitar</button>
       </div>`).join("")
     : `<div class="empty">Sin hallazgos agregados</div>`;
 }
 on(document.getElementById("addDiagHallazgoBtn"), "click", ()=>{
-  const areaId = document.getElementById("diagHallazgoArea").value;
+  const areaNombre = document.getElementById("diagHallazgoArea").value.trim();
   const descripcion = document.getElementById("diagHallazgoDescripcion").value.trim();
-  if(!areaId || !descripcion){ alert("Selecciona el área y describe el hallazgo."); return; }
-  diagHallazgos.push({areaId, descripcion});
+  if(!areaNombre || !descripcion){ alert("Indica el área/proceso y describe el hallazgo."); return; }
+  diagHallazgos.push({areaNombre, descripcion});
+  document.getElementById("diagHallazgoArea").value = "";
   document.getElementById("diagHallazgoDescripcion").value = "";
   drawDiagHallazgos();
 });
@@ -5030,6 +5118,7 @@ document.getElementById("diagHallazgosWrap").addEventListener("click",(e)=>{
 function resetDiagnosticoForm(){
   diagEditingId = null;
   diagHallazgos = [];
+  diagChecklistEstado = {};
   document.getElementById("diagFecha").value = "";
   document.getElementById("diagResponsable").value = "";
   document.getElementById("diagHallazgoDescripcion").value = "";
@@ -5039,12 +5128,15 @@ function resetDiagnosticoForm(){
   document.getElementById("cancelEditDiagnosticoBtn").style.display = "none";
   renderDiagAreaOptions();
   drawDiagHallazgos();
+  drawDiagChecklist();
 }
 function startEditDiagnostico(id){
   const rec = CACHE.diagnosticos.find(r=>r.id===id);
   if(!rec) return;
   diagEditingId = id;
   diagHallazgos = (rec.hallazgos||[]).map(h=>({...h}));
+  diagChecklistEstado = {};
+  (rec.checklist||[]).forEach(c=>{ diagChecklistEstado[c.numero] = {estado:c.estado||"", observacion:c.observacion||""}; });
   document.getElementById("diagFecha").value = rec.fecha || "";
   document.getElementById("diagResponsable").value = rec.responsable || "";
   document.getElementById("diagObservaciones").value = rec.observaciones || "";
@@ -5053,17 +5145,22 @@ function startEditDiagnostico(id){
   document.getElementById("cancelEditDiagnosticoBtn").style.display = "";
   renderDiagAreaOptions();
   drawDiagHallazgos();
+  drawDiagChecklist();
   document.getElementById("hdrDiagnostico").scrollIntoView({behavior:"smooth", block:"start"});
 }
 on(document.getElementById("cancelEditDiagnosticoBtn"), "click", ()=> resetDiagnosticoForm());
 on(document.getElementById("saveDiagnosticoBtn"), "click", async ()=>{
   const fecha = document.getElementById("diagFecha").value;
   if(!fecha){ alert("Indica la fecha de la visita."); return; }
+  const checklist = DIAGNOSTICO_CHECKLIST_ITEMS
+    .map(it=>({numero:it.numero, estado:(diagChecklistEstado[it.numero]||{}).estado||"", observacion:(diagChecklistEstado[it.numero]||{}).observacion||""}))
+    .filter(c=>c.estado || c.observacion);
   const rec = {
     id: diagEditingId || uid(),
     fecha,
     responsable: document.getElementById("diagResponsable").value.trim(),
     hallazgos: diagHallazgos.slice(),
+    checklist,
     observaciones: document.getElementById("diagObservaciones").value.trim(),
     recomendaciones: document.getElementById("diagRecomendaciones").value.trim(),
   };
@@ -5119,9 +5216,22 @@ function descargarDiagnosticoPdf(id){
   if(lineaDatos){ doc.text(lineaDatos, 14, y); y += 6; }
   doc.text(`Fecha de la visita: ${fmtDate(rec.fecha)}   ·   Responsable: ${rec.responsable||"—"}`, 14, y); y += 8;
 
+  const checklistConDatos = (rec.checklist||[]).filter(c=>c.estado || c.observacion);
+  if(checklistConDatos.length){
+    doc.setFontSize(11); doc.text("Lista de chequeo", 14, y); y += 2;
+    doc.autoTable({ startY:y, head:[["Sección","Ítem","Estado","Observación"]],
+      body: checklistConDatos.map(c=>{
+        const item = DIAGNOSTICO_CHECKLIST_ITEMS.find(it=>it.numero===c.numero) || {};
+        return [item.seccion||"—", item.texto||"—", DIAG_ESTADO_LABEL[c.estado]||"Sin evaluar", c.observacion||"—"];
+      }),
+      styles:{fontSize:8}, headStyles:{fillColor:[42,120,214]} });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  if(y > 240){ doc.addPage(); y = 16; }
   doc.setFontSize(11); doc.text("Hallazgos por área", 14, y); y += 2;
   doc.autoTable({ startY:y, head:[["Área","Hallazgo"]],
-    body: (rec.hallazgos||[]).length ? rec.hallazgos.map(h=>[areaName(h.areaId), h.descripcion]) : [["Sin hallazgos registrados","—"]],
+    body: (rec.hallazgos||[]).length ? rec.hallazgos.map(h=>[h.areaNombre, h.descripcion]) : [["Sin hallazgos registrados","—"]],
     styles:{fontSize:8.5}, headStyles:{fillColor:[42,120,214]} });
   y = doc.lastAutoTable.finalY + 8;
 
@@ -5168,7 +5278,7 @@ function descargarDiagnosticoPdf(id){
 }
 function renderDiagnostico(){
   renderDiagnosticoAsistente();
-  if(!diagEditingId){ renderDiagAreaOptions(); drawDiagHallazgos(); }
+  if(!diagEditingId){ renderDiagAreaOptions(); drawDiagHallazgos(); drawDiagChecklist(); }
   renderDiagnosticoTable();
 }
 
