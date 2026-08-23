@@ -448,6 +448,13 @@
         <div><label>Responsable del diagnóstico</label><input id="diagResponsable" placeholder="Nombre y cargo"></div>
         <div><label>Empresa o cliente diagnosticado</label><input id="diagNombreEmpresa" placeholder="Dejar vacío si es tu propia empresa"></div>
         <div><label>N° de trabajadores (estimado)</label><input type="number" id="diagNumTrabajadores" min="0" placeholder="Dejar vacío si es tu propia empresa"></div>
+        <div><label>Estado del prospecto</label>
+          <select id="diagEstadoProspecto">
+            <option value="pendiente">Pendiente de definir</option>
+            <option value="contrato">Contrató el servicio</option>
+            <option value="no_contrato">No contrató</option>
+          </select>
+        </div>
       </div>
       <label style="margin-top:14px;">Lista de chequeo</label>
       <div class="desc">Aspectos básicos a revisar en el recorrido, incluido el cumplimiento legal. Es un vistazo rápido de primera visita — no reemplaza el checklist completo de "Cumplimiento legal DS 44 (FUF)".</div>
@@ -477,8 +484,10 @@
     <div class="card">
       <div class="card-header-row" id="hdrDiagnosticoListado"><h2>Historial de diagnósticos</h2><button class="collapse-toggle" id="toggleDiagnosticoListado" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyDiagnosticoListado">
+      <div class="desc">Consolidado de todas las empresas diagnosticadas, sean prospectos o tu propia empresa, con el estado de si contrataron el servicio.</div>
+      <div class="grid-tiles" id="diagResumenTiles"></div>
       <table>
-        <thead><tr><th>Fecha</th><th>Empresa/cliente</th><th>Responsable</th><th>Hallazgos</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Empresa/cliente</th><th>Responsable</th><th>Hallazgos</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody id="diagnosticoTable"></tbody>
       </table>
       </div>
@@ -5168,6 +5177,7 @@ function resetDiagnosticoForm(){
   document.getElementById("diagResponsable").value = "";
   document.getElementById("diagNombreEmpresa").value = "";
   document.getElementById("diagNumTrabajadores").value = "";
+  document.getElementById("diagEstadoProspecto").value = "pendiente";
   document.getElementById("diagHallazgoDescripcion").value = "";
   document.getElementById("diagObservaciones").value = "";
   document.getElementById("diagRecomendaciones").value = "";
@@ -5189,6 +5199,7 @@ function startEditDiagnostico(id){
   document.getElementById("diagResponsable").value = rec.responsable || "";
   document.getElementById("diagNombreEmpresa").value = rec.nombreEmpresa || "";
   document.getElementById("diagNumTrabajadores").value = rec.numTrabajadoresEstimado!=null ? rec.numTrabajadoresEstimado : "";
+  document.getElementById("diagEstadoProspecto").value = rec.estadoProspecto || "pendiente";
   document.getElementById("diagObservaciones").value = rec.observaciones || "";
   document.getElementById("diagRecomendaciones").value = rec.recomendaciones || "";
   document.getElementById("diagFormTitle").textContent = "Editando diagnóstico del "+fmtDate(rec.fecha);
@@ -5214,6 +5225,7 @@ on(document.getElementById("saveDiagnosticoBtn"), "click", async ()=>{
     responsable: document.getElementById("diagResponsable").value.trim(),
     nombreEmpresa,
     numTrabajadoresEstimado: nombreEmpresa && numTrabajadoresVal!=="" ? +numTrabajadoresVal : null,
+    estadoProspecto: nombreEmpresa ? document.getElementById("diagEstadoProspecto").value : null,
     hallazgos: diagHallazgos.slice(),
     checklist,
     observaciones: document.getElementById("diagObservaciones").value.trim(),
@@ -5226,19 +5238,42 @@ on(document.getElementById("saveDiagnosticoBtn"), "click", async ()=>{
 });
 function renderDiagnosticoTable(){
   const rows = (CACHE.diagnosticos||[]).slice().sort((a,b)=> new Date(b.fecha)-new Date(a.fecha));
+  const prospectos = rows.filter(r=>r.nombreEmpresa);
+  const contratados = prospectos.filter(r=>r.estadoProspecto==="contrato").length;
+  const pendientes = prospectos.filter(r=>!r.estadoProspecto || r.estadoProspecto==="pendiente").length;
+  document.getElementById("diagResumenTiles").innerHTML = [
+    tile("Diagnósticos totales", rows.length, "propia empresa + prospectos"),
+    tile("Prospectos diagnosticados", prospectos.length, "empresas que no son tu cuenta"),
+    tile("Contrataron el servicio", contratados, "de "+prospectos.length+" prospectos"),
+    tile("Pendientes de definir", pendientes, "todavía sin resultado", pendientes>0?"medio":"bajo"),
+  ].join("");
   document.getElementById("diagnosticoTable").innerHTML = rows.length ? rows.map(r=>`
     <tr>
       <td>${fmtDate(r.fecha)}</td>
       <td>${r.nombreEmpresa || `<span class="kv">Propia empresa</span>`}</td>
       <td>${r.responsable || "—"}</td>
       <td>${(r.hallazgos||[]).length}</td>
+      <td>${r.nombreEmpresa ? `<select data-diag-estado="${r.id}">
+          <option value="pendiente" ${(!r.estadoProspecto||r.estadoProspecto==="pendiente")?"selected":""}>Pendiente</option>
+          <option value="contrato" ${r.estadoProspecto==="contrato"?"selected":""}>Contrató</option>
+          <option value="no_contrato" ${r.estadoProspecto==="no_contrato"?"selected":""}>No contrató</option>
+        </select>` : "—"}</td>
       <td>
         <button class="subtle-btn" data-diag-pdf="${r.id}">Imprimir PDF</button>
         <button class="subtle-btn" data-diag-editar="${r.id}">Editar</button>
         <button class="subtle-btn" data-diag-eliminar="${r.id}">Eliminar</button>
       </td>
-    </tr>`).join("") : `<tr><td class="empty" colspan="5">Sin diagnósticos registrados todavía</td></tr>`;
+    </tr>`).join("") : `<tr><td class="empty" colspan="6">Sin diagnósticos registrados todavía</td></tr>`;
 }
+document.getElementById("diagnosticoTable").addEventListener("change", async (e)=>{
+  const sel = e.target.closest("select[data-diag-estado]");
+  if(!sel) return;
+  const rec = CACHE.diagnosticos.find(r=>r.id===sel.dataset.diagEstado);
+  if(!rec) return;
+  await put("diagnosticos", {...rec, estadoProspecto: sel.value});
+  await loadCache();
+  renderDiagnosticoTable();
+});
 on(document.getElementById("diagnosticoTable"), "click", async (e)=>{
   const editBtn = e.target.closest("[data-diag-editar]");
   if(editBtn){ startEditDiagnostico(editBtn.dataset.diagEditar); return; }
