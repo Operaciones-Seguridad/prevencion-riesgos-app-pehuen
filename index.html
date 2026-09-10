@@ -17606,7 +17606,12 @@ on(document.getElementById("usuariosTable"), "click", async (e) => {
   if(delBtn){
     if(!confirm("¿Eliminar este usuario?")) return;
     const eraSesion = SESION.usuarioId === delBtn.dataset.usuarioEliminar;
-    await deleteRecord("accesoUsuarios", delBtn.dataset.usuarioEliminar);
+    try{
+      await deleteRecord("accesoUsuarios", delBtn.dataset.usuarioEliminar);
+    }catch(err){
+      alert("No se pudo eliminar el usuario: " + err.message);
+      return;
+    }
     await loadCache();
     if(usuarioEditingId === delBtn.dataset.usuarioEliminar) resetUsuarioForm();
     renderAccesos();
