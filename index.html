@@ -2944,12 +2944,6 @@
       </div>
     </div>
 
-    <div class="card" id="eliminarMiEmpresaWrap" style="display:none;">
-      <div class="card-header-row" id="hdrEliminarMiEmpresaWrap"><h2>Eliminar mi empresa</h2><button class="collapse-toggle" id="toggleEliminarMiEmpresaWrap" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyEliminarMiEmpresaWrap">
-      <div class="desc">Cierra tu cuenta por completo: elimina para siempre tu empresa y TODOS sus datos (trabajadores, accidentes, EPP, usuarios, documentos, todo). No se puede deshacer. No puedes eliminar ninguna otra empresa, solo la tuya.</div>
-      <button class="btn danger small" id="eliminarMiEmpresaBtn" style="margin-top:8px;">Eliminar mi empresa</button>
-    </div></div>
-
     <div class="card" id="respaldoDatosWrap" style="display:none;">
       <div class="card-header-row" id="hdrRespaldoDatosWrap"><h2>Respaldo y migración de datos</h2><button class="collapse-toggle" id="toggleRespaldoDatosWrap" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyRespaldoDatosWrap">
       <div class="desc">"Exportar" descarga todos los datos de la empresa con la que iniciaste sesión ahora mismo, en un archivo JSON. "Importar" carga un archivo así dentro de la empresa actual (útil para trasladar los datos de una instalación separada, como las versiones anteriores de ANGOLEC o Pehuén, hacia esta instalación única).</div>
@@ -3505,7 +3499,6 @@ setupCollapsible("hdrGestionarListasDesplegables", "bodyGestionarListasDesplegab
 setupCollapsible("hdrAreasProcesos", "bodyAreasProcesos", "toggleAreasProcesos", "collapsed_areasProcesos");
 setupCollapsible("hdrResponsablesDeCierreDeHallazgos", "bodyResponsablesDeCierreDeHallazgos", "toggleResponsablesDeCierreDeHallazgos", "collapsed_responsablesDeCierreDeHallazgos");
 setupCollapsible("hdrImportarMatrizDeRiesgosDesdeExcel", "bodyImportarMatrizDeRiesgosDesdeExcel", "toggleImportarMatrizDeRiesgosDesdeExcel", "collapsed_importarMatrizDeRiesgosDesdeExcel");
-setupCollapsible("hdrEliminarMiEmpresaWrap", "bodyEliminarMiEmpresaWrap", "toggleEliminarMiEmpresaWrap", "collapsed_eliminarMiEmpresaWrap");
 setupCollapsible("hdrRespaldoDatosWrap", "bodyRespaldoDatosWrap", "toggleRespaldoDatosWrap", "collapsed_respaldoDatosWrap");
 setupCollapsible("hdrDatosDeEjemplo", "bodyDatosDeEjemplo", "toggleDatosDeEjemplo", "collapsed_datosDeEjemplo");
 setupCollapsible("hdrPropiedadIntelectual", "bodyPropiedadIntelectual", "togglePropiedadIntelectual", "collapsed_propiedadIntelectual");
@@ -17064,31 +17057,6 @@ on(document.getElementById("crearEmpresaBtn"), "click", async () => {
     btn.disabled = false;
   }
 });
-on(document.getElementById("eliminarMiEmpresaBtn"), "click", async () => {
-  if(!activeEmpresa){ return; }
-  const nombre = activeEmpresa.nombre;
-  const escrito = prompt(`Esto elimina para siempre tu empresa "${nombre}" y TODOS sus datos (trabajadores, accidentes, EPP, usuarios, documentos, todo). No se puede deshacer.\n\nPara confirmar, escribe exactamente el nombre de tu empresa:`);
-  if(escrito === null) return;
-  if(escrito.trim() !== nombre){
-    alert("El nombre escrito no coincide. No se eliminó tu empresa.");
-    return;
-  }
-  const btn = document.getElementById("eliminarMiEmpresaBtn");
-  btn.disabled = true;
-  try{
-    await apiFetch("DELETE", "/api/empresas/" + encodeURIComponent(activeEmpresa.id));
-    alert("Tu empresa fue eliminada. Vuelves a la pantalla de inicio.");
-    authToken = null;
-    activeEmpresa = null;
-    SESION.usuarioId = null;
-    SESION.superAdmin = false;
-    try{ localStorage.removeItem(SESION_STORAGE_KEY); localStorage.removeItem(AUTH_TOKEN_KEY); }catch(e){}
-    mostrarLogin();
-  }catch(e){
-    alert("No se pudo eliminar tu empresa: " + e.message);
-    btn.disabled = false;
-  }
-});
 on(document.getElementById("exportarDatosEmpresaBtn"), "click", async () => {
   try{
     const resp = await apiFetch("GET", "/api/admin/export");
@@ -17216,11 +17184,6 @@ function aplicarPermisosSesion(){
   const mostrarEmpresasWrap = SESION.superAdmin && storageMode==="api";
   if(empresasWrap) empresasWrap.style.display = mostrarEmpresasWrap ? "" : "none";
   if(mostrarEmpresasWrap) renderEmpresasTable();
-  /* Para un admin normal (no superAdmin): puede cerrar/eliminar SU
-     PROPIA empresa si lo decide, pero no ninguna otra -- el reverso
-     exacto de la regla anterior. */
-  const eliminarMiEmpresaWrap = document.getElementById("eliminarMiEmpresaWrap");
-  if(eliminarMiEmpresaWrap) eliminarMiEmpresaWrap.style.display = (esAdmin && !SESION.superAdmin && storageMode==="api") ? "" : "none";
   const respaldoDatosWrap = document.getElementById("respaldoDatosWrap");
   if(respaldoDatosWrap) respaldoDatosWrap.style.display = (esAdmin && storageMode==="api") ? "" : "none";
   const matrizIaWrap = document.getElementById("matrizIaWrap");
