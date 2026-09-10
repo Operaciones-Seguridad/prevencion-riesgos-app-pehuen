@@ -623,6 +623,13 @@
         <div class="desc" style="margin-top:4px;">La IA usa como tema el "Nombre del formato" de arriba, junto con el rubro de la empresa y el perfil de riesgos real de la Matriz de riesgos, para proponer ítems concretos evitando repetir los que ya están en la tabla. Los ítems sugeridos se agregan a la tabla de abajo para que los revises, edites o quites antes de crear o guardar el formato — nunca se guardan solos.</div>
       </div>
 
+      <div id="fmtRecomendadosWrap" class="desc" style="background:#fdf3ec; border:1px solid #ecc9a8; border-radius:6px; padding:10px; margin-top:14px;">
+        <label>Formatos recomendados</label>
+        <div class="desc" style="margin:2px 0 8px;">Formato basado en la guía "Control de peligros en el izaje de cargas con grúas móviles" de la Mutual de Seguridad CChC (ver bibliografía: NCh 1258, ASME B30.5, OSHA 29CFR1926 subparte CC). Cubre el paso más frecuentemente omitido antes de un accidente de izaje: evaluar el peso real de la carga y el estado de los accesorios (eslingas, cadenas, grilletes) antes de levantarla.</div>
+        <button class="btn small secondary" id="agregarFormatoIzajeBtn" type="button">+ Agregar formato: Evaluación de carga — Maniobras de izaje</button>
+        <span id="fmtRecomendadosEstado" class="kv"></span>
+      </div>
+
       <h2 style="margin-top:22px;">Formatos ya creados</h2>
       <table>
         <thead><tr><th>Nombre</th><th>Se usa para</th><th>Ítems</th><th>Acciones</th></tr></thead>
@@ -3545,6 +3552,7 @@ async function seedData(force=false){
     {id:"cl-epp", nombre:"EPP y condiciones generales", items:["Uso correcto de casco","Uso correcto de zapatos de seguridad","Uso de guantes según tarea","Orden y aseo del área","Señalética visible y en buen estado"], categoria:"ambos"},
     {id:"cl-altura", nombre:"Trabajo en altura", items:["Arnés y línea de vida en buen estado","Anclaje certificado","Andamios con plataforma completa y barandas","Permiso de trabajo en altura vigente",{text:"Observaciones adicionales del inspector", tipo:"texto"}], categoria:"ambos"},
     {id:"cl-electrico", nombre:"Instalaciones eléctricas", items:["Tableros eléctricos señalizados y cerrados","Cables sin daños visibles","Extensiones certificadas","Extintor cercano vigente"], categoria:"ambos"},
+    CHECKLIST_IZAJE_CARGA,
   ];
   for(const c of checklists) await put("checklists", c);
 
@@ -8482,6 +8490,56 @@ function startEditFormato(id){
   document.getElementById("fmtFormTitle").scrollIntoView({behavior:"smooth", block:"start"});
 }
 on(document.getElementById("cancelEditFormatoBtn"), "click", ()=> resetFormatoForm());
+/* Formato recomendado "Evaluación de carga -- Maniobras de izaje", basado
+   en la guía "Control de peligros en el izaje de cargas con grúas móviles"
+   de Mutual de Seguridad CChC (bibliografía de la guía: NCh 1258/1 y /2,
+   ASME B30.5-2011, OSHA 29CFR1926 subparte CC). Apunta directamente a la
+   causa de accidente más citada tanto en esa guía como en la práctica: no
+   conocer el peso real de la carga ni el estado de los accesorios de izaje
+   (eslingas, cadenas, grilletes) antes de levantarla. */
+const LABEL_IZAJE_PESO = "Peso real de la carga evaluado (solo el número, en kg)";
+const LABEL_IZAJE_CAPACIDAD = "Capacidad máxima admisible según tabla de carga, para el radio y pluma usados (solo el número, en kg)";
+const CHECKLIST_IZAJE_CARGA = {
+  id: "cl-izaje-carga",
+  nombre: "Evaluación de carga — Maniobras de izaje (grúa móvil / camión pluma)",
+  categoria: "ambos",
+  items: [
+    "Se determinó y documentó el peso real de la carga a izar, incluyendo el peso de eslingas, grilletes, ganchos y otros accesorios de izaje",
+    "Se revisó la tabla de capacidades de carga (tabla de carga) del fabricante antes de iniciar la maniobra",
+    {text: LABEL_IZAJE_PESO, tipo:"texto"},
+    {text: LABEL_IZAJE_CAPACIDAD, tipo:"texto"},
+    "Los accesorios de izaje (cadenas, eslingas, grilletes, ganchos) tienen su capacidad de carga límite claramente identificada",
+    "Los accesorios de izaje fueron inspeccionados visualmente antes del uso (sin fisuras, deformaciones, desgaste o corrosión) y se descartaron los que estén en mal estado",
+    "Existe un registro de inspección periódica de los accesorios de izaje expuestos a desgaste",
+    "Los ganchos utilizados cuentan con seguro de bloqueo (pestillo de seguridad)",
+    "Se consideró el ángulo de las eslingas/cadenas respecto a la carga (a menor ángulo, mayor es la tensión real en cada ramal)",
+    "La carga está correctamente eslingada/estrobada, con el peso distribuido en todos los ramales por igual",
+    "El terreno donde se posiciona el equipo es apto y los estabilizadores están correctamente extendidos y apoyados",
+    "Se delimitó y señalizó el área de influencia de la maniobra (radio de giro de la pluma), restringiendo el acceso a personal no autorizado",
+    "El operador cuenta con licencia y capacitación certificada vigente para maniobras de izaje",
+    "Se cuenta con rigger o señalero capacitado y certificado, con código de señales acordado con el operador",
+    "Las condiciones ambientales (viento, visibilidad) son adecuadas para realizar la maniobra",
+    "Existe un plan de izaje o procedimiento de trabajo específico para esta maniobra",
+    {text: "Observaciones adicionales del evaluador", tipo:"texto"},
+  ],
+};
+on(document.getElementById("agregarFormatoIzajeBtn"), "click", async () => {
+  const estado = document.getElementById("fmtRecomendadosEstado");
+  const yaExiste = (CACHE.checklists||[]).some(c=>c.id===CHECKLIST_IZAJE_CARGA.id);
+  if(yaExiste){ estado.textContent = "Este formato ya está agregado."; return; }
+  const btn = document.getElementById("agregarFormatoIzajeBtn");
+  btn.disabled = true;
+  try{
+    await put("checklists", Object.assign({}, CHECKLIST_IZAJE_CARGA));
+    await loadCache();
+    renderInsTipoOptions();
+    renderFormatosTable();
+    estado.textContent = "Formato agregado. Ya está disponible en Realizar inspecciones.";
+  }catch(e){
+    alert("No se pudo agregar el formato: " + e.message);
+  }
+  btn.disabled = false;
+});
 on(document.getElementById("addFormatoBtn"), "click", async () => {
   const nombre = document.getElementById("fmtNombre").value.trim();
   const categoria = document.getElementById("fmtCategoria").value;
@@ -9142,6 +9200,38 @@ function getJsPDF(){
   if(typeof window.jspdf === "undefined" || !window.jspdf.jsPDF) return null;
   return window.jspdf.jsPDF;
 }
+/* Gráfico de % de capacidad usada para el formato "Evaluación de carga --
+   Maniobras de izaje" (CHECKLIST_IZAJE_CARGA): compara el peso real de la
+   carga contra la capacidad máxima admisible que el propio usuario ingresó
+   (leída de la tabla de carga del fabricante -- no se inventa ni se estima
+   acá). Devuelve la nueva posición Y del cursor del PDF. Si falta alguno de
+   los dos datos o no son números válidos, no dibuja nada y no interrumpe el
+   resto del informe. */
+function dibujarGraficoCapacidadIzajePdf(doc, rec, y){
+  const itemPeso = (rec.checklist||[]).find(it=>it.text===LABEL_IZAJE_PESO);
+  const itemCap = (rec.checklist||[]).find(it=>it.text===LABEL_IZAJE_CAPACIDAD);
+  const peso = itemPeso ? parseFloat(String(itemPeso.valorTexto||"").replace(",",".")) : NaN;
+  const cap = itemCap ? parseFloat(String(itemCap.valorTexto||"").replace(",",".")) : NaN;
+  if(isNaN(peso) || isNaN(cap) || cap<=0) return y;
+  const pct = (peso/cap)*100;
+  const color = pct>100 ? [211,59,59] : pct>=80 ? [237,161,0] : [12,163,12];
+  const mensaje = pct>100 ? "SUPERA LA CAPACIDAD ADMISIBLE — NO IZAR" : pct>=80 ? "Cerca del límite — evaluar con precaución" : "Dentro del margen seguro";
+  doc.setFont(undefined,"bold"); doc.text("Evaluación de capacidad de izaje", 14, y); doc.setFont(undefined,"normal"); y += 6;
+  doc.setFontSize(9);
+  doc.text(`Peso de la carga: ${peso} kg    Capacidad admisible: ${cap} kg    Uso de la capacidad: ${pct.toFixed(0)}%`, 14, y); y += 5;
+  const barX = 14, barY = y, barW = 160, barH = 6, escalaMax = 150;
+  doc.setFillColor(230,230,230); doc.rect(barX, barY, barW, barH, "F");
+  const fillW = Math.max(0, Math.min(pct, escalaMax)) / escalaMax * barW;
+  doc.setFillColor(color[0], color[1], color[2]); doc.rect(barX, barY, fillW, barH, "F");
+  const marca100 = (100/escalaMax) * barW;
+  doc.setDrawColor(60,60,60); doc.line(barX+marca100, barY-1, barX+marca100, barY+barH+1);
+  doc.setFontSize(7.5); doc.text("100%", barX+marca100-4, barY+barH+4);
+  y += barH + 10;
+  doc.setFontSize(10); doc.setTextColor(color[0], color[1], color[2]); doc.setFont(undefined,"bold");
+  doc.text(mensaje, 14, y); y += 8;
+  doc.setFont(undefined,"normal"); doc.setTextColor(0,0,0); doc.setFontSize(10);
+  return y;
+}
 function descargarInspeccionPdf(rec){
   const JsPDFClass = getJsPDF();
   if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
@@ -9155,6 +9245,9 @@ function descargarInspeccionPdf(rec){
   doc.setFontSize(10);
   doc.text(`Empresa: ${(CACHE.empresa&&CACHE.empresa.razonSocial)||"—"}`, 14, y); y += 6;
   doc.text(`Formato: ${cl?cl.nombre:"—"}   Área: ${areaName(rec.areaId)}   Inspector: ${rec.inspector||"—"}   Estado: ${ESTADO_INS_LABEL[estado]}`, 14, y); y += 8;
+  if(cl && cl.id === "cl-izaje-carga"){
+    y = dibujarGraficoCapacidadIzajePdf(doc, rec, y);
+  }
   if(rec.descripcion){
     doc.setFont(undefined,"bold"); doc.text("Descripción / motivo:", 14, y); doc.setFont(undefined,"normal"); y += 5;
     const splitDesc = doc.splitTextToSize(rec.descripcion, 180);
