@@ -302,7 +302,7 @@
   <header>
     <button id="openSidebarBtn" type="button" aria-label="Abrir menú">☰</button>
     <div>
-      <div class="sub" style="font-size:13px;">Sistema de Gestión Prevención de Riesgos — Inspecciones · Matriz de riesgos · Vigilancia de salud</div>
+      <div class="sub" style="font-size:16px;font-weight:600;color:var(--text-primary);" id="headerTituloVista">Dashboard</div>
     </div>
     <div></div>
   </header>
@@ -4060,6 +4060,8 @@ function irAVista(nombreVista){
   document.querySelectorAll("#mainNav button").forEach(b=>b.classList.remove("active"));
   const btn = document.querySelector(`#mainNav button[data-view="${nombreVista}"]`);
   if(btn) btn.classList.add("active");
+  const tituloHeader = document.getElementById("headerTituloVista");
+  if(tituloHeader && btn) tituloHeader.textContent = btn.textContent;
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
   document.getElementById("view-"+nombreVista).classList.add("active");
   if(nombreVista==="dashboard") renderDashboard();
