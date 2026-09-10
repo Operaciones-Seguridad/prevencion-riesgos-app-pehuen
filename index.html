@@ -8009,43 +8009,43 @@ function renderDashboard(){
   const tmertCriticos = tmertRepetitivos.filter(r=>tmertResultadoCritica(r.avanzadaCritica||{}).startsWith("Crítico")).length;
 
   document.getElementById("tiles").innerHTML =
-    tileSection("Accidentabilidad", "var(--s8)", [
-      tile("Tasa de frecuencia", indAcc.tf, periodoTexto, semaforoMeta(indAcc.tf, metasAcc.metaFrecuencia), "alert", "var(--s8)"),
-      tile("Tasa de gravedad", indAcc.tg, periodoTexto, semaforoMeta(indAcc.tg, metasAcc.metaGravedad), "alert", "var(--s8)"),
-      tile("Índice de accidentabilidad", indAcc.indiceAcc+"%", periodoTexto, semaforoMeta(indAcc.indiceAcc, metasAcc.metaAccidentabilidad), "alert", "var(--s8)"),
+    tileSection("Accidentabilidad", "var(--s1)", [
+      tile("Tasa de frecuencia", indAcc.tf, periodoTexto, semaforoMeta(indAcc.tf, metasAcc.metaFrecuencia), "alert", "var(--s1)"),
+      tile("Tasa de gravedad", indAcc.tg, periodoTexto, semaforoMeta(indAcc.tg, metasAcc.metaGravedad), "alert", "var(--s1)"),
+      tile("Índice de accidentabilidad", indAcc.indiceAcc+"%", periodoTexto, semaforoMeta(indAcc.indiceAcc, metasAcc.metaAccidentabilidad), "alert", "var(--s1)"),
       ...(usaRirdaDash ? [
-        tile("RIRDA", indAcc.rirda, periodoTexto, semaforoMeta(indAcc.rirda, metasAcc.metaRirda), "alert", "var(--s8)"),
-        tile("LDR", indAcc.ldr, periodoTexto, semaforoMeta(indAcc.ldr, metasAcc.metaLdr), "alert", "var(--s8)"),
+        tile("RIRDA", indAcc.rirda, periodoTexto, semaforoMeta(indAcc.rirda, metasAcc.metaRirda), "alert", "var(--s1)"),
+        tile("LDR", indAcc.ldr, periodoTexto, semaforoMeta(indAcc.ldr, metasAcc.metaLdr), "alert", "var(--s1)"),
       ] : []),
-      tile("Tasa de siniestralidad total (DS 67)", ds67Ultimo ? ds67Ultimo.tasaSiniestralidadTotal.toFixed(2) : "—", ds67Ultimo ? ("evaluación "+ds67Ultimo.anioEvaluacion) : "sin evaluación DS 67 registrada", null, "alert", "var(--s8)"),
+      tile("Tasa de siniestralidad total (DS 67)", ds67Ultimo ? ds67Ultimo.tasaSiniestralidadTotal.toFixed(2) : "—", ds67Ultimo ? ("evaluación "+ds67Ultimo.anioEvaluacion) : "sin evaluación DS 67 registrada", null, "alert", "var(--s1)"),
     ]) +
     tileSection("Matriz de riesgos", "var(--s1)", [
       tile("Riesgos críticos en matriz", riesgosCriticos, "de "+CACHE.matriz.length+" líneas", null, "shield", "var(--s1)"),
       tile("Hallazgos con acción abierta", accionesAbiertas, "requieren seguimiento", null, "shield", "var(--s1)"),
       tile("Análisis de causa raíz realizados", (CACHE.arbolesCausales||[]).length, "árboles causales registrados", null, "shield", "var(--s1)"),
     ]) +
-    tileSection("Cumplimiento legal y documental", "var(--s3)", [
-      tile("Cumplimiento legal DS 44 (FUF)", fufPct+"%", fufCounts.cumple+" de "+fufEvaluables+" ítems evaluables", null, "document", "var(--s3)"),
-      tile("Cursos DS44 — cumplimiento", cursosPct===null?"—":cursosPct+"%", cursosPct===null?"sin cursos aplicables registrados":(cursosTotalVigentes+" de "+cursosTotalAplicables+" vigentes"), null, "document", "var(--s3)"),
-      tile("RIOHyS — versión vigente", riohysVigente ? riohysVigente.version : "—", riohysVigente && riohysVigente.fechaActualizacion ? ("actualizada el "+fmtDate(riohysVigente.fechaActualizacion)) : "sin versión registrada", null, "document", "var(--s3)"),
-      tile("Documentos vigentes", documentosVigentesCount, "de "+(CACHE.documentos||[]).length+" versiones en el histórico", null, "document", "var(--s3)"),
-      tile("Compromisos — cumplimiento "+compAnioActual, compPctAnual===null?"—":compPctAnual+"%", compPctAnual===null?"sin ítems de control registrados":(compTranscurridos+" meses considerados"), null, "document", "var(--s3)"),
+    tileSection("Cumplimiento legal y documental", "var(--s1)", [
+      tile("Cumplimiento legal DS 44 (FUF)", fufPct+"%", fufCounts.cumple+" de "+fufEvaluables+" ítems evaluables", null, "document", "var(--s1)"),
+      tile("Cursos DS44 — cumplimiento", cursosPct===null?"—":cursosPct+"%", cursosPct===null?"sin cursos aplicables registrados":(cursosTotalVigentes+" de "+cursosTotalAplicables+" vigentes"), null, "document", "var(--s1)"),
+      tile("RIOHyS — versión vigente", riohysVigente ? riohysVigente.version : "—", riohysVigente && riohysVigente.fechaActualizacion ? ("actualizada el "+fmtDate(riohysVigente.fechaActualizacion)) : "sin versión registrada", null, "document", "var(--s1)"),
+      tile("Documentos vigentes", documentosVigentesCount, "de "+(CACHE.documentos||[]).length+" versiones en el histórico", null, "document", "var(--s1)"),
+      tile("Compromisos — cumplimiento "+compAnioActual, compPctAnual===null?"—":compPctAnual+"%", compPctAnual===null?"sin ítems de control registrados":(compTranscurridos+" meses considerados"), null, "document", "var(--s1)"),
     ]) +
-    tileSection("Salud y bienestar", "var(--s5)", [
-      tile("Cumplimiento vigilancia de salud", cumplPct+"%", vigentes+" de "+totalAsig+" vigentes", null, "health", "var(--s5)"),
-      tile("TMERT — puestos críticos", tmertCriticos, "de "+tmertRepetitivos.length+" con trabajo repetitivo evaluado", tmertCriticos>0?"alto":"bajo", "health", "var(--s5)"),
+    tileSection("Salud y bienestar", "var(--s1)", [
+      tile("Cumplimiento vigilancia de salud", cumplPct+"%", vigentes+" de "+totalAsig+" vigentes", null, "health", "var(--s1)"),
+      tile("TMERT — puestos críticos", tmertCriticos, "de "+tmertRepetitivos.length+" con trabajo repetitivo evaluado", tmertCriticos>0?"alto":"bajo", "health", "var(--s1)"),
     ]) +
-    tileSection("Programa, capacitación e inspecciones", "var(--s4)", [
-      tile("Cumplimiento programa de seguridad", pgPct+"%", pgRealizadas+" de "+pgTotal+" actividades", null, "calendar", "var(--s4)"),
-      tile("Cumplimiento plan de capacitación", capPct+"%", capAsistieron+" de "+capConvocados+" asistencias", null, "calendar", "var(--s4)"),
-      tile("Inspecciones registradas", CACHE.inspecciones.length, "histórico", null, "calendar", "var(--s4)"),
+    tileSection("Programa, capacitación e inspecciones", "var(--s1)", [
+      tile("Cumplimiento programa de seguridad", pgPct+"%", pgRealizadas+" de "+pgTotal+" actividades", null, "calendar", "var(--s1)"),
+      tile("Cumplimiento plan de capacitación", capPct+"%", capAsistieron+" de "+capConvocados+" asistencias", null, "calendar", "var(--s1)"),
+      tile("Inspecciones registradas", CACHE.inspecciones.length, "histórico", null, "calendar", "var(--s1)"),
     ]) +
-    tileSection("Comité paritario, emergencias, EPP y vehículos", "var(--s7)", [
-      tile("CPHyS — días desde última reunión ordinaria", cphysDiasDesdeOrdinaria===null?"—":cphysDiasDesdeOrdinaria, cphysDiasDesdeOrdinaria===null?"sin reuniones ordinarias registradas":(cphysDiasDesdeOrdinaria<=31?"dentro del plazo mensual":"sobre el plazo mensual"), cphysSemaforoReunion, "people", "var(--s7)"),
-      tile("CPHyS — investigaciones pendientes", cphysPendientesInvestigar, "de "+cphysAccidentesAll.length+" accidentes/incidentes", cphysPendientesInvestigar>0?"alto":"bajo", "people", "var(--s7)"),
-      tile("GRD — cumplimiento global", grdPct+"%", "diagnóstico, plan de respuesta y simulacros", grdEtapaSemaforo(grdPct), "people", "var(--s7)"),
-      tile("Vales de EPP entregados", eppTotalVales, periodoTexto, null, "people", "var(--s7)"),
-      tile("Infracciones registradas", periodo.infRows.length, periodoTexto, null, "people", "var(--s7)"),
+    tileSection("Comité paritario, emergencias, EPP y vehículos", "var(--s1)", [
+      tile("CPHyS — días desde última reunión ordinaria", cphysDiasDesdeOrdinaria===null?"—":cphysDiasDesdeOrdinaria, cphysDiasDesdeOrdinaria===null?"sin reuniones ordinarias registradas":(cphysDiasDesdeOrdinaria<=31?"dentro del plazo mensual":"sobre el plazo mensual"), cphysSemaforoReunion, "people", "var(--s1)"),
+      tile("CPHyS — investigaciones pendientes", cphysPendientesInvestigar, "de "+cphysAccidentesAll.length+" accidentes/incidentes", cphysPendientesInvestigar>0?"alto":"bajo", "people", "var(--s1)"),
+      tile("GRD — cumplimiento global", grdPct+"%", "diagnóstico, plan de respuesta y simulacros", grdEtapaSemaforo(grdPct), "people", "var(--s1)"),
+      tile("Vales de EPP entregados", eppTotalVales, periodoTexto, null, "people", "var(--s1)"),
+      tile("Infracciones registradas", periodo.infRows.length, periodoTexto, null, "people", "var(--s1)"),
     ]);
 
   // chart 1: riesgos por nivel
