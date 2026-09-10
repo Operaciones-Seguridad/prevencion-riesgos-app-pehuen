@@ -623,13 +623,6 @@
         <div class="desc" style="margin-top:4px;">La IA usa como tema el "Nombre del formato" de arriba, junto con el rubro de la empresa y el perfil de riesgos real de la Matriz de riesgos, para proponer ítems concretos evitando repetir los que ya están en la tabla. Los ítems sugeridos se agregan a la tabla de abajo para que los revises, edites o quites antes de crear o guardar el formato — nunca se guardan solos.</div>
       </div>
 
-      <div id="fmtRecomendadosWrap" class="desc" style="background:#fdf3ec; border:1px solid #ecc9a8; border-radius:6px; padding:10px; margin-top:14px;">
-        <label>Formatos recomendados</label>
-        <div class="desc" style="margin:2px 0 8px;">Formato basado en la guía "Control de peligros en el izaje de cargas con grúas móviles" de la Mutual de Seguridad CChC (ver bibliografía: NCh 1258, ASME B30.5, OSHA 29CFR1926 subparte CC). Cubre el paso más frecuentemente omitido antes de un accidente de izaje: evaluar el peso real de la carga y el estado de los accesorios (eslingas, cadenas, grilletes) antes de levantarla.</div>
-        <button class="btn small secondary" id="agregarFormatoIzajeBtn" type="button">+ Agregar formato: Evaluación de carga — Maniobras de izaje</button>
-        <span id="fmtRecomendadosEstado" class="kv"></span>
-      </div>
-
       <h2 style="margin-top:22px;">Formatos ya creados</h2>
       <table>
         <thead><tr><th>Nombre</th><th>Se usa para</th><th>Ítems</th><th>Acciones</th></tr></thead>
@@ -691,6 +684,53 @@
       <table>
         <thead><tr><th>Fecha</th><th>Área</th><th>Actividad</th><th>Responsable</th><th>N° de riesgos</th><th>Participantes</th><th></th></tr></thead>
         <tbody id="astTable"></tbody>
+      </table>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrEvaluacionDeCargaIzaje"><h2 id="izajeFormTitle">Evaluación de carga — Maniobras de izaje</h2><button class="collapse-toggle" id="toggleEvaluacionDeCargaIzaje" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyEvaluacionDeCargaIzaje">
+      <div class="desc">Antes de una maniobra con grúa móvil o camión pluma, evalúa si la carga está dentro de la capacidad segura del equipo y de los accesorios de izaje. Basado en la guía "Control de peligros en el izaje de cargas con grúas móviles" de Mutual de Seguridad CChC (NCh 1258, ASME B30.5-2011, OSHA 29CFR1926 subparte CC).</div>
+      <div class="form-grid">
+        <div><label>Fecha</label><input id="izajeFecha" type="date"></div>
+        <div><label>Área</label><select id="izajeArea"></select></div>
+        <div><label>Equipo utilizado</label><input id="izajeEquipo" placeholder="Ej: Camión pluma XYZ"></div>
+        <div><label>Responsable de la evaluación</label><input id="izajeResponsable" placeholder="Nombre / cargo"></div>
+      </div>
+      <label style="margin-top:14px;display:block;">Peso de la carga</label>
+      <div class="form-grid">
+        <div><label>Peso de la carga a izar (kg)</label><input id="izajePesoCarga" type="number" min="0" step="1"></div>
+        <div><label>Peso de accesorios de izaje: ganchos, grilletes, eslingas (kg)</label><input id="izajePesoAccesorios" type="number" min="0" step="1"></div>
+      </div>
+      <label style="margin-top:14px;display:block;">Capacidad del equipo (según su tabla de carga)</label>
+      <div class="form-grid">
+        <div><label>Longitud de pluma utilizada (m)</label><input id="izajeLongitudPluma" type="number" min="0" step="0.1"></div>
+        <div><label>Radio de trabajo (m)</label><input id="izajeRadioTrabajo" type="number" min="0" step="0.1"></div>
+        <div><label>Capacidad máxima de la grúa/camión pluma para esa configuración (kg)</label><input id="izajeCapacidadGrua" type="number" min="0" step="1"></div>
+      </div>
+      <label style="margin-top:14px;display:block;">Capacidad de los accesorios de izaje</label>
+      <div class="form-grid">
+        <div><label>Capacidad de trabajo (WLL) de las eslingas/cadenas utilizadas (kg)</label><input id="izajeCapacidadEslingas" type="number" min="0" step="1"></div>
+        <div><label>Ángulo de las eslingas respecto a la carga (grados, opcional)</label><input id="izajeAnguloEslingas" type="number" min="0" max="90" step="1"></div>
+        <div><label>Largo del viento / cuerda guía utilizada (m)</label><input id="izajeLargoViento" type="number" min="0" step="0.1"></div>
+      </div>
+      <div id="izajeGraficoWrap" style="margin-top:12px;"></div>
+
+      <label style="margin-top:18px;display:block;">Lista de verificación</label>
+      <div id="izajeChecklistWrap"></div>
+
+      <div style="margin-top:14px;"><label>Observaciones</label><textarea id="izajeObservaciones" rows="2" placeholder="Observaciones adicionales"></textarea></div>
+
+      <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" id="saveIzajeBtn">Guardar evaluación</button>
+        <button class="btn secondary" id="cancelEditIzajeBtn" style="display:none;">Cancelar edición</button>
+      </div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrEvaluacionesDeCargaRegistradas"><h2>Evaluaciones de carga registradas</h2><button class="collapse-toggle" id="toggleEvaluacionesDeCargaRegistradas" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyEvaluacionesDeCargaRegistradas">
+      <table>
+        <thead><tr><th>Fecha</th><th>Área</th><th>Equipo</th><th>% capacidad grúa</th><th>% capacidad eslingas</th><th>Responsable</th><th></th></tr></thead>
+        <tbody id="izajeTable"></tbody>
       </table>
     </div></div>
 
@@ -2994,8 +3034,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 32;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos"];
+const DB_VERSION = 33;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -3552,7 +3592,6 @@ async function seedData(force=false){
     {id:"cl-epp", nombre:"EPP y condiciones generales", items:["Uso correcto de casco","Uso correcto de zapatos de seguridad","Uso de guantes según tarea","Orden y aseo del área","Señalética visible y en buen estado"], categoria:"ambos"},
     {id:"cl-altura", nombre:"Trabajo en altura", items:["Arnés y línea de vida en buen estado","Anclaje certificado","Andamios con plataforma completa y barandas","Permiso de trabajo en altura vigente",{text:"Observaciones adicionales del inspector", tipo:"texto"}], categoria:"ambos"},
     {id:"cl-electrico", nombre:"Instalaciones eléctricas", items:["Tableros eléctricos señalizados y cerrados","Cables sin daños visibles","Extensiones certificadas","Extintor cercano vigente"], categoria:"ambos"},
-    CHECKLIST_IZAJE_CARGA,
   ];
   for(const c of checklists) await put("checklists", c);
 
@@ -7620,6 +7659,7 @@ function renderCommonSelects(){
 
   fillSelect(document.getElementById("astArea"), areaOpts, true);
   fillSelect(document.getElementById("astTrabajadorSel"), CACHE.trabajadores.map(t=>({id:t.id,label:t.nombre})), true);
+  fillSelect(document.getElementById("izajeArea"), areaOpts, true);
   fillDatalist(document.getElementById("dlActividadesAst"), Array.from(new Set(CACHE.matriz.map(m=>m.actividad).filter(Boolean))));
 
   fillSelect(document.getElementById("tmertArea"), areaOpts, true);
@@ -8490,56 +8530,6 @@ function startEditFormato(id){
   document.getElementById("fmtFormTitle").scrollIntoView({behavior:"smooth", block:"start"});
 }
 on(document.getElementById("cancelEditFormatoBtn"), "click", ()=> resetFormatoForm());
-/* Formato recomendado "Evaluación de carga -- Maniobras de izaje", basado
-   en la guía "Control de peligros en el izaje de cargas con grúas móviles"
-   de Mutual de Seguridad CChC (bibliografía de la guía: NCh 1258/1 y /2,
-   ASME B30.5-2011, OSHA 29CFR1926 subparte CC). Apunta directamente a la
-   causa de accidente más citada tanto en esa guía como en la práctica: no
-   conocer el peso real de la carga ni el estado de los accesorios de izaje
-   (eslingas, cadenas, grilletes) antes de levantarla. */
-const LABEL_IZAJE_PESO = "Peso real de la carga evaluado (solo el número, en kg)";
-const LABEL_IZAJE_CAPACIDAD = "Capacidad máxima admisible según tabla de carga, para el radio y pluma usados (solo el número, en kg)";
-const CHECKLIST_IZAJE_CARGA = {
-  id: "cl-izaje-carga",
-  nombre: "Evaluación de carga — Maniobras de izaje (grúa móvil / camión pluma)",
-  categoria: "ambos",
-  items: [
-    "Se determinó y documentó el peso real de la carga a izar, incluyendo el peso de eslingas, grilletes, ganchos y otros accesorios de izaje",
-    "Se revisó la tabla de capacidades de carga (tabla de carga) del fabricante antes de iniciar la maniobra",
-    {text: LABEL_IZAJE_PESO, tipo:"texto"},
-    {text: LABEL_IZAJE_CAPACIDAD, tipo:"texto"},
-    "Los accesorios de izaje (cadenas, eslingas, grilletes, ganchos) tienen su capacidad de carga límite claramente identificada",
-    "Los accesorios de izaje fueron inspeccionados visualmente antes del uso (sin fisuras, deformaciones, desgaste o corrosión) y se descartaron los que estén en mal estado",
-    "Existe un registro de inspección periódica de los accesorios de izaje expuestos a desgaste",
-    "Los ganchos utilizados cuentan con seguro de bloqueo (pestillo de seguridad)",
-    "Se consideró el ángulo de las eslingas/cadenas respecto a la carga (a menor ángulo, mayor es la tensión real en cada ramal)",
-    "La carga está correctamente eslingada/estrobada, con el peso distribuido en todos los ramales por igual",
-    "El terreno donde se posiciona el equipo es apto y los estabilizadores están correctamente extendidos y apoyados",
-    "Se delimitó y señalizó el área de influencia de la maniobra (radio de giro de la pluma), restringiendo el acceso a personal no autorizado",
-    "El operador cuenta con licencia y capacitación certificada vigente para maniobras de izaje",
-    "Se cuenta con rigger o señalero capacitado y certificado, con código de señales acordado con el operador",
-    "Las condiciones ambientales (viento, visibilidad) son adecuadas para realizar la maniobra",
-    "Existe un plan de izaje o procedimiento de trabajo específico para esta maniobra",
-    {text: "Observaciones adicionales del evaluador", tipo:"texto"},
-  ],
-};
-on(document.getElementById("agregarFormatoIzajeBtn"), "click", async () => {
-  const estado = document.getElementById("fmtRecomendadosEstado");
-  const yaExiste = (CACHE.checklists||[]).some(c=>c.id===CHECKLIST_IZAJE_CARGA.id);
-  if(yaExiste){ estado.textContent = "Este formato ya está agregado."; return; }
-  const btn = document.getElementById("agregarFormatoIzajeBtn");
-  btn.disabled = true;
-  try{
-    await put("checklists", Object.assign({}, CHECKLIST_IZAJE_CARGA));
-    await loadCache();
-    renderInsTipoOptions();
-    renderFormatosTable();
-    estado.textContent = "Formato agregado. Ya está disponible en Realizar inspecciones.";
-  }catch(e){
-    alert("No se pudo agregar el formato: " + e.message);
-  }
-  btn.disabled = false;
-});
 on(document.getElementById("addFormatoBtn"), "click", async () => {
   const nombre = document.getElementById("fmtNombre").value.trim();
   const categoria = document.getElementById("fmtCategoria").value;
@@ -9200,38 +9190,6 @@ function getJsPDF(){
   if(typeof window.jspdf === "undefined" || !window.jspdf.jsPDF) return null;
   return window.jspdf.jsPDF;
 }
-/* Gráfico de % de capacidad usada para el formato "Evaluación de carga --
-   Maniobras de izaje" (CHECKLIST_IZAJE_CARGA): compara el peso real de la
-   carga contra la capacidad máxima admisible que el propio usuario ingresó
-   (leída de la tabla de carga del fabricante -- no se inventa ni se estima
-   acá). Devuelve la nueva posición Y del cursor del PDF. Si falta alguno de
-   los dos datos o no son números válidos, no dibuja nada y no interrumpe el
-   resto del informe. */
-function dibujarGraficoCapacidadIzajePdf(doc, rec, y){
-  const itemPeso = (rec.checklist||[]).find(it=>it.text===LABEL_IZAJE_PESO);
-  const itemCap = (rec.checklist||[]).find(it=>it.text===LABEL_IZAJE_CAPACIDAD);
-  const peso = itemPeso ? parseFloat(String(itemPeso.valorTexto||"").replace(",",".")) : NaN;
-  const cap = itemCap ? parseFloat(String(itemCap.valorTexto||"").replace(",",".")) : NaN;
-  if(isNaN(peso) || isNaN(cap) || cap<=0) return y;
-  const pct = (peso/cap)*100;
-  const color = pct>100 ? [211,59,59] : pct>=80 ? [237,161,0] : [12,163,12];
-  const mensaje = pct>100 ? "SUPERA LA CAPACIDAD ADMISIBLE — NO IZAR" : pct>=80 ? "Cerca del límite — evaluar con precaución" : "Dentro del margen seguro";
-  doc.setFont(undefined,"bold"); doc.text("Evaluación de capacidad de izaje", 14, y); doc.setFont(undefined,"normal"); y += 6;
-  doc.setFontSize(9);
-  doc.text(`Peso de la carga: ${peso} kg    Capacidad admisible: ${cap} kg    Uso de la capacidad: ${pct.toFixed(0)}%`, 14, y); y += 5;
-  const barX = 14, barY = y, barW = 160, barH = 6, escalaMax = 150;
-  doc.setFillColor(230,230,230); doc.rect(barX, barY, barW, barH, "F");
-  const fillW = Math.max(0, Math.min(pct, escalaMax)) / escalaMax * barW;
-  doc.setFillColor(color[0], color[1], color[2]); doc.rect(barX, barY, fillW, barH, "F");
-  const marca100 = (100/escalaMax) * barW;
-  doc.setDrawColor(60,60,60); doc.line(barX+marca100, barY-1, barX+marca100, barY+barH+1);
-  doc.setFontSize(7.5); doc.text("100%", barX+marca100-4, barY+barH+4);
-  y += barH + 10;
-  doc.setFontSize(10); doc.setTextColor(color[0], color[1], color[2]); doc.setFont(undefined,"bold");
-  doc.text(mensaje, 14, y); y += 8;
-  doc.setFont(undefined,"normal"); doc.setTextColor(0,0,0); doc.setFontSize(10);
-  return y;
-}
 function descargarInspeccionPdf(rec){
   const JsPDFClass = getJsPDF();
   if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
@@ -9245,9 +9203,6 @@ function descargarInspeccionPdf(rec){
   doc.setFontSize(10);
   doc.text(`Empresa: ${(CACHE.empresa&&CACHE.empresa.razonSocial)||"—"}`, 14, y); y += 6;
   doc.text(`Formato: ${cl?cl.nombre:"—"}   Área: ${areaName(rec.areaId)}   Inspector: ${rec.inspector||"—"}   Estado: ${ESTADO_INS_LABEL[estado]}`, 14, y); y += 8;
-  if(cl && cl.id === "cl-izaje-carga"){
-    y = dibujarGraficoCapacidadIzajePdf(doc, rec, y);
-  }
   if(rec.descripcion){
     doc.setFont(undefined,"bold"); doc.text("Descripción / motivo:", 14, y); doc.setFont(undefined,"normal"); y += 5;
     const splitDesc = doc.splitTextToSize(rec.descripcion, 180);
@@ -9588,6 +9543,296 @@ function descargarAstPdf(rec){
     });
   }
   doc.save(`AST_${(rec.actividad||"tarea").replace(/[^a-zA-Z0-9]+/g,"_")}_${rec.fecha||""}.pdf`);
+}
+
+/* =========================================================
+   EVALUACIÓN DE CARGA — MANIOBRAS DE IZAJE
+   Basado en la guía "Control de peligros en el izaje de cargas con grúas
+   móviles" de Mutual de Seguridad CChC (bibliografía de la guía: NCh
+   1258/1 y /2, ASME B30.5-2011, OSHA 29CFR1926 subparte CC). Agregado
+   después de un accidente real por rotura de cadenas de izaje al no
+   evaluar la carga -- por eso el cálculo compara el peso real contra DOS
+   límites independientes (capacidad de la grúa Y capacidad de las
+   eslingas/cadenas), ya que cualquiera de los dos puede fallar por
+   separado aunque el otro esté bien. No se inventa ninguna tabla de
+   factores de ángulo ni de reducción de capacidad: el usuario ingresa la
+   capacidad que ya viene certificada en la tabla de carga del fabricante
+   y en la etiqueta/certificado de la eslinga o cadena para el ángulo y N°
+   de ramales que use.
+   ========================================================= */
+const IZAJE_CHECKLIST_ITEMS = [
+  "Los accesorios de izaje (cadenas, eslingas, grilletes, ganchos) tienen su capacidad de carga límite claramente identificada",
+  "Los accesorios de izaje fueron inspeccionados visualmente antes del uso (sin fisuras, deformaciones, desgaste o corrosión) y se descartaron los que estén en mal estado",
+  "Existe un registro de inspección periódica de los accesorios de izaje expuestos a desgaste",
+  "Los ganchos utilizados cuentan con seguro de bloqueo (pestillo de seguridad)",
+  "La carga está correctamente eslingada/estrobada, con el peso distribuido en todos los ramales por igual",
+  "El terreno donde se posiciona el equipo es apto y los estabilizadores están correctamente extendidos y apoyados",
+  "Se delimitó y señalizó el área de influencia de la maniobra (radio de giro de la pluma), restringiendo el acceso a personal no autorizado",
+  "El operador cuenta con licencia y capacitación certificada vigente para maniobras de izaje",
+  "Se cuenta con rigger o señalero capacitado y certificado, con código de señales acordado con el operador",
+  "Las condiciones ambientales (viento, visibilidad) son adecuadas para realizar la maniobra",
+  "Existe un plan de izaje o procedimiento de trabajo específico para esta maniobra",
+];
+let izajeChecklistEstado = {};
+function drawIzajeChecklist(){
+  document.getElementById("izajeChecklistWrap").innerHTML = IZAJE_CHECKLIST_ITEMS.map((texto,idx)=>{
+    const est = izajeChecklistEstado[idx] || "";
+    return `
+    <div class="checklist-item">
+      <div>${texto}</div>
+      <div class="seg" data-izidx="${idx}">
+        <button data-v="ok" class="${est==='ok'?'on-ok':''}">Cumple</button>
+        <button data-v="fail" class="${est==='fail'?'on-fail':''}">No cumple</button>
+        <button data-v="na" class="${est==='na'?'on-na':''}">N/A</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+document.getElementById("izajeChecklistWrap").addEventListener("click",(e)=>{
+  const btn = e.target.closest("button[data-v]");
+  if(!btn) return;
+  const seg = btn.closest(".seg");
+  izajeChecklistEstado[seg.dataset.izidx] = btn.dataset.v;
+  drawIzajeChecklist();
+});
+
+/* Cálculo puramente aritmético: % de uso = peso total / capacidad. No hay
+   estimaciones -- si falta un dato o la capacidad es 0, esa comparación en
+   particular simplemente no se muestra. */
+function calcIzajePorcentajes({pesoCarga, pesoAccesorios, capacidadGrua, capacidadEslingas}){
+  const pesoTotal = (Number(pesoCarga)||0) + (Number(pesoAccesorios)||0);
+  const cGrua = Number(capacidadGrua);
+  const cEsl = Number(capacidadEslingas);
+  return {
+    pesoTotal,
+    pctGrua: (pesoTotal>0 && cGrua>0) ? (pesoTotal/cGrua)*100 : null,
+    pctEslingas: (pesoTotal>0 && cEsl>0) ? (pesoTotal/cEsl)*100 : null,
+  };
+}
+function izajeSemaforo(pct){
+  if(pct===null) return null;
+  return pct>100 ? "alto" : pct>=80 ? "medio" : "bajo";
+}
+const IZAJE_SEMAFORO_COLOR = {bajo:[12,163,12], medio:[237,161,0], alto:[211,59,59]};
+const IZAJE_SEMAFORO_MSG = {bajo:"Dentro del margen seguro", medio:"Cerca del límite — evaluar con precaución", alto:"SUPERA LA CAPACIDAD — NO IZAR"};
+function barraCapacidadHtml(label, pct){
+  if(pct===null) return `<div class="kv" style="margin-top:6px;">${label}: ingresa el peso y la capacidad para calcular</div>`;
+  const sem = izajeSemaforo(pct);
+  const color = `rgb(${IZAJE_SEMAFORO_COLOR[sem].join(",")})`;
+  const anchoPct = Math.max(0, Math.min(pct,150))/150*100;
+  return `
+  <div style="margin-top:8px;">
+    <div class="kv">${label}: <strong>${pct.toFixed(0)}%</strong> — ${IZAJE_SEMAFORO_MSG[sem]}</div>
+    <div style="background:#e6e6e6;border-radius:4px;height:10px;position:relative;overflow:hidden;">
+      <div style="background:${color};height:100%;width:${anchoPct}%;"></div>
+      <div style="position:absolute;left:${100/150*100}%;top:0;bottom:0;width:1px;background:#666;"></div>
+    </div>
+  </div>`;
+}
+function izajeLeerFormulario(){
+  return {
+    pesoCarga: document.getElementById("izajePesoCarga").value,
+    pesoAccesorios: document.getElementById("izajePesoAccesorios").value,
+    capacidadGrua: document.getElementById("izajeCapacidadGrua").value,
+    capacidadEslingas: document.getElementById("izajeCapacidadEslingas").value,
+  };
+}
+function renderIzajeGrafico(){
+  const {pesoTotal, pctGrua, pctEslingas} = calcIzajePorcentajes(izajeLeerFormulario());
+  document.getElementById("izajeGraficoWrap").innerHTML = `
+    <div class="kv">Peso total a izar (carga + accesorios): <strong>${pesoTotal || 0} kg</strong></div>
+    ${barraCapacidadHtml("Uso de la capacidad de la grúa/camión pluma", pctGrua)}
+    ${barraCapacidadHtml("Uso de la capacidad de las eslingas/cadenas", pctEslingas)}
+  `;
+}
+["izajePesoCarga","izajePesoAccesorios","izajeCapacidadGrua","izajeCapacidadEslingas"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", renderIzajeGrafico);
+});
+
+let izajeEditingId = null;
+function resetIzajeForm(){
+  izajeEditingId = null;
+  ["izajeFecha","izajeArea","izajeEquipo","izajeResponsable","izajePesoCarga","izajePesoAccesorios",
+   "izajeLongitudPluma","izajeRadioTrabajo","izajeCapacidadGrua","izajeCapacidadEslingas",
+   "izajeAnguloEslingas","izajeLargoViento","izajeObservaciones"].forEach(id=>{ document.getElementById(id).value = ""; });
+  izajeChecklistEstado = {};
+  drawIzajeChecklist();
+  renderIzajeGrafico();
+  document.getElementById("izajeFormTitle").textContent = "Evaluación de carga — Maniobras de izaje";
+  document.getElementById("saveIzajeBtn").textContent = "Guardar evaluación";
+  document.getElementById("cancelEditIzajeBtn").style.display = "none";
+}
+on(document.getElementById("cancelEditIzajeBtn"), "click", () => resetIzajeForm());
+
+function izajeFormularioARegistro(id){
+  return {
+    id,
+    fecha: document.getElementById("izajeFecha").value,
+    areaId: document.getElementById("izajeArea").value,
+    equipo: document.getElementById("izajeEquipo").value.trim(),
+    responsable: document.getElementById("izajeResponsable").value.trim(),
+    pesoCarga: +document.getElementById("izajePesoCarga").value || null,
+    pesoAccesorios: +document.getElementById("izajePesoAccesorios").value || null,
+    longitudPluma: +document.getElementById("izajeLongitudPluma").value || null,
+    radioTrabajo: +document.getElementById("izajeRadioTrabajo").value || null,
+    capacidadGrua: +document.getElementById("izajeCapacidadGrua").value || null,
+    capacidadEslingas: +document.getElementById("izajeCapacidadEslingas").value || null,
+    anguloEslingas: +document.getElementById("izajeAnguloEslingas").value || null,
+    largoViento: +document.getElementById("izajeLargoViento").value || null,
+    observaciones: document.getElementById("izajeObservaciones").value.trim(),
+    items: IZAJE_CHECKLIST_ITEMS.map((texto,idx)=>({texto, estado: izajeChecklistEstado[idx]||""})),
+  };
+}
+function startEditIzaje(id){
+  const rec = CACHE.izajeCarga.find(r=>r.id===id);
+  if(!rec) return;
+  izajeEditingId = id;
+  document.getElementById("izajeFecha").value = rec.fecha || "";
+  document.getElementById("izajeArea").value = rec.areaId || "";
+  document.getElementById("izajeEquipo").value = rec.equipo || "";
+  document.getElementById("izajeResponsable").value = rec.responsable || "";
+  document.getElementById("izajePesoCarga").value = rec.pesoCarga ?? "";
+  document.getElementById("izajePesoAccesorios").value = rec.pesoAccesorios ?? "";
+  document.getElementById("izajeLongitudPluma").value = rec.longitudPluma ?? "";
+  document.getElementById("izajeRadioTrabajo").value = rec.radioTrabajo ?? "";
+  document.getElementById("izajeCapacidadGrua").value = rec.capacidadGrua ?? "";
+  document.getElementById("izajeCapacidadEslingas").value = rec.capacidadEslingas ?? "";
+  document.getElementById("izajeAnguloEslingas").value = rec.anguloEslingas ?? "";
+  document.getElementById("izajeLargoViento").value = rec.largoViento ?? "";
+  document.getElementById("izajeObservaciones").value = rec.observaciones || "";
+  izajeChecklistEstado = {};
+  (rec.items||[]).forEach((it,idx)=>{ if(it.estado) izajeChecklistEstado[idx] = it.estado; });
+  drawIzajeChecklist();
+  renderIzajeGrafico();
+  document.getElementById("izajeFormTitle").textContent = `Editando evaluación del ${fmtDate(rec.fecha)}`;
+  document.getElementById("saveIzajeBtn").textContent = "Guardar cambios";
+  document.getElementById("cancelEditIzajeBtn").style.display = "";
+  document.getElementById("izajeFormTitle").scrollIntoView({behavior:"smooth", block:"start"});
+}
+on(document.getElementById("saveIzajeBtn"), "click", async () => {
+  const fecha = document.getElementById("izajeFecha").value;
+  const areaId = document.getElementById("izajeArea").value;
+  if(!fecha || !areaId){ alert("Completa al menos la fecha y el área antes de guardar."); return; }
+  const rec = izajeFormularioARegistro(izajeEditingId || uid());
+  await put("izajeCarga", rec);
+  await loadCache();
+  const creando = !izajeEditingId;
+  resetIzajeForm();
+  renderIzajeTable();
+  alert(creando ? "Evaluación de carga guardada." : "Evaluación de carga actualizada.");
+});
+
+function renderIzajeTable(){
+  const rows = (CACHE.izajeCarga||[]).slice().sort((a,b)=> new Date(b.fecha)-new Date(a.fecha));
+  document.getElementById("izajeTable").innerHTML = rows.map(r=>{
+    const {pctGrua, pctEslingas} = calcIzajePorcentajes(r);
+    const fmtPct = (pct)=> pct===null ? "—" : `<span class="pill ${izajeSemaforo(pct)}">${pct.toFixed(0)}%</span>`;
+    return `<tr>
+      <td>${fmtDate(r.fecha)}</td>
+      <td>${areaName(r.areaId)}</td>
+      <td>${r.equipo||"—"}</td>
+      <td>${fmtPct(pctGrua)}</td>
+      <td>${fmtPct(pctEslingas)}</td>
+      <td>${r.responsable||"—"}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn secondary small" data-izaje-editar="${r.id}">Editar</button>
+        <button class="btn small" data-izaje-imprimir="${r.id}">Descargar PDF</button>
+        <button class="subtle-btn" data-izaje-eliminar="${r.id}">Eliminar</button>
+      </td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="7">Aún no hay evaluaciones de carga registradas</td></tr>`;
+}
+on(document.getElementById("izajeTable"), "click", async (e) => {
+  const editBtn = e.target.closest("button[data-izaje-editar]");
+  if(editBtn){ startEditIzaje(editBtn.dataset.izajeEditar); return; }
+  const delBtn = e.target.closest("button[data-izaje-eliminar]");
+  if(delBtn){
+    const rec = CACHE.izajeCarga.find(r=>r.id===delBtn.dataset.izajeEliminar);
+    if(!rec) return;
+    if(!confirm(`¿Eliminar la evaluación de carga del ${fmtDate(rec.fecha)}? Esta acción no se puede deshacer.`)) return;
+    await deleteRecord("izajeCarga", rec.id);
+    await loadCache();
+    if(izajeEditingId === rec.id) resetIzajeForm();
+    renderIzajeTable();
+    return;
+  }
+  const printBtn = e.target.closest("button[data-izaje-imprimir]");
+  if(printBtn){
+    const rec = CACHE.izajeCarga.find(r=>r.id===printBtn.dataset.izajeImprimir);
+    if(rec) descargarIzajePdf(rec);
+  }
+});
+
+function descargarIzajePdf(rec){
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const doc = new JsPDFClass();
+  addLogoPdf(doc);
+  let y = 16;
+  doc.setFontSize(16);
+  doc.text("Evaluación de carga — Maniobra de izaje", 14, y); y += 8;
+  doc.setFontSize(10);
+  doc.text(`Empresa: ${(CACHE.empresa&&CACHE.empresa.razonSocial)||"—"}`, 14, y); y += 6;
+  const lineaDatosIzaje = datosEmpresaLineaPdf();
+  if(lineaDatosIzaje){ doc.text(lineaDatosIzaje, 14, y); y += 6; }
+  y += 2;
+  doc.autoTable({ startY:y, head:[["Dato","Detalle"]], body:[
+    ["Fecha", fmtDate(rec.fecha)],
+    ["Área", areaName(rec.areaId)],
+    ["Equipo utilizado", rec.equipo || "—"],
+    ["Responsable de la evaluación", rec.responsable || "—"],
+    ["Longitud de pluma", rec.longitudPluma!=null ? rec.longitudPluma+" m" : "—"],
+    ["Radio de trabajo", rec.radioTrabajo!=null ? rec.radioTrabajo+" m" : "—"],
+    ["Ángulo de las eslingas", rec.anguloEslingas!=null ? rec.anguloEslingas+"°" : "—"],
+    ["Largo del viento / cuerda guía", rec.largoViento!=null ? rec.largoViento+" m" : "—"],
+  ], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  const {pesoTotal, pctGrua, pctEslingas} = calcIzajePorcentajes(rec);
+  doc.setFontSize(12); doc.text("Cálculo de capacidad", 14, y); y += 5;
+  doc.setFontSize(9);
+  doc.text(`Peso de la carga: ${rec.pesoCarga??"—"} kg    Peso de accesorios: ${rec.pesoAccesorios??"—"} kg    Peso total: ${pesoTotal} kg`, 14, y); y += 7;
+  y = dibujarBarraCapacidadPdf(doc, y, "Capacidad de la grúa/camión pluma", rec.capacidadGrua, pctGrua);
+  y = dibujarBarraCapacidadPdf(doc, y, "Capacidad de las eslingas/cadenas (WLL)", rec.capacidadEslingas, pctEslingas);
+  y += 4;
+
+  doc.setFontSize(12); doc.text("Lista de verificación", 14, y); y += 4;
+  doc.autoTable({ startY:y, head:[["Ítem","Resultado"]],
+    body: (rec.items||[]).map(it=>[it.texto, it.estado==='ok'?'Cumple':it.estado==='fail'?'No cumple':it.estado==='na'?'N/A':"—"]),
+    styles:{fontSize:9}, headStyles:{fillColor:[236,131,90]} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  if(rec.observaciones){
+    if(y > 260){ doc.addPage(); y = 16; }
+    doc.setFont(undefined,"bold"); doc.text("Observaciones:", 14, y); doc.setFont(undefined,"normal"); y += 5;
+    const splitObs = doc.splitTextToSize(rec.observaciones, 180);
+    doc.text(splitObs, 14, y); y += splitObs.length*5;
+  }
+  doc.save(`Evaluacion_carga_izaje_${rec.fecha||""}.pdf`);
+}
+/* Barra de % de uso de capacidad para el PDF -- misma lógica de semáforo
+   que la vista previa en pantalla (barraCapacidadHtml), dibujada a mano
+   con primitivas de jsPDF (rect) ya que jsPDF no dibuja gráficos nativos. */
+function dibujarBarraCapacidadPdf(doc, y, label, capacidad, pct){
+  doc.setFontSize(9); doc.setFont(undefined,"normal");
+  if(pct===null){
+    doc.text(`${label}: capacidad no ingresada`, 14, y);
+    return y + 8;
+  }
+  const sem = izajeSemaforo(pct);
+  const color = IZAJE_SEMAFORO_COLOR[sem];
+  doc.text(`${label}: capacidad ${capacidad} kg — uso ${pct.toFixed(0)}%`, 14, y); y += 4;
+  const barX = 14, barW = 160, barH = 5, escalaMax = 150;
+  doc.setFillColor(230,230,230); doc.rect(barX, y, barW, barH, "F");
+  const fillW = Math.max(0, Math.min(pct, escalaMax)) / escalaMax * barW;
+  doc.setFillColor(color[0], color[1], color[2]); doc.rect(barX, y, fillW, barH, "F");
+  const marca100 = (100/escalaMax) * barW;
+  doc.setDrawColor(60,60,60); doc.line(barX+marca100, y-1, barX+marca100, y+barH+1);
+  y += barH + 5;
+  doc.setTextColor(color[0], color[1], color[2]); doc.setFont(undefined,"bold");
+  doc.text(IZAJE_SEMAFORO_MSG[sem], 14, y); y += 7;
+  doc.setFont(undefined,"normal"); doc.setTextColor(0,0,0);
+  return y;
 }
 
 /* =========================================================
@@ -18129,6 +18374,7 @@ async function refreshAll(){
   renderCphys();
   renderEmergencia();
   renderAstTable();
+  renderIzajeTable();
   renderTmertTable();
   if(!tmertEditingId){
     if(!document.getElementById("tmertFechaRegistro").value) document.getElementById("tmertFechaRegistro").value = new Date().toISOString().slice(0,10);
@@ -18143,6 +18389,7 @@ async function refreshAll(){
   drawFindings();
   drawInspeccionados();
   if(!astEditingId){ drawAstRiesgos(); drawAstTrabajadores(); }
+  if(!izajeEditingId){ drawIzajeChecklist(); renderIzajeGrafico(); }
   drawAccTrabajadores();
   if(!valeEditingId){
     document.getElementById("valeFolio").value = fmtFolio(nextFolioEpp());
