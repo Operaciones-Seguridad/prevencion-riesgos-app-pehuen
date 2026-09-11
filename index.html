@@ -2021,8 +2021,10 @@
       </div>
 
       <label style="margin-top:14px;display:block;">Cálculo de velocidad y distancias</label>
+      <div class="desc">Si ya sabés la velocidad (testigo, GPS/tacógrafo, dashcam, declaración propia), ingrésala directamente en "Velocidad conocida/estimada" — no hace falta huella de frenado para eso. Si no la sabés pero hay huella medida en el suelo, dejá ese campo vacío y completá la huella; el sistema la calcula. Si completás ambas, se usa la conocida y la calculada por huella queda como referencia cruzada.</div>
       <div class="form-grid">
-        <div><label>Largo de la huella de frenado (m, dejar vacío si no hay huellas visibles)</label><input id="transitoHuellaFrenado" type="number" min="0" step="0.1"></div>
+        <div><label>Velocidad conocida/estimada (km/h, si ya la sabés)</label><input id="transitoVelocidadConocida" type="number" min="0" step="1"></div>
+        <div><label>Largo de la huella de frenado (m, si no sabés la velocidad)</label><input id="transitoHuellaFrenado" type="number" min="0" step="0.1"></div>
         <div><label>Tiempo de reacción a usar (segundos)</label><input id="transitoTiempoReaccion" type="number" min="0.4" max="4" step="0.1"></div>
       </div>
       <div id="transitoCalculoWrap" style="margin-top:10px;"></div>
@@ -2034,6 +2036,7 @@
       <div class="desc">Sube una foto del lugar del accidente y agrega íconos arrastrables encima para armar un croquis básico (vehículos, dirección, huellas, etc.).</div>
       <div class="toolbar">
         <div><button class="btn small secondary" id="transitoSubirFotoCroquisBtn" type="button">⬆ Subir foto de fondo</button><input type="file" id="transitoFotoCroquisInput" accept="image/*" style="display:none;"></div>
+        <div><button class="btn small secondary" id="transitoQuitarFotoCroquisBtn" type="button">🗑 Quitar foto de fondo</button></div>
       </div>
       <div class="toolbar" id="transitoPaletaIconos" style="flex-wrap:wrap;"></div>
       <div id="transitoCroquisWrap" style="margin-top:8px;"></div>
@@ -2045,7 +2048,14 @@
       <div id="transitoFotosWrap" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;"></div>
 
       <div style="margin-top:14px;"><label>Observaciones</label><textarea id="transitoObservaciones" rows="2"></textarea></div>
-      <div><label>Conclusiones</label><textarea id="transitoConclusiones" rows="2"></textarea></div>
+      <div>
+        <label>Conclusiones</label>
+        <textarea id="transitoConclusiones" rows="4"></textarea>
+        <div class="toolbar" style="margin-top:4px;">
+          <button class="btn small secondary" id="transitoGenerarConclusionesBtn" type="button">✨ Generar conclusiones técnicas a partir de los datos</button>
+        </div>
+        <div class="desc" style="margin-top:2px;">Arma un borrador a partir de lo que ya completaste (cálculo de velocidad, checklist, estado del conductor); revísalo y edítalo antes de guardar.</div>
+      </div>
 
       <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn" id="saveTransitoBtn">Guardar investigación</button>
@@ -15742,6 +15752,7 @@ function barraVelocidadHtml(label, pct){
 }
 function transitoLeerCalculo(){
   return {
+    velocidadConocida: document.getElementById("transitoVelocidadConocida").value,
     huellaFrenado: document.getElementById("transitoHuellaFrenado").value,
     coefFriccion: document.getElementById("transitoCoefFriccion").value,
     tipoPendiente: document.getElementById("transitoTipoPendiente").value,
@@ -15751,31 +15762,98 @@ function transitoLeerCalculo(){
   };
 }
 /* Resultado de cálculo reutilizado tanto por la vista previa en pantalla
-   como por el PDF, para que nunca puedan mostrar números distintos. */
+   como por el PDF, para que nunca puedan mostrar números distintos. Si el
+   investigador ya conoce la velocidad (testigo, GPS/tacógrafo, dashcam,
+   declaración), se usa esa directamente -- no hace falta huella de frenado
+   para ese caso (ej. alcance a un camión que ya estaba frenando). Si además
+   hay huella medida, la velocidad calculada por huella se muestra como
+   referencia cruzada, nunca se descarta en silencio. */
 function transitoCalcularResultado(datos){
-  const vms = calcVelocidadDesdeHuella(datos);
-  if(vms===null) return null;
-  const vkmh = vms*3.6;
-  const dist = calcDistancias({velocidadMs:vms, tiempoReaccion:datos.tiempoReaccion, coefFriccion:datos.coefFriccion});
+  const vConocida = Number(datos.velocidadConocida);
+  const tieneConocida = vConocida > 0;
+  const vmsHuella = calcVelocidadDesdeHuella(datos);
+  const vkmhHuella = vmsHuella!=null ? vmsHuella*3.6 : null;
+  const vkmh = tieneConocida ? vConocida : vkmhHuella;
+  if(vkmh==null) return null;
+  const dist = calcDistancias({velocidadMs: vkmh/3.6, tiempoReaccion:datos.tiempoReaccion, coefFriccion:datos.coefFriccion});
   const vmax = Number(datos.velocidadMaxima);
   const pct = vmax>0 ? (vkmh/vmax)*100 : null;
-  return { vkmh, dist, pct };
+  return { vkmh, dist, pct, origen: tieneConocida ? "conocida" : "huella", vkmhHuella: tieneConocida ? vkmhHuella : null };
+}
+/* Borrador de conclusiones armado SOLO con los datos ya ingresados (cálculo,
+   checklist, estado del conductor) -- ninguna frase agrega un hecho que no
+   esté en el registro. Sirve de punto de partida; el investigador lo revisa
+   y ajusta con su propio criterio antes de guardar. */
+function generarConclusionesTransito(rec){
+  const partes = [];
+  const tipoLabel = (TRANSITO_TIPO_LABEL[rec.tipoAccidente]||rec.tipoAccidente||"accidente de tránsito").toLowerCase();
+  partes.push(`Se investigó un(a) ${tipoLabel} ocurrido en ${areaName(rec.areaId)}${rec.vehiculo?` (vehículo: ${rec.vehiculo})`:""}.`);
+
+  const res = transitoCalcularResultado(rec);
+  if(res){
+    if(res.origen==="conocida"){
+      partes.push(`Se usó una velocidad conocida/estimada de ${res.vkmh.toFixed(0)} km/h (informada por testigo, dispositivo u otra fuente distinta del cálculo por huella).`);
+      if(res.vkmhHuella!=null) partes.push(`Como referencia cruzada, la velocidad calculada a partir de la huella de frenado da ${res.vkmhHuella.toFixed(0)} km/h.`);
+    } else {
+      const condLabel = (COEF_FRICCION_REF[rec.condicionCalzada]||{}).label || "valor ingresado";
+      partes.push(`Según el cálculo realizado a partir de la huella de frenado (${rec.huellaFrenado} m) y un coeficiente de fricción de ${rec.coefFriccion} (${condLabel}), el vehículo circulaba a una velocidad estimada de ${res.vkmh.toFixed(0)} km/h antes de iniciar el frenado.`);
+    }
+    if(res.pct!=null){
+      if(res.pct>100){
+        partes.push(`Esta velocidad SUPERA en ${(res.pct-100).toFixed(0)} puntos porcentuales la velocidad máxima permitida en el tramo (${rec.velocidadMaxima} km/h), por lo que el exceso de velocidad es un factor contribuyente a considerar.`);
+      } else if(res.pct>=80){
+        partes.push(`Esta velocidad está cerca del límite permitido en el tramo (${rec.velocidadMaxima} km/h, ${res.pct.toFixed(0)}% de uso).`);
+      } else {
+        partes.push(`Esta velocidad está dentro del límite permitido en el tramo (${rec.velocidadMaxima} km/h).`);
+      }
+    }
+    if(res.dist.distTotal!=null){
+      partes.push(`La distancia total de detención estimada (reacción + frenado) fue de ${res.dist.distTotal.toFixed(1)} m.`);
+      if(rec.tipoAccidente==="colision-trasera"){
+        partes.push(`Tratándose de una colisión trasera (alcance): si la distancia que el vehículo mantenía respecto al vehículo de adelante era menor a esos ${res.dist.distTotal.toFixed(1)} m, no habría sido posible evitar la colisión ante una frenada de ese vehículo, lo que es coherente con una distancia de seguimiento insuficiente para la velocidad de circulación.`);
+      }
+    }
+  } else {
+    partes.push("No fue posible estimar la velocidad del vehículo por no contar con una velocidad conocida ni con una huella de frenado medida en terreno; se recomienda obtener alguno de estos datos en una futura inspección si el lugar aún lo permite.");
+  }
+
+  if(rec.estadoConductor==="fatiga" || rec.estadoConductor==="alcohol-drogas"){
+    const estadoLabel = rec.estadoConductor==="fatiga" ? "fatiga o somnolencia" : "efectos de alcohol o drogas";
+    partes.push(`Se registró que el conductor presentaba ${estadoLabel} al momento del hecho, lo que pudo aumentar su tiempo de reacción real por sobre el valor usado en el cálculo (${rec.tiempoReaccion} s).`);
+  }
+
+  const fallas = (rec.items||[]).filter(it=>it.estado==="fail").map(it=>it.texto);
+  if(fallas.length){
+    partes.push(`De la lista de verificación, NO se cumplieron los siguientes puntos: ${fallas.map(f=>`"${f}"`).join("; ")}.`);
+  }
+
+  const sinRegistrar = (rec.items||[]).filter(it=>!it.estado).length;
+  if(sinRegistrar>0){
+    partes.push(`Quedaron ${sinRegistrar} punto(s) de la lista de verificación sin registrar; se recomienda completarlos antes de cerrar la investigación.`);
+  }
+
+  partes.push("Esta conclusión es un borrador técnico generado a partir de los datos registrados; revísala, complétala con el criterio del investigador y ajústala antes de considerarla definitiva.");
+  return partes.join(" ");
 }
 function renderTransitoCalculo(){
   const wrap = document.getElementById("transitoCalculoWrap");
   const res = transitoCalcularResultado(transitoLeerCalculo());
   if(!res){
-    wrap.innerHTML = '<div class="kv">Ingresa el largo de la huella de frenado y el coeficiente de fricción para calcular la velocidad estimada.</div>';
+    wrap.innerHTML = '<div class="kv">Ingresa una velocidad conocida/estimada, o el largo de la huella de frenado y el coeficiente de fricción, para calcular.</div>';
     return;
   }
-  const { vkmh, dist, pct } = res;
+  const { vkmh, dist, pct, origen, vkmhHuella } = res;
+  const origenTexto = origen==="conocida" ? "velocidad conocida/estimada ingresada" : "velocidad estimada a partir de la huella de frenado";
+  const crossCheck = (origen==="conocida" && vkmhHuella!=null)
+    ? `<div class="kv">Como referencia cruzada, la velocidad calculada a partir de la huella de frenado da ${vkmhHuella.toFixed(1)} km/h.</div>` : "";
   wrap.innerHTML = `
-    <div class="kv">Velocidad estimada antes de frenar: <strong>${vkmh.toFixed(1)} km/h</strong></div>
+    <div class="kv">${origen==="conocida"?"Velocidad usada":"Velocidad estimada"} (${origenTexto}): <strong>${vkmh.toFixed(1)} km/h</strong></div>
+    ${crossCheck}
     <div class="kv">Distancia de reacción: ${dist.distReaccion.toFixed(1)} m — Distancia de frenado: ${dist.distFrenado!=null?dist.distFrenado.toFixed(1)+" m":"—"} — Distancia total de detención: ${dist.distTotal!=null?dist.distTotal.toFixed(1)+" m":"—"}</div>
-    ${barraVelocidadHtml("Velocidad estimada vs. límite permitido", pct)}
+    ${barraVelocidadHtml("Velocidad vs. límite permitido", pct)}
   `;
 }
-["transitoHuellaFrenado","transitoCoefFriccion","transitoTipoPendiente","transitoPendientePct","transitoTiempoReaccion","transitoVelocidadMaxima"].forEach(id=>{
+["transitoVelocidadConocida","transitoHuellaFrenado","transitoCoefFriccion","transitoTipoPendiente","transitoPendientePct","transitoTiempoReaccion","transitoVelocidadMaxima"].forEach(id=>{
   document.getElementById(id).addEventListener("input", renderTransitoCalculo);
   document.getElementById(id).addEventListener("change", renderTransitoCalculo);
 });
@@ -15793,6 +15871,7 @@ const TRANSITO_CHECKLIST_ITEMS = [
   "Se identificaron testigos y se registró su versión de los hechos",
   "Se verificó la licencia de conducir y su vigencia/categoría",
   "Se verificó si el conductor contaba con capacitación en conducción segura vigente",
+  "Se evaluó si el vehículo mantenía una distancia de seguimiento segura respecto al vehículo de adelante, acorde a su velocidad",
 ];
 let transitoChecklistEstado = {};
 function drawTransitoChecklist(){
@@ -15919,6 +15998,13 @@ on(document.getElementById("transitoFotoCroquisInput"), "change", async (e)=>{
   currentCroquisFoto = await readFileAsDataUrl(file);
   renderTransitoCroquis();
 });
+on(document.getElementById("transitoQuitarFotoCroquisBtn"), "click", ()=>{
+  if(!currentCroquisFoto) return;
+  if(!confirm("¿Quitar la foto de fondo del croquis? También se quitan los íconos ya colocados sobre ella.")) return;
+  currentCroquisFoto = null;
+  currentCroquisIconos = {};
+  renderTransitoCroquis();
+});
 
 let currentFotosAdicionales = [];
 function renderTransitoFotos(){
@@ -15946,7 +16032,7 @@ let transitoEditingId = null;
 function resetTransitoForm(){
   transitoEditingId = null;
   ["transitoFecha","transitoHora","transitoArea","transitoAccidenteId","transitoVehiculo","transitoResponsable","transitoDescripcion",
-   "transitoPendientePct","transitoVelocidadMaxima","transitoHuellaFrenado","transitoObservaciones","transitoConclusiones"].forEach(id=>{ document.getElementById(id).value = ""; });
+   "transitoPendientePct","transitoVelocidadMaxima","transitoVelocidadConocida","transitoHuellaFrenado","transitoObservaciones","transitoConclusiones"].forEach(id=>{ document.getElementById(id).value = ""; });
   document.getElementById("transitoTipo").value = "colision-frontal";
   document.getElementById("transitoCondicionCalzada").value = "asfalto-seco";
   document.getElementById("transitoCoefFriccion").value = COEF_FRICCION_REF["asfalto-seco"].mu;
@@ -15988,6 +16074,7 @@ function transitoFormularioARegistro(id){
     pendientePct: +document.getElementById("transitoPendientePct").value || 0,
     velocidadMaxima: +document.getElementById("transitoVelocidadMaxima").value || null,
     estadoConductor: document.getElementById("transitoEstadoConductor").value,
+    velocidadConocida: document.getElementById("transitoVelocidadConocida").value ? +document.getElementById("transitoVelocidadConocida").value : null,
     huellaFrenado: document.getElementById("transitoHuellaFrenado").value ? +document.getElementById("transitoHuellaFrenado").value : null,
     tiempoReaccion: +document.getElementById("transitoTiempoReaccion").value || null,
     items: TRANSITO_CHECKLIST_ITEMS.map((texto,idx)=>({texto, estado: transitoChecklistEstado[idx]||""})),
@@ -16016,6 +16103,7 @@ function startEditTransito(id){
   document.getElementById("transitoPendientePct").value = rec.pendientePct || "";
   document.getElementById("transitoVelocidadMaxima").value = rec.velocidadMaxima ?? "";
   document.getElementById("transitoEstadoConductor").value = rec.estadoConductor || "normal";
+  document.getElementById("transitoVelocidadConocida").value = rec.velocidadConocida ?? "";
   document.getElementById("transitoHuellaFrenado").value = rec.huellaFrenado ?? "";
   document.getElementById("transitoTiempoReaccion").value = rec.tiempoReaccion ?? "";
   currentTransitoTrabajadores = (rec.participantesIds||[]).slice();
@@ -16034,11 +16122,37 @@ function startEditTransito(id){
   document.getElementById("cancelEditTransitoBtn").style.display = "";
   document.getElementById("transitoFormTitle").scrollIntoView({behavior:"smooth", block:"start"});
 }
+on(document.getElementById("transitoGenerarConclusionesBtn"), "click", () => {
+  const campo = document.getElementById("transitoConclusiones");
+  if(campo.value.trim() && !confirm("Ya hay texto en Conclusiones. ¿Reemplazarlo por el borrador generado?")) return;
+  campo.value = generarConclusionesTransito(transitoFormularioARegistro(null));
+});
+/* Lo que se espera de una investigación de tránsito completa. No bloquea el
+   guardado (una investigación real a veces queda abierta mientras se
+   consiguen datos), pero exige que quien guarda vea explícitamente qué
+   falta y lo confirme, en vez de dejarlo pasar en silencio. */
+function transitoCamposFaltantes(rec){
+  const faltan = [];
+  if(!rec.vehiculo) faltan.push("Vehículo(s) involucrado(s)");
+  if(!rec.responsable) faltan.push("Responsable de la investigación");
+  if(!rec.descripcion) faltan.push("Descripción de los hechos");
+  if(!(rec.participantesIds||[]).length) faltan.push("Trabajadores involucrados / testigos");
+  const tieneVelocidad = (rec.velocidadConocida>0) || (rec.huellaFrenado>0 && rec.coefFriccion>0);
+  if(!tieneVelocidad) faltan.push("Velocidad conocida/estimada, o huella de frenado + coeficiente de fricción");
+  if(!rec.velocidadMaxima) faltan.push("Velocidad máxima permitida en el tramo");
+  const sinResponder = (rec.items||[]).filter(it=>!it.estado).length;
+  if(sinResponder>0) faltan.push(`${sinResponder} ítem(s) de la lista de verificación sin responder`);
+  if(!rec.fotoCroquis && !(rec.fotosAdicionales||[]).length) faltan.push("Croquis o al menos una fotografía del lugar");
+  if(!rec.conclusiones) faltan.push("Conclusiones (usa \"Generar conclusiones técnicas\" como punto de partida)");
+  return faltan;
+}
 on(document.getElementById("saveTransitoBtn"), "click", async () => {
   const fecha = document.getElementById("transitoFecha").value;
   const areaId = document.getElementById("transitoArea").value;
   if(!fecha || !areaId){ alert("Completa al menos la fecha y el área antes de guardar."); return; }
   const rec = transitoFormularioARegistro(transitoEditingId || uid());
+  const faltan = transitoCamposFaltantes(rec);
+  if(faltan.length && !confirm(`Para una investigación completa todavía faltan estos datos:\n\n- ${faltan.join("\n- ")}\n\n¿Guardar de todas formas?`)) return;
   await put("transitoInvestigaciones", rec);
   await loadCache();
   const creando = !transitoEditingId;
@@ -16171,11 +16285,16 @@ async function descargarTransitoPdf(rec){
   doc.setFontSize(12); doc.text("Cálculo de velocidad y distancias", 14, y); y += 5;
   const res = transitoCalcularResultado(rec);
   if(!res){
-    doc.setFontSize(9); doc.text("No se registró huella de frenado o coeficiente de fricción: no fue posible estimar la velocidad.", 14, y); y += 8;
+    doc.setFontSize(9); doc.text("No se registró una velocidad conocida ni una huella de frenado con coeficiente de fricción: no fue posible estimar la velocidad.", 14, y); y += 8;
   } else {
     doc.setFontSize(9);
-    doc.text(`Huella de frenado: ${rec.huellaFrenado} m    Coeficiente de fricción (μ): ${rec.coefFriccion}    Tiempo de reacción usado: ${rec.tiempoReaccion} s`, 14, y); y += 5;
-    doc.text(`Velocidad estimada antes de frenar: ${res.vkmh.toFixed(1)} km/h`, 14, y); y += 5;
+    if(res.origen==="conocida"){
+      doc.text(`Velocidad usada: conocida/estimada (informada por testigo, dispositivo u otra fuente), ${res.vkmh.toFixed(1)} km/h.`, 14, y); y += 5;
+      if(res.vkmhHuella!=null){ doc.text(`Referencia cruzada — velocidad calculada por huella de frenado: ${res.vkmhHuella.toFixed(1)} km/h (huella ${rec.huellaFrenado} m, μ ${rec.coefFriccion}).`, 14, y); y += 5; }
+    } else {
+      doc.text(`Huella de frenado: ${rec.huellaFrenado} m    Coeficiente de fricción (μ): ${rec.coefFriccion}    Tiempo de reacción usado: ${rec.tiempoReaccion} s`, 14, y); y += 5;
+      doc.text(`Velocidad estimada antes de frenar: ${res.vkmh.toFixed(1)} km/h`, 14, y); y += 5;
+    }
     doc.text(`Distancia de reacción: ${res.dist.distReaccion.toFixed(1)} m    Distancia de frenado: ${res.dist.distFrenado!=null?res.dist.distFrenado.toFixed(1)+" m":"—"}    Distancia total de detención: ${res.dist.distTotal!=null?res.dist.distTotal.toFixed(1)+" m":"—"}`, 14, y); y += 7;
     doc.text(`Velocidad máxima permitida en el tramo: ${rec.velocidadMaxima ?? "—"} km/h`, 14, y); y += 6;
     y = dibujarBarraVelocidadPdf(doc, y, res.pct);
