@@ -1892,6 +1892,7 @@
         <div><label>Responsable del análisis</label><input id="arbolResponsable" placeholder="Nombre / cargo"></div>
         <div><label>Fecha del análisis</label><input id="arbolFecha" type="date"></div>
       </div>
+      <div id="arbolVinculoTransitoWrap"></div>
       <label>Relato del accidente</label>
       <div class="desc" style="margin:0 0 6px;">Antes de construir el árbol, redacta en tercera persona y en orden cronológico qué ocurrió (quién, qué, cuándo, dónde, cómo), incluyendo solo hechos verificables. Este relato es la base para identificar los hechos que se agregarán al árbol.</div>
       <textarea id="arbolRelato" placeholder="Ej: El día X, a las Y horas, el trabajador Z se encontraba realizando... "></textarea>
@@ -1971,6 +1972,7 @@
         <div><label>Vehículo(s) involucrado(s)</label><input id="transitoVehiculo" placeholder="Ej: Camioneta ABCD-12"></div>
         <div><label>Responsable de la investigación</label><input id="transitoResponsable" placeholder="Nombre / cargo"></div>
       </div>
+      <div id="transitoVinculoArbolWrap"></div>
       <div><label>Descripción de los hechos</label><textarea id="transitoDescripcion" rows="2" placeholder="Relato de lo ocurrido, en tercera persona y orden cronológico"></textarea></div>
 
       <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;">
@@ -3678,6 +3680,10 @@ setupCollapsible("hdrMisHallazgos", "bodyMisHallazgos", "toggleMisHallazgos", "c
 setupCollapsible("hdrFormatosDeInspeccionObservacion", "bodyFormatosDeInspeccionObservacion", "toggleFormatosDeInspeccionObservacion", "collapsed_formatosDeInspeccionObservacion");
 setupCollapsible("hdrConfeccionDeASTAnalisisDeSeguridadDelTrabajo", "bodyConfeccionDeASTAnalisisDeSeguridadDelTrabajo", "toggleConfeccionDeASTAnalisisDeSeguridadDelTrabajo", "collapsed_confeccionDeASTAnalisisDeSeguridadDelTrabajo");
 setupCollapsible("hdrASTRegistradas", "bodyASTRegistradas", "toggleASTRegistradas", "collapsed_aSTRegistradas");
+setupCollapsible("hdrEvaluacionDeCargaIzaje", "bodyEvaluacionDeCargaIzaje", "toggleEvaluacionDeCargaIzaje", "collapsed_evaluacionDeCargaIzaje");
+setupCollapsible("hdrEvaluacionesDeCargaRegistradas", "bodyEvaluacionesDeCargaRegistradas", "toggleEvaluacionesDeCargaRegistradas", "collapsed_evaluacionesDeCargaRegistradas");
+setupCollapsible("hdrInvestigacionDeAccidentesDeTransito", "bodyInvestigacionDeAccidentesDeTransito", "toggleInvestigacionDeAccidentesDeTransito", "collapsed_investigacionDeAccidentesDeTransito");
+setupCollapsible("hdrInvestigacionesDeTransitoRegistradas", "bodyInvestigacionesDeTransitoRegistradas", "toggleInvestigacionesDeTransitoRegistradas", "collapsed_investigacionesDeTransitoRegistradas");
 setupCollapsible("hdrHistorialDeInspeccionesYObservaciones", "bodyHistorialDeInspeccionesYObservaciones", "toggleHistorialDeInspeccionesYObservaciones", "collapsed_historialDeInspeccionesYObservaciones");
 setupCollapsible("hdrDescargarResumenesEnPDF", "bodyDescargarResumenesEnPDF", "toggleDescargarResumenesEnPDF", "collapsed_descargarResumenesEnPDF");
 setupCollapsible("hdrTop10HallazgosRepetitivos", "bodyTop10HallazgosRepetitivos", "toggleTop10HallazgosRepetitivos", "collapsed_top10HallazgosRepetitivos");
@@ -15240,7 +15246,38 @@ function textoHechoCentralDeAccidente(rec){
 on(document.getElementById("arbolAccidenteSel"), "change", () => {
   const rec = CACHE.accidentes.find(a=>a.id===document.getElementById("arbolAccidenteSel").value);
   document.getElementById("arbolHechoCentral").value = textoHechoCentralDeAccidente(rec);
+  renderArbolVinculoTransito();
 });
+/* Referencia cruzada, no acoplamiento: cada módulo solo mira si existe OTRO
+   registro con el mismo accidenteId -- un cambio futuro en un módulo no
+   puede romper al otro, porque no comparten más que ese id compartido. */
+function renderArbolVinculoTransito(){
+  const wrap = document.getElementById("arbolVinculoTransitoWrap");
+  if(!wrap) return;
+  const accidenteId = document.getElementById("arbolAccidenteSel").value;
+  const rel = accidenteId ? (CACHE.transitoInvestigaciones||[]).find(t=>t.accidenteId===accidenteId) : null;
+  wrap.innerHTML = rel ? `<div class="kv" style="margin:4px 0 10px;">Este accidente ya tiene una <a href="#" data-ir-transito="${rel.id}">investigación de accidentes de tránsito registrada</a> — puedes revisarla como referencia.</div>` : "";
+}
+on(document.getElementById("arbolVinculoTransitoWrap"), "click", (e)=>{
+  const a = e.target.closest("a[data-ir-transito]");
+  if(!a) return;
+  e.preventDefault();
+  startEditTransito(a.dataset.irTransito);
+});
+function renderTransitoVinculoArbol(){
+  const wrap = document.getElementById("transitoVinculoArbolWrap");
+  if(!wrap) return;
+  const accidenteId = document.getElementById("transitoAccidenteId").value;
+  const rel = accidenteId ? (CACHE.arbolesCausales||[]).find(a=>a.accidenteId===accidenteId) : null;
+  wrap.innerHTML = rel ? `<div class="kv" style="margin:4px 0 10px;">Este accidente ya tiene un <a href="#" data-ir-arbol="${rel.id}">análisis de causa raíz registrado</a> — puedes revisarlo como referencia.</div>` : "";
+}
+on(document.getElementById("transitoVinculoArbolWrap"), "click", (e)=>{
+  const a = e.target.closest("a[data-ir-arbol]");
+  if(!a) return;
+  e.preventDefault();
+  startEditArbol(a.dataset.irArbol);
+});
+on(document.getElementById("transitoAccidenteId"), "change", renderTransitoVinculoArbol);
 on(document.getElementById("arbolHechoTexto"), "input", (e) => {
   const alerta = document.getElementById("arbolHechoJuicioAlerta");
   alerta.style.display = ARBOL_PALABRAS_JUICIO.test(e.target.value) ? "" : "none";
@@ -15529,6 +15566,7 @@ function resetArbolForm(){
   document.getElementById("arbolConclusion").value = "";
   currentArbolHechos = [];
   drawArbolTree();
+  renderArbolVinculoTransito();
   document.getElementById("arbolFormTitle").textContent = "Análisis de causa raíz — Árbol causal";
   document.getElementById("saveArbolBtn").textContent = "Guardar análisis";
   document.getElementById("cancelEditArbolBtn").style.display = "none";
@@ -15547,6 +15585,7 @@ function startEditArbol(id){
   document.getElementById("arbolConclusion").value = rec.conclusion || "";
   currentArbolHechos = (rec.hechos||[]).map(h=>({...h, precedeA: hechoPrecedeA(h).slice()}));
   drawArbolTree();
+  renderArbolVinculoTransito();
   document.getElementById("arbolFormTitle").textContent = "Editando análisis de causa raíz";
   document.getElementById("saveArbolBtn").textContent = "Guardar cambios";
   document.getElementById("cancelEditArbolBtn").style.display = "";
@@ -15571,6 +15610,7 @@ on(document.getElementById("saveArbolBtn"), "click", async () => {
     await loadCache();
     resetArbolForm();
     renderArbolTable();
+    renderTransitoVinculoArbol();
     alert("Análisis de causa raíz actualizado.");
     return;
   }
@@ -15578,6 +15618,7 @@ on(document.getElementById("saveArbolBtn"), "click", async () => {
   await loadCache();
   resetArbolForm();
   renderArbolTable();
+  renderTransitoVinculoArbol();
   alert("Análisis de causa raíz guardado.");
 });
 
@@ -15705,12 +15746,12 @@ async function descargarArbolPdf(rec){
   } else {
     lineas.forEach(l=>{
       if(y > 275){ doc.addPage(); y = 16; }
-      const prefijo = l.esRaiz ? "● [CAUSA RAÍZ] " : "○ ";
+      const prefijo = l.esRaiz ? "[CAUSA RAÍZ] " : "- ";
       const texto = `${ARBOL_TIPO_LABEL[l.hecho.tipo]||l.hecho.tipo}: ${l.hecho.texto}`;
       const wrapped = doc.splitTextToSize(prefijo + texto, 182 - l.depth*6);
       doc.text(wrapped, 14 + l.depth*6, y);
       y += wrapped.length*4.5;
-      const antecedeLine = doc.splitTextToSize(`   → antecede a: ${l.destinos.join(", ")}`, 176 - l.depth*6);
+      const antecedeLine = doc.splitTextToSize(`   -> antecede a: ${l.destinos.join(", ")}`, 176 - l.depth*6);
       doc.setTextColor(120); doc.text(antecedeLine, 16 + l.depth*6, y); doc.setTextColor(0);
       y += antecedeLine.length*4 + 3;
     });
@@ -16279,6 +16320,7 @@ function resetTransitoForm(){
   renderTransitoPostImpacto();
   actualizarVisibilidadEstabilidad();
   renderTransitoSsf();
+  renderTransitoVinculoArbol();
   document.getElementById("transitoFormTitle").textContent = "Investigación de accidentes de tránsito";
   document.getElementById("saveTransitoBtn").textContent = "Guardar investigación";
   document.getElementById("cancelEditTransitoBtn").style.display = "none";
@@ -16372,6 +16414,7 @@ function startEditTransito(id){
   renderTransitoPostImpacto();
   actualizarVisibilidadEstabilidad();
   renderTransitoSsf();
+  renderTransitoVinculoArbol();
   document.getElementById("transitoFormTitle").textContent = `Editando investigación del ${fmtDate(rec.fecha)}`;
   document.getElementById("saveTransitoBtn").textContent = "Guardar cambios";
   document.getElementById("cancelEditTransitoBtn").style.display = "";
@@ -16413,6 +16456,7 @@ on(document.getElementById("saveTransitoBtn"), "click", async () => {
   const creando = !transitoEditingId;
   resetTransitoForm();
   renderTransitoTable();
+  renderArbolVinculoTransito();
   alert(creando ? "Investigación guardada." : "Investigación actualizada.");
 });
 
@@ -16545,13 +16589,19 @@ async function descargarTransitoPdf(rec){
     doc.setFontSize(9);
     if(res.origen==="conocida"){
       doc.text(`Velocidad usada: conocida/estimada (informada por testigo, dispositivo u otra fuente), ${res.vkmh.toFixed(1)} km/h.`, 14, y); y += 5;
-      if(res.vkmhHuella!=null){ doc.text(`Referencia cruzada — velocidad calculada por huella de frenado: ${res.vkmhHuella.toFixed(1)} km/h (huella ${rec.huellaFrenado} m, μ ${rec.coefFriccion}).`, 14, y); y += 5; }
+      if(res.vkmhHuella!=null){
+        const txtCross = doc.splitTextToSize(`Referencia cruzada - velocidad calculada por huella de frenado: ${res.vkmhHuella.toFixed(1)} km/h (huella ${rec.huellaFrenado} m, coeficiente de fricción ${rec.coefFriccion}).`, 182);
+        doc.text(txtCross, 14, y); y += txtCross.length*4.5 + 1;
+      }
     } else {
-      doc.text(`Huella de frenado: ${rec.huellaFrenado} m    Coeficiente de fricción (μ): ${rec.coefFriccion}    Tiempo de reacción usado: ${rec.tiempoReaccion} s`, 14, y); y += 5;
+      const txtHuella = doc.splitTextToSize(`Huella de frenado: ${rec.huellaFrenado} m    Coeficiente de fricción: ${rec.coefFriccion}    Tiempo de reacción usado: ${rec.tiempoReaccion} s`, 182);
+      doc.text(txtHuella, 14, y); y += txtHuella.length*4.5 + 1;
       doc.text(`Velocidad estimada antes de frenar: ${res.vkmh.toFixed(1)} km/h`, 14, y); y += 5;
     }
-    doc.text(`Distancia de reacción: ${res.dist.distReaccion.toFixed(1)} m    Distancia de frenado: ${res.dist.distFrenado!=null?res.dist.distFrenado.toFixed(1)+" m":"—"}    Distancia total de detención: ${res.dist.distTotal!=null?res.dist.distTotal.toFixed(1)+" m":"—"}`, 14, y); y += 5;
-    doc.text(`Tiempo de frenado: ${res.dist.tiempoFrenado!=null?res.dist.tiempoFrenado.toFixed(1)+" s":"—"}    Tiempo total hasta detenerse (reacción + frenado): ${res.dist.tiempoTotal!=null?res.dist.tiempoTotal.toFixed(1)+" s":"—"}`, 14, y); y += 7;
+    const txtDist = doc.splitTextToSize(`Distancia de reacción: ${res.dist.distReaccion.toFixed(1)} m    Distancia de frenado: ${res.dist.distFrenado!=null?res.dist.distFrenado.toFixed(1)+" m":"—"}    Distancia total de detención: ${res.dist.distTotal!=null?res.dist.distTotal.toFixed(1)+" m":"—"}`, 182);
+    doc.text(txtDist, 14, y); y += txtDist.length*4.5 + 1;
+    const txtTiempos = doc.splitTextToSize(`Tiempo de frenado: ${res.dist.tiempoFrenado!=null?res.dist.tiempoFrenado.toFixed(1)+" s":"—"}    Tiempo total hasta detenerse (reacción + frenado): ${res.dist.tiempoTotal!=null?res.dist.tiempoTotal.toFixed(1)+" s":"—"}`, 182);
+    doc.text(txtTiempos, 14, y); y += txtTiempos.length*4.5 + 3;
     doc.text(`Velocidad máxima permitida en el tramo: ${rec.velocidadMaxima ?? "—"} km/h`, 14, y); y += 6;
     y = dibujarBarraVelocidadPdf(doc, y, res.pct);
     if(res.comparacionDisponible){
@@ -16569,8 +16619,9 @@ async function descargarTransitoPdf(rec){
   const vmsPost = calcVelocidadPostImpacto({distanciaRetroceso: rec.distanciaRetroceso, coefFriccionPostImpacto: rec.coefFriccionPostImpacto});
   if(vmsPost!=null){
     doc.setFontSize(9);
-    doc.text(`Retroceso/desplazamiento post-impacto: ${rec.distanciaRetroceso} m (μ post-impacto ${rec.coefFriccionPostImpacto}) → velocidad de separación estimada: ${(vmsPost*3.6).toFixed(1)} km/h (no es la velocidad en el instante de la colisión, que fue mayor).`, 14, y);
-    y += 10;
+    const txtRetroceso = doc.splitTextToSize(`Retroceso/desplazamiento post-impacto: ${rec.distanciaRetroceso} m (coeficiente de fricción post-impacto: ${rec.coefFriccionPostImpacto}). Velocidad de separación estimada: ${(vmsPost*3.6).toFixed(1)} km/h (no es la velocidad en el instante de la colisión, que fue mayor).`, 182);
+    doc.text(txtRetroceso, 14, y);
+    y += txtRetroceso.length*4.5 + 5;
   }
   if(res){
     const vBprimeMs = calcVelocidadBPostImpacto({desplazamientoB: rec.desplazamientoB, coefFriccionB: rec.coefFriccionB});
@@ -17128,7 +17179,7 @@ async function descargarInformeAccidentePdf(accRec){
       } else {
         lineas.forEach(l=>{
           if(y > 275){ doc.addPage(); y = 16; }
-          const prefijo = l.esRaiz ? "● [CAUSA RAÍZ] " : "○ ";
+          const prefijo = l.esRaiz ? "[CAUSA RAÍZ] " : "- ";
           const texto = `${ARBOL_TIPO_LABEL[l.hecho.tipo]||l.hecho.tipo}: ${l.hecho.texto}`;
           const wrapped = doc.splitTextToSize(prefijo + texto, 182 - l.depth*6);
           doc.text(wrapped, 14 + l.depth*6, y);
@@ -19468,6 +19519,8 @@ async function refreshAll(){
   renderArbolTable();
   renderTransitoTable();
   if(!transitoEditingId){ drawTransitoChecklist(); renderTransitoCroquis(); renderTransitoFotos(); renderTransitoCalculo(); renderTransitoPostImpacto(); actualizarVisibilidadEstabilidad(); renderTransitoSsf(); }
+  renderTransitoVinculoArbol();
+  renderArbolVinculoTransito();
   if(!arbolEditingId){
     if(!document.getElementById("arbolFecha").value) document.getElementById("arbolFecha").value = new Date().toISOString().slice(0,10);
     drawArbolTree();
