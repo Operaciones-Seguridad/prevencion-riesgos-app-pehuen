@@ -1947,6 +1947,119 @@
       </table>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrInvestigacionDeAccidentesDeTransito"><h2 id="transitoFormTitle">Investigación de accidentes de tránsito</h2><button class="collapse-toggle" id="toggleInvestigacionDeAccidentesDeTransito" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyInvestigacionDeAccidentesDeTransito">
+      <div class="desc" style="background:#fdf3ec;border:1px solid #ecc9a8;border-radius:6px;padding:8px 10px;"><strong>Estimación de apoyo para una investigación interna.</strong> Los cálculos usan fórmulas de física estándar y valores de referencia bibliográficos (coeficiente de fricción, tiempo de reacción); no reemplazan una pericia de reconstrucción de accidentes certificada, especialmente para fines legales o judiciales.</div>
+      <div class="form-grid" style="margin-top:10px;">
+        <div><label>Fecha</label><input id="transitoFecha" type="date"></div>
+        <div><label>Hora</label><input id="transitoHora" type="time"></div>
+        <div><label>Área</label><select id="transitoArea"></select></div>
+        <div><label>Accidente relacionado (opcional)</label><select id="transitoAccidenteId"><option value="">Ninguno / investigación independiente</option></select></div>
+        <div>
+          <label>Tipo de accidente</label>
+          <select id="transitoTipo">
+            <option value="colision-frontal">Colisión frontal</option>
+            <option value="colision-lateral">Colisión lateral</option>
+            <option value="colision-trasera">Colisión trasera (alcance)</option>
+            <option value="choque-objeto-fijo">Choque con objeto fijo</option>
+            <option value="volcamiento">Volcamiento</option>
+            <option value="atropello">Atropello</option>
+            <option value="salida-via">Salida de la vía / despiste</option>
+          </select>
+        </div>
+        <div><label>Vehículo(s) involucrado(s)</label><input id="transitoVehiculo" placeholder="Ej: Camioneta ABCD-12"></div>
+        <div><label>Responsable de la investigación</label><input id="transitoResponsable" placeholder="Nombre / cargo"></div>
+      </div>
+      <div><label>Descripción de los hechos</label><textarea id="transitoDescripcion" rows="2" placeholder="Relato de lo ocurrido, en tercera persona y orden cronológico"></textarea></div>
+
+      <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;">
+        <label style="margin:0;">Trabajadores involucrados / testigos</label>
+      </div>
+      <div class="toolbar">
+        <div class="field"><label>Trabajador</label><select id="transitoTrabajadorSel"></select></div>
+        <div><button class="btn small secondary" id="addTransitoTrabBtn" style="margin-top:20px;">+ Agregar</button></div>
+      </div>
+      <div id="transitoTrabajadoresWrap"></div>
+
+      <label style="margin-top:14px;display:block;">Condiciones de la vía y del conductor</label>
+      <div class="form-grid">
+        <div>
+          <label>Superficie y condición de la calzada</label>
+          <select id="transitoCondicionCalzada">
+            <option value="asfalto-seco">Asfalto/hormigón seco</option>
+            <option value="asfalto-mojado">Asfalto mojado</option>
+            <option value="hormigon-mojado">Hormigón mojado</option>
+            <option value="grava">Grava</option>
+            <option value="tierra-seca">Tierra seca</option>
+            <option value="tierra-humeda">Tierra húmeda</option>
+            <option value="nieve">Nieve dura</option>
+            <option value="hielo">Hielo</option>
+            <option value="otro">Otra / coeficiente medido en terreno</option>
+          </select>
+        </div>
+        <div><label>Coeficiente de fricción (μ) a usar</label><input id="transitoCoefFriccion" type="number" min="0" max="1" step="0.01"></div>
+        <div>
+          <label>Pendiente de la vía</label>
+          <select id="transitoTipoPendiente">
+            <option value="plana">Plana</option>
+            <option value="subida">Subida</option>
+            <option value="bajada">Bajada</option>
+          </select>
+        </div>
+        <div><label>Pendiente estimada (%, si no es plana)</label><input id="transitoPendientePct" type="number" min="0" max="30" step="1"></div>
+        <div><label>Velocidad máxima permitida en el tramo (km/h)</label><input id="transitoVelocidadMaxima" type="number" min="0" step="1"></div>
+        <div>
+          <label>Estado del conductor</label>
+          <select id="transitoEstadoConductor">
+            <option value="normal">Normal</option>
+            <option value="fatiga">Fatiga / somnolencia</option>
+            <option value="alcohol-drogas">Bajo efecto de alcohol o drogas</option>
+            <option value="se-desconoce">Se desconoce</option>
+          </select>
+        </div>
+      </div>
+
+      <label style="margin-top:14px;display:block;">Cálculo de velocidad y distancias</label>
+      <div class="form-grid">
+        <div><label>Largo de la huella de frenado (m, dejar vacío si no hay huellas visibles)</label><input id="transitoHuellaFrenado" type="number" min="0" step="0.1"></div>
+        <div><label>Tiempo de reacción a usar (segundos)</label><input id="transitoTiempoReaccion" type="number" min="0.4" max="4" step="0.1"></div>
+      </div>
+      <div id="transitoCalculoWrap" style="margin-top:10px;"></div>
+
+      <label style="margin-top:18px;display:block;">Lista de verificación</label>
+      <div id="transitoChecklistWrap"></div>
+
+      <label style="margin-top:18px;display:block;">Croquis del lugar</label>
+      <div class="desc">Sube una foto del lugar del accidente y agrega íconos arrastrables encima para armar un croquis básico (vehículos, dirección, huellas, etc.).</div>
+      <div class="toolbar">
+        <div><button class="btn small secondary" id="transitoSubirFotoCroquisBtn" type="button">⬆ Subir foto de fondo</button><input type="file" id="transitoFotoCroquisInput" accept="image/*" style="display:none;"></div>
+      </div>
+      <div class="toolbar" id="transitoPaletaIconos" style="flex-wrap:wrap;"></div>
+      <div id="transitoCroquisWrap" style="margin-top:8px;"></div>
+
+      <label style="margin-top:18px;display:block;">Fotos adicionales</label>
+      <div class="toolbar">
+        <div><button class="btn small secondary" id="transitoSubirFotosBtn" type="button">⬆ Subir foto(s)</button><input type="file" id="transitoFotosInput" accept="image/*" multiple style="display:none;"></div>
+      </div>
+      <div id="transitoFotosWrap" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;"></div>
+
+      <div style="margin-top:14px;"><label>Observaciones</label><textarea id="transitoObservaciones" rows="2"></textarea></div>
+      <div><label>Conclusiones</label><textarea id="transitoConclusiones" rows="2"></textarea></div>
+
+      <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" id="saveTransitoBtn">Guardar investigación</button>
+        <button class="btn secondary" id="cancelEditTransitoBtn" style="display:none;">Cancelar edición</button>
+      </div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrInvestigacionesDeTransitoRegistradas"><h2>Investigaciones de tránsito registradas</h2><button class="collapse-toggle" id="toggleInvestigacionesDeTransitoRegistradas" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyInvestigacionesDeTransitoRegistradas">
+      <table>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Área</th><th>Vehículo</th><th>Velocidad estimada</th><th>Responsable</th><th></th></tr></thead>
+        <tbody id="transitoTable"></tbody>
+      </table>
+    </div></div>
   </div>
 
   <!-- SEGURIDAD -->
@@ -3034,8 +3147,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 33;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga"];
+const DB_VERSION = 34;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -7660,6 +7773,15 @@ function renderCommonSelects(){
   fillSelect(document.getElementById("astArea"), areaOpts, true);
   fillSelect(document.getElementById("astTrabajadorSel"), CACHE.trabajadores.map(t=>({id:t.id,label:t.nombre})), true);
   fillSelect(document.getElementById("izajeArea"), areaOpts, true);
+  fillSelect(document.getElementById("transitoArea"), areaOpts, true);
+  fillSelect(document.getElementById("transitoTrabajadorSel"), CACHE.trabajadores.map(t=>({id:t.id,label:t.nombre})), true);
+  {
+    const accSel = document.getElementById("transitoAccidenteId");
+    const cur = accSel.value;
+    accSel.innerHTML = '<option value="">Ninguno / investigación independiente</option>' +
+      CACHE.accidentes.slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).map(a=>`<option value="${a.id}">${fmtDate(a.fecha)} — ${ACC_TIPO_LABEL[a.tipo]||a.tipo} — ${areaName(a.areaId)}</option>`).join("");
+    accSel.value = cur;
+  }
   fillDatalist(document.getElementById("dlActividadesAst"), Array.from(new Set(CACHE.matriz.map(m=>m.actividad).filter(Boolean))));
 
   fillSelect(document.getElementById("tmertArea"), areaOpts, true);
@@ -15547,6 +15669,577 @@ async function descargarArbolPdf(rec){
 }
 
 /* =========================================================
+   INVESTIGACIÓN DE ACCIDENTES DE TRÁNSITO
+   Pensado para que lo complete alguien SIN formación en reconstrucción de
+   accidentes: la persona registra datos de terreno (huella de frenado,
+   superficie, estado del conductor, etc.) y el sistema calcula velocidad
+   estimada y distancias con física estándar de reconstrucción de
+   accidentes. El coeficiente de fricción (μ) es una TABLA DE REFERENCIA
+   bibliográfica -- siempre editable, porque el valor real de una vía
+   específica solo se puede medir en terreno. El informe deja explícito
+   que es una estimación de apoyo, no una pericia certificada. Factores
+   cualitativos sin una cifra citable (ej. cuánto tiempo de reacción resta
+   usar el celular) NO se inventan como ajuste numérico: quedan como
+   hallazgo en la lista de verificación, no como input de la fórmula.
+   ========================================================= */
+const COEF_FRICCION_REF = {
+  "asfalto-seco": {label:"Asfalto/hormigón seco", mu:0.75},
+  "asfalto-mojado": {label:"Asfalto mojado", mu:0.45},
+  "hormigon-mojado": {label:"Hormigón mojado", mu:0.55},
+  "grava": {label:"Grava", mu:0.60},
+  "tierra-seca": {label:"Tierra seca", mu:0.65},
+  "tierra-humeda": {label:"Tierra húmeda", mu:0.55},
+  "nieve": {label:"Nieve dura", mu:0.20},
+  "hielo": {label:"Hielo", mu:0.10},
+};
+const TRANSITO_TIPO_LABEL = {
+  "colision-frontal":"Colisión frontal", "colision-lateral":"Colisión lateral", "colision-trasera":"Colisión trasera (alcance)",
+  "choque-objeto-fijo":"Choque con objeto fijo", "volcamiento":"Volcamiento", "atropello":"Atropello", "salida-via":"Salida de la vía / despiste",
+};
+const TRANSITO_TIEMPO_REACCION_SUGERIDO = {normal:1, fatiga:2, "alcohol-drogas":3, "se-desconoce":1};
+document.getElementById("transitoCondicionCalzada").addEventListener("change",(e)=>{
+  const ref = COEF_FRICCION_REF[e.target.value];
+  if(ref) document.getElementById("transitoCoefFriccion").value = ref.mu;
+  renderTransitoCalculo();
+});
+document.getElementById("transitoEstadoConductor").addEventListener("change",(e)=>{
+  document.getElementById("transitoTiempoReaccion").value = TRANSITO_TIEMPO_REACCION_SUGERIDO[e.target.value] ?? 1;
+  renderTransitoCalculo();
+});
+
+/* Física estándar de reconstrucción de accidentes (universal, no propia de
+   ningún país): V=√(2·g·μ·d) para velocidad desde huella de frenado, con
+   corrección de pendiente; d_frenado=V²/(2·g·μ); d_reacción=V·t. */
+function calcVelocidadDesdeHuella({huellaFrenado, coefFriccion, tipoPendiente, pendientePct}){
+  const d = Number(huellaFrenado), mu = Number(coefFriccion);
+  if(!(d>0) || !(mu>0)) return null;
+  const e = (Number(pendientePct)||0)/100;
+  const factor = tipoPendiente==="subida" ? (mu+e) : tipoPendiente==="bajada" ? Math.max(0.01, mu-e) : mu;
+  if(factor<=0) return null;
+  return Math.sqrt(2*9.81*d*factor); // m/s
+}
+function calcDistancias({velocidadMs, tiempoReaccion, coefFriccion}){
+  const v = Number(velocidadMs), t = Number(tiempoReaccion), mu = Number(coefFriccion);
+  if(!(v>0)) return null;
+  const distReaccion = t>0 ? v*t : 0;
+  const distFrenado = mu>0 ? (v*v)/(2*9.81*mu) : null;
+  return { distReaccion, distFrenado, distTotal: distFrenado!=null ? distReaccion+distFrenado : null };
+}
+const TRANSITO_SEMAFORO_MSG = {bajo:"Dentro del límite permitido", medio:"Cerca del límite permitido", alto:"SUPERÓ LA VELOCIDAD MÁXIMA PERMITIDA"};
+function barraVelocidadHtml(label, pct){
+  if(pct===null) return `<div class="kv" style="margin-top:6px;">${label}: ingresa la velocidad máxima permitida para comparar</div>`;
+  const sem = izajeSemaforo(pct);
+  const color = `rgb(${IZAJE_SEMAFORO_COLOR[sem].join(",")})`;
+  const anchoPct = Math.max(0, Math.min(pct,150))/150*100;
+  return `
+  <div style="margin-top:8px;">
+    <div class="kv">${label}: <strong>${pct.toFixed(0)}%</strong> del límite — ${TRANSITO_SEMAFORO_MSG[sem]}</div>
+    <div style="background:#e6e6e6;border-radius:4px;height:10px;position:relative;overflow:hidden;">
+      <div style="background:${color};height:100%;width:${anchoPct}%;"></div>
+      <div style="position:absolute;left:${100/150*100}%;top:0;bottom:0;width:1px;background:#666;"></div>
+    </div>
+  </div>`;
+}
+function transitoLeerCalculo(){
+  return {
+    huellaFrenado: document.getElementById("transitoHuellaFrenado").value,
+    coefFriccion: document.getElementById("transitoCoefFriccion").value,
+    tipoPendiente: document.getElementById("transitoTipoPendiente").value,
+    pendientePct: document.getElementById("transitoPendientePct").value,
+    tiempoReaccion: document.getElementById("transitoTiempoReaccion").value,
+    velocidadMaxima: document.getElementById("transitoVelocidadMaxima").value,
+  };
+}
+/* Resultado de cálculo reutilizado tanto por la vista previa en pantalla
+   como por el PDF, para que nunca puedan mostrar números distintos. */
+function transitoCalcularResultado(datos){
+  const vms = calcVelocidadDesdeHuella(datos);
+  if(vms===null) return null;
+  const vkmh = vms*3.6;
+  const dist = calcDistancias({velocidadMs:vms, tiempoReaccion:datos.tiempoReaccion, coefFriccion:datos.coefFriccion});
+  const vmax = Number(datos.velocidadMaxima);
+  const pct = vmax>0 ? (vkmh/vmax)*100 : null;
+  return { vkmh, dist, pct };
+}
+function renderTransitoCalculo(){
+  const wrap = document.getElementById("transitoCalculoWrap");
+  const res = transitoCalcularResultado(transitoLeerCalculo());
+  if(!res){
+    wrap.innerHTML = '<div class="kv">Ingresa el largo de la huella de frenado y el coeficiente de fricción para calcular la velocidad estimada.</div>';
+    return;
+  }
+  const { vkmh, dist, pct } = res;
+  wrap.innerHTML = `
+    <div class="kv">Velocidad estimada antes de frenar: <strong>${vkmh.toFixed(1)} km/h</strong></div>
+    <div class="kv">Distancia de reacción: ${dist.distReaccion.toFixed(1)} m — Distancia de frenado: ${dist.distFrenado!=null?dist.distFrenado.toFixed(1)+" m":"—"} — Distancia total de detención: ${dist.distTotal!=null?dist.distTotal.toFixed(1)+" m":"—"}</div>
+    ${barraVelocidadHtml("Velocidad estimada vs. límite permitido", pct)}
+  `;
+}
+["transitoHuellaFrenado","transitoCoefFriccion","transitoTipoPendiente","transitoPendientePct","transitoTiempoReaccion","transitoVelocidadMaxima"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", renderTransitoCalculo);
+  document.getElementById(id).addEventListener("change", renderTransitoCalculo);
+});
+
+const TRANSITO_CHECKLIST_ITEMS = [
+  "Se registró si el conductor usaba el celular al momento del hecho",
+  "La señalización vial en el lugar era adecuada y visible",
+  "Existía segregación adecuada entre vehículos y peatones/otras vías, si correspondía",
+  "Se verificó el estado de los neumáticos del/los vehículo(s) involucrado(s)",
+  "Se verificó que el vehículo contaba con revisión técnica y mantenimiento vigente",
+  "Se registró el uso de cinturón de seguridad",
+  "Se registraron las condiciones climáticas y de visibilidad al momento del hecho",
+  "Se midieron y fotografiaron las huellas de frenado/derrape, si existían",
+  "Se fotografió la posición final de los vehículos y el lugar del hecho",
+  "Se identificaron testigos y se registró su versión de los hechos",
+  "Se verificó la licencia de conducir y su vigencia/categoría",
+  "Se verificó si el conductor contaba con capacitación en conducción segura vigente",
+];
+let transitoChecklistEstado = {};
+function drawTransitoChecklist(){
+  document.getElementById("transitoChecklistWrap").innerHTML = TRANSITO_CHECKLIST_ITEMS.map((texto,idx)=>{
+    const est = transitoChecklistEstado[idx] || "";
+    return `
+    <div class="checklist-item">
+      <div>${texto}</div>
+      <div class="seg" data-trIdx="${idx}">
+        <button data-v="ok" class="${est==='ok'?'on-ok':''}">Cumple</button>
+        <button data-v="fail" class="${est==='fail'?'on-fail':''}">No cumple</button>
+        <button data-v="na" class="${est==='na'?'on-na':''}">N/A</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+document.getElementById("transitoChecklistWrap").addEventListener("click",(e)=>{
+  const btn = e.target.closest("button[data-v]");
+  if(!btn) return;
+  const seg = btn.closest(".seg");
+  transitoChecklistEstado[seg.dataset.tridx] = btn.dataset.v;
+  drawTransitoChecklist();
+});
+
+let currentTransitoTrabajadores = [];
+function drawTransitoTrabajadores(){
+  document.getElementById("transitoTrabajadoresWrap").innerHTML = currentTransitoTrabajadores.length
+    ? currentTransitoTrabajadores.map((tid,idx)=>`
+        <div class="checklist-item">
+          <div>${trabName(tid)}</div>
+          <button class="subtle-btn" data-transito-trab-quitar="${idx}">Quitar</button>
+        </div>
+      `).join("")
+    : '<div class="empty">Sin participantes agregados</div>';
+}
+document.getElementById("addTransitoTrabBtn").addEventListener("click", ()=>{
+  const sel = document.getElementById("transitoTrabajadorSel");
+  if(!sel.value) return;
+  if(!currentTransitoTrabajadores.includes(sel.value)) currentTransitoTrabajadores.push(sel.value);
+  sel.value = "";
+  drawTransitoTrabajadores();
+});
+document.getElementById("transitoTrabajadoresWrap").addEventListener("click",(e)=>{
+  const btn = e.target.closest("button[data-transito-trab-quitar]");
+  if(!btn) return;
+  currentTransitoTrabajadores.splice(+btn.dataset.transitoTrabQuitar,1);
+  drawTransitoTrabajadores();
+});
+
+/* Croquis: foto de fondo + íconos arrastrables encima, mismo mecanismo de
+   arrastre por puntero (pointerdown/move/up, posición en % x/y) que ya usa
+   "Plano de riesgos" (attachPlanoDragPara) -- acá con un solo tipo de marca
+   en vez de dos, y sin auto-guardado por arrastre (se guarda todo junto al
+   guardar la investigación completa). */
+const CROQUIS_ICONOS = [
+  {tipo:"vehiculoA", emoji:"🚗", label:"Vehículo A"},
+  {tipo:"vehiculoB", emoji:"🚙", label:"Vehículo B"},
+  {tipo:"peaton", emoji:"🚶", label:"Peatón"},
+  {tipo:"direccion", emoji:"➡️", label:"Dirección"},
+  {tipo:"huella", emoji:"〰️", label:"Huella de frenado"},
+  {tipo:"objeto", emoji:"⬛", label:"Objeto fijo"},
+  {tipo:"norte", emoji:"🧭", label:"Norte"},
+];
+document.getElementById("transitoPaletaIconos").innerHTML = CROQUIS_ICONOS.map(i=>`<button type="button" class="btn small secondary" data-add-icono="${i.tipo}">${i.emoji} ${i.label}</button>`).join("");
+let currentCroquisFoto = null;
+let currentCroquisIconos = {};
+function renderTransitoCroquis(){
+  const wrap = document.getElementById("transitoCroquisWrap");
+  if(!currentCroquisFoto){
+    wrap.innerHTML = '<div class="empty">Sube una foto para empezar a armar el croquis.</div>';
+    return;
+  }
+  const marcas = Object.entries(currentCroquisIconos).map(([key,m])=>{
+    const def = CROQUIS_ICONOS.find(i=>i.tipo===m.tipo) || {};
+    return `<div class="transito-icono-marker" data-key="${key}" title="${def.label||m.tipo} (doble clic para quitar)" style="position:absolute;left:${m.x}%;top:${m.y}%;transform:translate(-50%,-50%);cursor:grab;font-size:28px;touch-action:none;user-select:none;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6));">${def.emoji||"?"}</div>`;
+  }).join("");
+  wrap.innerHTML = `<div id="transitoCroquisImgWrap" style="position:relative;display:inline-block;max-width:100%;touch-action:none;">
+    <img src="${currentCroquisFoto}" style="display:block;max-width:100%;border:1px solid var(--border);border-radius:8px;">
+    ${marcas}
+  </div>`;
+  attachCroquisDrag();
+}
+let croquisDragState = null;
+function attachCroquisDrag(){
+  const wrap = document.getElementById("transitoCroquisImgWrap");
+  if(!wrap) return;
+  wrap.querySelectorAll(".transito-icono-marker").forEach(marker=>{
+    marker.addEventListener("pointerdown",(e)=>{
+      e.preventDefault();
+      croquisDragState = { key: marker.dataset.key, rect: wrap.getBoundingClientRect() };
+      marker.style.cursor = "grabbing";
+      try{ marker.setPointerCapture(e.pointerId); }catch(err){}
+    });
+    marker.addEventListener("pointermove",(e)=>{
+      if(!croquisDragState || croquisDragState.key !== marker.dataset.key) return;
+      const rect = croquisDragState.rect;
+      let x = ((e.clientX-rect.left)/rect.width)*100;
+      let y = ((e.clientY-rect.top)/rect.height)*100;
+      x = Math.max(2,Math.min(98,x)); y = Math.max(2,Math.min(98,y));
+      marker.style.left = x+"%"; marker.style.top = y+"%";
+      if(currentCroquisIconos[marker.dataset.key]){ currentCroquisIconos[marker.dataset.key].x = x; currentCroquisIconos[marker.dataset.key].y = y; }
+    });
+    marker.addEventListener("pointerup",()=>{
+      if(croquisDragState && croquisDragState.key===marker.dataset.key){ marker.style.cursor="grab"; croquisDragState=null; }
+    });
+    marker.addEventListener("dblclick",()=>{
+      delete currentCroquisIconos[marker.dataset.key];
+      renderTransitoCroquis();
+    });
+  });
+}
+on(document.getElementById("transitoPaletaIconos"), "click", (e)=>{
+  const btn = e.target.closest("button[data-add-icono]");
+  if(!btn) return;
+  if(!currentCroquisFoto){ alert("Primero sube una foto de fondo para el croquis."); return; }
+  const key = "k"+Date.now()+Math.random().toString(36).slice(2,6);
+  currentCroquisIconos[key] = {tipo: btn.dataset.addIcono, x:50, y:50};
+  renderTransitoCroquis();
+});
+on(document.getElementById("transitoSubirFotoCroquisBtn"), "click", ()=> document.getElementById("transitoFotoCroquisInput").click());
+on(document.getElementById("transitoFotoCroquisInput"), "change", async (e)=>{
+  const file = e.target.files[0]; e.target.value = "";
+  if(!file) return;
+  currentCroquisFoto = await readFileAsDataUrl(file);
+  renderTransitoCroquis();
+});
+
+let currentFotosAdicionales = [];
+function renderTransitoFotos(){
+  document.getElementById("transitoFotosWrap").innerHTML = currentFotosAdicionales.length ? currentFotosAdicionales.map((src,idx)=>`
+    <div style="position:relative;">
+      <img src="${src}" style="width:100px;height:100px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">
+      <button type="button" data-quitar-foto="${idx}" class="subtle-btn" style="position:absolute;top:-2px;right:-2px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.4);">✕</button>
+    </div>
+  `).join("") : '<div class="kv">Sin fotos adicionales</div>';
+}
+on(document.getElementById("transitoSubirFotosBtn"), "click", ()=> document.getElementById("transitoFotosInput").click());
+on(document.getElementById("transitoFotosInput"), "change", async (e)=>{
+  const files = Array.from(e.target.files); e.target.value = "";
+  for(const f of files){ currentFotosAdicionales.push(await readFileAsDataUrl(f)); }
+  renderTransitoFotos();
+});
+on(document.getElementById("transitoFotosWrap"), "click", (e)=>{
+  const btn = e.target.closest("button[data-quitar-foto]");
+  if(!btn) return;
+  currentFotosAdicionales.splice(+btn.dataset.quitarFoto,1);
+  renderTransitoFotos();
+});
+
+let transitoEditingId = null;
+function resetTransitoForm(){
+  transitoEditingId = null;
+  ["transitoFecha","transitoHora","transitoArea","transitoAccidenteId","transitoVehiculo","transitoResponsable","transitoDescripcion",
+   "transitoPendientePct","transitoVelocidadMaxima","transitoHuellaFrenado","transitoObservaciones","transitoConclusiones"].forEach(id=>{ document.getElementById(id).value = ""; });
+  document.getElementById("transitoTipo").value = "colision-frontal";
+  document.getElementById("transitoCondicionCalzada").value = "asfalto-seco";
+  document.getElementById("transitoCoefFriccion").value = COEF_FRICCION_REF["asfalto-seco"].mu;
+  document.getElementById("transitoTipoPendiente").value = "plana";
+  document.getElementById("transitoEstadoConductor").value = "normal";
+  document.getElementById("transitoTiempoReaccion").value = 1;
+  currentTransitoTrabajadores = [];
+  transitoChecklistEstado = {};
+  currentCroquisFoto = null;
+  currentCroquisIconos = {};
+  currentFotosAdicionales = [];
+  drawTransitoTrabajadores();
+  drawTransitoChecklist();
+  renderTransitoCroquis();
+  renderTransitoFotos();
+  renderTransitoCalculo();
+  document.getElementById("transitoFormTitle").textContent = "Investigación de accidentes de tránsito";
+  document.getElementById("saveTransitoBtn").textContent = "Guardar investigación";
+  document.getElementById("cancelEditTransitoBtn").style.display = "none";
+}
+on(document.getElementById("cancelEditTransitoBtn"), "click", ()=> resetTransitoForm());
+resetTransitoForm();
+
+function transitoFormularioARegistro(id){
+  return {
+    id,
+    fecha: document.getElementById("transitoFecha").value,
+    hora: document.getElementById("transitoHora").value,
+    areaId: document.getElementById("transitoArea").value,
+    accidenteId: document.getElementById("transitoAccidenteId").value || null,
+    tipoAccidente: document.getElementById("transitoTipo").value,
+    vehiculo: document.getElementById("transitoVehiculo").value.trim(),
+    responsable: document.getElementById("transitoResponsable").value.trim(),
+    descripcion: document.getElementById("transitoDescripcion").value.trim(),
+    participantesIds: currentTransitoTrabajadores.slice(),
+    condicionCalzada: document.getElementById("transitoCondicionCalzada").value,
+    coefFriccion: +document.getElementById("transitoCoefFriccion").value || null,
+    tipoPendiente: document.getElementById("transitoTipoPendiente").value,
+    pendientePct: +document.getElementById("transitoPendientePct").value || 0,
+    velocidadMaxima: +document.getElementById("transitoVelocidadMaxima").value || null,
+    estadoConductor: document.getElementById("transitoEstadoConductor").value,
+    huellaFrenado: document.getElementById("transitoHuellaFrenado").value ? +document.getElementById("transitoHuellaFrenado").value : null,
+    tiempoReaccion: +document.getElementById("transitoTiempoReaccion").value || null,
+    items: TRANSITO_CHECKLIST_ITEMS.map((texto,idx)=>({texto, estado: transitoChecklistEstado[idx]||""})),
+    fotoCroquis: currentCroquisFoto,
+    iconosCroquis: {...currentCroquisIconos},
+    fotosAdicionales: currentFotosAdicionales.slice(),
+    observaciones: document.getElementById("transitoObservaciones").value.trim(),
+    conclusiones: document.getElementById("transitoConclusiones").value.trim(),
+  };
+}
+function startEditTransito(id){
+  const rec = CACHE.transitoInvestigaciones.find(r=>r.id===id);
+  if(!rec) return;
+  transitoEditingId = id;
+  document.getElementById("transitoFecha").value = rec.fecha || "";
+  document.getElementById("transitoHora").value = rec.hora || "";
+  document.getElementById("transitoArea").value = rec.areaId || "";
+  document.getElementById("transitoAccidenteId").value = rec.accidenteId || "";
+  document.getElementById("transitoTipo").value = rec.tipoAccidente || "colision-frontal";
+  document.getElementById("transitoVehiculo").value = rec.vehiculo || "";
+  document.getElementById("transitoResponsable").value = rec.responsable || "";
+  document.getElementById("transitoDescripcion").value = rec.descripcion || "";
+  document.getElementById("transitoCondicionCalzada").value = rec.condicionCalzada || "asfalto-seco";
+  document.getElementById("transitoCoefFriccion").value = rec.coefFriccion ?? "";
+  document.getElementById("transitoTipoPendiente").value = rec.tipoPendiente || "plana";
+  document.getElementById("transitoPendientePct").value = rec.pendientePct || "";
+  document.getElementById("transitoVelocidadMaxima").value = rec.velocidadMaxima ?? "";
+  document.getElementById("transitoEstadoConductor").value = rec.estadoConductor || "normal";
+  document.getElementById("transitoHuellaFrenado").value = rec.huellaFrenado ?? "";
+  document.getElementById("transitoTiempoReaccion").value = rec.tiempoReaccion ?? "";
+  currentTransitoTrabajadores = (rec.participantesIds||[]).slice();
+  transitoChecklistEstado = {};
+  (rec.items||[]).forEach((it,idx)=>{ if(it.estado) transitoChecklistEstado[idx] = it.estado; });
+  currentCroquisFoto = rec.fotoCroquis || null;
+  currentCroquisIconos = {...(rec.iconosCroquis||{})};
+  currentFotosAdicionales = (rec.fotosAdicionales||[]).slice();
+  drawTransitoTrabajadores();
+  drawTransitoChecklist();
+  renderTransitoCroquis();
+  renderTransitoFotos();
+  renderTransitoCalculo();
+  document.getElementById("transitoFormTitle").textContent = `Editando investigación del ${fmtDate(rec.fecha)}`;
+  document.getElementById("saveTransitoBtn").textContent = "Guardar cambios";
+  document.getElementById("cancelEditTransitoBtn").style.display = "";
+  document.getElementById("transitoFormTitle").scrollIntoView({behavior:"smooth", block:"start"});
+}
+on(document.getElementById("saveTransitoBtn"), "click", async () => {
+  const fecha = document.getElementById("transitoFecha").value;
+  const areaId = document.getElementById("transitoArea").value;
+  if(!fecha || !areaId){ alert("Completa al menos la fecha y el área antes de guardar."); return; }
+  const rec = transitoFormularioARegistro(transitoEditingId || uid());
+  await put("transitoInvestigaciones", rec);
+  await loadCache();
+  const creando = !transitoEditingId;
+  resetTransitoForm();
+  renderTransitoTable();
+  alert(creando ? "Investigación guardada." : "Investigación actualizada.");
+});
+
+function renderTransitoTable(){
+  const rows = (CACHE.transitoInvestigaciones||[]).slice().sort((a,b)=> new Date(b.fecha)-new Date(a.fecha));
+  document.getElementById("transitoTable").innerHTML = rows.map(r=>{
+    const res = transitoCalcularResultado(r);
+    return `<tr>
+      <td>${fmtDate(r.fecha)}</td>
+      <td>${TRANSITO_TIPO_LABEL[r.tipoAccidente]||r.tipoAccidente}</td>
+      <td>${areaName(r.areaId)}</td>
+      <td>${r.vehiculo||"—"}</td>
+      <td>${res ? res.vkmh.toFixed(0)+" km/h" : "—"}</td>
+      <td>${r.responsable||"—"}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn secondary small" data-transito-editar="${r.id}">Editar</button>
+        <button class="btn small" data-transito-imprimir="${r.id}">Descargar PDF</button>
+        <button class="subtle-btn" data-transito-eliminar="${r.id}">Eliminar</button>
+      </td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="7">Aún no hay investigaciones de tránsito registradas</td></tr>`;
+}
+on(document.getElementById("transitoTable"), "click", async (e) => {
+  const editBtn = e.target.closest("button[data-transito-editar]");
+  if(editBtn){ startEditTransito(editBtn.dataset.transitoEditar); return; }
+  const delBtn = e.target.closest("button[data-transito-eliminar]");
+  if(delBtn){
+    const rec = CACHE.transitoInvestigaciones.find(r=>r.id===delBtn.dataset.transitoEliminar);
+    if(!rec) return;
+    if(!confirm(`¿Eliminar la investigación del ${fmtDate(rec.fecha)}? Esta acción no se puede deshacer.`)) return;
+    await deleteRecord("transitoInvestigaciones", rec.id);
+    await loadCache();
+    if(transitoEditingId === rec.id) resetTransitoForm();
+    renderTransitoTable();
+    return;
+  }
+  const printBtn = e.target.closest("button[data-transito-imprimir]");
+  if(printBtn){
+    const rec = CACHE.transitoInvestigaciones.find(r=>r.id===printBtn.dataset.transitoImprimir);
+    if(rec) await descargarTransitoPdf(rec);
+  }
+});
+
+/* Captura el croquis actual (foto + íconos) como imagen, con html2canvas,
+   mismo patrón que capturarArbolMapaImagen -- pero sobre el contenedor ya
+   visible en pantalla en vez de uno fuera de pantalla, porque el croquis
+   ya se ve tal cual se necesita para el PDF. Al imprimir un registro
+   guardado que no es el que está abierto en el formulario, se arma un
+   contenedor temporal con esos datos para poder capturarlo igual. */
+async function capturarCroquisImagen(rec){
+  if(typeof html2canvas === "undefined" || !rec.fotoCroquis) return null;
+  const marcas = Object.values(rec.iconosCroquis||{}).map(m=>{
+    const def = CROQUIS_ICONOS.find(i=>i.tipo===m.tipo) || {};
+    return `<div style="position:absolute;left:${m.x}%;top:${m.y}%;transform:translate(-50%,-50%);font-size:28px;">${def.emoji||"?"}</div>`;
+  }).join("");
+  const cont = document.createElement("div");
+  cont.style.cssText = "position:fixed;left:-10000px;top:0;width:800px;";
+  cont.innerHTML = `<div style="position:relative;display:inline-block;width:800px;"><img src="${rec.fotoCroquis}" style="display:block;width:800px;">${marcas}</div>`;
+  document.body.appendChild(cont);
+  try{
+    const target = cont.firstElementChild;
+    const canvas = await html2canvas(target, { backgroundColor:"#ffffff", scale:1.5 });
+    return { dataUrl: canvas.toDataURL("image/png"), w: canvas.width, h: canvas.height };
+  }catch(e){
+    return null;
+  }finally{
+    document.body.removeChild(cont);
+  }
+}
+function dibujarBarraVelocidadPdf(doc, y, pct){
+  if(pct===null){
+    doc.setFontSize(9); doc.text("Ingresa la velocidad máxima permitida en el tramo para comparar.", 14, y);
+    return y + 8;
+  }
+  const sem = izajeSemaforo(pct);
+  const color = IZAJE_SEMAFORO_COLOR[sem];
+  doc.setFontSize(9); doc.text(`Uso de la velocidad máxima permitida: ${pct.toFixed(0)}%`, 14, y); y += 4;
+  const barX = 14, barW = 160, barH = 5, escalaMax = 150;
+  doc.setFillColor(230,230,230); doc.rect(barX, y, barW, barH, "F");
+  const fillW = Math.max(0, Math.min(pct, escalaMax)) / escalaMax * barW;
+  doc.setFillColor(color[0], color[1], color[2]); doc.rect(barX, y, fillW, barH, "F");
+  const marca100 = (100/escalaMax) * barW;
+  doc.setDrawColor(60,60,60); doc.line(barX+marca100, y-1, barX+marca100, y+barH+1);
+  y += barH + 5;
+  doc.setTextColor(color[0], color[1], color[2]); doc.setFont(undefined,"bold");
+  doc.text(TRANSITO_SEMAFORO_MSG[sem], 14, y); y += 7;
+  doc.setFont(undefined,"normal"); doc.setTextColor(0,0,0);
+  return y;
+}
+async function descargarTransitoPdf(rec){
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const doc = new JsPDFClass();
+  addLogoPdf(doc);
+  let y = 16;
+  doc.setFontSize(16);
+  doc.text("Investigación de accidente de tránsito", 14, y); y += 8;
+  doc.setFontSize(8.5); doc.setTextColor(120);
+  const avisoLines = doc.splitTextToSize("Estimación de apoyo para una investigación interna, basada en fórmulas de física estándar y valores de referencia bibliográficos (coeficiente de fricción, tiempo de reacción). No reemplaza una pericia de reconstrucción de accidentes certificada, especialmente para fines legales o judiciales.", 182);
+  doc.text(avisoLines, 14, y); y += avisoLines.length*3.8 + 4;
+  doc.setTextColor(0); doc.setFontSize(10);
+  doc.text(`Empresa: ${(CACHE.empresa&&CACHE.empresa.razonSocial)||"—"}`, 14, y); y += 6;
+  const lineaDatosTr = datosEmpresaLineaPdf();
+  if(lineaDatosTr){ doc.text(lineaDatosTr, 14, y); y += 6; }
+  y += 2;
+
+  doc.autoTable({ startY:y, head:[["Dato","Detalle"]], body:[
+    ["Fecha / hora", `${fmtDate(rec.fecha)}${rec.hora?" "+rec.hora:""}`],
+    ["Área", areaName(rec.areaId)],
+    ["Tipo de accidente", TRANSITO_TIPO_LABEL[rec.tipoAccidente]||rec.tipoAccidente],
+    ["Vehículo(s)", rec.vehiculo || "—"],
+    ["Responsable de la investigación", rec.responsable || "—"],
+    ["Superficie / condición de la calzada", (COEF_FRICCION_REF[rec.condicionCalzada]||{}).label || rec.condicionCalzada || "—"],
+    ["Pendiente", `${rec.tipoPendiente||"—"}${rec.pendientePct?" ("+rec.pendientePct+"%)":""}`],
+    ["Estado del conductor", rec.estadoConductor || "—"],
+  ], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  if(rec.descripcion){
+    doc.setFont(undefined,"bold"); doc.text("Descripción de los hechos:", 14, y); doc.setFont(undefined,"normal"); y += 5;
+    const splitDesc = doc.splitTextToSize(rec.descripcion, 182);
+    doc.text(splitDesc, 14, y); y += splitDesc.length*4.5 + 4;
+  }
+
+  doc.setFontSize(12); doc.text("Cálculo de velocidad y distancias", 14, y); y += 5;
+  const res = transitoCalcularResultado(rec);
+  if(!res){
+    doc.setFontSize(9); doc.text("No se registró huella de frenado o coeficiente de fricción: no fue posible estimar la velocidad.", 14, y); y += 8;
+  } else {
+    doc.setFontSize(9);
+    doc.text(`Huella de frenado: ${rec.huellaFrenado} m    Coeficiente de fricción (μ): ${rec.coefFriccion}    Tiempo de reacción usado: ${rec.tiempoReaccion} s`, 14, y); y += 5;
+    doc.text(`Velocidad estimada antes de frenar: ${res.vkmh.toFixed(1)} km/h`, 14, y); y += 5;
+    doc.text(`Distancia de reacción: ${res.dist.distReaccion.toFixed(1)} m    Distancia de frenado: ${res.dist.distFrenado!=null?res.dist.distFrenado.toFixed(1)+" m":"—"}    Distancia total de detención: ${res.dist.distTotal!=null?res.dist.distTotal.toFixed(1)+" m":"—"}`, 14, y); y += 7;
+    doc.text(`Velocidad máxima permitida en el tramo: ${rec.velocidadMaxima ?? "—"} km/h`, 14, y); y += 6;
+    y = dibujarBarraVelocidadPdf(doc, y, res.pct);
+  }
+  y += 4;
+
+  if(y > 230){ doc.addPage(); y = 16; }
+  doc.setFontSize(12); doc.text("Lista de verificación", 14, y); y += 4;
+  doc.autoTable({ startY:y, head:[["Ítem","Resultado"]],
+    body: (rec.items||[]).map(it=>[it.texto, it.estado==='ok'?'Cumple':it.estado==='fail'?'No cumple':it.estado==='na'?'N/A':"—"]),
+    styles:{fontSize:9}, headStyles:{fillColor:[236,131,90]} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  const croquisImg = await capturarCroquisImagen(rec);
+  if(croquisImg){
+    const maxImgW = 182, maxImgH = 130;
+    let imgW = maxImgW, imgH = imgW * (croquisImg.h/croquisImg.w);
+    if(imgH > maxImgH){ imgH = maxImgH; imgW = imgH * (croquisImg.w/croquisImg.h); }
+    if(y + imgH > 280){ doc.addPage(); y = 16; }
+    doc.setFontSize(12); doc.text("Croquis del lugar", 14, y); y += 6;
+    doc.addImage(croquisImg.dataUrl, "PNG", 14, y, imgW, imgH);
+    y += imgH + 8;
+  }
+
+  for(const foto of (rec.fotosAdicionales||[])){
+    const maxImgW = 100, maxImgH = 100;
+    if(y + maxImgH > 280){ doc.addPage(); y = 16; }
+    try{
+      const match = /^data:image\/(png|jpe?g);base64,/i.exec(foto);
+      const fmt = match ? (match[1].toLowerCase()==="jpg" ? "JPEG" : match[1].toUpperCase()) : "PNG";
+      doc.addImage(foto, fmt, 14, y, maxImgW, maxImgH);
+      y += maxImgH + 6;
+    }catch(e){ /* formato de imagen no soportado por jsPDF: se omite */ }
+  }
+
+  if(rec.observaciones){
+    if(y > 260){ doc.addPage(); y = 16; }
+    doc.setFont(undefined,"bold"); doc.text("Observaciones:", 14, y); doc.setFont(undefined,"normal"); y += 5;
+    const splitObs = doc.splitTextToSize(rec.observaciones, 182);
+    doc.text(splitObs, 14, y); y += splitObs.length*4.5 + 4;
+  }
+  if(rec.conclusiones){
+    if(y > 260){ doc.addPage(); y = 16; }
+    doc.setFont(undefined,"bold"); doc.text("Conclusiones:", 14, y); doc.setFont(undefined,"normal"); y += 5;
+    const splitConcl = doc.splitTextToSize(rec.conclusiones, 182);
+    doc.text(splitConcl, 14, y); y += splitConcl.length*4.5 + 4;
+  }
+
+  const participantes = (rec.participantesIds||[]).map(id=>trabName(id));
+  if(participantes.length){
+    if(y > 250){ doc.addPage(); y = 16; }
+    doc.setFontSize(12); doc.text("Participantes / testigos", 14, y); y += 6;
+    doc.setFontSize(9);
+    participantes.forEach(nombre=>{
+      if(y > 275){ doc.addPage(); y = 16; }
+      doc.text(nombre, 14, y);
+      doc.line(90, y+1, 196, y+1);
+      y += 12;
+    });
+  }
+  doc.save(`Investigacion_transito_${rec.fecha||""}.pdf`);
+}
+
+/* =========================================================
    INVESTIGACIÓN DE ACCIDENTE (formato formal, modelo de
    causalidad de pérdidas de Bird: identificación del accidentado,
    información del evento, causas inmediatas -- acción/condición
@@ -18360,6 +19053,8 @@ async function refreshAll(){
   renderAccidentesTable();
   renderAccidentabilidad();
   renderArbolTable();
+  renderTransitoTable();
+  if(!transitoEditingId){ drawTransitoChecklist(); renderTransitoCroquis(); renderTransitoFotos(); renderTransitoCalculo(); }
   if(!arbolEditingId){
     if(!document.getElementById("arbolFecha").value) document.getElementById("arbolFecha").value = new Date().toISOString().slice(0,10);
     drawArbolTree();
