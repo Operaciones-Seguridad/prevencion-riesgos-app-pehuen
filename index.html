@@ -2027,7 +2027,67 @@
         <div><label>Largo de la huella de frenado (m, si no sabés la velocidad)</label><input id="transitoHuellaFrenado" type="number" min="0" step="0.1"></div>
         <div><label>Tiempo de reacción a usar (segundos)</label><input id="transitoTiempoReaccion" type="number" min="0.4" max="4" step="0.1"></div>
       </div>
+      <div class="desc" style="margin-top:10px;">Si tenés cómo probar la distancia real que había hasta el punto de impacto (dashcam, GPS/telemetría de flota, testigo, medición desde un punto de referencia fijo), ingrésala acá para que el sistema compare directamente si esa distancia alcanzaba para detenerse.</div>
+      <div class="form-grid">
+        <div><label>Distancia real disponible hasta el punto de impacto (m, si tenés cómo probarla)</label><input id="transitoDistanciaDisponible" type="number" min="0" step="0.1"></div>
+      </div>
       <div id="transitoCalculoWrap" style="margin-top:10px;"></div>
+
+      <label style="margin-top:18px;display:block;">Retroceso / desplazamiento post-impacto (opcional)</label>
+      <div class="desc">Si el vehículo se desplazó o retrocedió una distancia medible después del choque (antes de detenerse), esto permite estimar su velocidad justo después del impacto (velocidad de separación) — no es la velocidad en el momento exacto de la colisión, que siempre es más alta, porque gran parte de la energía se pierde en la propia deformación. Como las ruedas/neumáticos suelen quedar dañados tras el impacto, el roce real puede ser distinto al de una frenada normal — ajustá el coeficiente si corresponde.</div>
+      <div class="form-grid">
+        <div><label>Distancia de retroceso/desplazamiento post-impacto (m)</label><input id="transitoDistanciaRetroceso" type="number" min="0" step="0.1"></div>
+        <div>
+          <label>Superficie/condición para el roce post-impacto</label>
+          <select id="transitoCondicionPostImpacto">
+            <option value="asfalto-seco">Asfalto/hormigón seco</option>
+            <option value="asfalto-mojado">Asfalto mojado</option>
+            <option value="hormigon-mojado">Hormigón mojado</option>
+            <option value="grava">Grava</option>
+            <option value="tierra-seca">Tierra seca</option>
+            <option value="tierra-humeda">Tierra húmeda</option>
+            <option value="nieve">Nieve dura</option>
+            <option value="hielo">Hielo</option>
+            <option value="otro">Otra / coeficiente medido en terreno</option>
+          </select>
+        </div>
+        <div><label>Coeficiente de fricción post-impacto a usar</label><input id="transitoCoefFriccionPostImpacto" type="number" min="0" max="1" step="0.01"></div>
+      </div>
+      <div id="transitoPostImpactoWrap" style="margin-top:8px;"></div>
+
+      <label style="margin-top:18px;display:block;">Análisis de momentum entre 2 vehículos (opcional)</label>
+      <div class="desc">Completamente opcional — ningún campo de esta sección es obligatorio ni se exige al guardar. Si tenés la masa de ambos vehículos y sabés cuánto se desplazó (o no) el otro vehículo tras el impacto, se puede estimar la velocidad que tenía ANTES del choque por conservación de momentum (física estándar) — por ejemplo, para respaldar si un camión estaba realmente detenido. Si te falta algún dato, dejalo vacío: el cálculo simplemente no se muestra, sin bloquear nada más.</div>
+      <div class="form-grid">
+        <div><label>Masa del vehículo investigado (kg)</label><input id="transitoMasaA" type="number" min="0" step="10"></div>
+        <div><label>Masa del otro vehículo involucrado (kg)</label><input id="transitoMasaB" type="number" min="0" step="10"></div>
+        <div><label>Desplazamiento post-impacto del otro vehículo (m, 0 si no se movió)</label><input id="transitoDesplazamientoB" type="number" min="0" step="0.1"></div>
+        <div>
+          <label>Superficie/condición para el roce del otro vehículo</label>
+          <select id="transitoCondicionB">
+            <option value="asfalto-seco">Asfalto/hormigón seco</option>
+            <option value="asfalto-mojado">Asfalto mojado</option>
+            <option value="hormigon-mojado">Hormigón mojado</option>
+            <option value="grava">Grava</option>
+            <option value="tierra-seca">Tierra seca</option>
+            <option value="tierra-humeda">Tierra húmeda</option>
+            <option value="nieve">Nieve dura</option>
+            <option value="hielo">Hielo</option>
+            <option value="otro">Otra / coeficiente medido en terreno</option>
+          </select>
+        </div>
+        <div><label>Coeficiente de fricción del otro vehículo</label><input id="transitoCoefFriccionB" type="number" min="0" max="1" step="0.01"></div>
+      </div>
+      <div id="transitoMomentumWrap" style="margin-top:8px;"></div>
+
+      <div id="transitoEstabilidadWrap" style="display:none;">
+        <label style="margin-top:18px;display:block;">Índice de estabilidad (volcamiento)</label>
+        <div class="desc">Indicador general de qué tan propenso es ESE MODELO de vehículo a volcar (no explica por sí solo esta maniobra puntual). Fórmula NHTSA: SSF = ancho de trocha ÷ (2 × altura del centro de gravedad). La altura del centro de gravedad normalmente no se mide en terreno — se obtiene de la ficha técnica del fabricante o de bases de datos de NHTSA por modelo.</div>
+        <div class="form-grid">
+          <div><label>Ancho de trocha del vehículo (m)</label><input id="transitoTrocha" type="number" min="0" step="0.01"></div>
+          <div><label>Altura del centro de gravedad (m, si se conoce/estimó)</label><input id="transitoAlturaCg" type="number" min="0" step="0.01"></div>
+        </div>
+        <div id="transitoSsfWrap" style="margin-top:6px;"></div>
+      </div>
 
       <label style="margin-top:18px;display:block;">Lista de verificación</label>
       <div id="transitoChecklistWrap"></div>
@@ -15733,7 +15793,11 @@ function calcDistancias({velocidadMs, tiempoReaccion, coefFriccion}){
   if(!(v>0)) return null;
   const distReaccion = t>0 ? v*t : 0;
   const distFrenado = mu>0 ? (v*v)/(2*9.81*mu) : null;
-  return { distReaccion, distFrenado, distTotal: distFrenado!=null ? distReaccion+distFrenado : null };
+  // Tiempo de frenado (activo, ya con el pie en el freno) = v / (μ·g) --
+  // distinto del tiempo de reacción, que es antes de empezar a frenar.
+  const tiempoFrenado = mu>0 ? v/(9.81*mu) : null;
+  const tiempoTotal = tiempoFrenado!=null ? (t>0?t:0) + tiempoFrenado : null;
+  return { distReaccion, distFrenado, distTotal: distFrenado!=null ? distReaccion+distFrenado : null, tiempoFrenado, tiempoTotal };
 }
 const TRANSITO_SEMAFORO_MSG = {bajo:"Dentro del límite permitido", medio:"Cerca del límite permitido", alto:"SUPERÓ LA VELOCIDAD MÁXIMA PERMITIDA"};
 function barraVelocidadHtml(label, pct){
@@ -15759,6 +15823,7 @@ function transitoLeerCalculo(){
     pendientePct: document.getElementById("transitoPendientePct").value,
     tiempoReaccion: document.getElementById("transitoTiempoReaccion").value,
     velocidadMaxima: document.getElementById("transitoVelocidadMaxima").value,
+    distanciaDisponible: document.getElementById("transitoDistanciaDisponible").value,
   };
 }
 /* Resultado de cálculo reutilizado tanto por la vista previa en pantalla
@@ -15778,8 +15843,105 @@ function transitoCalcularResultado(datos){
   const dist = calcDistancias({velocidadMs: vkmh/3.6, tiempoReaccion:datos.tiempoReaccion, coefFriccion:datos.coefFriccion});
   const vmax = Number(datos.velocidadMaxima);
   const pct = vmax>0 ? (vkmh/vmax)*100 : null;
-  return { vkmh, dist, pct, origen: tieneConocida ? "conocida" : "huella", vkmhHuella: tieneConocida ? vkmhHuella : null };
+  const distDisponible = Number(datos.distanciaDisponible);
+  const comparacionDisponible = (distDisponible>0 && dist.distTotal!=null)
+    ? { distDisponible, evitable: distDisponible >= dist.distTotal, margen: distDisponible - dist.distTotal }
+    : null;
+  return { vkmh, dist, pct, origen: tieneConocida ? "conocida" : "huella", vkmhHuella: tieneConocida ? vkmhHuella : null, comparacionDisponible };
 }
+/* Velocidad de SEPARACIÓN (justo después del impacto), no la velocidad en
+   el instante de la colisión -- misma física que el frenado normal
+   (V=√(2·g·μ·d)), aplicada a la distancia que el vehículo se desplazó tras
+   el choque hasta detenerse. El roce post-impacto puede ser distinto al de
+   una frenada intacta (ruedas/neumáticos dañados), por eso el coeficiente
+   se pide aparte y siempre editable. */
+function calcVelocidadPostImpacto({distanciaRetroceso, coefFriccionPostImpacto}){
+  const d = Number(distanciaRetroceso), mu = Number(coefFriccionPostImpacto);
+  if(!(d>0) || !(mu>0)) return null;
+  return Math.sqrt(2*9.81*d*mu); // m/s
+}
+/* Static Stability Factor (NHTSA): SSF = trocha / (2 * altura CG). Es una
+   característica del MODELO de vehículo (qué tan propenso es a volcar en
+   general), no explica por sí sola esta maniobra puntual. Las bandas de
+   interpretación son aproximadas, tomadas de la escala general de NHTSA
+   (5 estrellas ~10% de riesgo con SSF ~1.45+; 1 estrella ~40%+ con
+   SSF ~1.0 o menos) -- se muestran como referencia, no como un veredicto. */
+function calcSSF({trocha, alturaCg}){
+  const t = Number(trocha), h = Number(alturaCg);
+  if(!(t>0) || !(h>0)) return null;
+  return t/(2*h);
+}
+function interpretarSSF(ssf){
+  if(ssf>=1.45) return "riesgo de volcamiento bajo para este modelo (referencial, escala NHTSA)";
+  if(ssf>=1.25) return "riesgo de volcamiento bajo-moderado para este modelo (referencial, escala NHTSA)";
+  if(ssf>=1.05) return "riesgo de volcamiento moderado-alto para este modelo (referencial, escala NHTSA)";
+  return "riesgo de volcamiento alto para este modelo (referencial, escala NHTSA)";
+}
+function renderTransitoSsf(){
+  const wrap = document.getElementById("transitoSsfWrap");
+  const ssf = calcSSF({trocha: document.getElementById("transitoTrocha").value, alturaCg: document.getElementById("transitoAlturaCg").value});
+  wrap.innerHTML = ssf===null ? "" : `<div class="kv">SSF calculado: <strong>${ssf.toFixed(2)}</strong> — ${interpretarSSF(ssf)}.</div>`;
+}
+function actualizarVisibilidadEstabilidad(){
+  document.getElementById("transitoEstabilidadWrap").style.display = document.getElementById("transitoTipo").value==="volcamiento" ? "" : "none";
+}
+document.getElementById("transitoTipo").addEventListener("change", actualizarVisibilidadEstabilidad);
+["transitoTrocha","transitoAlturaCg"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", renderTransitoSsf);
+});
+
+/* Análisis de momentum (opcional, dos vehículos): conservación de momentum
+   lineal (física estándar) para estimar la velocidad que tenía el OTRO
+   vehículo antes del impacto -- útil para respaldar si estaba detenido.
+   Ningún dato es obligatorio: si falta algo, simplemente no se muestra
+   resultado, sin bloquear el resto del formulario ni el guardado. */
+function calcVelocidadBPostImpacto({desplazamientoB, coefFriccionB}){
+  const d = Number(desplazamientoB);
+  if(!(d>0)) return 0; // no se desplazó (o se dejó vacío) -> se asume que quedó en el sitio
+  const mu = Number(coefFriccionB);
+  if(!(mu>0)) return null; // se desplazó pero falta el coeficiente para calcular
+  return Math.sqrt(2*9.81*d*mu); // m/s
+}
+function calcVelocidadBAntes({masaA, masaB, vA_ms, vAprime_ms, vBprime_ms}){
+  const mA = Number(masaA), mB = Number(masaB);
+  if(!(mA>0) || !(mB>0) || vA_ms==null || vAprime_ms==null || vBprime_ms==null) return null;
+  return vBprime_ms + (mA/mB)*(vAprime_ms - vA_ms); // m/s, conservación de momentum lineal (modelo 1D)
+}
+document.getElementById("transitoCondicionB").addEventListener("change",(e)=>{
+  const ref = COEF_FRICCION_REF[e.target.value];
+  if(ref) document.getElementById("transitoCoefFriccionB").value = ref.mu;
+  renderTransitoMomentum();
+});
+function renderTransitoMomentum(){
+  const wrap = document.getElementById("transitoMomentumWrap");
+  const masaA = document.getElementById("transitoMasaA").value;
+  const masaB = document.getElementById("transitoMasaB").value;
+  if(!masaA || !masaB){ wrap.innerHTML = ""; return; }
+  const res = transitoCalcularResultado(transitoLeerCalculo());
+  const vAprimeMs = calcVelocidadPostImpacto({
+    distanciaRetroceso: document.getElementById("transitoDistanciaRetroceso").value,
+    coefFriccionPostImpacto: document.getElementById("transitoCoefFriccionPostImpacto").value,
+  });
+  if(!res || vAprimeMs==null){
+    wrap.innerHTML = '<div class="kv">Para este cálculo también hace falta la velocidad del vehículo investigado (arriba) y su retroceso/desplazamiento post-impacto.</div>';
+    return;
+  }
+  const vBprimeMs = calcVelocidadBPostImpacto({
+    desplazamientoB: document.getElementById("transitoDesplazamientoB").value,
+    coefFriccionB: document.getElementById("transitoCoefFriccionB").value,
+  });
+  if(vBprimeMs===null){ wrap.innerHTML = '<div class="kv">El otro vehículo se desplazó, pero falta su coeficiente de fricción para calcular su velocidad post-impacto.</div>'; return; }
+  const vB = calcVelocidadBAntes({masaA, masaB, vA_ms: res.vkmh/3.6, vAprime_ms: vAprimeMs, vBprime_ms: vBprimeMs});
+  if(vB===null){ wrap.innerHTML = ""; return; }
+  const vBkmh = vB*3.6;
+  const interpretacion = Math.abs(vBkmh) < 5
+    ? "compatible con que el otro vehículo estaba detenido o casi detenido"
+    : `equivalente a una velocidad aproximada de ${Math.abs(vBkmh).toFixed(0)} km/h ${vBkmh<0 ? "en sentido contrario (o los datos ingresados no son consistentes con un choque simple en línea recta)" : "antes del impacto"}`;
+  wrap.innerHTML = `<div class="kv">Velocidad estimada del otro vehículo antes del impacto (conservación de momentum): <strong>${vBkmh.toFixed(1)} km/h</strong> — ${interpretacion}. Modelo simplificado en línea recta (1D); no reemplaza una pericia si el impacto tuvo ángulo.</div>`;
+}
+["transitoMasaA","transitoMasaB","transitoDesplazamientoB","transitoCoefFriccionB"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", renderTransitoMomentum);
+});
 /* Borrador de conclusiones armado SOLO con los datos ya ingresados (cálculo,
    checklist, estado del conductor) -- ninguna frase agrega un hecho que no
    esté en el registro. Sirve de punto de partida; el investigador lo revisa
@@ -15808,13 +15970,41 @@ function generarConclusionesTransito(rec){
       }
     }
     if(res.dist.distTotal!=null){
-      partes.push(`La distancia total de detención estimada (reacción + frenado) fue de ${res.dist.distTotal.toFixed(1)} m.`);
-      if(rec.tipoAccidente==="colision-trasera"){
+      partes.push(`La distancia total de detención estimada (reacción + frenado) fue de ${res.dist.distTotal.toFixed(1)} m, en un tiempo total de ${res.dist.tiempoTotal!=null?res.dist.tiempoTotal.toFixed(1)+" segundos":"—"} desde que apareció el peligro hasta detenerse por completo.`);
+      if(res.comparacionDisponible){
+        const c = res.comparacionDisponible;
+        partes.push(c.evitable
+          ? `Comparando esta distancia con la distancia real disponible hasta el punto de impacto (${c.distDisponible.toFixed(1)} m), había un margen de ${c.margen.toFixed(1)} m: con estos parámetros, la colisión era evitable, por lo que otros factores (distracción, no prestar atención, etc.) deben considerarse como causa principal.`
+          : `Comparando esta distancia con la distancia real disponible hasta el punto de impacto (${c.distDisponible.toFixed(1)} m), faltaban ${Math.abs(c.margen).toFixed(1)} m: con estos parámetros, la colisión era inevitable una vez presente el peligro, lo que apunta a que la distancia de seguimiento/reacción disponible no era suficiente para la velocidad de circulación.`);
+      } else if(rec.tipoAccidente==="colision-trasera"){
         partes.push(`Tratándose de una colisión trasera (alcance): si la distancia que el vehículo mantenía respecto al vehículo de adelante era menor a esos ${res.dist.distTotal.toFixed(1)} m, no habría sido posible evitar la colisión ante una frenada de ese vehículo, lo que es coherente con una distancia de seguimiento insuficiente para la velocidad de circulación.`);
       }
     }
   } else {
     partes.push("No fue posible estimar la velocidad del vehículo por no contar con una velocidad conocida ni con una huella de frenado medida en terreno; se recomienda obtener alguno de estos datos en una futura inspección si el lugar aún lo permite.");
+  }
+
+  const vmsPost = calcVelocidadPostImpacto({distanciaRetroceso: rec.distanciaRetroceso, coefFriccionPostImpacto: rec.coefFriccionPostImpacto});
+  if(vmsPost!=null){
+    partes.push(`Según la distancia de desplazamiento post-impacto (${rec.distanciaRetroceso} m), la velocidad de separación justo después del choque se estima en ${(vmsPost*3.6).toFixed(0)} km/h; esto no reemplaza la velocidad en el instante de la colisión, que fue mayor, ya que gran parte de la energía se disipó en la propia deformación del vehículo.`);
+  }
+
+  if(res){
+    const vBprimeMs = calcVelocidadBPostImpacto({desplazamientoB: rec.desplazamientoB, coefFriccionB: rec.coefFriccionB});
+    const vB = calcVelocidadBAntes({masaA: rec.masaA, masaB: rec.masaB, vA_ms: res.vkmh/3.6, vAprime_ms: vmsPost, vBprime_ms: vBprimeMs});
+    if(vB!=null){
+      const vBkmh = vB*3.6;
+      partes.push(Math.abs(vBkmh) < 5
+        ? `Por conservación de momentum entre ambos vehículos (masas de ${rec.masaA} kg y ${rec.masaB} kg), el resultado es compatible con que el otro vehículo estaba detenido o casi detenido al momento del impacto.`
+        : `Por conservación de momentum entre ambos vehículos (masas de ${rec.masaA} kg y ${rec.masaB} kg), el otro vehículo circulaba a una velocidad aproximada de ${Math.abs(vBkmh).toFixed(0)} km/h antes del impacto (modelo simplificado en línea recta).`);
+    }
+  }
+
+  if(rec.tipoAccidente==="volcamiento"){
+    const ssf = calcSSF(rec);
+    if(ssf!=null){
+      partes.push(`El índice de estabilidad (SSF) calculado para este vehículo es de ${ssf.toFixed(2)}, lo que indica un ${interpretarSSF(ssf)}; esto describe una característica general del modelo de vehículo, no la causa específica de este volcamiento en particular.`);
+    }
   }
 
   if(rec.estadoConductor==="fatiga" || rec.estadoConductor==="alcohol-drogas"){
@@ -15842,20 +16032,47 @@ function renderTransitoCalculo(){
     wrap.innerHTML = '<div class="kv">Ingresa una velocidad conocida/estimada, o el largo de la huella de frenado y el coeficiente de fricción, para calcular.</div>';
     return;
   }
-  const { vkmh, dist, pct, origen, vkmhHuella } = res;
+  const { vkmh, dist, pct, origen, vkmhHuella, comparacionDisponible } = res;
   const origenTexto = origen==="conocida" ? "velocidad conocida/estimada ingresada" : "velocidad estimada a partir de la huella de frenado";
   const crossCheck = (origen==="conocida" && vkmhHuella!=null)
     ? `<div class="kv">Como referencia cruzada, la velocidad calculada a partir de la huella de frenado da ${vkmhHuella.toFixed(1)} km/h.</div>` : "";
+  const comparacionHtml = comparacionDisponible ? `
+    <div class="kv" style="margin-top:6px;font-weight:600;color:${comparacionDisponible.evitable?'#0a6b0a':'#a03d1a'};">
+      Distancia real disponible: ${comparacionDisponible.distDisponible.toFixed(1)} m vs. distancia total de detención: ${dist.distTotal.toFixed(1)} m →
+      ${comparacionDisponible.evitable
+        ? `había ${comparacionDisponible.margen.toFixed(1)} m de margen: con estos parámetros, la colisión era evitable.`
+        : `faltaban ${Math.abs(comparacionDisponible.margen).toFixed(1)} m: con estos parámetros, la colisión era inevitable.`}
+    </div>` : "";
   wrap.innerHTML = `
     <div class="kv">${origen==="conocida"?"Velocidad usada":"Velocidad estimada"} (${origenTexto}): <strong>${vkmh.toFixed(1)} km/h</strong></div>
     ${crossCheck}
     <div class="kv">Distancia de reacción: ${dist.distReaccion.toFixed(1)} m — Distancia de frenado: ${dist.distFrenado!=null?dist.distFrenado.toFixed(1)+" m":"—"} — Distancia total de detención: ${dist.distTotal!=null?dist.distTotal.toFixed(1)+" m":"—"}</div>
+    <div class="kv">Tiempo de frenado (solo frenando): ${dist.tiempoFrenado!=null?dist.tiempoFrenado.toFixed(1)+" s":"—"} — Tiempo total hasta detenerse (reacción + frenado): ${dist.tiempoTotal!=null?dist.tiempoTotal.toFixed(1)+" s":"—"}</div>
+    ${comparacionHtml}
     ${barraVelocidadHtml("Velocidad vs. límite permitido", pct)}
   `;
+  renderTransitoMomentum();
 }
-["transitoVelocidadConocida","transitoHuellaFrenado","transitoCoefFriccion","transitoTipoPendiente","transitoPendientePct","transitoTiempoReaccion","transitoVelocidadMaxima"].forEach(id=>{
+function renderTransitoPostImpacto(){
+  const wrap = document.getElementById("transitoPostImpactoWrap");
+  const vms = calcVelocidadPostImpacto({
+    distanciaRetroceso: document.getElementById("transitoDistanciaRetroceso").value,
+    coefFriccionPostImpacto: document.getElementById("transitoCoefFriccionPostImpacto").value,
+  });
+  wrap.innerHTML = vms===null ? "" : `<div class="kv">Velocidad de separación post-impacto estimada: <strong>${(vms*3.6).toFixed(1)} km/h</strong> (velocidad justo después del choque, no la velocidad en el instante de la colisión, que fue mayor).</div>`;
+  renderTransitoMomentum();
+}
+document.getElementById("transitoCondicionPostImpacto").addEventListener("change",(e)=>{
+  const ref = COEF_FRICCION_REF[e.target.value];
+  if(ref) document.getElementById("transitoCoefFriccionPostImpacto").value = ref.mu;
+  renderTransitoPostImpacto();
+});
+["transitoVelocidadConocida","transitoHuellaFrenado","transitoCoefFriccion","transitoTipoPendiente","transitoPendientePct","transitoTiempoReaccion","transitoVelocidadMaxima","transitoDistanciaDisponible"].forEach(id=>{
   document.getElementById(id).addEventListener("input", renderTransitoCalculo);
   document.getElementById(id).addEventListener("change", renderTransitoCalculo);
+});
+["transitoDistanciaRetroceso","transitoCoefFriccionPostImpacto"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", renderTransitoPostImpacto);
 });
 
 const TRANSITO_CHECKLIST_ITEMS = [
@@ -15872,6 +16089,10 @@ const TRANSITO_CHECKLIST_ITEMS = [
   "Se verificó la licencia de conducir y su vigencia/categoría",
   "Se verificó si el conductor contaba con capacitación en conducción segura vigente",
   "Se evaluó si el vehículo mantenía una distancia de seguimiento segura respecto al vehículo de adelante, acorde a su velocidad",
+  "Se verificó si los neumáticos estaban desinflados o dañados al momento del hecho",
+  "Se registró si la tracción (4x4/AWD) estaba activada al momento del hecho",
+  "Se registró si el vehículo llevaba carga que pudo elevar su centro de gravedad",
+  "Se registró si la carga del otro vehículo involucrado (si llevaba) se desplazó producto del impacto",
 ];
 let transitoChecklistEstado = {};
 function drawTransitoChecklist(){
@@ -16032,13 +16253,19 @@ let transitoEditingId = null;
 function resetTransitoForm(){
   transitoEditingId = null;
   ["transitoFecha","transitoHora","transitoArea","transitoAccidenteId","transitoVehiculo","transitoResponsable","transitoDescripcion",
-   "transitoPendientePct","transitoVelocidadMaxima","transitoVelocidadConocida","transitoHuellaFrenado","transitoObservaciones","transitoConclusiones"].forEach(id=>{ document.getElementById(id).value = ""; });
+   "transitoPendientePct","transitoVelocidadMaxima","transitoVelocidadConocida","transitoHuellaFrenado","transitoDistanciaDisponible",
+   "transitoDistanciaRetroceso","transitoTrocha","transitoAlturaCg","transitoMasaA","transitoMasaB","transitoDesplazamientoB","transitoCoefFriccionB",
+   "transitoObservaciones","transitoConclusiones"].forEach(id=>{ document.getElementById(id).value = ""; });
   document.getElementById("transitoTipo").value = "colision-frontal";
   document.getElementById("transitoCondicionCalzada").value = "asfalto-seco";
   document.getElementById("transitoCoefFriccion").value = COEF_FRICCION_REF["asfalto-seco"].mu;
   document.getElementById("transitoTipoPendiente").value = "plana";
   document.getElementById("transitoEstadoConductor").value = "normal";
   document.getElementById("transitoTiempoReaccion").value = 1;
+  document.getElementById("transitoCondicionPostImpacto").value = "asfalto-seco";
+  document.getElementById("transitoCoefFriccionPostImpacto").value = COEF_FRICCION_REF["asfalto-seco"].mu;
+  document.getElementById("transitoCondicionB").value = "asfalto-seco";
+  document.getElementById("transitoCoefFriccionB").value = COEF_FRICCION_REF["asfalto-seco"].mu;
   currentTransitoTrabajadores = [];
   transitoChecklistEstado = {};
   currentCroquisFoto = null;
@@ -16049,6 +16276,9 @@ function resetTransitoForm(){
   renderTransitoCroquis();
   renderTransitoFotos();
   renderTransitoCalculo();
+  renderTransitoPostImpacto();
+  actualizarVisibilidadEstabilidad();
+  renderTransitoSsf();
   document.getElementById("transitoFormTitle").textContent = "Investigación de accidentes de tránsito";
   document.getElementById("saveTransitoBtn").textContent = "Guardar investigación";
   document.getElementById("cancelEditTransitoBtn").style.display = "none";
@@ -16077,6 +16307,17 @@ function transitoFormularioARegistro(id){
     velocidadConocida: document.getElementById("transitoVelocidadConocida").value ? +document.getElementById("transitoVelocidadConocida").value : null,
     huellaFrenado: document.getElementById("transitoHuellaFrenado").value ? +document.getElementById("transitoHuellaFrenado").value : null,
     tiempoReaccion: +document.getElementById("transitoTiempoReaccion").value || null,
+    distanciaDisponible: document.getElementById("transitoDistanciaDisponible").value ? +document.getElementById("transitoDistanciaDisponible").value : null,
+    distanciaRetroceso: document.getElementById("transitoDistanciaRetroceso").value ? +document.getElementById("transitoDistanciaRetroceso").value : null,
+    condicionPostImpacto: document.getElementById("transitoCondicionPostImpacto").value,
+    coefFriccionPostImpacto: +document.getElementById("transitoCoefFriccionPostImpacto").value || null,
+    trocha: document.getElementById("transitoTrocha").value ? +document.getElementById("transitoTrocha").value : null,
+    alturaCg: document.getElementById("transitoAlturaCg").value ? +document.getElementById("transitoAlturaCg").value : null,
+    masaA: document.getElementById("transitoMasaA").value ? +document.getElementById("transitoMasaA").value : null,
+    masaB: document.getElementById("transitoMasaB").value ? +document.getElementById("transitoMasaB").value : null,
+    desplazamientoB: document.getElementById("transitoDesplazamientoB").value ? +document.getElementById("transitoDesplazamientoB").value : null,
+    condicionB: document.getElementById("transitoCondicionB").value,
+    coefFriccionB: +document.getElementById("transitoCoefFriccionB").value || null,
     items: TRANSITO_CHECKLIST_ITEMS.map((texto,idx)=>({texto, estado: transitoChecklistEstado[idx]||""})),
     fotoCroquis: currentCroquisFoto,
     iconosCroquis: {...currentCroquisIconos},
@@ -16106,6 +16347,17 @@ function startEditTransito(id){
   document.getElementById("transitoVelocidadConocida").value = rec.velocidadConocida ?? "";
   document.getElementById("transitoHuellaFrenado").value = rec.huellaFrenado ?? "";
   document.getElementById("transitoTiempoReaccion").value = rec.tiempoReaccion ?? "";
+  document.getElementById("transitoDistanciaDisponible").value = rec.distanciaDisponible ?? "";
+  document.getElementById("transitoDistanciaRetroceso").value = rec.distanciaRetroceso ?? "";
+  document.getElementById("transitoCondicionPostImpacto").value = rec.condicionPostImpacto || "asfalto-seco";
+  document.getElementById("transitoCoefFriccionPostImpacto").value = rec.coefFriccionPostImpacto ?? "";
+  document.getElementById("transitoTrocha").value = rec.trocha ?? "";
+  document.getElementById("transitoAlturaCg").value = rec.alturaCg ?? "";
+  document.getElementById("transitoMasaA").value = rec.masaA ?? "";
+  document.getElementById("transitoMasaB").value = rec.masaB ?? "";
+  document.getElementById("transitoDesplazamientoB").value = rec.desplazamientoB ?? "";
+  document.getElementById("transitoCondicionB").value = rec.condicionB || "asfalto-seco";
+  document.getElementById("transitoCoefFriccionB").value = rec.coefFriccionB ?? "";
   currentTransitoTrabajadores = (rec.participantesIds||[]).slice();
   transitoChecklistEstado = {};
   (rec.items||[]).forEach((it,idx)=>{ if(it.estado) transitoChecklistEstado[idx] = it.estado; });
@@ -16117,6 +16369,9 @@ function startEditTransito(id){
   renderTransitoCroquis();
   renderTransitoFotos();
   renderTransitoCalculo();
+  renderTransitoPostImpacto();
+  actualizarVisibilidadEstabilidad();
+  renderTransitoSsf();
   document.getElementById("transitoFormTitle").textContent = `Editando investigación del ${fmtDate(rec.fecha)}`;
   document.getElementById("saveTransitoBtn").textContent = "Guardar cambios";
   document.getElementById("cancelEditTransitoBtn").style.display = "";
@@ -16295,9 +16550,48 @@ async function descargarTransitoPdf(rec){
       doc.text(`Huella de frenado: ${rec.huellaFrenado} m    Coeficiente de fricción (μ): ${rec.coefFriccion}    Tiempo de reacción usado: ${rec.tiempoReaccion} s`, 14, y); y += 5;
       doc.text(`Velocidad estimada antes de frenar: ${res.vkmh.toFixed(1)} km/h`, 14, y); y += 5;
     }
-    doc.text(`Distancia de reacción: ${res.dist.distReaccion.toFixed(1)} m    Distancia de frenado: ${res.dist.distFrenado!=null?res.dist.distFrenado.toFixed(1)+" m":"—"}    Distancia total de detención: ${res.dist.distTotal!=null?res.dist.distTotal.toFixed(1)+" m":"—"}`, 14, y); y += 7;
+    doc.text(`Distancia de reacción: ${res.dist.distReaccion.toFixed(1)} m    Distancia de frenado: ${res.dist.distFrenado!=null?res.dist.distFrenado.toFixed(1)+" m":"—"}    Distancia total de detención: ${res.dist.distTotal!=null?res.dist.distTotal.toFixed(1)+" m":"—"}`, 14, y); y += 5;
+    doc.text(`Tiempo de frenado: ${res.dist.tiempoFrenado!=null?res.dist.tiempoFrenado.toFixed(1)+" s":"—"}    Tiempo total hasta detenerse (reacción + frenado): ${res.dist.tiempoTotal!=null?res.dist.tiempoTotal.toFixed(1)+" s":"—"}`, 14, y); y += 7;
     doc.text(`Velocidad máxima permitida en el tramo: ${rec.velocidadMaxima ?? "—"} km/h`, 14, y); y += 6;
     y = dibujarBarraVelocidadPdf(doc, y, res.pct);
+    if(res.comparacionDisponible){
+      const c = res.comparacionDisponible;
+      doc.setFont(undefined,"bold");
+      doc.setTextColor(c.evitable?0:180,c.evitable?110:40,0);
+      const txtComp = c.evitable
+        ? `Distancia disponible (${c.distDisponible.toFixed(1)} m) vs. detención (${res.dist.distTotal.toFixed(1)} m): margen de ${c.margen.toFixed(1)} m — la colisión era evitable con estos parámetros.`
+        : `Distancia disponible (${c.distDisponible.toFixed(1)} m) vs. detención (${res.dist.distTotal.toFixed(1)} m): faltaban ${Math.abs(c.margen).toFixed(1)} m — la colisión era inevitable con estos parámetros.`;
+      const compLines = doc.splitTextToSize(txtComp, 182);
+      doc.text(compLines, 14, y); y += compLines.length*4.5 + 4;
+      doc.setFont(undefined,"normal"); doc.setTextColor(0);
+    }
+  }
+  const vmsPost = calcVelocidadPostImpacto({distanciaRetroceso: rec.distanciaRetroceso, coefFriccionPostImpacto: rec.coefFriccionPostImpacto});
+  if(vmsPost!=null){
+    doc.setFontSize(9);
+    doc.text(`Retroceso/desplazamiento post-impacto: ${rec.distanciaRetroceso} m (μ post-impacto ${rec.coefFriccionPostImpacto}) → velocidad de separación estimada: ${(vmsPost*3.6).toFixed(1)} km/h (no es la velocidad en el instante de la colisión, que fue mayor).`, 14, y);
+    y += 10;
+  }
+  if(res){
+    const vBprimeMs = calcVelocidadBPostImpacto({desplazamientoB: rec.desplazamientoB, coefFriccionB: rec.coefFriccionB});
+    const vB = calcVelocidadBAntes({masaA: rec.masaA, masaB: rec.masaB, vA_ms: res.vkmh/3.6, vAprime_ms: vmsPost, vBprime_ms: vBprimeMs});
+    if(vB!=null){
+      const vBkmh = vB*3.6;
+      doc.setFontSize(9);
+      const txtMom = Math.abs(vBkmh)<5
+        ? `Análisis de momentum (masas ${rec.masaA} kg / ${rec.masaB} kg): compatible con que el otro vehículo estaba detenido o casi detenido.`
+        : `Análisis de momentum (masas ${rec.masaA} kg / ${rec.masaB} kg): el otro vehículo circulaba a aprox. ${Math.abs(vBkmh).toFixed(1)} km/h antes del impacto (modelo simplificado en línea recta).`;
+      const momLines = doc.splitTextToSize(txtMom, 182);
+      doc.text(momLines, 14, y); y += momLines.length*4.5 + 4;
+    }
+  }
+  if(rec.tipoAccidente==="volcamiento"){
+    const ssf = calcSSF(rec);
+    if(ssf!=null){
+      doc.setFontSize(9);
+      doc.text(`Índice de estabilidad (SSF) del vehículo: ${ssf.toFixed(2)} (trocha ${rec.trocha} m, altura CG ${rec.alturaCg} m) — ${interpretarSSF(ssf)}.`, 14, y);
+      y += 8;
+    }
   }
   y += 4;
 
@@ -19173,7 +19467,7 @@ async function refreshAll(){
   renderAccidentabilidad();
   renderArbolTable();
   renderTransitoTable();
-  if(!transitoEditingId){ drawTransitoChecklist(); renderTransitoCroquis(); renderTransitoFotos(); renderTransitoCalculo(); }
+  if(!transitoEditingId){ drawTransitoChecklist(); renderTransitoCroquis(); renderTransitoFotos(); renderTransitoCalculo(); renderTransitoPostImpacto(); actualizarVisibilidadEstabilidad(); renderTransitoSsf(); }
   if(!arbolEditingId){
     if(!document.getElementById("arbolFecha").value) document.getElementById("arbolFecha").value = new Date().toISOString().slice(0,10);
     drawArbolTree();
