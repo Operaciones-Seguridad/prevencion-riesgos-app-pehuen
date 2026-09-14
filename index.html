@@ -18289,7 +18289,11 @@ function parseMatrizIperCorporativa(sheet, defaultAreaId){
   let headerRow = -1;
   for(let i=0;i<Math.min(aoa.length,30);i++){
     const rowNorm = (aoa[i]||[]).map(c=>normHdr(c));
-    if(rowNorm.some(c=>c.includes("PELIGRO")) && rowNorm.some(c=>c.includes("PROCESO"))){ headerRow = i; break; }
+    // Algunas plantillas (ej. la de esta empresa) no tienen una columna
+    // "Proceso" propiamente tal -- usan "Protocolo" u otro nombre, pero
+    // siempre tienen "Actividad". Exigir solo "Proceso" dejaba el archivo
+    // entero sin reconocer.
+    if(rowNorm.some(c=>c.includes("PELIGRO")) && (rowNorm.some(c=>c.includes("PROCESO")) || rowNorm.some(c=>c.includes("ACTIVIDAD")))){ headerRow = i; break; }
   }
   if(headerRow === -1) return null;
   // h0 = fila de encabezados de GRUPO (una fila arriba de headerRow, ej. "MEDIDAS DE CONTROL",
@@ -18304,8 +18308,16 @@ function parseMatrizIperCorporativa(sheet, defaultAreaId){
   const findFirst = (pred) => combo.findIndex(pred);
   const findAll = (pred) => combo.reduce((acc,c,i)=>{ if(pred(c)) acc.push(i); return acc; }, []);
 
-  const colProceso = findFirst(c=>c.includes("PROCESO"));
+  let colProceso = findFirst(c=>c.includes("PROCESO"));
   const colActividad = h1.findIndex(c=>c.startsWith("ACTIVIDAD"));
+  // Si no hay columna "Proceso" explícita, se usa la columna inmediatamente
+  // anterior a "Actividad" (con texto propio en el encabezado) -- es la
+  // convención más común para la agrupación que antecede a la actividad,
+  // aunque la plantilla la haya llamado de otra forma (ej. "Protocolo",
+  // o incluso "Área" reutilizada, como en esta plantilla en particular).
+  if(colProceso===-1 && colActividad>0 && combo[colActividad-1].trim()){
+    colProceso = colActividad-1;
+  }
   const colCategoria = findFirst(c=>c.includes("CATEGORIA"));
   const colPeligro = findFirst(c=>c.includes("PELIGRO"));
   const colEfecto = findFirst(c=>c.includes("EFECTO"));
@@ -18454,7 +18466,12 @@ on(document.getElementById("importMatrizBtn"), "click", async () => {
   fileInput.value = "";
   document.getElementById("importMatrizReplace").checked = false;
   renderMatrizTable(); renderEquidadGenero(); renderMatrizCharts(); renderJerarquiaControles(); renderEppEstudioCobertura(); renderEppEstPeligroOptions(); renderMapaRiesgos(); renderPlanoRiesgos(); renderPlanAccion(); renderTraspasosPendientes(); renderMatrizHistorialTable(); renderCommonSelects(); renderCatList();
-  alert(`Importación completa (formato ${formato}): ${importadas} línea(s) ${reemplazar? "cargadas":"agregadas"} en la Matriz de riesgos.`);
+  const areaDefaultNombre = (CACHE.areas.find(a=>a.id===defaultAreaId)||{}).nombre || "—";
+  const sinAreaPorLinea = lineas.length && lineas.every(l=>l.areaId===defaultAreaId);
+  const avisoArea = sinAreaPorLinea
+    ? `\n\nNo se encontró una columna de Área con datos propios por línea en el archivo (o no coincidió el texto con ninguna área ya creada) -- las ${importadas} línea(s) se asignaron a la Área por defecto que elegiste: "${areaDefaultNombre}". Si el archivo tenía distintas áreas por fila, revisa que el nombre de esa columna sea "Área" y que el texto coincida exactamente con el de un área ya creada en Configuración → Áreas.`
+    : "";
+  alert(`Importación completa (formato ${formato}): ${importadas} línea(s) ${reemplazar? "cargadas":"agregadas"} en la Matriz de riesgos.${avisoArea}`);
 });
 
 on(document.getElementById("resetDataBtn"), "click", async () => {
