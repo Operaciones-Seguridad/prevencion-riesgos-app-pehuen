@@ -899,13 +899,31 @@
         <div class="field"><label>Responsable</label><input id="mcResp" placeholder="Nombre / cargo"></div>
         <div class="field"><label>Fecha de implementación</label><input id="mcFecha" type="date"></div>
         <div><button class="btn small secondary" id="addControlBtn" style="margin-top:20px;">+ Agregar medida</button></div>
+        <div><button class="btn small secondary" id="cancelEditControlBtn" style="margin-top:20px;display:none;">Cancelar edición</button></div>
       </div>
       <div id="controlesWrap"></div>
       <div id="soloEppWarning" style="display:none;margin-top:10px;"></div>
 
       <div style="margin-top:14px;">
-        <span>Nivel de riesgo estimado: </span><span id="mNivelPreview" class="pill bajo">bajo</span>
+        <span>Nivel de riesgo puro estimado: </span><span id="mNivelPreview" class="pill bajo">bajo</span>
       </div>
+
+      <label style="margin-top:16px;">Evaluación de riesgo residual (después de aplicar las medidas de control)</label>
+      <div class="desc">Vuelve a evaluar probabilidad y consecuencia asumiendo que las medidas de control de arriba ya están implementadas. Mientras no la completes, la matriz sigue mostrando y usando el riesgo puro; en cuanto la evalúes, esta línea pasa a mostrar y usar el riesgo residual.</div>
+      <div class="form-grid">
+        <div>
+          <label>Probabilidad residual (1-5)</label>
+          <select id="mProbResidual"><option value="">— Sin evaluar aún —</option><option value="1">1 - Muy improbable</option><option value="2">2 - Improbable</option><option value="3">3 - Posible</option><option value="4">4 - Probable</option><option value="5">5 - Muy probable</option></select>
+        </div>
+        <div>
+          <label>Consecuencia residual (1-5)</label>
+          <select id="mConsResidual"><option value="">— Sin evaluar aún —</option><option value="1">1 - Leve</option><option value="2">2 - Menor</option><option value="3">3 - Moderada</option><option value="4">4 - Mayor</option><option value="5">5 - Catastrófica</option></select>
+        </div>
+      </div>
+      <div style="margin-top:6px;">
+        <span>Nivel de riesgo residual: </span><span id="mNivelResidualPreview" class="pill" style="background:#eceff3;color:#4a5568;">Sin evaluar</span>
+      </div>
+
       <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn" id="saveMatrizBtn">Agregar a la matriz</button>
         <button class="btn secondary" id="cancelEditMatrizBtn" style="display:none;">Cancelar edición</button>
@@ -987,7 +1005,7 @@
         <div><button class="btn secondary small" id="exportMatrizBtn" style="margin-top:20px;">Descargar Excel</button></div>
       </div>
       <table>
-        <thead><tr><th>Área</th><th>Proceso / Actividad</th><th>Categoría</th><th>Peligro / Riesgo</th><th>P x C</th><th>Nivel</th><th>Equidad de género</th><th>Especialmente sensible</th><th>Medidas de control (DS 44)</th><th>Estado</th><th></th></tr></thead>
+        <thead><tr><th>Área</th><th>Proceso / Actividad</th><th>Categoría</th><th>Peligro / Riesgo</th><th>P x C</th><th>Nivel</th><th>Equidad de género</th><th>Especialmente sensible</th><th>Medidas de control (DS 44)</th><th>Estado</th><th>Revisado</th><th></th></tr></thead>
         <tbody id="matrizTable"></tbody>
       </table>
       </div>
@@ -4085,6 +4103,13 @@ function nivelRiesgo(p,c){
   return "critico";
 }
 function nivelLabel(n){ return {bajo:"Bajo",medio:"Medio",alto:"Alto",critico:"Crítico"}[n]||n; }
+// Riesgo "efectivo" de una línea de matriz: usa el riesgo residual (post-control)
+// si ya fue evaluado; mientras no se evalúe, sigue usando el riesgo puro tal
+// como funcionaba antes de que existiera la evaluación residual.
+function tieneResidualEvaluado(m){ return !!(m && m.probabilidadResidual && m.consecuenciaResidual); }
+function probResidualEfectiva(m){ return (m && m.probabilidadResidual) || (m && m.probabilidad); }
+function consResidualEfectiva(m){ return (m && m.consecuenciaResidual) || (m && m.consecuencia); }
+function nivelRiesgoLinea(m){ return nivelRiesgo(probResidualEfectiva(m), consResidualEfectiva(m)); }
 
 /* =========================================================
    JERARQUÍA DE CONTROLES (DS N°44)
@@ -5071,8 +5096,8 @@ function descargarIrlPdf(id){
   doc.autoTable({ startY:y,
     head:[["Área","Peligro","Riesgo","Nivel","Medidas de control"]],
     body: lineasCargo.length
-      ? lineasCargo.slice().sort((a,b)=> (b.probabilidad||0)*(b.consecuencia||0) - (a.probabilidad||0)*(a.consecuencia||0))
-          .map(m=>[areaName(m.areaId)||"—", m.peligro||"—", m.riesgo||"—", nivelLabel(nivelRiesgo(m.probabilidad,m.consecuencia)), controlesTextoPlano(jerarquiaDe(m)) || "—"])
+      ? lineasCargo.slice().sort((a,b)=> (probResidualEfectiva(b)||0)*(consResidualEfectiva(b)||0) - (probResidualEfectiva(a)||0)*(consResidualEfectiva(a)||0))
+          .map(m=>[areaName(m.areaId)||"—", m.peligro||"—", m.riesgo||"—", nivelLabel(nivelRiesgoLinea(m)), controlesTextoPlano(jerarquiaDe(m)) || "—"])
       : [["Sin líneas registradas en la Matriz de riesgos para las áreas de este cargo","—","—","—","—"]],
     styles:{fontSize:8}, headStyles:{fillColor:[42,120,214]} });
   y = doc.lastAutoTable.finalY + 8;
@@ -6176,7 +6201,7 @@ function generarDocumentoAutomaticoPDF(docRec){
         `${m.proceso? m.proceso+" / " : ""}${m.actividad||"—"}`,
         m.peligro || "—",
         m.riesgo || "—",
-        nivelLabel(nivelRiesgo(m.probabilidad, m.consecuencia)),
+        nivelLabel(nivelRiesgoLinea(m)),
       ]),
       styles:{fontSize:9}, headStyles:{fillColor:[236,131,90]} });
   } else {
@@ -6272,7 +6297,7 @@ function construirHtmlDocumentoWord(docRec){
     html += `<h2>Riesgos principales asociados (cruce con la Matriz de riesgos)</h2>`;
     if(lineas.length){
       html += `<table><tr><th>Área</th><th>Proceso / Actividad</th><th>Peligro</th><th>Riesgo asociado</th><th>Nivel</th></tr>`;
-      html += lineas.map(m=>`<tr><td>${esc(areaName(m.areaId))}</td><td>${esc((m.proceso? m.proceso+" / " : "")+(m.actividad||"—"))}</td><td>${esc(m.peligro||"—")}</td><td>${esc(m.riesgo||"—")}</td><td>${esc(nivelLabel(nivelRiesgo(m.probabilidad, m.consecuencia)))}</td></tr>`).join("");
+      html += lineas.map(m=>`<tr><td>${esc(areaName(m.areaId))}</td><td>${esc((m.proceso? m.proceso+" / " : "")+(m.actividad||"—"))}</td><td>${esc(m.peligro||"—")}</td><td>${esc(m.riesgo||"—")}</td><td>${esc(nivelLabel(nivelRiesgoLinea(m)))}</td></tr>`).join("");
       html += `</table>`;
     } else {
       html += `<p>No se encontraron líneas de la Matriz de riesgos cuya medida de control administrativa (D) coincida exactamente con el nombre de este documento.</p>`;
@@ -8140,7 +8165,7 @@ function renderDashboard(){
 
   const findingsAll = CACHE.inspecciones.flatMap(i=>i.findings||[]);
   const accionesAbiertas = findingsAll.filter(f=>f.estado!=="cerrada").length;
-  const riesgosCriticos = CACHE.matriz.filter(m=>nivelRiesgo(m.probabilidad,m.consecuencia)==="critico").length;
+  const riesgosCriticos = CACHE.matriz.filter(m=>nivelRiesgoLinea(m)==="critico").length;
 
   // cumplimiento vigilancia — a partir de la bitácora de cumplimiento por protocolo
   // (protocolo "vigente" = su último registro de bitácora "cumplido" sigue dentro
@@ -8290,7 +8315,7 @@ function renderDashboard(){
 
   // chart 1: riesgos por nivel
   const niveles = ["bajo","medio","alto","critico"];
-  const riskRows = niveles.map(n=>({label:nivelLabel(n), value: CACHE.matriz.filter(m=>nivelRiesgo(m.probabilidad,m.consecuencia)===n).length}));
+  const riskRows = niveles.map(n=>({label:nivelLabel(n), value: CACHE.matriz.filter(m=>nivelRiesgoLinea(m)===n).length}));
   renderBarChart(document.getElementById("chartRiskLevel"), riskRows, r=>NIVEL_COLOR[r.label.toLowerCase()==="crítico"?"critico":r.label.toLowerCase()]);
 
   // chart 2: cumplimiento por protocolo (solo protocolos que aplican según la matriz)
@@ -10049,10 +10074,27 @@ function updateMatrizPreview(){
   el.className = "pill "+n;
   el.textContent = nivelLabel(n);
 }
+function updateMatrizResidualPreview(){
+  const pv = document.getElementById("mProbResidual").value;
+  const cv = document.getElementById("mConsResidual").value;
+  const el = document.getElementById("mNivelResidualPreview");
+  if(!pv || !cv){
+    el.className = "pill";
+    el.style.background = "#eceff3"; el.style.color = "#4a5568";
+    el.textContent = "Sin evaluar";
+    return;
+  }
+  const n = nivelRiesgo(+pv, +cv);
+  el.className = "pill "+n;
+  el.style.background = ""; el.style.color = "";
+  el.textContent = nivelLabel(n);
+}
 document.getElementById("mProb").addEventListener("change", updateMatrizPreview);
 document.getElementById("mCons").addEventListener("change", updateMatrizPreview);
+document.getElementById("mProbResidual").addEventListener("change", updateMatrizResidualPreview);
+document.getElementById("mConsResidual").addEventListener("change", updateMatrizResidualPreview);
 
-const MATRIZ_FORM_FIELDS = ["mProceso","mActividad","mPeligro","mRiesgo","mHombres","mMujeres","mOtros","mEfecto","mSimboloDetalle"];
+const MATRIZ_FORM_FIELDS = ["mProceso","mActividad","mPeligro","mRiesgo","mHombres","mMujeres","mOtros","mEfecto","mSimboloDetalle","mProbResidual","mConsResidual"];
 // Símbolo oficial: el <select> combina fila de ANEXO1_SIMBOLOS + nombre específico
 // en un solo value "id__idx" (varias filas de la norma comparten un mismo
 // pictograma -- ver ANEXO1_SIMBOLOS más abajo), para no forzar un segundo control.
@@ -10116,7 +10158,10 @@ function drawControles(){
         <div style="margin-top:4px;">${c.texto}${c.documentoId?' <span class="pill vigente" title="Vinculado a un documento de Control Documental">🔗 Vinculado</span>':""}</div>
         <div class="kv">${c.responsable?`Responsable: ${c.responsable}`:""}${c.plazo?` · Plazo: ${fmtDate(c.plazo)}`:""}</div>
       </div>
-      <button class="subtle-btn" data-control-quitar="${c.idx}">Quitar</button>
+      <div style="white-space:nowrap;">
+        <button class="subtle-btn" data-control-editar="${c.idx}">Editar</button>
+        <button class="subtle-btn" data-control-quitar="${c.idx}">Quitar</button>
+      </div>
     </div>
   `).join("") || '<div class="empty">Sin medidas de control agregadas todavía</div>';
 
@@ -10155,6 +10200,20 @@ function pintarGruposSensibles(sensible, grupos){
   document.getElementById("mSensibleOtroTexto").value = otro||"";
   document.getElementById("mSensibleOtroTexto").disabled = !otro;
 }
+/* Editar una medida de control ya agregada reutiliza el mismo compositor
+   (jerarquía/texto/responsable/fecha) en vez de forzar a quitarla y
+   volver a escribirla desde cero -- controlEditingIdx guarda la posición
+   dentro de currentControles mientras se edita esa medida puntual. */
+let controlEditingIdx = null;
+function resetControlForm(){
+  controlEditingIdx = null;
+  document.getElementById("mcTexto").value = "";
+  document.getElementById("mcResp").value = "";
+  document.getElementById("mcFecha").value = "";
+  document.getElementById("mcJerarquia").value = "D";
+  document.getElementById("addControlBtn").textContent = "+ Agregar medida";
+  document.getElementById("cancelEditControlBtn").style.display = "none";
+}
 on(document.getElementById("addControlBtn"), "click", async ()=>{
   const texto = document.getElementById("mcTexto").value.trim();
   if(!texto){ alert("Describe la medida de control antes de agregarla."); return; }
@@ -10162,22 +10221,41 @@ on(document.getElementById("addControlBtn"), "click", async ()=>{
   // registrado, se vincula solo (documentoId) -- ver documentoDeControl().
   const normTexto = s => (s||"").toLowerCase().replace(/\s+/g," ").trim();
   const docCoincidente = (CACHE.documentos||[]).find(d=> d.tipo==="procedimiento" && normTexto(d.nombre)===normTexto(texto));
-  currentControles.push({
+  const datos = {
     jerarquia: document.getElementById("mcJerarquia").value,
     texto,
     responsable: document.getElementById("mcResp").value.trim(),
     plazo: document.getElementById("mcFecha").value,
     documentoId: docCoincidente ? docCoincidente.id : null,
-  });
-  document.getElementById("mcTexto").value = "";
-  document.getElementById("mcResp").value = "";
-  document.getElementById("mcFecha").value = "";
+  };
+  if(controlEditingIdx !== null){
+    currentControles[controlEditingIdx] = datos;
+  } else {
+    currentControles.push(datos);
+  }
+  resetControlForm();
   drawControles();
 });
+on(document.getElementById("cancelEditControlBtn"), "click", () => resetControlForm());
 on(document.getElementById("controlesWrap"), "click", async (e)=>{
+  const editBtn = e.target.closest("button[data-control-editar]");
+  if(editBtn){
+    const idx = +editBtn.dataset.controlEditar;
+    const c = currentControles[idx];
+    if(!c) return;
+    controlEditingIdx = idx;
+    document.getElementById("mcJerarquia").value = c.jerarquia;
+    document.getElementById("mcTexto").value = c.texto;
+    document.getElementById("mcResp").value = c.responsable||"";
+    document.getElementById("mcFecha").value = c.plazo||"";
+    document.getElementById("addControlBtn").textContent = "Guardar cambios en la medida";
+    document.getElementById("cancelEditControlBtn").style.display = "";
+    return;
+  }
   const btn = e.target.closest("button[data-control-quitar]");
   if(!btn) return;
   currentControles.splice(+btn.dataset.controlQuitar, 1);
+  if(controlEditingIdx !== null) resetControlForm();
   drawControles();
 });
 
@@ -10230,10 +10308,14 @@ function startEditMatriz(id){
   document.getElementById("mProb").value = rec.probabilidad||3;
   document.getElementById("mCons").value = rec.consecuencia||3;
   document.getElementById("mEfecto").value = rec.efecto||"";
+  document.getElementById("mProbResidual").value = rec.probabilidadResidual||"";
+  document.getElementById("mConsResidual").value = rec.consecuenciaResidual||"";
   pintarGruposSensibles(rec.sensible, rec.gruposSensibles);
   currentControles = jerarquiaDe(rec).map(c=>({...c}));
+  resetControlForm();
   drawControles();
   updateMatrizPreview();
+  updateMatrizResidualPreview();
   document.getElementById("matrizFormTitle").textContent = "Editando línea de matriz de riesgos (IPER)";
   document.getElementById("saveMatrizBtn").textContent = "Guardar cambios";
   document.getElementById("cancelEditMatrizBtn").style.display = "";
@@ -10248,8 +10330,9 @@ function resetMatrizForm(){
   document.getElementById("mSimboloDetalleWrap").style.display = "none";
   pintarGruposSensibles(false, []);
   currentControles = [];
+  resetControlForm();
   drawControles();
-  document.getElementById("mcTexto").value = ""; document.getElementById("mcResp").value = ""; document.getElementById("mcFecha").value = "";
+  updateMatrizResidualPreview();
   document.getElementById("matrizFormTitle").textContent = "Nueva línea de matriz de riesgos (IPER)";
   document.getElementById("saveMatrizBtn").textContent = "Agregar a la matriz";
   document.getElementById("cancelEditMatrizBtn").style.display = "none";
@@ -10324,6 +10407,10 @@ on(document.getElementById("saveMatrizBtn"), "click", async () => {
   const otros = +document.getElementById("mOtros").value || 0;
   const probabilidad = +document.getElementById("mProb").value;
   const consecuencia = +document.getElementById("mCons").value;
+  const mProbResidualVal = document.getElementById("mProbResidual").value;
+  const mConsResidualVal = document.getElementById("mConsResidual").value;
+  const probabilidadResidual = mProbResidualVal ? +mProbResidualVal : undefined;
+  const consecuenciaResidual = mConsResidualVal ? +mConsResidualVal : undefined;
   if(!areaId || !actividad || !peligro || !riesgo){ alert("Complete área, actividad, peligro y riesgo."); return; }
   const simboloInfo = simboloRowDe(document.getElementById("mSimboloOficial").value);
   if(!simboloInfo){ alert("Selecciona el símbolo oficial del mapa de riesgos para esta línea (norma DS N°44 / guía de mapas de riesgo)."); return; }
@@ -10354,7 +10441,7 @@ on(document.getElementById("saveMatrizBtn"), "click", async () => {
     if(!anterior){ alert("La línea que estabas editando ya no existe."); resetMatrizForm(); return; }
     const rec = {
       ...anterior, areaId, proceso, actividad, categoria, peligro, riesgo,
-      hombres, mujeres, otros, probabilidad, consecuencia,
+      hombres, mujeres, otros, probabilidad, consecuencia, probabilidadResidual, consecuenciaResidual,
       efecto: document.getElementById("mEfecto").value.trim(),
       sensible, gruposSensibles,
       controlesJerarquizados, controles: controlesTxt, responsable: responsableTxt, plazo: plazoTxt,
@@ -10364,6 +10451,7 @@ on(document.getElementById("saveMatrizBtn"), "click", async () => {
     const campos = [
       ["areaId","Área"], ["proceso","Proceso"], ["actividad","Actividad"], ["categoria","Categoría"],
       ["peligro","Peligro"], ["riesgo","Riesgo asociado"], ["probabilidad","Probabilidad"], ["consecuencia","Consecuencia"],
+      ["probabilidadResidual","Probabilidad residual"], ["consecuenciaResidual","Consecuencia residual"],
       ["hombres","N° hombres"], ["mujeres","N° mujeres"], ["otros","N° otros"],
       ["simboloOficial","Símbolo oficial (mapa de riesgos)"], ["simboloDetalle","Especificación de la leyenda"],
     ];
@@ -10401,10 +10489,11 @@ on(document.getElementById("saveMatrizBtn"), "click", async () => {
     hombres, mujeres, otros,
     efecto: document.getElementById("mEfecto").value.trim(),
     sensible, gruposSensibles,
-    probabilidad, consecuencia,
+    probabilidad, consecuencia, probabilidadResidual, consecuenciaResidual,
     controlesJerarquizados, controles: controlesTxt, responsable: responsableTxt, plazo: plazoTxt,
     simboloOficial, simboloDetalle,
     estado: "pendiente",
+    revisado: false, fechaRevision: "",
     fechaCreacion: new Date().toISOString()
   };
   await put("matriz", rec);
@@ -10437,7 +10526,7 @@ function renderMatrizIaPreview(){
   if(!matrizSugerenciasIA.length){ wrap.style.display = "none"; return; }
   wrap.style.display = "";
   document.getElementById("matrizIaPreviewTable").innerHTML = matrizSugerenciasIA.map((m,i)=>{
-    const nivel = nivelRiesgo(m.probabilidad, m.consecuencia);
+    const nivel = nivelRiesgoLinea(m);
     const items = m.controlesJerarquizados||[];
     const warn = items.length && items.every(it=>it.jerarquia==="E") ? `<div style="margin-bottom:5px;"><span class="pill critico">Solo EPP</span></div>` : "";
     const controlesHtml = items.length ? warn + items.map(c=>`<div style="margin-bottom:5px;">${jerarquiaChipHtml(c.jerarquia)} ${c.texto}</div>`).join("") : "—";
@@ -10527,36 +10616,45 @@ function renderMatrizTable(){
   const fSensible = document.getElementById("filterMatrizSensible").value;
   const fPeligro = quitarAcentos(document.getElementById("filterMatrizPeligro").value||"").toLowerCase().trim();
   const rows = CACHE.matriz
-    .map(m=>({...m, nivel: nivelRiesgo(m.probabilidad,m.consecuencia)}))
+    .map(m=>({...m, nivel: nivelRiesgoLinea(m)}))
     .filter(m=> (!fArea || m.areaId===fArea) && (!fNivel || m.nivel===fNivel) && (!fCategoria || m.categoria===fCategoria) && (!fEstado || (m.estado||"pendiente")===fEstado) && (!fSensible || (fSensible==="si"?!!m.sensible:!m.sensible))
       && (!fPeligro || quitarAcentos(((m.peligro||"")+" "+(m.riesgo||"")+" "+(m.efecto||"")).toLowerCase()).includes(fPeligro)))
-    .sort((a,b)=> (b.probabilidad*b.consecuencia)-(a.probabilidad*a.consecuencia));
+    .sort((a,b)=> (probResidualEfectiva(b)*consResidualEfectiva(b))-(probResidualEfectiva(a)*consResidualEfectiva(a)));
   document.getElementById("matrizTable").innerHTML = rows.map(m=>`
     <tr>
       <td>${areaName(m.areaId)}</td>
       <td>${m.proceso?`<div class="kv">${m.proceso}</div>`:""}${m.actividad||"—"}</td>
       <td>${m.categoria||"—"}</td>
       <td><strong>${m.peligro}</strong>${m.levantamientoId?` <span class="pill bajo" title="Generada desde un Levantamiento de riesgos">Levantamiento</span>`:""}<div class="kv">${m.riesgo}</div>${m.efecto?`<div class="kv">${m.efecto.length>140?m.efecto.slice(0,140)+"…":m.efecto}</div>`:""}</td>
-      <td>${m.probabilidad} x ${m.consecuencia} = ${m.probabilidad*m.consecuencia}</td>
-      <td><span class="pill ${m.nivel}">${nivelLabel(m.nivel)}</span></td>
+      <td>Puro: ${m.probabilidad} x ${m.consecuencia} = ${m.probabilidad*m.consecuencia}${tieneResidualEvaluado(m)?`<div class="kv">Residual: ${m.probabilidadResidual} x ${m.consecuenciaResidual} = ${m.probabilidadResidual*m.consecuenciaResidual}</div>`:""}</td>
+      <td><span class="pill ${m.nivel}">${nivelLabel(m.nivel)}</span><div class="kv">${tieneResidualEvaluado(m)?"(residual)":"(puro)"}</div></td>
       <td><div class="kv">${m.hombres||0} H · ${m.mujeres||0} M${m.otros?` · ${m.otros} otros`:""}</div></td>
       <td>${m.sensible && (m.gruposSensibles||[]).length ? `<span class="pill alto" title="${(m.gruposSensibles||[]).join(", ")}">Sí</span><div class="kv" style="margin-top:4px;">${(m.gruposSensibles||[]).join(", ")}</div>` : '<span class="pill bajo">No</span>'}</td>
       <td>${(() => {
         const items = jerarquiaDe(m);
         if(!items.length) return "—";
         const warn = soloEpp(m) ? `<div style="margin-bottom:5px;"><span class="pill critico">Solo EPP</span></div>` : "";
-        return warn + items.map(c=>`<div style="margin-bottom:5px;">${jerarquiaChipHtml(c.jerarquia)} ${c.texto}${c.responsable?`<div class="kv">Resp.: ${c.responsable}${c.plazo?` · Plazo: ${fmtDate(c.plazo)}`:""}</div>`:""}</div>`).join("");
+        return warn + items.map(c=>{
+          const detalle = [c.responsable?`Resp.: ${c.responsable}`:"", c.plazo?`Plazo: ${fmtDate(c.plazo)}`:""].filter(Boolean).join(" · ");
+          return `<div style="margin-bottom:5px;">${jerarquiaChipHtml(c.jerarquia)} ${c.texto}${detalle?`<div class="kv">${detalle}</div>`:""}</div>`;
+        }).join("");
       })()}</td>
       <td>
+        <div style="margin-bottom:4px;"><span class="pill ${m.estado||'pendiente'}">${({pendiente:"Pendiente",proceso:"En proceso",cerrada:"Cerrada"})[m.estado||'pendiente']}</span></div>
         <select data-matriz-estado="${m.id}">
           <option value="pendiente" ${m.estado==='pendiente'?'selected':''}>Pendiente</option>
           <option value="proceso" ${m.estado==='proceso'?'selected':''}>En proceso</option>
           <option value="cerrada" ${m.estado==='cerrada'?'selected':''}>Cerrada</option>
         </select>
       </td>
+      <td>
+        <button type="button" data-matriz-revisado="${m.id}" style="background:none;border:none;padding:0;cursor:pointer;" title="Clic para ${m.revisado?'desmarcar':'marcar'} como revisada">
+          <span class="pill ${m.revisado?'vigente':'critico'}">${m.revisado?`✓ Revisada${m.fechaRevision?" "+fmtDate(m.fechaRevision):""}`:"✕ No revisada"}</span>
+        </button>
+      </td>
       <td><button class="btn secondary small" data-matriz-editar="${m.id}">Editar</button></td>
     </tr>
-  `).join("") || `<tr><td class="empty" colspan="11">Sin líneas registradas para el filtro seleccionado</td></tr>`;
+  `).join("") || `<tr><td class="empty" colspan="12">Sin líneas registradas para el filtro seleccionado</td></tr>`;
 }
 on(document.getElementById("matrizTable"), "change", async (e) => {
   const sel = e.target.closest("select[data-matriz-estado]");
@@ -10578,9 +10676,27 @@ on(document.getElementById("matrizTable"), "change", async (e) => {
   renderMatrizHistorialTable();
 });
 on(document.getElementById("matrizTable"), "click", async (e) => {
-  const btn = e.target.closest("button[data-matriz-editar]");
-  if(!btn) return;
-  startEditMatriz(btn.dataset.matrizEditar);
+  const btnEditar = e.target.closest("button[data-matriz-editar]");
+  if(btnEditar){ startEditMatriz(btnEditar.dataset.matrizEditar); return; }
+  const btnRevisado = e.target.closest("button[data-matriz-revisado]");
+  if(btnRevisado){
+    const rec = CACHE.matriz.find(m=>m.id===btnRevisado.dataset.matrizRevisado);
+    if(!rec) return;
+    const etiqueta = (rv, fecha) => rv ? `Revisada ${fmtDate(fecha)}` : "No revisada";
+    const anteriorTxt = etiqueta(rec.revisado, rec.fechaRevision);
+    if(rec.revisado){
+      if(!confirm("¿Marcar esta línea como NO revisada?")) return;
+      rec.revisado = false;
+      rec.fechaRevision = "";
+    } else {
+      rec.revisado = true;
+      rec.fechaRevision = new Date().toISOString().slice(0,10);
+    }
+    await put("matriz", rec);
+    await logHistorial(rec.id, matrizLineLabel(rec), "Revisado", anteriorTxt, etiqueta(rec.revisado, rec.fechaRevision));
+    renderMatrizTable();
+    renderMatrizHistorialTable();
+  }
 });
 document.getElementById("filterMatrizArea").addEventListener("change", renderMatrizTable);
 document.getElementById("filterMatrizNivel").addEventListener("change", renderMatrizTable);
@@ -10882,7 +10998,7 @@ function chartBarsHtml(entries, colorFor, compact){
 function renderMatrizCharts(){
   const nivelOrder = ["bajo","medio","alto","critico"];
   const nivelCounts = {bajo:0, medio:0, alto:0, critico:0};
-  CACHE.matriz.forEach(m=>{ const n = nivelRiesgo(m.probabilidad,m.consecuencia); if(nivelCounts[n]!==undefined) nivelCounts[n]++; });
+  CACHE.matriz.forEach(m=>{ const n = nivelRiesgoLinea(m); if(nivelCounts[n]!==undefined) nivelCounts[n]++; });
   const nivelEntries = nivelOrder.map(n=>[nivelLabel(n), nivelCounts[n]]);
   document.getElementById("chartNivelWrap").innerHTML = CACHE.matriz.length
     ? chartBarsHtml(nivelEntries, (label,i)=> NIVEL_CHART_COLORS[nivelOrder[i]])
@@ -10923,7 +11039,7 @@ function renderJerarquiaControles(){
     ? `<div class="desc" style="margin-bottom:8px;"><strong>${soloEppLineas.length} línea(s)</strong> dependen únicamente de EPP como medida de control — conviene revisar si corresponde agregar una medida de mayor jerarquía:</div>
        <table><thead><tr><th>Área</th><th>Peligro</th><th>Nivel</th><th></th></tr></thead><tbody>${
          soloEppLineas.map(m=>{
-           const n = nivelRiesgo(m.probabilidad,m.consecuencia);
+           const n = nivelRiesgoLinea(m);
            return `<tr><td>${areaName(m.areaId)}</td><td>${m.peligro}</td><td><span class="pill ${n}">${nivelLabel(n)}</span></td><td><button class="btn secondary small" data-matriz-editar="${m.id}">Editar</button></td></tr>`;
          }).join("")
        }</tbody></table>`
@@ -11145,7 +11261,7 @@ const ANEXO1_SIMBOLOS = [{"id":"seg-caida-mismo-nivel","tipo":"seguridad","famil
 
 const NIVEL_ORDEN_VALOR = {bajo:1, medio:2, alto:3, critico:4};
 function nivelMasAlto(rows){
-  return rows.map(m=>nivelRiesgo(m.probabilidad,m.consecuencia))
+  return rows.map(m=>nivelRiesgoLinea(m))
     .reduce((max,n)=> NIVEL_ORDEN_VALOR[n]>NIVEL_ORDEN_VALOR[max]? n : max, "bajo");
 }
 // Traduce un nivel bajo/medio/alto/critico a la clave de color de
@@ -11175,7 +11291,7 @@ function simbolosDeArea(rows){
   const map = new Map();
   rows.forEach(m=>{
     const row = simboloDe(m);
-    const nivel = nivelRiesgo(m.probabilidad, m.consecuencia);
+    const nivel = nivelRiesgoLinea(m);
     if(!map.has(row.id)) map.set(row.id, { row, nivel, detalles: new Set(), count:0 });
     const it = map.get(row.id);
     if(NIVEL_ORDEN_VALOR[nivel]>NIVEL_ORDEN_VALOR[it.nivel]) it.nivel = nivel;
@@ -11221,7 +11337,7 @@ function mapaTileHtml(nombre, rows){
     </div>`;
   }
   const counts = {bajo:0, medio:0, alto:0, critico:0};
-  rows.forEach(m=> counts[nivelRiesgo(m.probabilidad,m.consecuencia)]++);
+  rows.forEach(m=> counts[nivelRiesgoLinea(m)]++);
   const nMax = nivelMasAlto(rows);
   const color = NIVEL_CHART_COLORS[nMax];
   const { visibles, ocultos } = simbolosPriorizados(simbolosDeArea(rows));
@@ -11684,7 +11800,7 @@ on(document.getElementById("printPlanoRiesgosBtn"), "click", async () => { impri
    ========================================================= */
 const PA_TIPO_LABEL = { mitigar:"Mitigar", evitar:"Evitar", transferir:"Transferir", aceptar:"Aceptar" };
 function paLineasRequierenAccion(){
-  return CACHE.matriz.filter(m => nivelRiesgo(m.probabilidad, m.consecuencia) !== "bajo");
+  return CACHE.matriz.filter(m => nivelRiesgoLinea(m) !== "bajo");
 }
 function paMatrizLinea(matrizId){
   return CACHE.matriz.find(m=>m.id===matrizId) || null;
@@ -11708,7 +11824,7 @@ function renderPaPendientes(){
   const pendientes = paLineasRequierenAccion().filter(m=>!cubiertas.has(m.id));
   document.getElementById("paPendientesTable").innerHTML = pendientes.length
     ? pendientes.map(m=>{
-        const n = nivelRiesgo(m.probabilidad, m.consecuencia);
+        const n = nivelRiesgoLinea(m);
         return `<tr>
           <td>${areaName(m.areaId)}</td>
           <td><strong>${m.peligro}</strong><div class="kv">${m.riesgo}</div></td>
@@ -11721,7 +11837,7 @@ function renderPaPendientes(){
 function paFillMatrizSelect(){
   const sel = document.getElementById("paMatrizId");
   const items = paLineasRequierenAccion().map(m=>{
-    const n = nivelRiesgo(m.probabilidad, m.consecuencia);
+    const n = nivelRiesgoLinea(m);
     return { id: m.id, label: `${areaName(m.areaId)} — ${m.peligro} (${nivelLabel(n)})` };
   });
   fillSelect(sel, items, true);
@@ -11730,7 +11846,7 @@ function paActualizarContexto(){
   const m = paMatrizLinea(document.getElementById("paMatrizId").value);
   const wrap = document.getElementById("paLineaContexto");
   if(!m){ wrap.textContent = "Selecciona una línea de la matriz."; return; }
-  const n = nivelRiesgo(m.probabilidad, m.consecuencia);
+  const n = nivelRiesgoLinea(m);
   const controles = jerarquiaDe(m);
   wrap.innerHTML = `<strong>${areaName(m.areaId)}</strong> — ${m.peligro} → ${m.riesgo} · <span class="pill ${n}">${nivelLabel(n)}</span><br>
     Controles actuales: ${controles.length ? controles.map(c=>`${c.jerarquia}) ${c.texto}`).join("; ") : "sin controles registrados"}`;
@@ -11811,7 +11927,7 @@ function renderPaTable(){
     })
     .sort((a,b)=> (a.p.plazo||"").localeCompare(b.p.plazo||""));
   document.getElementById("paTable").innerHTML = rows.length ? rows.map(({p,m,estadoMostrado})=>{
-    const n = m ? nivelRiesgo(m.probabilidad, m.consecuencia) : null;
+    const n = m ? nivelRiesgoLinea(m) : null;
     return `<tr>
       <td>${m ? areaName(m.areaId) : "—"}</td>
       <td>${m ? `<strong>${m.peligro}</strong><div class="kv">${m.riesgo}</div>` : "(línea eliminada)"}</td>
@@ -11954,7 +12070,7 @@ function imprimirPlanAccion(){
           <div>${empresaNombre} · Generado el ${fmtDate(fecha)}</div>
           ${b.acciones.length ? `<table><thead><tr><th>Peligro / Riesgo</th><th>Nivel</th><th>Tipo</th><th>Actividad</th><th>Responsable</th><th>Plazo</th><th>Estado</th></tr></thead>
           <tbody>${b.acciones.map(({p,m})=>{
-            const n = nivelRiesgo(m.probabilidad, m.consecuencia);
+            const n = nivelRiesgoLinea(m);
             return `<tr><td>${m.peligro}<br>${m.riesgo}</td><td>${nivelLabel(n)}</td><td>${PA_TIPO_LABEL[p.tipoAccion]||"—"}</td><td>${p.actividad||"—"}</td><td>${p.responsable||"—"}</td><td>${p.plazo?fmtDate(p.plazo):"—"}</td><td>${paEstadoLabel(p)}</td></tr>`;
           }).join("")}</tbody></table>` : `<div style="color:#777;font-size:13px;margin-top:10px;">Sin acciones registradas todavía en esta área.</div>`}
           ${b.pendientes.length ? `<div style="margin-top:14px;"><strong>Pendientes de definir acción:</strong><br>${b.pendientes.map(m=>`• ${m.peligro} → ${m.riesgo}`).join("<br>")}</div>` : ""}
@@ -12054,10 +12170,10 @@ on(document.getElementById("exportMatrizBtn"), "click", async () => {
   const fSensible = document.getElementById("filterMatrizSensible").value;
   const fPeligro = quitarAcentos(document.getElementById("filterMatrizPeligro").value||"").toLowerCase().trim();
   const rows = CACHE.matriz
-    .map(m=>({...m, nivel: nivelRiesgo(m.probabilidad,m.consecuencia)}))
+    .map(m=>({...m, nivel: nivelRiesgoLinea(m)}))
     .filter(m=> (!fArea || m.areaId===fArea) && (!fNivel || m.nivel===fNivel) && (!fCategoria || m.categoria===fCategoria) && (!fEstado || (m.estado||"pendiente")===fEstado) && (!fSensible || (fSensible==="si"?!!m.sensible:!m.sensible))
       && (!fPeligro || quitarAcentos(((m.peligro||"")+" "+(m.riesgo||"")+" "+(m.efecto||"")).toLowerCase()).includes(fPeligro)))
-    .sort((a,b)=> (b.probabilidad*b.consecuencia)-(a.probabilidad*a.consecuencia));
+    .sort((a,b)=> (probResidualEfectiva(b)*consResidualEfectiva(b))-(probResidualEfectiva(a)*consResidualEfectiva(a)));
   if(!rows.length){ alert("No hay líneas para exportar con el filtro actual."); return; }
   if(typeof XLSX === "undefined"){ alert("No se pudo cargar el generador de Excel (revisa tu conexión a internet e intenta de nuevo)."); return; }
   const estadoLabel = {pendiente:"Pendiente", proceso:"En proceso", cerrada:"Cerrada"};
@@ -12072,9 +12188,12 @@ on(document.getElementById("exportMatrizBtn"), "click", async () => {
       "Peligro": m.peligro||"",
       "Riesgo asociado": m.riesgo||"",
       "Efecto / descripción": m.efecto||"",
-      "Probabilidad": m.probabilidad,
-      "Consecuencia": m.consecuencia,
-      "P x C": m.probabilidad*m.consecuencia,
+      "Probabilidad (puro)": m.probabilidad,
+      "Consecuencia (puro)": m.consecuencia,
+      "P x C (puro)": m.probabilidad*m.consecuencia,
+      "Probabilidad residual": m.probabilidadResidual||"",
+      "Consecuencia residual": m.consecuenciaResidual||"",
+      "P x C (residual)": tieneResidualEvaluado(m) ? (m.probabilidadResidual*m.consecuenciaResidual) : "",
       "Nivel de riesgo": nivelLabel(m.nivel),
       "Controles": m.controles||"",
       "Jerarquías usadas (DS 44)": jerarquiasUsadas.join(", ") || "—",
@@ -12082,6 +12201,8 @@ on(document.getElementById("exportMatrizBtn"), "click", async () => {
       "Responsable": m.responsable||"",
       "Plazo": m.plazo||"",
       "Estado": estadoLabel[m.estado]||m.estado||"Pendiente",
+      "Revisado": m.revisado ? "Sí" : "No",
+      "Fecha de revisión": m.revisado ? (m.fechaRevision||"") : "",
       "N° hombres": m.hombres||0,
       "N° mujeres": m.mujeres||0,
       "N° otros": m.otros||0,
@@ -12090,7 +12211,7 @@ on(document.getElementById("exportMatrizBtn"), "click", async () => {
     };
   });
   const ws = XLSX.utils.json_to_sheet(data);
-  ws["!cols"] = [{wch:14},{wch:20},{wch:28},{wch:14},{wch:26},{wch:26},{wch:32},{wch:12},{wch:12},{wch:8},{wch:14},{wch:32},{wch:16},{wch:14},{wch:18},{wch:12},{wch:12},{wch:10},{wch:10},{wch:10},{wch:16},{wch:32}];
+  ws["!cols"] = [{wch:14},{wch:20},{wch:28},{wch:14},{wch:26},{wch:26},{wch:32},{wch:12},{wch:12},{wch:10},{wch:12},{wch:12},{wch:12},{wch:14},{wch:32},{wch:16},{wch:14},{wch:18},{wch:12},{wch:12},{wch:10},{wch:14},{wch:10},{wch:10},{wch:10},{wch:16},{wch:32}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Matriz de riesgos");
 
@@ -12250,7 +12371,7 @@ function renderVsMatrizProtocoloTable(){
   renderVsMatrizEvaluacion(protocoloId);
   const rows = protocoloId ? protocoloLineasMatriz(protocoloId) : [];
   document.getElementById("vsMatrizProtocoloTable").innerHTML = rows.map(m=>{
-    const nivel = nivelRiesgo(m.probabilidad, m.consecuencia);
+    const nivel = nivelRiesgoLinea(m);
     return `<tr>
       <td>${areaName(m.areaId)}</td>
       <td>${m.proceso||"—"} / ${m.actividad||"—"}</td>
@@ -14990,7 +15111,7 @@ function datosInformeGerencia(){
   const racha = computeRachas();
   const findingsAll = CACHE.inspecciones.flatMap(i=>i.findings||[]);
   const accionesAbiertas = findingsAll.filter(f=>f.estado!=="cerrada").length;
-  const riesgosCriticos = CACHE.matriz.filter(m=>nivelRiesgo(m.probabilidad,m.consecuencia)==="critico").length;
+  const riesgosCriticos = CACHE.matriz.filter(m=>nivelRiesgoLinea(m)==="critico").length;
   const protAplicables = protocolosAplicables();
   const totalAsig = protAplicables.length;
   const vigentes = protAplicables.filter(p=>{ const v = protocoloVigenciaBitacora(p); return v && v.estado==="vigente"; }).length;
@@ -18280,12 +18401,16 @@ function parseMatrizPlana(sheet, defaultAreaId){
   const kPeligro = find("Peligro");
   const kRiesgo = find("Riesgo asociado","Riesgo");
   const kEfecto = find("Efecto / descripción","Efecto","Descripción","Descripcion");
-  const kProb = find("Probabilidad");
-  const kCons = find("Consecuencia");
+  const kProb = find("Probabilidad (puro)","Probabilidad");
+  const kCons = find("Consecuencia (puro)","Consecuencia");
+  const kProbResidual = find("Probabilidad residual");
+  const kConsResidual = find("Consecuencia residual");
   const kControles = find("Controles","Medidas de control");
   const kResp = find("Responsable");
   const kPlazo = find("Plazo","Fecha de implementación","Fecha de implementacion");
   const kEstado = find("Estado");
+  const kRevisado = find("Revisado");
+  const kFechaRevision = find("Fecha de revisión","Fecha de revision");
   const kHombres = find("N° hombres","N hombres","Hombres");
   const kMujeres = find("N° mujeres","N mujeres","Mujeres");
   const kOtros = find("N° otros","N otros","Otros");
@@ -18315,10 +18440,14 @@ function parseMatrizPlana(sheet, defaultAreaId){
       otros: kOtros? (+row[kOtros]||0) : 0,
       probabilidad: kProb && +row[kProb] ? Math.min(5,Math.max(1,+row[kProb])) : 3,
       consecuencia: kCons && +row[kCons] ? Math.min(5,Math.max(1,+row[kCons])) : 3,
+      probabilidadResidual: kProbResidual && +row[kProbResidual] ? Math.min(5,Math.max(1,+row[kProbResidual])) : undefined,
+      consecuenciaResidual: kConsResidual && +row[kConsResidual] ? Math.min(5,Math.max(1,+row[kConsResidual])) : undefined,
       controles: kControles? String(row[kControles]||"").trim() : "",
       responsable: kResp? String(row[kResp]||"").trim() : "",
       plazo: kPlazo? String(row[kPlazo]||"").trim() : "",
       estado: kEstado? (estadoInverso[normHdr(row[kEstado]).toLowerCase()] || "pendiente") : "pendiente",
+      revisado: kRevisado? normHdr(row[kRevisado]).toLowerCase()==="si" : false,
+      fechaRevision: kFechaRevision? String(row[kFechaRevision]||"").trim() : "",
     });
   }
   return out.length? out : null;
@@ -18377,7 +18506,10 @@ function parseMatrizIperCorporativa(sheet, defaultAreaId){
   const colArea = h1.findIndex(c=>c.trim()==="AREA");
 
   if(colPeligro===-1) return null;
-  // Prefiere la evaluación RESIDUAL (la última de cada tipo); si no existe, usa la "pura" (la primera).
+  // La matriz nativa distingue riesgo puro (primera evaluación) de residual
+  // (post-control, la última); cuando la plantilla trae ambas columnas se
+  // guardan las dos por separado -- "probabilidad"/"consecuencia" siempre
+  // corresponden al riesgo puro, igual que en una línea creada a mano.
   const colProbResidual = colsProb.length? colsProb[colsProb.length-1] : -1;
   const colConsResidual = colsCons.length? colsCons[colsCons.length-1] : -1;
   const colProbPuro = colsProb.length? colsProb[0] : -1;
@@ -18409,12 +18541,18 @@ function parseMatrizIperCorporativa(sheet, defaultAreaId){
     const cRes = colConsResidual>=0? row[colConsResidual] : null;
     const pPuro = colProbPuro>=0? row[colProbPuro] : null;
     const cPuro = colConsPuro>=0? row[colConsPuro] : null;
-    if(typeof pRes==="number" && typeof cRes==="number"){ p=pRes; c=cRes; }
-    else if(typeof pPuro==="number" && typeof cPuro==="number"){ p=pPuro; c=cPuro; }
+    if(typeof pPuro==="number" && typeof cPuro==="number"){ p=pPuro; c=cPuro; }
+    else if(typeof pRes==="number" && typeof cRes==="number"){ p=pRes; c=cRes; }
     else {
-      const mrTxt = (colMRResidual>=0 && row[colMRResidual]) ? row[colMRResidual] : (colMRPuro>=0? row[colMRPuro] : "");
+      const mrTxt = (colMRPuro>=0 && row[colMRPuro]) ? row[colMRPuro] : (colMRResidual>=0? row[colMRResidual] : "");
       [p,c] = mrTextoAPC(mrTxt);
     }
+    // Solo se considera "residual" cuando la plantilla trae una columna
+    // realmente distinta de la puro (misma columna == no hay evaluación
+    // residual separada, es la misma probabilidad/consecuencia de siempre).
+    const hayResidualSeparado = colProbResidual>=0 && colConsResidual>=0 && colProbResidual!==colProbPuro && colConsResidual!==colConsPuro;
+    const probabilidadResidual = hayResidualSeparado && typeof pRes==="number" ? Math.min(5,Math.max(1, Math.round(pRes))) : undefined;
+    const consecuenciaResidual = hayResidualSeparado && typeof cRes==="number" ? Math.min(5,Math.max(1, Math.round(cRes))) : undefined;
 
     let areaId = defaultAreaId;
     const areaTxt = colArea>=0 && row[colArea]!=null ? String(row[colArea]).trim() : "";
@@ -18443,6 +18581,7 @@ function parseMatrizIperCorporativa(sheet, defaultAreaId){
       otros: colOtros>=0 && typeof row[colOtros]==="number" ? row[colOtros] : 0,
       probabilidad: Math.min(5,Math.max(1, Math.round(p))),
       consecuencia: Math.min(5,Math.max(1, Math.round(c))),
+      probabilidadResidual, consecuenciaResidual,
       controles,
       responsable: colResponsableReal>=0 && row[colResponsableReal]!=null ? String(row[colResponsableReal]).trim() : "",
       plazo,
@@ -18496,8 +18635,10 @@ on(document.getElementById("importMatrizBtn"), "click", async () => {
       peligro: l.peligro, riesgo: l.riesgo, efecto: l.efecto,
       hombres: l.hombres||0, mujeres: l.mujeres||0, otros: l.otros||0,
       probabilidad: l.probabilidad, consecuencia: l.consecuencia,
+      probabilidadResidual: l.probabilidadResidual, consecuenciaResidual: l.consecuenciaResidual,
       controlesJerarquizados, controles: l.controles, responsable: l.responsable, plazo: l.plazo||"",
       estado: l.estado || "pendiente",
+      revisado: !!l.revisado, fechaRevision: l.fechaRevision||"",
       fechaCreacion: new Date().toISOString(),
     };
     await put("matriz", rec);
