@@ -800,7 +800,7 @@
 
   <!-- MATRIZ DE RIESGOS -->
   <div class="view" id="view-matriz">
-    <div class="card">
+    <div class="card" id="matrizFormCard">
       <div class="card-header-row" id="hdrNuevaLineaDeMatrizDeRiesgosIPER"><h2 id="matrizFormTitle">Nueva línea de matriz de riesgos (IPER)</h2><button class="collapse-toggle" id="toggleNuevaLineaDeMatrizDeRiesgosIPER" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyNuevaLineaDeMatrizDeRiesgosIPER">
       <div class="form-grid">
         <div>
@@ -911,6 +911,7 @@
         <button class="btn secondary" id="cancelEditMatrizBtn" style="display:none;">Cancelar edición</button>
       </div>
     </div></div>
+    <div id="matrizFormAnchor" style="display:none;"></div>
 
     <div class="card">
       <div class="card-header-row" id="hdrLevantamiento"><h2>Levantamiento de riesgos (IPER) por área de trabajo</h2><button class="collapse-toggle" id="toggleLevantamiento" type="button" aria-label="Contraer o expandir">▾</button></div>
@@ -9167,7 +9168,11 @@ function closeModal(){
   document.getElementById("modalBg").classList.remove("open");
   document.getElementById("modalBody").innerHTML = "";
 }
-document.getElementById("modalBg").addEventListener("click", (e)=>{ if(e.target.id==="modalBg") closeModal(); });
+document.getElementById("modalBg").addEventListener("click", (e)=>{
+  if(e.target.id!=="modalBg") return;
+  if(matrizFormEnModal){ cerrarFormularioMatrizModal(); return; }
+  closeModal();
+});
 
 /* Detalle de una inspección/observación: ver de qué se trata, cerrar, editar, descargar PDF */
 function openInspeccionModal(id){
@@ -10176,6 +10181,38 @@ on(document.getElementById("controlesWrap"), "click", async (e)=>{
   drawControles();
 });
 
+/* Editar una línea de la matriz mueve la tarjeta del formulario (ya
+   existente en la página, con todos sus campos y su propia lógica) dentro
+   del modal genérico, en vez de duplicarla -- así no hay dos copias de un
+   formulario tan grande para mantener sincronizadas. matrizFormAnchor
+   marca el lugar exacto de donde se sacó, para devolverla ahí al terminar
+   (guardar, cancelar, o cerrar el modal desde el fondo). */
+let matrizFormEnModal = false;
+function moverFormularioMatrizAModal(){
+  const card = document.getElementById("matrizFormCard");
+  const modalBody = document.getElementById("modalBody");
+  modalBody.innerHTML = "";
+  modalBody.classList.add("modal-wide");
+  const barraCierre = document.createElement("div");
+  barraCierre.style.cssText = "text-align:right;margin-bottom:6px;";
+  barraCierre.innerHTML = '<button class="btn secondary small" id="matrizModalCerrarBtn" type="button">Cerrar ventana</button>';
+  modalBody.appendChild(barraCierre);
+  modalBody.appendChild(card);
+  document.getElementById("bodyNuevaLineaDeMatrizDeRiesgosIPER").classList.remove("collapsed");
+  document.getElementById("modalBg").classList.add("open");
+  matrizFormEnModal = true;
+  document.getElementById("matrizModalCerrarBtn").addEventListener("click", cerrarFormularioMatrizModal);
+}
+function cerrarFormularioMatrizModal(){
+  if(!matrizFormEnModal) return;
+  const card = document.getElementById("matrizFormCard");
+  const anchor = document.getElementById("matrizFormAnchor");
+  anchor.parentNode.insertBefore(card, anchor);
+  document.getElementById("modalBg").classList.remove("open");
+  document.getElementById("modalBody").innerHTML = "";
+  document.getElementById("modalBody").classList.remove("modal-wide");
+  matrizFormEnModal = false;
+}
 function startEditMatriz(id){
   const rec = CACHE.matriz.find(m=>m.id===id);
   if(!rec) return;
@@ -10200,7 +10237,7 @@ function startEditMatriz(id){
   document.getElementById("matrizFormTitle").textContent = "Editando línea de matriz de riesgos (IPER)";
   document.getElementById("saveMatrizBtn").textContent = "Guardar cambios";
   document.getElementById("cancelEditMatrizBtn").style.display = "";
-  document.getElementById("view-matriz").scrollIntoView({behavior:"smooth", block:"start"});
+  moverFormularioMatrizAModal();
 }
 
 function resetMatrizForm(){
@@ -10216,6 +10253,7 @@ function resetMatrizForm(){
   document.getElementById("matrizFormTitle").textContent = "Nueva línea de matriz de riesgos (IPER)";
   document.getElementById("saveMatrizBtn").textContent = "Agregar a la matriz";
   document.getElementById("cancelEditMatrizBtn").style.display = "none";
+  if(matrizFormEnModal) cerrarFormularioMatrizModal();
 }
 on(document.getElementById("cancelEditMatrizBtn"), "click", async () => { resetMatrizForm(); });
 
