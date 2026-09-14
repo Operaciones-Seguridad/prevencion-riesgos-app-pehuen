@@ -11544,25 +11544,29 @@ function attachPlanoDrag(){
   attachPlanoDragPara(wrap, ".plano-marker", "areaId", "marcas");
   attachPlanoDragPara(wrap, ".plano-icono-marker", "iconoKey", "iconos");
 }
-let planoNombrePendiente = null;
 on(document.getElementById("planoSelect"), "change", (e) => {
   planoActualId = e.target.value || null;
   renderPlanoRiesgos();
 });
+/* El selector de archivos se abre DIRECTO al hacer clic (mismo gesto del
+   usuario, sin nada bloqueante en el medio) -- antes se pedía el nombre
+   del plano con prompt() primero, pero un diálogo bloqueante como prompt()
+   puede hacer que el navegador ya no reconozca el clic siguiente sobre el
+   input de archivo como iniciado por el usuario, y bloquee el selector en
+   silencio (reportado por un usuario: "no se abre"). Ahora el nombre se
+   pide después de elegir la imagen, no antes. */
 on(document.getElementById("planoNuevoBtn"), "click", () => {
-  const nombre = prompt("Nombre del plano (ej: \"Planta 1\", \"Bodega central\", el área o proceso que representa):");
-  if(nombre === null) return;
-  if(!nombre.trim()){ alert("Indica un nombre para el plano."); return; }
-  planoNombrePendiente = nombre.trim();
   document.getElementById("planoUploadInput").click();
 });
 on(document.getElementById("planoUploadInput"), "change", async (e) => {
   const file = e.target.files[0];
   e.target.value = "";
-  if(!file || !planoNombrePendiente) return;
+  if(!file) return;
+  const nombre = prompt("Nombre del plano (ej: \"Planta 1\", \"Bodega central\", el área o proceso que representa):");
+  if(nombre === null) return;
+  if(!nombre.trim()){ alert("Indica un nombre para el plano."); return; }
   const dataUrl = await readFileAsDataUrl(file);
-  const nuevo = { id:uid(), nombre: planoNombrePendiente, imagen: dataUrl, marcas:{}, iconos:{} };
-  planoNombrePendiente = null;
+  const nuevo = { id:uid(), nombre: nombre.trim(), imagen: dataUrl, marcas:{}, iconos:{} };
   await savePlanoConfig(nuevo);
   planoActualId = nuevo.id;
   renderPlanoRiesgos();
