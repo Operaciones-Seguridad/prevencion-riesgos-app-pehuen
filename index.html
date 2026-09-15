@@ -2300,6 +2300,26 @@
   <!-- CUMPLIMIENTO LEGAL -->
   <div class="view" id="view-cumplimiento">
     <div class="card">
+      <div class="card-header-row" id="hdrResumenRiesgosLegal"><h2>Resumen de riesgos de la empresa (según Matriz de riesgos)</h2><button class="collapse-toggle" id="toggleResumenRiesgosLegal" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyResumenRiesgosLegal">
+      <div class="desc">Se genera automáticamente a partir de la Matriz de riesgos vigente (usa el riesgo residual cuando ya fue evaluado; si no, el riesgo puro). Se actualiza solo, cada vez que entras a esta pestaña.</div>
+      <div class="toolbar">
+        <div class="field" style="min-width:150px;"><div class="kv">Bajo</div><div id="resumenRiesgosCountBajo" style="font-size:22px;font-weight:800;color:#0ca30c;"></div></div>
+        <div class="field" style="min-width:150px;"><div class="kv">Medio</div><div id="resumenRiesgosCountMedio" style="font-size:22px;font-weight:800;color:#a37a00;"></div></div>
+        <div class="field" style="min-width:150px;"><div class="kv">Alto</div><div id="resumenRiesgosCountAlto" style="font-size:22px;font-weight:800;color:#c15b30;"></div></div>
+        <div class="field" style="min-width:150px;"><div class="kv">Crítico</div><div id="resumenRiesgosCountCritico" style="font-size:22px;font-weight:800;color:#a02323;"></div></div>
+        <div class="field" style="min-width:150px;"><div class="kv">Total líneas en la matriz</div><div id="resumenRiesgosCountTotal" style="font-size:22px;font-weight:800;"></div></div>
+      </div>
+      <h3 style="margin-top:16px;">Principales riesgos (nivel Alto y Crítico)</h3>
+      <table>
+        <thead><tr><th>Área</th><th>Peligro / Riesgo</th><th>Nivel</th><th>Medidas de control</th><th>Responsable</th><th>Plazo</th></tr></thead>
+        <tbody id="resumenRiesgosLegalTable"></tbody>
+      </table>
+      <div style="margin-top:10px;"><button class="btn secondary small" id="descargarResumenRiesgosPdfBtn">Descargar PDF</button></div>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-header-row" id="hdrFuf"><h2>Formulario Único de Fiscalización (FUF) — DS N°44/2024</h2><button class="collapse-toggle" id="toggleFuf" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyFuf">
       <div class="desc">Los 62 ítems del FUF vigente, agrupados por materia. Por cada ítem se registra el nivel de cumplimiento, la fecha de evaluación, observaciones y evidencia de respaldo (documento o fotografía).</div>
@@ -3649,6 +3669,7 @@ function setupCollapsible(headerId, bodyId, toggleId, storageKey, defaultOpen){
 setupCollapsible("hdrMatrizVigente", "bodyMatrizVigente", "toggleMatrizVigente", "collapsed_matrizVigente");
 setupCollapsible("hdrTraspasosPendientes", "bodyTraspasosPendientes", "toggleTraspasosPendientes", "collapsed_traspasosPendientes");
 setupCollapsible("hdrDs44Catalogo", "bodyDs44Catalogo", "toggleDs44Catalogo", "collapsed_ds44Catalogo");
+setupCollapsible("hdrResumenRiesgosLegal", "bodyResumenRiesgosLegal", "toggleResumenRiesgosLegal", "collapsed_resumenRiesgosLegal");
 setupCollapsible("hdrFuf", "bodyFuf", "toggleFuf", "collapsed_fuf");
 setupCollapsible("hdrCursosDs44", "bodyCursosDs44", "toggleCursosDs44", "collapsed_cursosDs44");
 setupCollapsible("hdrLevantamiento", "bodyLevantamiento", "toggleLevantamiento", "collapsed_levantamiento");
@@ -4323,6 +4344,7 @@ function irAVista(nombreVista){
   if(nombreVista==="accidentabilidad") renderAccidentabilidad();
   if(nombreVista==="seguridad"){ renderInfractores(); renderVelocidad(); }
   if(nombreVista==="cphys") renderCphys();
+  if(nombreVista==="cumplimiento") renderResumenRiesgosLegal();
   if(nombreVista==="emergencia") renderEmergencia();
   if(nombreVista==="config") poblarFormConfigEmpresa();
   document.getElementById("view-"+nombreVista).scrollIntoView({behavior:"smooth", block:"start"});
@@ -4666,6 +4688,68 @@ on(document.getElementById("ds44ObligacionesTable"), "click", async (e)=>{
     renderDs44ObligacionesTable();
     renderDs44Cumplimiento();
   }
+});
+
+/* =========================================================
+   RESUMEN DE RIESGOS DE LA EMPRESA (dentro de Cumplimiento legal)
+   Se genera en vivo a partir de la Matriz de riesgos vigente; no
+   guarda copia ni versión, solo refleja el estado actual cada vez
+   que se entra a esta pestaña (ver irAVista).
+   ========================================================= */
+function renderResumenRiesgosLegal(){
+  const niveles = ["bajo","medio","alto","critico"];
+  const total = CACHE.matriz.length;
+  const counts = Object.fromEntries(niveles.map(n=>[n, CACHE.matriz.filter(m=>nivelRiesgoLinea(m)===n).length]));
+  document.getElementById("resumenRiesgosCountBajo").textContent = counts.bajo;
+  document.getElementById("resumenRiesgosCountMedio").textContent = counts.medio;
+  document.getElementById("resumenRiesgosCountAlto").textContent = counts.alto;
+  document.getElementById("resumenRiesgosCountCritico").textContent = counts.critico;
+  document.getElementById("resumenRiesgosCountTotal").textContent = total;
+  const principales = CACHE.matriz
+    .filter(m=>["alto","critico"].includes(nivelRiesgoLinea(m)))
+    .sort((a,b)=> (probResidualEfectiva(b)*consResidualEfectiva(b)) - (probResidualEfectiva(a)*consResidualEfectiva(a)));
+  document.getElementById("resumenRiesgosLegalTable").innerHTML = principales.length
+    ? principales.map(m=>`<tr>
+        <td>${areaName(m.areaId)}</td>
+        <td><strong>${m.peligro}</strong><div class="kv">${m.riesgo}</div></td>
+        <td><span class="pill ${nivelRiesgoLinea(m)}">${nivelLabel(nivelRiesgoLinea(m))}</span></td>
+        <td>${m.controles||"—"}</td>
+        <td>${m.responsable||"—"}</td>
+        <td>${m.plazo?fmtDate(m.plazo):"—"}</td>
+      </tr>`).join("")
+    : `<tr><td class="empty" colspan="6">Sin líneas de nivel Alto o Crítico en la matriz vigente</td></tr>`;
+}
+on(document.getElementById("descargarResumenRiesgosPdfBtn"), "click", () => {
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const niveles = ["bajo","medio","alto","critico"];
+  const total = CACHE.matriz.length;
+  const counts = Object.fromEntries(niveles.map(n=>[n, CACHE.matriz.filter(m=>nivelRiesgoLinea(m)===n).length]));
+  const principales = CACHE.matriz
+    .filter(m=>["alto","critico"].includes(nivelRiesgoLinea(m)))
+    .sort((a,b)=> (probResidualEfectiva(b)*consResidualEfectiva(b)) - (probResidualEfectiva(a)*consResidualEfectiva(a)));
+  const doc = new JsPDFClass();
+  addLogoPdf(doc);
+  let y = 16;
+  doc.setFontSize(15);
+  doc.text("Resumen de riesgos de la empresa", 14, y); y += 8;
+  doc.setFontSize(10);
+  doc.text(`Empresa: ${(CACHE.empresa&&CACHE.empresa.razonSocial)||"—"}`, 14, y); y += 6;
+  const lineaDatos = datosEmpresaLineaPdf();
+  if(lineaDatos){ doc.text(lineaDatos, 14, y); y += 6; }
+  doc.text(`Generado: ${fmtDate(new Date().toISOString())} — según Matriz de riesgos vigente (${total} línea(s))`, 14, y); y += 8;
+  doc.autoTable({ startY:y, head:[["Nivel de riesgo","N° de líneas"]], body:[
+    ["Bajo", counts.bajo], ["Medio", counts.medio], ["Alto", counts.alto], ["Crítico", counts.critico],
+  ], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 8;
+  doc.setFontSize(12); doc.text("Principales riesgos (nivel Alto y Crítico)", 14, y); y += 4;
+  doc.autoTable({ startY:y,
+    head:[["Área","Peligro","Riesgo","Nivel","Medidas de control","Responsable","Plazo"]],
+    body: principales.length
+      ? principales.map(m=>[areaName(m.areaId)||"—", m.peligro||"—", m.riesgo||"—", nivelLabel(nivelRiesgoLinea(m)), m.controles||"—", m.responsable||"—", m.plazo?fmtDate(m.plazo):"—"])
+      : [["Sin líneas de nivel Alto o Crítico en la matriz vigente","—","—","—","—","—","—"]],
+    styles:{fontSize:8}, headStyles:{fillColor:[42,120,214]} });
+  doc.save("resumen_riesgos_empresa.pdf");
 });
 
 /* --- Seguimiento (tabla filtrada por tramo + modal de edición) --- */
