@@ -18371,23 +18371,34 @@ on(document.getElementById("importTrabBtn"), "click", async () => {
   const buffer = await file.arrayBuffer();
   const wb = XLSX.read(buffer, {type:"array"});
   const sheet = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(sheet, {defval:""});
-  if(!rows.length){ alert("El archivo no tiene filas de datos."); return; }
   const norm = s => String(s||"").trim().toLowerCase();
+  // El encabezado no siempre está en la primera fila (algunas planillas traen
+  // filas en blanco o un título arriba, como la nómina real de un cliente) --
+  // se busca la fila que contenga la columna "Nombre" en las primeras 15 filas,
+  // igual que ya hace el import de la Matriz de riesgos.
+  const aoa = XLSX.utils.sheet_to_json(sheet, {header:1, raw:true, defval:null});
+  let headerRow = -1;
+  for(let i=0;i<Math.min(aoa.length,15);i++){
+    const rowNorm = (aoa[i]||[]).map(c=>norm(c));
+    if(rowNorm.some(c=>["nombre","nombre completo","trabajador"].includes(c))){ headerRow = i; break; }
+  }
+  if(headerRow===-1){ alert("No se encontró una columna \"Nombre\" en el archivo. Revisa que la planilla tenga una columna con el nombre de cada trabajador."); return; }
+  if(aoa.length <= headerRow+1){ alert("El archivo no tiene filas de datos."); return; }
+  const headers = (aoa[headerRow]||[]).map(c=>norm(c));
+  const colNombre = headers.findIndex(c=>["nombre","nombre completo","trabajador"].includes(c));
+  const colRut = headers.findIndex(c=>c==="rut");
+  const colCargo = headers.findIndex(c=>c==="cargo");
+  const colArea = headers.findIndex(c=>c==="área"||c==="area");
   let importados = 0, omitidos = 0, sinArea = 0;
-  for(const row of rows){
-    const keys = Object.keys(row);
-    const kNombre = keys.find(k=>["nombre","nombre completo","trabajador"].includes(norm(k)));
-    const kRut = keys.find(k=>norm(k)==="rut");
-    const kCargo = keys.find(k=>norm(k)==="cargo");
-    const kArea = keys.find(k=>norm(k)==="área"||norm(k)==="area");
-    const nombre = kNombre? String(row[kNombre]).trim() : "";
+  for(let r=headerRow+1; r<aoa.length; r++){
+    const row = aoa[r] || [];
+    const nombre = colNombre>=0 && row[colNombre]!=null ? String(row[colNombre]).trim() : "";
     if(!nombre){ omitidos++; continue; }
-    const rut = kRut? String(row[kRut]).trim() : "";
-    const cargo = kCargo? String(row[kCargo]).trim() : "";
+    const rut = colRut>=0 && row[colRut]!=null ? String(row[colRut]).trim() : "";
+    const cargo = colCargo>=0 && row[colCargo]!=null ? String(row[colCargo]).trim() : "";
     let areaId = "";
-    if(kArea){
-      const areaNombre = String(row[kArea]).trim();
+    if(colArea>=0 && row[colArea]!=null){
+      const areaNombre = String(row[colArea]).trim();
       const match = CACHE.areas.find(a=>norm(a.nombre)===norm(areaNombre));
       if(match) areaId = match.id;
     }
