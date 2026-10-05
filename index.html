@@ -1768,9 +1768,9 @@
         </div>
         <div><label>Fecha</label><input id="accFecha" type="date"></div>
         <div><label>Área</label><select id="accArea"></select></div>
-        <div>
-          <label>Gravedad</label>
-          <select id="accGravedad"><option value="leve">Leve</option><option value="grave">Grave</option><option value="fatal">Fatal</option></select>
+        <div id="accGravedadWrap">
+          <label>Clasificación (accidente grave o fatal)</label>
+          <select id="accGravedad"><option value="leve">No grave ni fatal</option><option value="grave">Grave</option><option value="fatal">Fatal</option></select>
         </div>
         <div><label>Días perdidos</label><input id="accDiasPerdidos" type="number" min="0" placeholder="0 si no aplica"></div>
         <div>
@@ -1778,6 +1778,19 @@
           <select id="accSexo"><option value="">No aplica / sin dato</option><option value="M">Hombre</option><option value="F">Mujer</option></select>
         </div>
         <div><label>Foco crítico</label><select id="accFocoCritico"></select></div>
+        <div id="accDenunciaWrap">
+          <label id="accDenunciaLabel">¿DIAT realizada?</label>
+          <select id="accDenunciaRealizada"><option value="">Sin dato</option><option value="si">Sí</option><option value="no">No</option></select>
+        </div>
+        <div id="accDenunciaFechaWrap" style="display:none;">
+          <label id="accDenunciaFechaLabel">Fecha de presentación de la DIAT</label>
+          <input id="accDenunciaFecha" type="date">
+        </div>
+      </div>
+      <div id="accClasifDetalle" style="display:none;margin-top:10px;" class="desc"></div>
+      <div id="accCriteriosGraveWrap" style="display:none;margin-top:8px;">
+        <label>Criterios que cumple (marca al menos uno)</label>
+        <div id="accCriteriosGraveLista"></div>
       </div>
       <label>Causa</label>
       <input id="accCausa" placeholder="Ej: Caída al mismo nivel por piso mojado">
@@ -1814,10 +1827,12 @@
         <div class="field"><label>Filtrar por mes</label><select id="filterAccMes"><option value="">Todos</option></select></div>
         <div class="field"><label>Filtrar por año</label><select id="filterAccAnio"><option value="">Todos</option></select></div>
         <div class="field"><label>Filtrar por foco crítico</label><select id="filterAccFoco"><option value="">Todos</option></select></div>
+        <div class="field"><label>Filtrar por clasificación</label><select id="filterAccGravedad"><option value="">Todas</option><option value="grave">Grave</option><option value="fatal">Fatal</option><option value="graveofatal">Grave o fatal</option></select></div>
+        <div class="field"><label>Filtrar por DIAT/DIEP</label><select id="filterAccDenuncia"><option value="">Todas</option><option value="si">Realizada</option><option value="no">Pendiente (marcada como No)</option></select></div>
         <div><button class="btn small secondary" id="downloadAccPdfBtn" style="margin-top:20px;">Descargar informe PDF</button></div>
       </div>
       <table>
-        <thead><tr><th>Fecha</th><th>Tipo</th><th>Sexo</th><th>Foco crítico</th><th>Trabajadores asociados</th><th>Área</th><th>Gravedad</th><th>Días perdidos</th><th>Causa</th><th>Informe / Foto</th><th></th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Sexo</th><th>Foco crítico</th><th>Trabajadores asociados</th><th>Área</th><th>Clasificación</th><th>DIAT / DIEP</th><th>Días perdidos</th><th>Causa</th><th>Informe / Foto</th><th></th></tr></thead>
         <tbody id="accidentesTable"></tbody>
       </table>
     </div></div>
@@ -1846,7 +1861,7 @@
 
     <div class="card">
       <div class="card-header-row" id="hdrControlEstadisticoMensualYAnual"><h2>Control estadístico mensual y anual</h2><button class="collapse-toggle" id="toggleControlEstadisticoMensualYAnual" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyControlEstadisticoMensualYAnual">
-      <div class="desc">Selecciona un mes o un año con datos registrados (horas-hombre y/o accidentes) para ver la tasa de frecuencia, la tasa de gravedad, el índice de accidentabilidad y el detalle por sexo de ese período específico (no acumulado histórico). Si activaste RIRDA/LDR en Configuración, también se muestran esos indicadores con el mismo período.</div>
+      <div class="desc">Selecciona un mes o un año con datos registrados (horas-hombre y/o accidentes) para ver la tasa de frecuencia, la tasa de gravedad, el índice de accidentabilidad y el detalle por sexo de ese período específico (no acumulado histórico). Si activaste RIRDA/LDR en Configuración, también se muestran esos indicadores con el mismo período. Cálculo: en un mes se usan las horas-hombre y los trabajadores de ese mes; en un año (o acumulado) se usan las horas-hombre acumuladas (sumadas) y el promedio de los trabajadores de los meses con datos. Ambos valores base se muestran en las tarjetas.</div>
       <div class="row">
         <div class="col">
           <div class="toolbar">
@@ -1866,10 +1881,13 @@
         </div>
       </div>
       <h3 style="margin:16px 0 6px;font-size:14px;">Detalle mes a mes del año seleccionado</h3>
+      <div class="desc">Columnas "mes": usan las horas-hombre y los trabajadores de ese mes. Columnas "acumulado": usan las horas-hombre acumuladas (sumadas) y el promedio de trabajadores desde enero hasta ese mes.</div>
+      <div style="overflow-x:auto;">
       <table>
-        <thead><tr><th>Mes</th><th>Tasa frecuencia</th><th>Tasa gravedad</th><th>Índice accidentabilidad</th><th>CTP</th><th>STP</th><th class="rirda-ldr-col" style="display:none;">RIRDA</th><th class="rirda-ldr-col" style="display:none;">LDR</th></tr></thead>
+        <thead><tr><th>Mes</th><th>HH mes</th><th>Trab. mes</th><th>Tasa frecuencia</th><th>Tasa gravedad</th><th>Índice accidentabilidad</th><th>CTP</th><th>STP</th><th>HH acumuladas</th><th>Trab. promedio acum.</th><th>Frecuencia acum.</th><th>Gravedad acum.</th><th>Accidentabilidad acum.</th><th class="rirda-ldr-col" style="display:none;">RIRDA</th><th class="rirda-ldr-col" style="display:none;">LDR</th></tr></thead>
         <tbody id="accAnioMesTable"></tbody>
       </table>
+      </div>
     </div></div>
 
     <div class="card">
@@ -14352,6 +14370,49 @@ on(document.getElementById("iapListWrap"), "click", async (e) => {
    ========================================================= */
 const ACC_TIPOS_RACHA = ["ctp","stp","trayecto"]; // tipos que cortan la racha de "días sin accidentes"
 const ACC_TIPO_LABEL = {ctp:"Con tiempo perdido", stp:"Sin tiempo perdido", trayecto:"Trayecto", incidente:"Incidente / cuasi accidente", enfermedad:"Enfermedad profesional"};
+/* Clasificación de accidente grave / fatal según el Compendio de Seguridad
+   Laboral de la SUSESO (capítulo "Obligaciones en caso de accidentes fatales
+   y graves", que recoge la Circular 3335 de 2017 -- dejada sin efecto por la
+   Resolución 156/2018 al pasar al Compendio -- y fue actualizado por la
+   Circular 3831 de 26-09-2024). Fatal: muerte del trabajador en forma
+   inmediata o como consecuencia directa del accidente. Grave: cumple al
+   menos uno de estos 6 criterios. Los accidentes de trayecto no generan la
+   obligación de suspensión ni de notificación inmediata. */
+const ACC_CRITERIOS_GRAVE = [
+  {key:"amputacion", texto:"Amputación inmediata o pérdida de partes del cuerpo"},
+  {key:"reanimacion", texto:"Requiere maniobras de reanimación"},
+  {key:"rescate", texto:"Requiere maniobras de rescate"},
+  {key:"caida", texto:"Caída de altura de más de 1,8 metros"},
+  {key:"hiperbarica", texto:"Ocurre en condiciones hiperbáricas"},
+  {key:"faenas", texto:"Afecta a un número de trabajadores tal que altera el desarrollo normal de las faenas"},
+];
+const ACC_GRAVEDAD_LABEL = {leve:"No grave ni fatal", grave:"Grave", fatal:"Fatal"};
+// La clasificación grave/fatal aplica a accidentes del trabajo y de trayecto (no a incidentes sin lesión ni enfermedades profesionales).
+function accClasificaAplica(tipo){ return ["ctp","stp","trayecto"].includes(tipo); }
+// DIAT (accidentes del trabajo y trayecto) / DIEP (enfermedad profesional); no aplica a incidentes sin lesión.
+function accDenunciaSigla(tipo){ return tipo==="enfermedad" ? "DIEP" : (["ctp","stp","trayecto"].includes(tipo) ? "DIAT" : ""); }
+function accClasificacionHtml(a){
+  if(!accClasificaAplica(a.tipo)) return "–";
+  const g = a.gravedad || "leve";
+  if(g==="leve") return "No grave ni fatal";
+  const crit = (a.criteriosGrave||[]).map(k=>(ACC_CRITERIOS_GRAVE.find(c=>c.key===k)||{}).texto).filter(Boolean);
+  const title = crit.length ? ` title="${crit.join(" | ")}"` : "";
+  return `<span class="pill ${g==="fatal"?"critico":"alto"}"${title}>${ACC_GRAVEDAD_LABEL[g]||g}</span>${crit.length?`<div class="kv">${crit.join("; ")}</div>`:""}`;
+}
+function accClasificacionTexto(a){
+  if(!accClasificaAplica(a.tipo)) return "—";
+  const g = a.gravedad || "leve";
+  if(g==="leve") return ACC_GRAVEDAD_LABEL.leve;
+  const crit = (a.criteriosGrave||[]).map(k=>(ACC_CRITERIOS_GRAVE.find(c=>c.key===k)||{}).texto).filter(Boolean);
+  return ACC_GRAVEDAD_LABEL[g] + (crit.length ? " — " + crit.join("; ") : "");
+}
+function accDenunciaTexto(a){
+  const sigla = accDenunciaSigla(a.tipo);
+  if(!sigla) return "—";
+  if(a.denunciaRealizada==="si") return `${sigla} realizada${a.fechaDenuncia?` (${fmtDate(a.fechaDenuncia)})`:""}`;
+  if(a.denunciaRealizada==="no") return `${sigla} NO realizada`;
+  return "Sin dato";
+}
 
 function computeRachas(){
   const list = CACHE.accidentes.filter(a=>ACC_TIPOS_RACHA.includes(a.tipo)).map(a=>a.fecha).sort();
@@ -14406,7 +14467,11 @@ function calcIndicadores(accidentesLista, horasHombreLista){
   const hombres = accidentados.filter(a=>a.sexo==="M").length;
   const mujeres = accidentados.filter(a=>a.sexo==="F").length;
   const sinDatoSexo = accidentados.length - hombres - mujeres;
-  return {totalHH, totalDiasPerdidosGravedad, totalCTP, totalSTP, totalTrayecto, totalIncidentes, totalEnfermedad, tf, tg, indiceAcc, rirda, ldr, hombres, mujeres, sinDatoSexo};
+  const totalGraves = accidentesLista.filter(a=>accClasificaAplica(a.tipo) && a.gravedad==="grave").length;
+  const totalFatales = accidentesLista.filter(a=>accClasificaAplica(a.tipo) && a.gravedad==="fatal").length;
+  const sinDenuncia = accidentesLista.filter(a=>accDenunciaSigla(a.tipo) && a.denunciaRealizada==="no").length;
+  const promTrabajadoresRed = Math.round(promTrabajadores*10)/10;
+  return {totalHH, promTrabajadores: promTrabajadoresRed, mesesConDatos: horasHombreLista.length, totalGraves, totalFatales, sinDenuncia, totalDiasPerdidosGravedad, totalCTP, totalSTP, totalTrayecto, totalIncidentes, totalEnfermedad, tf, tg, indiceAcc, rirda, ldr, hombres, mujeres, sinDatoSexo};
 }
 function accidentabilidadIndicadores(){ return calcIndicadores(CACHE.accidentes, CACHE.horasHombre); }
 
@@ -14505,6 +14570,20 @@ function accFiltrarPorPeriodo(tipoPeriodo, valor){
    activados en Configuración — igual que el control estadístico
    mensual/anual de más abajo, pero visibles de inmediato al entrar a
    Accidentabilidad. */
+/* Datos base del cálculo (horas-hombre y trabajadores promedio del período)
+   más las tarjetas de clasificación grave/fatal y DIAT/DIEP pendientes. */
+function accTilesExtra(ind, periodoTxt){
+  const baseTrab = ind.mesesConDatos
+    ? `promedio de ${ind.mesesConDatos} mes(es) con horas-hombre — ${periodoTxt}`
+    : `sin horas-hombre registradas: se usa la dotación actual — ${periodoTxt}`;
+  return [
+    tile("Horas-hombre del período", ind.totalHH, `acumuladas (sumadas) — ${periodoTxt}`),
+    tile("Trabajadores promedio", ind.promTrabajadores, baseTrab),
+    tile("Accidentes graves", ind.totalGraves, `según Compendio SUSESO — ${periodoTxt}`),
+    tile("Accidentes fatales", ind.totalFatales, `según Compendio SUSESO — ${periodoTxt}`),
+    tile("Sin DIAT/DIEP", ind.sinDenuncia, `marcadas como no realizadas — ${periodoTxt}`),
+  ];
+}
 function renderAccTilesPrincipales(){
   const {meses, anios} = accPeriodosDisponibles();
   const selMes = document.getElementById("accTilesMes");
@@ -14544,6 +14623,7 @@ function renderAccTilesPrincipales(){
     tile("Accidentes con tiempo perdido", ind.totalCTP, periodoTxt),
     tile("Accidentes sin tiempo perdido", ind.totalSTP, periodoTxt),
     tile("Incidentes / cuasi accidentes", ind.totalIncidentes, periodoTxt),
+    ...accTilesExtra(ind, periodoTxt),
   ];
   if(usaRirda){
     tilesArr.push(tile("RIRDA", ind.rirda, `CTP x 200.000 / HH — ${periodoTxt}`, semaforoMeta(ind.rirda, metas.metaRirda)));
@@ -14567,6 +14647,7 @@ function tilesIndicadoresHtml(ind, usaRirda){
     tile("Enfermedad profesional", ind.totalEnfermedad, ""),
     tile("Accidentados — hombres", ind.hombres, ""),
     tile("Accidentadas — mujeres", ind.mujeres, ""),
+    ...accTilesExtra(ind, "período"),
   ];
   if(usaRirda){
     base.push(tile("RIRDA", ind.rirda, "CTP x 200.000 / HH", semaforoMeta(ind.rirda, metas.metaRirda)));
@@ -14600,7 +14681,15 @@ function renderAccMensualAnual(){
       const periodo = `${anioVal}-${String(i+1).padStart(2,"0")}`;
       const f = accFiltrarPorPeriodo("mensual", periodo);
       const ind2 = calcIndicadores(f.accs, f.hh);
-      return `<tr><td>${nombre}</td><td>${ind2.tf}</td><td>${ind2.tg}</td><td>${ind2.indiceAcc}%</td><td>${ind2.totalCTP}</td><td>${ind2.totalSTP}</td>${usaRirda?`<td>${ind2.rirda}</td><td>${ind2.ldr}</td>`:""}</tr>`;
+      // Acumulado enero..este mes: accidentes y HH sumados, trabajadores promediados.
+      const hastaMes = periodo;
+      const accsAcum = accs.filter(a=> (a.fecha||"").slice(0,7) <= hastaMes);
+      const hhAcum = hh.filter(h=> h.periodo <= hastaMes);
+      const indAcum = calcIndicadores(accsAcum, hhAcum);
+      const hhMes = f.hh.length ? ind2.totalHH : "—";
+      const trabMes = f.hh.length ? ind2.promTrabajadores : "—";
+      const acumTxt = hhAcum.length ? null : "—";
+      return `<tr><td>${nombre}</td><td>${hhMes}</td><td>${trabMes}</td><td>${ind2.tf}</td><td>${ind2.tg}</td><td>${ind2.indiceAcc}%</td><td>${ind2.totalCTP}</td><td>${ind2.totalSTP}</td><td>${acumTxt||indAcum.totalHH}</td><td>${acumTxt||indAcum.promTrabajadores}</td><td>${acumTxt||indAcum.tf}</td><td>${acumTxt||indAcum.tg}</td><td>${acumTxt||(indAcum.indiceAcc+"%")}</td>${usaRirda?`<td>${ind2.rirda}</td><td>${ind2.ldr}</td>`:""}</tr>`;
     }).join("");
   } else {
     document.getElementById("accAnioTiles").innerHTML = '<div class="empty">Sin datos para calcular un año</div>';
@@ -14819,12 +14908,50 @@ document.getElementById("accFotoInput").addEventListener("change",(e)=>{
   reader.readAsDataURL(file);
 });
 
+function pintarCriteriosGrave(seleccionados){
+  const sel = seleccionados || [];
+  document.getElementById("accCriteriosGraveLista").innerHTML = ACC_CRITERIOS_GRAVE.map(c=>
+    `<label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:3px 0;"><input type="checkbox" class="accCriterioGrave" value="${c.key}" style="width:auto;min-height:auto;" ${sel.includes(c.key)?"checked":""}> ${c.texto}</label>`
+  ).join("");
+}
+function leerCriteriosGrave(){ return Array.from(document.querySelectorAll(".accCriterioGrave:checked")).map(c=>c.value); }
+/* Muestra u oculta, según el tipo elegido, la clasificación grave/fatal, los
+   criterios del Compendio SUSESO y los campos de la DIAT/DIEP (con la sigla
+   que corresponde: DIAT para accidentes del trabajo y trayecto, DIEP para
+   enfermedad profesional, nada para incidentes sin lesión). */
+function actualizarFormClasificacionAcc(){
+  const tipo = document.getElementById("accTipo").value;
+  const aplica = accClasificaAplica(tipo);
+  document.getElementById("accGravedadWrap").style.display = aplica ? "" : "none";
+  const g = aplica ? document.getElementById("accGravedad").value : "leve";
+  document.getElementById("accCriteriosGraveWrap").style.display = g==="grave" ? "" : "none";
+  const det = document.getElementById("accClasifDetalle");
+  let txt = "";
+  if(g==="fatal") txt = "Accidente fatal: provoca la muerte del trabajador en forma inmediata o como consecuencia directa del accidente.";
+  if(aplica && tipo==="trayecto" && g!=="leve") txt += (txt?" ":"") + "Los accidentes de trayecto no generan la obligación de suspensión de faenas ni de notificación inmediata a la Inspección del Trabajo y a la SEREMI de Salud.";
+  if(aplica && tipo!=="trayecto" && g!=="leve") txt += (txt?" ":"") + "Debe suspender de inmediato los trabajos afectados y notificar de inmediato a la Inspección del Trabajo y a la SEREMI de Salud (600 42 000 22).";
+  det.style.display = txt ? "" : "none";
+  det.textContent = txt;
+  const sigla = accDenunciaSigla(tipo);
+  document.getElementById("accDenunciaWrap").style.display = sigla ? "" : "none";
+  document.getElementById("accDenunciaLabel").textContent = sigla ? `¿${sigla} realizada?` : "";
+  document.getElementById("accDenunciaFechaLabel").textContent = sigla ? `Fecha de presentación de la ${sigla}` : "";
+  document.getElementById("accDenunciaFechaWrap").style.display = (sigla && document.getElementById("accDenunciaRealizada").value==="si") ? "" : "none";
+}
+["accTipo","accGravedad","accDenunciaRealizada"].forEach(id=>document.getElementById(id).addEventListener("change", actualizarFormClasificacionAcc));
+pintarCriteriosGrave([]);
+actualizarFormClasificacionAcc();
+
 function resetAccForm(){
   accEditingId = null;
   document.getElementById("accTipo").value = "ctp";
   document.getElementById("accFecha").value = "";
   document.getElementById("accArea").value = "";
   document.getElementById("accGravedad").value = "leve";
+  document.getElementById("accDenunciaRealizada").value = "";
+  document.getElementById("accDenunciaFecha").value = "";
+  pintarCriteriosGrave([]);
+  actualizarFormClasificacionAcc();
   document.getElementById("accDiasPerdidos").value = "";
   document.getElementById("accSexo").value = "";
   document.getElementById("accFocoCritico").value = "";
@@ -14849,6 +14976,10 @@ function startEditAcc(id){
   document.getElementById("accFecha").value = rec.fecha || "";
   document.getElementById("accArea").value = rec.areaId || "";
   document.getElementById("accGravedad").value = rec.gravedad || "leve";
+  pintarCriteriosGrave(rec.criteriosGrave || []);
+  document.getElementById("accDenunciaRealizada").value = rec.denunciaRealizada || "";
+  document.getElementById("accDenunciaFecha").value = rec.fechaDenuncia || "";
+  actualizarFormClasificacionAcc();
   document.getElementById("accDiasPerdidos").value = rec.diasPerdidos || "";
   document.getElementById("accSexo").value = rec.sexo || "";
   document.getElementById("accFocoCritico").value = rec.focoCritico || "";
@@ -14875,6 +15006,14 @@ on(document.getElementById("saveAccBtn"), "click", async ()=>{
   const fecha = document.getElementById("accFecha").value;
   const areaId = document.getElementById("accArea").value;
   if(!fecha || !areaId){ alert("Complete al menos la fecha y el área."); return; }
+  const aplicaClasif = accClasificaAplica(tipo);
+  const gravedad = aplicaClasif ? document.getElementById("accGravedad").value : "leve";
+  const criteriosGrave = gravedad==="grave" ? leerCriteriosGrave() : [];
+  if(gravedad==="grave" && !criteriosGrave.length){ alert("Para clasificar el accidente como grave, marca al menos uno de los criterios del Compendio SUSESO (amputación, reanimación, rescate, caída de más de 1,8 m, condiciones hiperbáricas o afectación de las faenas)."); return; }
+  const siglaDenuncia = accDenunciaSigla(tipo);
+  const denunciaRealizada = siglaDenuncia ? document.getElementById("accDenunciaRealizada").value : "";
+  const fechaDenuncia = denunciaRealizada==="si" ? document.getElementById("accDenunciaFecha").value : "";
+  if(denunciaRealizada==="si" && !fechaDenuncia){ alert(`Indica la fecha en que se presentó la ${siglaDenuncia}.`); return; }
 
   if(accEditingId){
     const anterior = CACHE.accidentes.find(a=>a.id===accEditingId);
@@ -14882,7 +15021,7 @@ on(document.getElementById("saveAccBtn"), "click", async ()=>{
     const rec = {
       ...anterior, tipo, fecha, areaId,
       trabajadoresIds: currentAccTrabajadores.slice(),
-      gravedad: document.getElementById("accGravedad").value,
+      gravedad, criteriosGrave, denunciaRealizada, fechaDenuncia,
       diasPerdidos: +document.getElementById("accDiasPerdidos").value || 0,
       sexo: document.getElementById("accSexo").value,
       focoCritico: document.getElementById("accFocoCritico").value,
@@ -14904,7 +15043,7 @@ on(document.getElementById("saveAccBtn"), "click", async ()=>{
   const rec = {
     id: uid(), tipo, fecha, areaId,
     trabajadoresIds: currentAccTrabajadores.slice(),
-    gravedad: document.getElementById("accGravedad").value,
+    gravedad, criteriosGrave, denunciaRealizada, fechaDenuncia,
     diasPerdidos: +document.getElementById("accDiasPerdidos").value || 0,
     sexo: document.getElementById("accSexo").value,
     focoCritico: document.getElementById("accFocoCritico").value,
@@ -14950,8 +15089,12 @@ function renderAccidentesTable(){
   const fMes = document.getElementById("filterAccMes").value;
   const fAnio = document.getElementById("filterAccAnio").value;
   const fFoco = document.getElementById("filterAccFoco").value;
+  const fGrav = document.getElementById("filterAccGravedad").value;
+  const fDen = document.getElementById("filterAccDenuncia").value;
   const rows = CACHE.accidentes
     .filter(a=> !fTipo || a.tipo===fTipo)
+    .filter(a=> !fGrav || (fGrav==="graveofatal" ? (accClasificaAplica(a.tipo) && ["grave","fatal"].includes(a.gravedad)) : (accClasificaAplica(a.tipo) && a.gravedad===fGrav)))
+    .filter(a=> !fDen || (accDenunciaSigla(a.tipo) && a.denunciaRealizada===fDen))
     .filter(a=> !fMes || (a.fecha||"").slice(0,7)===fMes)
     .filter(a=> !fAnio || (a.fecha||"").slice(0,4)===fAnio)
     .filter(a=> !fFoco || a.focoCritico===fFoco)
@@ -14969,7 +15112,8 @@ function renderAccidentesTable(){
       <td>${a.focoCritico || "—"}</td>
       <td>${trabs}</td>
       <td>${areaName(a.areaId)}</td>
-      <td>${a.gravedad}</td>
+      <td>${accClasificacionHtml(a)}</td>
+      <td>${accDenunciaSigla(a.tipo) ? (a.denunciaRealizada==="si" ? `<span class="pill vigente">${accDenunciaSigla(a.tipo)} realizada</span>${a.fechaDenuncia?`<div class="kv">${fmtDate(a.fechaDenuncia)}</div>`:""}` : a.denunciaRealizada==="no" ? `<span class="pill critico">${accDenunciaSigla(a.tipo)} pendiente</span>` : `<span class="kv">Sin dato</span>`) : "–"}</td>
       <td>${a.diasPerdidos||0}</td>
       <td>${a.causa||"—"}</td>
       <td>${docs}</td>
@@ -14980,8 +15124,10 @@ function renderAccidentesTable(){
         <button class="subtle-btn" data-acc-eliminar="${a.id}">Eliminar</button>
       </td>
     </tr>`;
-  }).join("") || `<tr><td class="empty" colspan="10">Sin registros para el filtro seleccionado</td></tr>`;
+  }).join("") || `<tr><td class="empty" colspan="12">Sin registros para el filtro seleccionado</td></tr>`;
 }
+document.getElementById("filterAccGravedad").addEventListener("change", renderAccidentesTable);
+document.getElementById("filterAccDenuncia").addEventListener("change", renderAccidentesTable);
 document.getElementById("filterAccTipo").addEventListener("change", renderAccidentesTable);
 document.getElementById("filterAccMes").addEventListener("change", renderAccidentesTable);
 document.getElementById("filterAccAnio").addEventListener("change", renderAccidentesTable);
@@ -15061,17 +15207,21 @@ on(document.getElementById("downloadAccPdfBtn"), "click", async () => {
     ["Accidentes de trayecto", ind.totalTrayecto],
     ["Enfermedades profesionales", ind.totalEnfermedad],
     ["Incidentes / cuasi accidentes", ind.totalIncidentes],
-    ["Total horas-hombre trabajadas", ind.totalHH],
+    ["Accidentes graves (Compendio SUSESO)", ind.totalGraves],
+    ["Accidentes fatales (Compendio SUSESO)", ind.totalFatales],
+    ["DIAT/DIEP marcadas como no realizadas", ind.sinDenuncia],
+    ["Total horas-hombre trabajadas (acumuladas)", ind.totalHH],
+    ["Trabajadores promedio (promedio de los meses con horas-hombre)", ind.promTrabajadores],
   ], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]} });
   y = doc.lastAutoTable.finalY + 8;
 
   doc.setFontSize(12); doc.text("Registro histórico de accidentes e incidentes", 14, y); y += 4;
   const rows = CACHE.accidentes.slice().sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
-  doc.autoTable({ startY:y, head:[["Fecha","Tipo","Sexo","Foco crítico","Trabajadores","Área","Gravedad","Días perdidos","Causa"]],
+  doc.autoTable({ startY:y, head:[["Fecha","Tipo","Sexo","Foco crítico","Trabajadores","Área","Clasificación","DIAT/DIEP","Días perdidos","Causa"]],
     body: rows.map(a=>[
       fmtDate(a.fecha), ACC_TIPO_LABEL[a.tipo]||a.tipo, a.sexo==="M"?"Hombre":a.sexo==="F"?"Mujer":"—", a.focoCritico||"—",
       accTrabajadoresDe(a).map(id=>trabName(id)).join(", ")||"—",
-      areaName(a.areaId), a.gravedad||"—", a.diasPerdidos||0, a.causa||"—"
+      areaName(a.areaId), accClasificacionTexto(a), accDenunciaTexto(a), a.diasPerdidos||0, a.causa||"—"
     ]), styles:{fontSize:7.5}, headStyles:{fillColor:[236,131,90]} });
 
   doc.save(`Informe_Accidentabilidad_${new Date().toISOString().slice(0,10)}.pdf`);
@@ -15146,7 +15296,11 @@ function generarInformeGerenciaPDF(tipoPeriodo, valor){
     ["Accidentes de trayecto", ind.totalTrayecto],
     ["Enfermedades profesionales", ind.totalEnfermedad],
     ["Incidentes / cuasi accidentes", ind.totalIncidentes],
-    ["Total horas-hombre del período", ind.totalHH],
+    ["Accidentes graves (Compendio SUSESO)", ind.totalGraves],
+    ["Accidentes fatales (Compendio SUSESO)", ind.totalFatales],
+    ["DIAT/DIEP marcadas como no realizadas", ind.sinDenuncia],
+    ["Total horas-hombre del período (acumuladas)", ind.totalHH],
+    ["Trabajadores promedio del período", ind.promTrabajadores],
     ["Accidentados — hombres", ind.hombres],
     ["Accidentadas — mujeres", ind.mujeres],
     ["Accidentados — sin dato de sexo", ind.sinDatoSexo],
@@ -15160,11 +15314,11 @@ function generarInformeGerenciaPDF(tipoPeriodo, valor){
 
   doc.setFontSize(12); doc.text("Registro de accidentes e incidentes del período", 14, y); y += 4;
   const rows = accs.slice().sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
-  doc.autoTable({ startY:y, head:[["Fecha","Tipo","Sexo","Foco crítico","Trabajadores","Área","Gravedad","Días perdidos","Causa"]],
+  doc.autoTable({ startY:y, head:[["Fecha","Tipo","Sexo","Foco crítico","Trabajadores","Área","Clasificación","DIAT/DIEP","Días perdidos","Causa"]],
     body: rows.map(a=>[
       fmtDate(a.fecha), ACC_TIPO_LABEL[a.tipo]||a.tipo, a.sexo==="M"?"Hombre":a.sexo==="F"?"Mujer":"—", a.focoCritico||"—",
       accTrabajadoresDe(a).map(id=>trabName(id)).join(", ")||"—",
-      areaName(a.areaId), a.gravedad||"—", a.diasPerdidos||0, a.causa||"—"
+      areaName(a.areaId), accClasificacionTexto(a), accDenunciaTexto(a), a.diasPerdidos||0, a.causa||"—"
     ]), styles:{fontSize:7.5}, headStyles:{fillColor:[236,131,90]} });
   y = doc.lastAutoTable.finalY + 10;
   if(y > 265){ doc.addPage(); y = 16; }
@@ -17381,7 +17535,8 @@ async function descargarInformeAccidentePdf(accRec){
     ["Sexo", accRec.sexo==="M"?"Hombre":accRec.sexo==="F"?"Mujer":"—"],
     ["Foco crítico", accRec.focoCritico || "—"],
     ["Trabajador(es) involucrado(s)", trabs],
-    ["Gravedad", accRec.gravedad || "—"],
+    ["Clasificación (grave / fatal)", accClasificacionTexto(accRec)],
+    ["DIAT / DIEP", accDenunciaTexto(accRec)],
     ["Días perdidos", accRec.diasPerdidos || 0],
     ["Causa registrada", accRec.causa || "—"],
   ], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]} });
@@ -17395,7 +17550,8 @@ async function descargarInformeAccidentePdf(accRec){
     doc.text(descLines, 14, y); y += descLines.length*4.5 + 6;
   }
 
-  const arboles = (typeof investigacionDeAccidente === "function") ? investigacionDeAccidente(accRec.id) : (CACHE.arbolesCausales||[]).filter(a=>a.accidenteId===accRec.id);
+  const arboles = (CACHE.arbolesCausales||[]).filter(a=>a.accidenteId===accRec.id)
+    .sort((a,b)=> new Date(a.fechaAnalisis||0)-new Date(b.fechaAnalisis||0));
   if(y > 250){ doc.addPage(); y = 16; }
   doc.setFontSize(12); doc.text("Análisis de causa raíz (Árbol de causas)", 14, y); y += 6;
   doc.setFontSize(9);
