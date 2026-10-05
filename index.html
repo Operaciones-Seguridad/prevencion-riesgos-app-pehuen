@@ -2197,13 +2197,16 @@
 
     <div class="card">
       <div class="card-header-row" id="hdrRankingDeInfractoresDeVelocidad"><h2 id="velFormTitle">Ranking de infractores de velocidad</h2><button class="collapse-toggle" id="toggleRankingDeInfractoresDeVelocidad" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyRankingDeInfractoresDeVelocidad">
-      <div class="desc">Registro manual de eventos de exceso de velocidad detectados (GPS/telemetría u otro control) por vehículo y conductor, ordenado como ranking según cantidad de eventos.</div>
+      <div class="desc">Registro manual de excesos de velocidad (GPS/telemetría u otro control) por conductor, ordenado como ranking. Puedes registrar N° de eventos y velocidad máxima, y/o los datos del informe RAEV de Migtra (RAEV/100 km, Distancia a EV y grupo de riesgo). Fecha y conductor son obligatorios; además, completa N° de eventos y velocidad máxima, o el RAEV/100 km.</div>
       <div class="form-grid">
         <div><label>Fecha</label><input id="velFecha" type="date"></div>
-        <div><label>Patente</label><input id="velPatente" placeholder="Ej: ABCD-12"></div>
+        <div><label>Patente (opcional)</label><input id="velPatente" placeholder="Ej: ABCD-12"></div>
         <div><label>Conductor</label><input id="velConductor" placeholder="Nombre del conductor"></div>
         <div><label>N° de eventos</label><input id="velEventos" type="number" min="0" placeholder="Ej: 3"></div>
         <div><label>Velocidad máxima registrada (km/h)</label><input id="velMaxima" type="number" min="0" placeholder="Ej: 95"></div>
+        <div><label>RAEV / 100 km (Migtra)</label><input id="velRaev" type="number" min="0" step="0.01" placeholder="Ej: 10.51"></div>
+        <div><label>Distancia a EV, km (Migtra)</label><input id="velDistEv" type="number" min="0" step="0.1" placeholder="Ej: 14"></div>
+        <div><label>Grupo de riesgo (Migtra)</label><select id="velGrupo"><option value="">— Sin dato —</option><option value="alto">Alto riesgo (grupo rojo)</option><option value="medio">Riesgo medio (grupo amarillo)</option><option value="bajo">Bajo riesgo (grupo verde)</option></select></div>
       </div>
       <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn" id="saveVelBtn">Registrar</button>
@@ -2215,13 +2218,17 @@
         <h2 style="font-size:15px;">Ranking por N° de eventos</h2>
         <div id="chartVelRanking" class="bar-chart"></div>
       </div>
+      <div style="margin-top:14px;">
+        <h2 style="font-size:15px;">Ranking por RAEV / 100 km (promedio por conductor, según informes de Migtra)</h2>
+        <div id="chartVelRaevRanking" class="bar-chart"></div>
+      </div>
 
       <div class="toolbar" style="margin-top:14px;">
         <div class="field"><label>Filtrar por patente</label><select id="filterVelPatente"></select></div>
         <div class="field"><label>Filtrar por conductor</label><select id="filterVelConductor"></select></div>
       </div>
       <table style="margin-top:10px;">
-        <thead><tr><th>#</th><th>Fecha</th><th>Patente</th><th>Conductor</th><th>N° eventos</th><th>Vel. máxima (km/h)</th><th></th></tr></thead>
+        <thead><tr><th>#</th><th>Fecha</th><th>Patente</th><th>Conductor</th><th>N° eventos</th><th>Vel. máxima (km/h)</th><th>RAEV / 100 km</th><th>Dist. a EV (km)</th><th>Grupo de riesgo</th><th></th></tr></thead>
         <tbody id="velocidadTable"></tbody>
       </table>
     </div></div>
@@ -17640,6 +17647,9 @@ function resetVelForm(){
   document.getElementById("velConductor").value = "";
   document.getElementById("velEventos").value = "";
   document.getElementById("velMaxima").value = "";
+  document.getElementById("velRaev").value = "";
+  document.getElementById("velDistEv").value = "";
+  document.getElementById("velGrupo").value = "";
   document.getElementById("velFormTitle").textContent = "Ranking de infractores de velocidad";
   document.getElementById("saveVelBtn").textContent = "Registrar";
   document.getElementById("cancelEditVelBtn").style.display = "none";
@@ -17653,7 +17663,10 @@ function startEditVel(id){
   document.getElementById("velConductor").value = rec.conductor || "";
   document.getElementById("velEventos").value = rec.eventos != null ? rec.eventos : "";
   document.getElementById("velMaxima").value = rec.velocidadMaxima != null ? rec.velocidadMaxima : "";
-  document.getElementById("velFormTitle").textContent = "Editando registro de " + (rec.patente||"vehículo");
+  document.getElementById("velRaev").value = rec.raev100km != null ? rec.raev100km : "";
+  document.getElementById("velDistEv").value = rec.distanciaEv != null ? rec.distanciaEv : "";
+  document.getElementById("velGrupo").value = rec.grupoRiesgo || "";
+  document.getElementById("velFormTitle").textContent = "Editando registro de " + (rec.conductor||rec.patente||"conductor");
   document.getElementById("saveVelBtn").textContent = "Guardar cambios";
   document.getElementById("cancelEditVelBtn").style.display = "";
   document.getElementById("view-seguridad").scrollIntoView({behavior:"smooth", block:"start"});
@@ -17663,10 +17676,24 @@ on(document.getElementById("saveVelBtn"), "click", async ()=>{
   const fecha = document.getElementById("velFecha").value;
   const patente = document.getElementById("velPatente").value.trim();
   const conductor = document.getElementById("velConductor").value.trim();
-  const eventos = parseInt(document.getElementById("velEventos").value, 10);
-  const velocidadMaxima = parseFloat(document.getElementById("velMaxima").value);
-  if(!fecha || !patente || !conductor || isNaN(eventos) || isNaN(velocidadMaxima)){ alert("Complete fecha, patente, conductor, N° de eventos y velocidad máxima."); return; }
-  const rec = { id: velEditingId || uid(), fecha, patente, conductor, eventos, velocidadMaxima };
+  const eventosTxt = document.getElementById("velEventos").value;
+  const maximaTxt = document.getElementById("velMaxima").value;
+  const raevTxt = document.getElementById("velRaev").value;
+  const distEvTxt = document.getElementById("velDistEv").value;
+  const eventos = eventosTxt!=="" ? parseInt(eventosTxt, 10) : null;
+  const velocidadMaxima = maximaTxt!=="" ? parseFloat(maximaTxt) : null;
+  const raev100km = raevTxt!=="" ? parseFloat(raevTxt) : null;
+  const distanciaEv = distEvTxt!=="" ? parseFloat(distEvTxt) : null;
+  const grupoRiesgo = document.getElementById("velGrupo").value;
+  const tieneManual = eventos!==null && !isNaN(eventos) && velocidadMaxima!==null && !isNaN(velocidadMaxima);
+  const tieneRaev = raev100km!==null && !isNaN(raev100km);
+  if(!fecha || !conductor || (!tieneManual && !tieneRaev)){ alert("Complete fecha y conductor, y además N° de eventos y velocidad máxima, o el RAEV / 100 km del informe de Migtra."); return; }
+  const rec = { id: velEditingId || uid(), fecha, patente, conductor,
+    eventos: (eventos!==null && !isNaN(eventos)) ? eventos : null,
+    velocidadMaxima: (velocidadMaxima!==null && !isNaN(velocidadMaxima)) ? velocidadMaxima : null,
+    raev100km: tieneRaev ? raev100km : null,
+    distanciaEv: (distanciaEv!==null && !isNaN(distanciaEv)) ? distanciaEv : null,
+    grupoRiesgo };
   await put("rankingVelocidad", rec);
   await loadCache();
   const wasEditing = !!velEditingId;
@@ -17676,23 +17703,31 @@ on(document.getElementById("saveVelBtn"), "click", async ()=>{
 });
 function renderVelocidadTable(){
   const rows = velocidadFiltrada().slice().sort((a,b)=>{
-    if(b.eventos !== a.eventos) return b.eventos - a.eventos;
+    const ra = a.raev100km, rb = b.raev100km;
+    const aTiene = ra!=null, bTiene = rb!=null;
+    if(aTiene && bTiene && rb !== ra) return rb - ra;
+    if(aTiene !== bTiene) return aTiene ? -1 : 1;
+    if((b.eventos||0) !== (a.eventos||0)) return (b.eventos||0) - (a.eventos||0);
     return (b.velocidadMaxima||0) - (a.velocidadMaxima||0);
   });
+  const grupoPill = g => g ? `<span class="pill ${g==="alto"?"critico":g==="medio"?"medio":"bajo"}">${({alto:"Alto riesgo",medio:"Riesgo medio",bajo:"Bajo riesgo"})[g]||g}</span>` : "–";
   document.getElementById("velocidadTable").innerHTML = rows.map((v,idx)=>`
     <tr>
       <td>${idx+1}</td>
       <td>${fmtDate(v.fecha)}</td>
       <td>${v.patente||"–"}</td>
       <td>${v.conductor||"–"}</td>
-      <td>${v.eventos}</td>
-      <td>${v.velocidadMaxima}</td>
+      <td>${v.eventos!=null?v.eventos:"–"}</td>
+      <td>${v.velocidadMaxima!=null?v.velocidadMaxima:"–"}</td>
+      <td>${v.raev100km!=null?v.raev100km:"–"}</td>
+      <td>${v.distanciaEv!=null?v.distanciaEv:"–"}</td>
+      <td>${grupoPill(v.grupoRiesgo)}</td>
       <td style="white-space:nowrap;">
         <button class="btn secondary small" data-vel-editar="${v.id}">Editar</button>
         <button class="subtle-btn" data-vel-eliminar="${v.id}">Eliminar</button>
       </td>
     </tr>
-  `).join("") || `<tr><td class="empty" colspan="7">Sin registros de velocidad</td></tr>`;
+  `).join("") || `<tr><td class="empty" colspan="10">Sin registros de velocidad</td></tr>`;
 }
 on(document.getElementById("velocidadTable"), "click", async (e)=>{
   const editBtn = e.target.closest("button[data-vel-editar]");
@@ -17701,7 +17736,7 @@ on(document.getElementById("velocidadTable"), "click", async (e)=>{
   if(delBtn){
     const rec = CACHE.rankingVelocidad.find(v=>v.id===delBtn.dataset.velEliminar);
     if(!rec) return;
-    if(!confirm(`¿Eliminar el registro de "${rec.patente}" (${fmtDate(rec.fecha)})? Esta acción no se puede deshacer.`)) return;
+    if(!confirm(`¿Eliminar el registro de "${rec.conductor||rec.patente}" (${fmtDate(rec.fecha)})? Esta acción no se puede deshacer.`)) return;
     await deleteRecord("rankingVelocidad", rec.id);
     await loadCache();
     if(velEditingId===rec.id) resetVelForm();
@@ -17719,14 +17754,25 @@ function renderVelocidad(){
   const velMaxHistorica = rows.length ? Math.max(...rows.map(v=>v.velocidadMaxima||0)) : 0;
   const porConductor = new Map();
   rows.forEach(v=>{ porConductor.set(v.conductor, (porConductor.get(v.conductor)||0) + (v.eventos||0)); });
-  const conductorTop = Array.from(porConductor.entries()).sort((a,b)=>b[1]-a[1])[0];
+  const conductorTop = Array.from(porConductor.entries()).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1])[0];
+  const raevPorConductor = new Map();
+  rows.filter(v=>v.raev100km!=null).forEach(v=>{
+    const k = v.conductor||"—";
+    if(!raevPorConductor.has(k)) raevPorConductor.set(k, {suma:0, n:0});
+    const e = raevPorConductor.get(k); e.suma += v.raev100km; e.n++;
+  });
+  const raevRows = Array.from(raevPorConductor.entries()).map(([c,e])=>({label:c, value:+(e.suma/e.n).toFixed(2), n:e.n}));
+  const raevPromedioGlobal = raevRows.length ? (raevRows.reduce((s,r)=>s+r.value,0)/raevRows.length).toFixed(2) : null;
   document.getElementById("velTiles").innerHTML = [
     tile("Total de eventos de exceso de velocidad", totalEventos, "acumulado del registro"),
     tile("Velocidad máxima histórica registrada", velMaxHistorica+" km/h", "de todos los registros"),
     tile("Conductor con más eventos", conductorTop? conductorTop[0] : "—", conductorTop? (conductorTop[1]+" evento(s)") : "sin datos aún"),
+    tile("RAEV / 100 km promedio (Migtra)", raevPromedioGlobal!==null ? raevPromedioGlobal : "—", raevPromedioGlobal!==null ? ("promedio de "+raevRows.length+" conductor(es)") : "sin informes de Migtra aún"),
   ].join("");
-  const rankingRows = rows.slice().sort((a,b)=>b.eventos-a.eventos).slice(0,10).map(v=>({label:`${v.patente} — ${v.conductor}`, value:v.eventos, display:`${v.eventos} (máx ${v.velocidadMaxima} km/h)`}));
+  const rankingRows = rows.filter(v=>v.eventos!=null).sort((a,b)=>b.eventos-a.eventos).slice(0,10).map(v=>({label:`${v.patente||"s/patente"} — ${v.conductor}`, value:v.eventos, display:`${v.eventos}${v.velocidadMaxima!=null?` (máx ${v.velocidadMaxima} km/h)`:""}`}));
   renderBarChart(document.getElementById("chartVelRanking"), rankingRows, ()=>"#eb6834");
+  const raevRanking = raevRows.sort((a,b)=>b.value-a.value).slice(0,10).map(r=>({label:r.label, value:r.value, display:`${r.value} (${r.n} informe${r.n>1?"s":""})`}));
+  renderBarChart(document.getElementById("chartVelRaevRanking"), raevRanking, ()=>"#6b1a12");
 }
 
 /* =========================================================
