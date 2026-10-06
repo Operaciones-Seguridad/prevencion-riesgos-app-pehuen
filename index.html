@@ -3021,6 +3021,73 @@
       </table>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrPlanEmergencia"><h2 id="planEmFormTitle">Plan de Emergencia (documento)</h2><button class="collapse-toggle" id="togglePlanEmergencia" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyPlanEmergencia">
+      <div class="desc">Arma el documento formal del Plan de Emergencia de un centro de trabajo, con la estructura habitual (introducción, objetivos, responsabilidades, análisis de vulnerabilidad, organización, procedimientos por emergencia, simulacros, teléfonos y anexos). Reutiliza lo que ya cargaste arriba: amenazas y vulnerabilidad, comité, planes de respuesta ACCEDER y simulacros. Completa aquí los datos propios del centro de trabajo y descarga el PDF o el Word (editable). Los croquis solo salen en el PDF.</div>
+      <div class="form-grid">
+        <div><label>Centro de trabajo / sucursal</label><input id="planEmCentro" placeholder="Ej: Sucursal Angol y faena"></div>
+        <div><label>Dirección</label><input id="planEmDireccion"></div>
+        <div><label>Versión</label><input id="planEmVersion" placeholder="Ej: 1"></div>
+        <div><label>Fecha</label><input type="date" id="planEmFecha"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:22px;"><input type="checkbox" id="planEmAprobado" style="width:auto;"><label style="margin:0;">Aprobado</label></div>
+      </div>
+      <label>Alcance</label>
+      <textarea id="planEmAlcance" placeholder="A quiénes y a qué áreas aplica el plan"></textarea>
+      <div class="form-grid" style="margin-top:10px;">
+        <div><label>Jefe de emergencia</label><input id="planEmJefe" list="dlPlanEmComite" placeholder="Nombre"><datalist id="dlPlanEmComite"></datalist></div>
+        <div><label>Asesor en prevención de riesgos</label><input id="planEmAsesor" list="dlPlanEmComite" placeholder="Nombre"></div>
+      </div>
+      <label style="margin-top:12px;">Grupos de apoyo (un nombre por línea)</label>
+      <div class="form-grid">
+        <div><label>Primeros auxilios</label><textarea id="planEmGrpAuxilios"></textarea></div>
+        <div><label>Combate de fuego</label><textarea id="planEmGrpFuego"></textarea></div>
+        <div><label>Evacuación</label><textarea id="planEmGrpEvacuacion"></textarea></div>
+      </div>
+      <label style="margin-top:12px;">Recursos y equipos del centro de trabajo</label>
+      <div class="form-grid">
+        <div><label>Zona(s) de seguridad</label><textarea id="planEmZonaSeg"></textarea></div>
+        <div><label>Punto(s) de reunión</label><textarea id="planEmPuntoReunion"></textarea></div>
+        <div><label>Vías de evacuación</label><textarea id="planEmVias"></textarea></div>
+        <div><label>Extintores (cantidad, tipo y ubicación)</label><textarea id="planEmExtintores"></textarea></div>
+        <div><label>Botiquines (ubicación)</label><textarea id="planEmBotiquin"></textarea></div>
+        <div><label>Otros equipos y herramientas</label><textarea id="planEmOtrosEquipos" placeholder="Ej: pito de silbato, linternas, conos"></textarea></div>
+        <div><label>Mantención de extintores e iluminación de emergencia</label><textarea id="planEmMantencion"></textarea></div>
+        <div><label>Documentos aplicables adicionales (uno por línea)</label><textarea id="planEmDocsExtra"></textarea></div>
+      </div>
+      <label style="margin-top:12px;">Teléfonos de emergencia</label>
+      <div class="toolbar">
+        <div class="field"><label>Nombre</label><input id="planEmTelNombre" placeholder="Ej: Organismo administrador"></div>
+        <div class="field"><label>Número</label><input id="planEmTelNumero" placeholder="Ej: 1407"></div>
+        <div><button class="btn small secondary" id="planEmAddTelBtn" type="button" style="margin-top:20px;">+ Agregar</button></div>
+      </div>
+      <div id="planEmTelefonosWrap"></div>
+      <label style="margin-top:12px;">Croquis y planos (Anexo 1: instalaciones, vías de evacuación y zonas de seguridad)</label>
+      <input type="file" id="planEmCroquisInput" accept="image/*" multiple>
+      <div id="planEmCroquisWrap" style="margin-top:6px;"></div>
+      <label style="margin-top:12px;">Procedimientos por emergencia que incluye el plan</label>
+      <div id="planEmProcedimientosWrap"></div>
+      <label style="margin-top:12px;">Control de cambios</label>
+      <div class="toolbar">
+        <div class="field"><label>Versión</label><input id="planEmCambioVersion" style="max-width:90px;"></div>
+        <div class="field" style="flex:2;min-width:220px;"><label>Cambio</label><input id="planEmCambioTexto" placeholder="Ej: Creación del plan de emergencia"></div>
+        <div class="field"><label>Fecha</label><input type="date" id="planEmCambioFecha"></div>
+        <div class="field"><label>Aprobado</label><select id="planEmCambioAprobado"><option value="Sí">Sí</option><option value="No">No</option></select></div>
+        <div><button class="btn small secondary" id="planEmAddCambioBtn" type="button" style="margin-top:20px;">+ Agregar</button></div>
+      </div>
+      <div id="planEmCambiosWrap"></div>
+      <div class="toolbar" style="margin-top:14px;">
+        <button class="btn" id="savePlanEmBtn">Guardar plan</button>
+        <button class="btn secondary" id="cancelEditPlanEmBtn" style="display:none;">Cancelar edición</button>
+      </div>
+      <h2 style="margin-top:22px;">Planes de emergencia guardados</h2>
+      <table>
+        <thead><tr><th>Centro de trabajo</th><th>Versión</th><th>Fecha</th><th>Aprobado</th><th>Acciones</th></tr></thead>
+        <tbody id="planEmTable"></tbody>
+      </table>
+      </div>
+    </div>
   </div>
 
   <!-- CONTROL DE COMPROMISOS -->
@@ -3335,8 +3402,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 34;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones"];
+const DB_VERSION = 35;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -3787,6 +3854,7 @@ setupCollapsible("hdrGrdComite", "bodyGrdComite", "toggleGrdComite", "collapsed_
 setupCollapsible("hdrGrdRespuesta", "bodyGrdRespuesta", "toggleGrdRespuesta", "collapsed_grdRespuesta");
 setupCollapsible("hdrGrdSimulacros", "bodyGrdSimulacros", "toggleGrdSimulacros", "collapsed_grdSimulacros");
 setupCollapsible("hdrGrdPlanAccion", "bodyGrdPlanAccion", "toggleGrdPlanAccion", "collapsed_grdPlanAccion");
+setupCollapsible("hdrPlanEmergencia", "bodyPlanEmergencia", "togglePlanEmergencia", "collapsed_planEmergencia");
 setupCollapsible("hdrIap", "bodyIap", "toggleIap", "collapsed_iap");
 setupCollapsible("hdrIapListado", "bodyIapListado", "toggleIapListado", "collapsed_iapListado");
 setupCollapsible("hdrAccesos", "bodyAccesos", "toggleAccesos", "collapsed_accesos");
@@ -7776,7 +7844,457 @@ on(document.getElementById("grdPlanAccionTable"), "click", async (e) => {
   }
 });
 
+/* =========================================================
+   PLAN DE EMERGENCIA (documento)
+   Un registro por centro de trabajo (store grdPlanEmergencia). El contenido
+   se arma una sola vez (armarContenidoPlanEmergencia) y de ahí salen el PDF
+   y el Word. Estructura basada en el Plan de Emergencia del usuario; los
+   procedimientos estándar están generalizados (sin nombres, teléfonos ni
+   empresas específicas). El procedimiento de accidente grave o fatal usa la
+   definición vigente del Compendio de Seguridad Laboral de la SUSESO.
+   ========================================================= */
+const PLAN_PROCEDIMIENTOS = [
+  {id:"incendio", ambito:"Instalaciones", titulo:"Incendio en el recinto", pasos:[
+    "Active el organigrama de emergencia. Conserve la calma y tranquilice a quien esté en estado de pánico.",
+    "Quien detecte el fuego debe dar aviso a viva voz para activar la alarma e informar a {JEFE}.",
+    "Las personas cercanas al inicio del fuego, capacitadas en el uso de extintores, intentan controlarlo con los extintores portátiles señalizados mientras llega Bomberos. Nunca arriesgue su integridad.",
+    "{JEFE} o su subrogante da aviso inmediato a Bomberos (132) indicando la dirección: {DIRECCION}.",
+    "Si el fuego impide salir, no abra ventanas ni puertas sin tocarlas antes con el dorso de la mano: si están calientes, hay fuego tras ellas.",
+    "Desplácese gateando a nivel del suelo, proteja su boca y nariz con un paño húmedo y, si queda aislado, avise su presencia con señales. Si sus ropas arden, ruede por el suelo tapándose la cara.",
+    "Al darse la alarma de evacuación, siga con rapidez y tranquilidad las vías de evacuación señalizadas hasta la zona de seguridad.",
+    "No reingrese a las dependencias hasta recibir instrucciones de {JEFE}.",
+    "Controlada la emergencia, se toman fotografías del lugar para el informe preliminar del incidente."]},
+  {id:"incendio_vehiculo", ambito:"Instalaciones", titulo:"Incendio de un vehículo dentro del recinto", pasos:[
+    "Quien detecte el fuego toma un extintor y lo combate solo si es de tamaño pequeño (aproximadamente un tarro de basura pequeño); en seguida solicita ayuda y se llama a Bomberos (132).",
+    "Si es posible identificar los vehículos del entorno, se solicita retirarlos.",
+    "Un incendio vehicular de mayor tamaño solo debe ser atendido por Bomberos.",
+    "Una vez controlada la emergencia, se informa a la jefatura directa y se toman fotografías para el informe del incidente."]},
+  {id:"sismo", ambito:"Instalaciones", titulo:"Sismo o terremoto", pasos:[
+    "Mantenga la calma y evite el pánico. No salga corriendo durante el movimiento.",
+    "Permanezca en su puesto de trabajo; si hay peligro de caída de objetos cortantes o golpeantes, protéjase bajo un escritorio o mesa resistente y manténgase alejado de ventanales y puertas de vidrio.",
+    "Terminado el movimiento, {JEFE}, con los grupos de apoyo, decide si es necesario evacuar.",
+    "Si se evacúa, diríjase a la zona de seguridad por la vía señalizada, guiado por el grupo de apoyo, manteniéndose lejos de cables eléctricos.",
+    "Permanezca en la zona de seguridad hasta recibir instrucciones; el reingreso solo lo autoriza {JEFE}."]},
+  {id:"asalto", ambito:"Instalaciones", titulo:"Asalto o robo con intimidación", pasos:[
+    "Mantenga la calma y observe el máximo de detalles de los asaltantes (características físicas, gestos, vestimenta).",
+    "Obedezca con calma, sin provocar ni resistirse. Es preferible perder un bien que poner en peligro una vida.",
+    "Cuando los delincuentes se hayan retirado, {JEFE} u otra persona designada llama a Carabineros (133) para denunciar lo ocurrido."]},
+  {id:"explosivo", ambito:"Instalaciones", titulo:"Amenaza de artefacto explosivo", pasos:[
+    "Si encuentra un paquete sospechoso, no lo toque e informe de inmediato a {JEFE}, quien avisa a Carabineros (133).",
+    "Si recibe una llamada de amenaza, entregue de inmediato toda la información a {JEFE}.",
+    "Si se dispone la evacuación, actúe según los procedimientos de este plan y espere instrucciones antes de reingresar."]},
+  {id:"corte_agua", ambito:"Instalaciones", titulo:"Corte prolongado de agua potable", pasos:[
+    "Revise con precaución cañerías y posibles fugas para descartar que el corte sea interno.",
+    "Si el corte afecta al medidor o proviene de la red, llame a la empresa sanitaria del sector (registre su número en la lista de teléfonos de emergencia).",
+    "Si el corte impide la ejecución de los trabajos, se solicita a la jefatura directa definir la continuidad de las labores.",
+    "Si el problema es interno, se solicita a personal especializado la reparación inmediata. Recuerde que todo lugar de trabajo debe contar con agua potable para consumo y necesidades básicas de higiene (DS 594)."]},
+  {id:"corte_electrico", ambito:"Instalaciones", titulo:"Corte prolongado de electricidad", pasos:[
+    "Revise con precaución el tablero eléctrico para descartar que el corte sea interno.",
+    "Si el corte proviene de la red, comunique de inmediato a la empresa distribuidora (registre su número en la lista de teléfonos de emergencia).",
+    "Si el corte persiste y los trabajos lo requieren, la jefatura directa define el abandono de las instalaciones o la continuidad de las labores.",
+    "Si debe usarse un generador, antes de conectarlo abra el interruptor automático o diferencial de las instalaciones para evitar el retorno de energía a la red, y al retirarse verifique su desconexión y cierre los interruptores."]},
+  {id:"accidente_trabajo", ambito:"Terreno", titulo:"Accidente del trabajo", pasos:[
+    "El trabajador afectado o un testigo evalúa la gravedad de la lesión según la evidencia visible.",
+    "Informe de inmediato a su jefe directo, quien avisa al supervisor y este al prevencionista de riesgos y al administrador de contrato.",
+    "Si corresponde a un accidente del trabajo, se acompaña al lesionado al centro asistencial del organismo administrador más cercano al lugar del accidente.",
+    "Una vez atendido, el trabajador relata por escrito cómo ocurrió el accidente (declaración de testigos).",
+    "El supervisor comunica el hecho al cliente a la brevedad y realiza el informe de investigación del incidente.",
+    "El empleador debe presentar la Denuncia Individual de Accidente del Trabajo (DIAT) al organismo administrador."]},
+  {id:"grave_fatal", ambito:"Terreno", titulo:"Accidente del trabajo grave o fatal", pasos:[
+    "Definición (Compendio de Seguridad Laboral de la SUSESO). Accidente fatal: el que provoca la muerte del trabajador en forma inmediata o como consecuencia directa del accidente. Accidente grave: el que cumple al menos uno de estos criterios: amputación inmediata o pérdida de partes del cuerpo; requiere maniobras de reanimación; requiere maniobras de rescate; caída de altura de más de 1,8 metros; ocurre en condiciones hiperbáricas; o afecta a un número de trabajadores tal que altera el desarrollo normal de las faenas.",
+    "Detenga de inmediato las labores y suspenda los trabajos en el área afectada; evacúe si pueden ocurrir nuevos accidentes.",
+    "Solicite auxilio médico de inmediato: ambulancia del organismo administrador o SAMU (131), e informe por teléfono a su jefe directo.",
+    "Notifique de inmediato a la Inspección del Trabajo y a la SEREMI de Salud (600 42 000 22). El administrador de contrato o quien este designe realiza la notificación.",
+    "No mueva a ninguna persona fallecida ni los elementos que la rodean; espere a la autoridad competente.",
+    "Si el accidente afecta a un trabajador de una empresa contratista, la empresa principal debe velar por que esta cumpla los mismos procedimientos.",
+    "Las faenas solo pueden reanudarse con autorización escrita de la entidad fiscalizadora (Inspección del Trabajo o SEREMI de Salud), una vez subsanadas las causas; se mantiene copia en el centro de trabajo.",
+    "Los accidentes de trayecto no generan la obligación de suspensión de faenas ni de notificación inmediata."]},
+  {id:"transito_lesion", ambito:"Terreno", titulo:"Accidente de tránsito con lesiones a personal propio o terceros", pasos:[
+    "Señalice el área y deje el vehículo en la posición en que quedó hasta la llegada de Carabineros.",
+    "Llame de inmediato a la ambulancia del organismo administrador o al SAMU (131).",
+    "Quien resulte sin lesiones graves y tenga conocimientos de primeros auxilios atiende a los lesionados; de lo contrario, no haga nada que pueda agravar las lesiones y mueva a los lesionados solo si corren peligro.",
+    "Si la persona accidentada está consciente, manténgala tranquila y hable con ella hasta la llegada de la ambulancia.",
+    "Dé aviso a Carabineros para dejar constancia de los hechos e informe a la jefatura directa, al administrador de contrato y al prevencionista de riesgos.",
+    "El conductor debe someterse al examen de alcoholemia que realice Carabineros, según la Ley de Tránsito.",
+    "No ofrezca ni diga algo que pueda entenderse como asumir responsabilidad de los hechos. Tome fotografías para la investigación."]},
+  {id:"transito_danos", ambito:"Terreno", titulo:"Accidente de tránsito con daños a vehículos propios o de terceros", pasos:[
+    "Si hay lesionados, denuncie a Carabineros para dejar constancia; si solo hay daños, deje constancia por escrito de los hechos.",
+    "Tome los datos de los vehículos y personas involucradas.",
+    "Si hay daños que puedan provocar un incendio, detenga el motor y estacione en la berma o en un lugar aislado; coloque triángulos reflectantes y mantenga alejados al público y a otros vehículos.",
+    "Avise a Bomberos y Carabineros si es necesario, e informe de inmediato a la jefatura directa, al supervisor, al administrador de contrato y al prevencionista de riesgos."]},
+  {id:"terceros", ambito:"Terreno", titulo:"Accidente a terceros por operaciones técnicas", pasos:[
+    "Brinde ayuda a la persona afectada solo si no agrava su estado.",
+    "El supervisor de área o quien este designe fija el lugar del accidente con fotografías con fecha y hora.",
+    "Llame a una ambulancia del servicio público (131) y a Carabineros (133) para dejar constancia.",
+    "Nunca traslade a terceros accidentados en vehículos de la empresa; espere la asistencia pública."]},
+  {id:"shock_electrico", ambito:"Terreno", titulo:"Accidente por shock eléctrico en trabajo en altura", pasos:[
+    "Identifique la emergencia y desprenda al accidentado de la fuente energizada solo si puede hacerlo sin riesgo.",
+    "Establezca comunicación verbal con el accidentado y aplique la técnica de rescate en altura con el equipo de rescate.",
+    "Proporcione primeros auxilios y solicite asistencia médica indicando la dirección exacta o una referencia (SAMU 131 o ambulancia del organismo administrador).",
+    "Comunique el hecho por radio o teléfono al despacho, supervisor de turno, supervisor directo y prevencionista de riesgos.",
+    "No deje de prestar apoyo al lesionado hasta que llegue personal especializado. No mueva a ninguna persona fallecida ni los elementos que la rodean."]},
+  {id:"asalto_terreno", ambito:"Terreno", titulo:"Asalto o agresión de terceros a una cuadrilla en terreno", pasos:[
+    "Mantenga la calma, no oponga resistencia y evite movimientos bruscos; colabore con lo que se le solicita.",
+    "Verifique de inmediato su estado de salud y el de sus compañeros.",
+    "Tome los resguardos necesarios y abandone el lugar cuando sea seguro.",
+    "Informe al despacho, supervisor de turno, supervisor directo y prevencionista de riesgos; llame a Carabineros (133) indicando la dirección exacta.",
+    "Si hay lesionados, solicite asistencia médica (131 o ambulancia del organismo administrador) y espere instrucciones de la jefatura."]},
+  {id:"trayecto", ambito:"Terreno", titulo:"Accidente de trayecto con lesión a personas", pasos:[
+    "Conserve la calma, evalúe el entorno, el estado de las víctimas y el grado de las lesiones.",
+    "Reúna al grupo no lesionado y asigne responsables de las comunicaciones, de la solicitud de ayuda y del apoyo en primeros auxilios (personas física y mentalmente aptas).",
+    "El responsable de las comunicaciones informa lo ocurrido, el lugar, la cantidad de personas y el estado de las víctimas; si no hay señal, se desplaza hasta encontrarla.",
+    "Si hay lesionados, llame al organismo administrador para solicitar ambulancia e informe la cantidad de lesionados.",
+    "Aplique primeros auxilios solo si está capacitado. No mueva a ninguna persona fallecida ni los elementos que la rodean.",
+    "Informe a la supervisión directa; el supervisor comunica el suceso al administrador del contrato."]},
+  {id:"sismo_terreno", ambito:"Terreno", titulo:"Sismo en terreno", pasos:[
+    "Si conduce un vehículo, disminuya la velocidad y deténgase alejándose de grietas y posibles aperturas en el camino.",
+    "Quien esté en un capacho o en altura debe permanecer en calma y agacharse hasta que cese el sismo.",
+    "Si realiza trabajo en altura, descienda de la estructura y diríjase a un punto libre de caída de objetos, materiales o deslizamientos de tierra."]},
+];
+const PLAN_TEL_DEFECTO = [{nombre:"Ambulancia (SAMU)", numero:"131"},{nombre:"Bomberos", numero:"132"},{nombre:"Carabineros", numero:"133"}];
+let planEmEditingId = null, planEmTelefonos = [], planEmCroquis = [], planEmCambios = [], planEmProcSel = new Set(PLAN_PROCEDIMIENTOS.map(p=>p.id));
+const $pe = id => document.getElementById(id);
+function drawPlanEmTelefonos(){
+  $pe("planEmTelefonosWrap").innerHTML = planEmTelefonos.length ? `<table><tbody>${planEmTelefonos.map((t,i)=>`<tr><td>${t.nombre}</td><td>${t.numero}</td><td><button class="subtle-btn" data-planem-tel-del="${i}" type="button">Quitar</button></td></tr>`).join("")}</tbody></table>` : '<div class="kv">Sin teléfonos registrados.</div>';
+}
+function drawPlanEmCroquis(){
+  $pe("planEmCroquisWrap").innerHTML = planEmCroquis.length ? planEmCroquis.map((c,i)=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"><img src="${c.data}" alt="" style="height:60px;border:1px solid var(--grid);border-radius:4px;"><input data-planem-croq-nombre="${i}" value="${(c.nombre||"").replace(/"/g,"&quot;")}" placeholder="Descripción del croquis" style="flex:1;"><button class="subtle-btn" data-planem-croq-del="${i}" type="button">Quitar</button></div>`).join("") : '<div class="kv">Sin croquis cargados.</div>';
+}
+function drawPlanEmCambios(){
+  $pe("planEmCambiosWrap").innerHTML = planEmCambios.length ? `<table><thead><tr><th>Versión</th><th>Cambio</th><th>Fecha</th><th>Aprobado</th><th></th></tr></thead><tbody>${planEmCambios.map((c,i)=>`<tr><td>${c.version}</td><td>${c.cambio}</td><td>${c.fecha?fmtDate(c.fecha):"—"}</td><td>${c.aprobado}</td><td><button class="subtle-btn" data-planem-cambio-del="${i}" type="button">Quitar</button></td></tr>`).join("")}</tbody></table>` : '<div class="kv">Sin cambios registrados.</div>';
+}
+function drawPlanEmProcedimientos(){
+  const grupo = amb => PLAN_PROCEDIMIENTOS.filter(p=>p.ambito===amb).map(p=>`<label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:2px 0;"><input type="checkbox" class="planEmProcChk" value="${p.id}" style="width:auto;min-height:auto;" ${planEmProcSel.has(p.id)?"checked":""}> ${p.titulo}</label>`).join("");
+  $pe("planEmProcedimientosWrap").innerHTML = `<div class="kv" style="margin-top:4px;">Emergencias en las instalaciones</div>${grupo("Instalaciones")}<div class="kv" style="margin-top:8px;">Emergencias en terreno</div>${grupo("Terreno")}`;
+}
+on($pe("planEmProcedimientosWrap"), "change", (e)=>{
+  if(!e.target.classList.contains("planEmProcChk")) return;
+  if(e.target.checked) planEmProcSel.add(e.target.value); else planEmProcSel.delete(e.target.value);
+});
+on($pe("planEmAddTelBtn"), "click", ()=>{
+  const nombre = $pe("planEmTelNombre").value.trim(), numero = $pe("planEmTelNumero").value.trim();
+  if(!nombre || !numero){ alert("Indica el nombre y el número."); return; }
+  planEmTelefonos.push({nombre, numero}); $pe("planEmTelNombre").value = ""; $pe("planEmTelNumero").value = ""; drawPlanEmTelefonos();
+});
+on($pe("planEmTelefonosWrap"), "click", (e)=>{ const b = e.target.closest("[data-planem-tel-del]"); if(b){ planEmTelefonos.splice(+b.dataset.planemTelDel,1); drawPlanEmTelefonos(); } });
+on($pe("planEmAddCambioBtn"), "click", ()=>{
+  const version = $pe("planEmCambioVersion").value.trim(), cambio = $pe("planEmCambioTexto").value.trim();
+  if(!version || !cambio){ alert("Indica la versión y el cambio."); return; }
+  planEmCambios.push({version, cambio, fecha:$pe("planEmCambioFecha").value, aprobado:$pe("planEmCambioAprobado").value});
+  ["planEmCambioVersion","planEmCambioTexto","planEmCambioFecha"].forEach(id=>$pe(id).value=""); drawPlanEmCambios();
+});
+on($pe("planEmCambiosWrap"), "click", (e)=>{ const b = e.target.closest("[data-planem-cambio-del]"); if(b){ planEmCambios.splice(+b.dataset.planemCambioDel,1); drawPlanEmCambios(); } });
+$pe("planEmCroquisInput").addEventListener("change", async (e)=>{
+  for(const f of Array.from(e.target.files||[])){
+    planEmCroquis.push({nombre: f.name.replace(/\.[^.]+$/,""), data: await readFileAsDataUrl(f)});
+  }
+  e.target.value = ""; drawPlanEmCroquis();
+});
+on($pe("planEmCroquisWrap"), "click", (e)=>{ const b = e.target.closest("[data-planem-croq-del]"); if(b){ planEmCroquis.splice(+b.dataset.planemCroqDel,1); drawPlanEmCroquis(); } });
+on($pe("planEmCroquisWrap"), "input", (e)=>{ if(e.target.dataset.planemCroqNombre!==undefined) planEmCroquis[+e.target.dataset.planemCroqNombre].nombre = e.target.value; });
+const PLAN_ALCANCE_BASE = "Este plan aplica a todo el personal que trabaja en el centro de trabajo, a los contratistas y visitas que se encuentren en él, y a los trabajadores que realizan sus labores en terreno.";
+function resetPlanEmForm(){
+  planEmEditingId = null;
+  const e = CACHE.empresa || {};
+  $pe("planEmCentro").value = ""; $pe("planEmDireccion").value = e.direccion || "";
+  $pe("planEmVersion").value = "1"; $pe("planEmFecha").value = new Date().toISOString().slice(0,10); $pe("planEmAprobado").checked = false;
+  $pe("planEmAlcance").value = PLAN_ALCANCE_BASE;
+  ["planEmJefe","planEmAsesor","planEmGrpAuxilios","planEmGrpFuego","planEmGrpEvacuacion","planEmZonaSeg","planEmPuntoReunion","planEmVias","planEmExtintores","planEmBotiquin","planEmOtrosEquipos","planEmMantencion","planEmDocsExtra"].forEach(id=>$pe(id).value="");
+  planEmTelefonos = PLAN_TEL_DEFECTO.map(t=>({...t})); planEmCroquis = []; planEmCambios = [];
+  planEmProcSel = new Set(PLAN_PROCEDIMIENTOS.map(p=>p.id));
+  drawPlanEmTelefonos(); drawPlanEmCroquis(); drawPlanEmCambios(); drawPlanEmProcedimientos();
+  $pe("planEmFormTitle").textContent = "Plan de Emergencia (documento)";
+  $pe("savePlanEmBtn").textContent = "Guardar plan";
+  $pe("cancelEditPlanEmBtn").style.display = "none";
+}
+on($pe("cancelEditPlanEmBtn"), "click", ()=> resetPlanEmForm());
+function startEditPlanEm(id){
+  const r = (CACHE.grdPlanEmergencia||[]).find(p=>p.id===id);
+  if(!r) return;
+  planEmEditingId = id;
+  $pe("planEmCentro").value = r.centro||""; $pe("planEmDireccion").value = r.direccion||"";
+  $pe("planEmVersion").value = r.version||""; $pe("planEmFecha").value = r.fecha||""; $pe("planEmAprobado").checked = !!r.aprobado;
+  $pe("planEmAlcance").value = r.alcance||"";
+  $pe("planEmJefe").value = r.jefe||""; $pe("planEmAsesor").value = r.asesor||"";
+  $pe("planEmGrpAuxilios").value = r.grpAuxilios||""; $pe("planEmGrpFuego").value = r.grpFuego||""; $pe("planEmGrpEvacuacion").value = r.grpEvacuacion||"";
+  $pe("planEmZonaSeg").value = r.zonaSeguridad||""; $pe("planEmPuntoReunion").value = r.puntoReunion||""; $pe("planEmVias").value = r.viasEvacuacion||"";
+  $pe("planEmExtintores").value = r.extintores||""; $pe("planEmBotiquin").value = r.botiquin||""; $pe("planEmOtrosEquipos").value = r.otrosEquipos||"";
+  $pe("planEmMantencion").value = r.mantencion||""; $pe("planEmDocsExtra").value = r.docsExtra||"";
+  planEmTelefonos = (r.telefonos||[]).map(t=>({...t})); planEmCroquis = (r.croquis||[]).map(c=>({...c})); planEmCambios = (r.cambios||[]).map(c=>({...c}));
+  planEmProcSel = new Set(r.procedimientos || PLAN_PROCEDIMIENTOS.map(p=>p.id));
+  drawPlanEmTelefonos(); drawPlanEmCroquis(); drawPlanEmCambios(); drawPlanEmProcedimientos();
+  $pe("planEmFormTitle").textContent = `Editando plan de "${r.centro||"centro de trabajo"}"`;
+  $pe("savePlanEmBtn").textContent = "Guardar cambios";
+  $pe("cancelEditPlanEmBtn").style.display = "";
+  $pe("hdrPlanEmergencia").scrollIntoView({behavior:"smooth", block:"start"});
+}
+on($pe("savePlanEmBtn"), "click", async ()=>{
+  const centro = $pe("planEmCentro").value.trim();
+  if(!centro){ alert("Indica el centro de trabajo o sucursal del plan."); return; }
+  const rec = {
+    id: planEmEditingId || uid(), centro, direccion: $pe("planEmDireccion").value.trim(),
+    version: $pe("planEmVersion").value.trim(), fecha: $pe("planEmFecha").value, aprobado: $pe("planEmAprobado").checked,
+    alcance: $pe("planEmAlcance").value.trim(), jefe: $pe("planEmJefe").value.trim(), asesor: $pe("planEmAsesor").value.trim(),
+    grpAuxilios: $pe("planEmGrpAuxilios").value.trim(), grpFuego: $pe("planEmGrpFuego").value.trim(), grpEvacuacion: $pe("planEmGrpEvacuacion").value.trim(),
+    zonaSeguridad: $pe("planEmZonaSeg").value.trim(), puntoReunion: $pe("planEmPuntoReunion").value.trim(), viasEvacuacion: $pe("planEmVias").value.trim(),
+    extintores: $pe("planEmExtintores").value.trim(), botiquin: $pe("planEmBotiquin").value.trim(), otrosEquipos: $pe("planEmOtrosEquipos").value.trim(),
+    mantencion: $pe("planEmMantencion").value.trim(), docsExtra: $pe("planEmDocsExtra").value.trim(),
+    telefonos: planEmTelefonos.slice(), croquis: planEmCroquis.slice(), cambios: planEmCambios.slice(),
+    procedimientos: Array.from(planEmProcSel),
+  };
+  await put("grdPlanEmergencia", rec);
+  await loadCache();
+  resetPlanEmForm();
+  renderEmergencia();
+  alert("Plan de Emergencia guardado.");
+});
+function renderPlanEmTable(){
+  const rows = (CACHE.grdPlanEmergencia||[]).slice().sort((a,b)=>(a.centro||"").localeCompare(b.centro||""));
+  $pe("planEmTable").innerHTML = rows.length ? rows.map(p=>`<tr>
+    <td>${p.centro||"—"}</td><td>${p.version||"—"}</td><td>${p.fecha?fmtDate(p.fecha):"—"}</td>
+    <td><span class="pill ${p.aprobado?"vigente":"pendiente"}">${p.aprobado?"Sí":"No"}</span></td>
+    <td style="white-space:nowrap;">
+      <button class="btn secondary small" data-planem-editar="${p.id}">Editar</button>
+      <button class="btn secondary small" data-planem-pdf="${p.id}">PDF</button>
+      <button class="btn secondary small" data-planem-word="${p.id}">Word</button>
+      <button class="subtle-btn" data-planem-eliminar="${p.id}">Eliminar</button>
+    </td></tr>`).join("") : `<tr><td class="empty" colspan="5">Aún no hay planes de emergencia guardados.</td></tr>`;
+}
+on($pe("planEmTable"), "click", async (e)=>{
+  const get = id => (CACHE.grdPlanEmergencia||[]).find(p=>p.id===id);
+  const ed = e.target.closest("[data-planem-editar]"); if(ed){ startEditPlanEm(ed.dataset.planemEditar); return; }
+  const pdf = e.target.closest("[data-planem-pdf]"); if(pdf){ const r = get(pdf.dataset.planemPdf); if(r) await planEmDescargarPdf(r); return; }
+  const wd = e.target.closest("[data-planem-word]"); if(wd){ const r = get(wd.dataset.planemWord); if(r) planEmDescargarWord(r); return; }
+  const del = e.target.closest("[data-planem-eliminar]");
+  if(del){
+    const r = get(del.dataset.planemEliminar); if(!r) return;
+    if(!confirm(`¿Eliminar el plan de emergencia de "${r.centro}"? Esta acción no se puede deshacer.`)) return;
+    await deleteRecord("grdPlanEmergencia", r.id); await loadCache();
+    if(planEmEditingId===r.id) resetPlanEmForm();
+    renderEmergencia();
+  }
+});
+function renderPlanEmergencia(){
+  fillDatalist($pe("dlPlanEmComite"), (CACHE.grdComite||[]).map(m=>m.nombre).filter(Boolean));
+  if(!planEmEditingId && !$pe("planEmDireccion").value && !$pe("planEmCentro").value) $pe("planEmDireccion").value = (CACHE.empresa && CACHE.empresa.direccion) || "";
+  renderPlanEmTable();
+}
+
+/* Contenido del plan: lista de secciones con bloques {t:"p"|"sub"|"ul"|"tabla"|"imgs"}. */
+function armarContenidoPlanEmergencia(plan){
+  const emp = CACHE.empresa || {};
+  const empresa = emp.razonSocial || "la empresa";
+  const jefe = plan.jefe || "el Jefe de Emergencia";
+  const lin = s => String(s||"").split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  const reemplazar = s => s.replace(/\{JEFE\}/g, jefe).replace(/\{DIRECCION\}/g, plan.direccion || "(dirección del centro de trabajo)");
+  const S = [];
+  S.push({titulo:"1. Introducción", bloques:[
+    {t:"p", txt:"Una emergencia requiere de una acción inmediata, por lo que es necesario contar con una forma de enfrentar este tipo de sucesos de la mejor manera, con un actuar rápido y eficiente, ya que estos acontecimientos generan desorden, confusión y otras situaciones que pueden aumentar sus consecuencias negativas. Para esto se emplean los planes de emergencia."},
+    {t:"p", txt:"Un plan de emergencia es la acción coordinada, eficiente y eficaz para hacer frente a un siniestro o emergencia, con el objeto de salvaguardar vidas, bienes o el medio ambiente. La respuesta está condicionada por la fase en que se encuentre el desarrollo de la emergencia, y su base es la organización que se haya adoptado para este fin."},
+    {t:"p", txt:"El plan de emergencia tiene como metas:"},
+    {t:"ul", items:["Organizar los medios humanos y materiales disponibles.","Prevenir el riesgo de incendio o de cualquier otro siniestro.","Garantizar la evacuación y la primera intervención.","Hacer cumplir la normativa de seguridad vigente y facilitar la inspección.","Facilitar la ayuda externa (Bomberos, ambulancias, Carabineros).","Minimizar el tiempo de interrupción de las actividades en caso de que ocurra una emergencia."]}]});
+  S.push({titulo:"2. Objetivo", bloques:[
+    {t:"p", txt:`Establecer, organizar, estructurar e implementar procedimientos que permitan a los ocupantes y usuarios de las instalaciones de ${empresa} (${plan.centro||"centro de trabajo"}), y a quienes trabajan en terreno, enfrentar y responder ante emergencias, desastres o amenazas colectivas que puedan poner en peligro su integridad, con la finalidad de minimizar lesiones, pérdidas, interrupciones del servicio y consecuencias negativas hacia la comunidad y el medio ambiente.`},
+    {t:"sub", txt:"Objetivos específicos"},
+    {t:"ul", items:["Definir las emergencias que pudieran presentarse en el centro de trabajo y en la prestación del servicio en terreno.","Establecer acciones y procedimientos para el correcto manejo de las emergencias detectadas y preservar la integridad física de los involucrados.","Capacitar al personal sobre la manera de proceder cuando surja una emergencia.","Realizar simulacros que permitan evaluar el accionar del personal y reducir las posibilidades de pánico.","Desarrollar un sistema preventivo de detección de condiciones de riesgo que pudieran causar incendios u otros eventos.","Generar un programa de mantención de extintores e iluminación de emergencia."]}]});
+  S.push({titulo:"3. Alcance", bloques:[{t:"p", txt: plan.alcance || PLAN_ALCANCE_BASE}]});
+  S.push({titulo:"4. Responsabilidades", bloques:[
+    {t:"sub", txt:"Gerencia"}, {t:"ul", items:["Autorizar los recursos humanos y materiales necesarios para aplicar este plan y los que se desprendan de su implementación."]},
+    {t:"sub", txt:"Administrador de contrato"}, {t:"ul", items:["Solicitar y proveer la logística y los recursos necesarios para la prevención e intervención de emergencias.","Velar por la correcta aplicación de este plan e informarlo a todas las personas que trabajan en las áreas."]},
+    {t:"sub", txt:"Prevención de riesgos"}, {t:"ul", items:["Asesorar en la elaboración del plan, revisarlo y mantenerlo actualizado.","Confeccionar y coordinar el programa de simulacros, evaluarlos y proponer mejoras.","Asesorar al Comité Paritario de Higiene y Seguridad sobre las medidas de control para minimizar el impacto de las contingencias."]},
+    {t:"sub", txt:"Jefe de emergencia"}, {t:"ul", items:["Dirigir la emergencia en el interior del centro de trabajo junto con los grupos de apoyo, y decidir la evacuación indicando vías de egreso y medios de escape.","Dar la alarma, avisar a Bomberos y a las unidades de emergencia, e informar al administrador de contrato.","Enviar a los grupos de apoyo a buscar a las personas que falten, solo si las condiciones no ponen en riesgo su integridad, e impedir el reingreso de quienes evacuaron.","Colaborar con Bomberos y Carabineros cuando intervengan, mantener actualizada la organización de la emergencia y estar siempre localizable.","Definir, según la información recabada, si el personal permanece en la zona de seguridad, se despacha a sus domicilios o se reintegra a sus funciones."]},
+    {t:"sub", txt:"Comité de emergencia y grupos de apoyo"}, {t:"ul", items:["El comité organiza, planifica, coordina y dirige las acciones para implementar y mantener el programa de evacuación.","Los grupos de apoyo están a disposición del comité para intervenir, según el puesto designado."]},
+    {t:"sub", txt:"Supervisores de área"}, {t:"ul", items:["Elaborar con su personal el plan de emergencia de su área con asesoría de prevención de riesgos, difundirlo, revisarlo y actualizarlo, y mantener los registros.","Proponer mejoras a partir de los simulacros."]},
+    {t:"sub", txt:"Trabajadores"}, {t:"ul", items:["Conocer y cumplir las medidas del plan y participar en los simulacros.","Avisar a otros trabajadores de la zona afectada para que abandonen el lugar ordenadamente.","Informar al supervisor más cercano la situación detectada para iniciar el procedimiento de emergencia."]}]});
+  S.push({titulo:"5. Documentos aplicables", bloques:[{t:"ul", items:[
+    "Ley 16.744 sobre accidentes del trabajo y enfermedades profesionales.","DS 594/99 sobre condiciones sanitarias y ambientales básicas en los lugares de trabajo.","DS 40/69 Reglamento sobre prevención de riesgos profesionales.","DS 44/2024 que aprueba el reglamento sobre gestión preventiva de los riesgos laborales para un entorno de trabajo seguro y saludable.","Código del Trabajo, artículos 184 y 184 bis.","Ley 18.290 de Tránsito.",
+    ...lin(plan.docsExtra)]}]});
+  S.push({titulo:"6. Terminología", bloques:[{t:"ul", items:[
+    "Evacuación: acción de desalojar un local o edificio en que se ha declarado un incendio u otro tipo de emergencia (sismo, escape de gas, etc.).",
+    "Vía de evacuación: camino expedito, continuo y seguro que, desde cualquier punto habitable, conduce a un lugar seguro.",
+    "Punto de reunión: lugar de encuentro o zona de transferencia de las personas, donde se decide la vía de evacuación más expedita hacia la zona de seguridad.",
+    "Zona de seguridad: lugar de refugio temporal que ofrece un grado alto de seguridad frente a la emergencia.",
+    "Escape: medio alternativo de salida, razonablemente seguro, complementario de las vías de evacuación.",
+    "Brigadas de emergencia: personas de la empresa que recibieron capacitación y entrenamiento específico para aplicar medidas preventivas y actuar en emergencias.",
+    "Conato de emergencia: accidente que puede ser controlado de forma sencilla y rápida por el personal y los medios de protección del local o sector.",
+    "Emergencia parcial: accidente que requiere la actuación de los equipos especiales de emergencia del sector; sus efectos quedan limitados a un sector.",
+    "Emergencia general: accidente que requiere la actuación de todos los equipos y medios de protección del establecimiento y la ayuda de medios de socorro exteriores; conlleva la evacuación de personas.",
+    "Amago de incendio: fuego descubierto y apagado a tiempo.","Incendio: fuego de grandes proporciones que provoca daños a las personas y a las instalaciones.",
+    "Sismo: movimiento telúrico de alta intensidad provocado por la liberación de energía en las placas tectónicas.",
+    "Alarmas: sistemas y equipos que el programa de emergencia y evacuación considera para advertir y combatir inicialmente una emergencia."]}]});
+  const eq = [];
+  [["Zona(s) de seguridad",plan.zonaSeguridad],["Punto(s) de reunión",plan.puntoReunion],["Vías de evacuación",plan.viasEvacuacion],["Extintores",plan.extintores],["Botiquines",plan.botiquin],["Otros equipos y herramientas",plan.otrosEquipos],["Mantención de extintores e iluminación de emergencia",plan.mantencion]].forEach(([tit,val])=>{
+    if(lin(val).length){ eq.push({t:"sub", txt:tit}); eq.push({t:"ul", items:lin(val)}); }
+  });
+  S.push({titulo:"7. Equipos, recursos e instalaciones", bloques: eq.length ? eq : [{t:"p", txt:"Sin recursos registrados. Completa estos datos en el formulario del plan."}]});
+  const filaVuln = (a,campo)=>[GRD_CATEGORIA_LABEL[a.categoria]||"—", grdAmenazaNombre(a), a.origenInterno?"X":"", a.origenExterno?"X":"", a.fuenteRiesgo||"—", GRD_CALIFICACION_LABEL[a[campo]]];
+  const vuln = campo => (CACHE.grdAmenazas||[]).filter(a=>a[campo] && GRD_CALIFICACION_LABEL[a[campo]]).map(a=>filaVuln(a,campo));
+  const headV = ["Categoría","Amenaza","Interna","Externa","Fuente de riesgo","Calificación"];
+  const vi = vuln("calificacionInstalaciones"), vt = vuln("calificacionTerreno");
+  S.push({titulo:"8. Análisis de vulnerabilidad", bloques:[
+    {t:"p", txt:"El análisis de vulnerabilidad recoge los sucesos acontecidos en el centro de trabajo y en otros de la organización que podrían desencadenarse en el desarrollo de las actividades. Se separa entre las emergencias al interior de las instalaciones y las que ocurren en terreno."},
+    {t:"sub", txt:"Emergencias en las instalaciones"}, vi.length ? {t:"tabla", head:headV, body:vi} : {t:"p", txt:"Sin amenazas calificadas para este ámbito."},
+    {t:"sub", txt:"Emergencias en terreno / faenas"}, vt.length ? {t:"tabla", head:headV, body:vt} : {t:"p", txt:"Sin amenazas calificadas para este ámbito."},
+    {t:"sub", txt:"Significado de la calificación"},
+    {t:"ul", items:["Posible: fenómeno que puede suceder o que es factible porque no existen razones históricas y científicas para decir que no sucederá.","Probable: fenómeno esperado, del cual existen razones y argumentos técnico-científicos para creer que sucederá.","Inminente: fenómeno esperado que tiene alta probabilidad de ocurrir."]}]});
+  const comite = (CACHE.grdComite||[]).map(m=>[m.nombre||"—", m.cargo||"—", GRD_ROL_LABEL[m.rol]||m.rol||"—", m.areaId?areaName(m.areaId):"—", m.telefono||"—"]);
+  const grp = (tit,val)=>[{t:"sub", txt:tit}, lin(val).length ? {t:"ul", items:lin(val)} : {t:"p", txt:"Por designar."}];
+  S.push({titulo:"9. Organización de la emergencia", bloques:[
+    {t:"p", txt:"Frente a una emergencia se suspende la jerarquía institucional y comienza a regir automáticamente el organigrama de emergencia. El Jefe de Emergencia es el máximo responsable de las actividades antes, durante y después de la emergencia."},
+    {t:"sub", txt:"Jefe de emergencia"}, {t:"p", txt: plan.jefe || "Por designar."},
+    {t:"sub", txt:"Asesor en prevención de riesgos"}, {t:"p", txt: plan.asesor || "Por designar."},
+    {t:"sub", txt:"Comité de gestión del riesgo de desastres"}, comite.length ? {t:"tabla", head:["Nombre","Cargo","Rol","Área","Teléfono"], body:comite} : {t:"p", txt:"No hay miembros registrados en el comité."},
+    ...grp("Grupo de apoyo: primeros auxilios", plan.grpAuxilios),
+    {t:"p", txt:"Conoce las técnicas de primeros auxilios, las aplica en caso de emergencia y asegura los insumos del botiquín."},
+    ...grp("Grupo de apoyo: combate de fuego", plan.grpFuego),
+    {t:"p", txt:"Conoce la correcta manipulación de los extintores y los utiliza cuando la situación lo amerita."},
+    ...grp("Grupo de apoyo: evacuación", plan.grpEvacuacion),
+    {t:"p", txt:"Tiene a su cargo la evacuación ordenada y segura del personal, tranquiliza al grupo, encabeza la fila hacia las vías de egreso y mantiene la seguridad del lugar durante y después de la evacuación, señalizando las zonas de peligro."}]});
+  S.push({titulo:"10. Consideraciones para la ejecución del plan", bloques:[{t:"ul", items:[
+    "Los procedimientos de evacuación reales y simulados son obligatorios para todas las personas del recinto; al generarse la alarma se deben dejar todas las actividades.",
+    "Nadie debe abandonar el recinto en vehículo mientras se realiza una evacuación, real o simulada.",
+    "Los simulacros de evacuación deben realizarse en cualquier momento y no en horas prefijadas; los ejercicios de evacuación simulada deben ser regulares y realizarse semestralmente.",
+    "Los vehículos deben estacionarse de frente a la salida para facilitar su rápida evacuación.",
+    "Los extintores deben mantenerse operativos y libres de obstáculos, con un programa de mantención, y todos los trabajadores deben estar capacitados en su uso.",
+    "Las zonas de seguridad deben ser conocidas por todos y estar siempre demarcadas; las vías de evacuación deben permanecer expeditas y señalizadas.",
+    "Todo contratista que trabaje en el centro de trabajo debe ser instruido sobre este plan.",
+    "El plan se revisa al menos una vez al año."]}]});
+  const proc = amb => PLAN_PROCEDIMIENTOS.filter(p=>p.ambito===amb && (plan.procedimientos||PLAN_PROCEDIMIENTOS.map(x=>x.id)).includes(p.id));
+  const bProc = [];
+  [["Emergencias en las instalaciones","Instalaciones"],["Emergencias en terreno","Terreno"]].forEach(([tit,amb])=>{
+    const lista = proc(amb); if(!lista.length) return;
+    bProc.push({t:"sub", txt:tit});
+    lista.forEach(p=>{ bProc.push({t:"sub", txt:p.titulo}); bProc.push({t:"ul", items:p.pasos.map(reemplazar)}); });
+  });
+  const accederPlanes = (CACHE.grdPlanRespuesta||[]).map(p=>({p, a:(CACHE.grdAmenazas||[]).find(x=>x.id===p.amenazaId)})).filter(x=>x.a);
+  if(accederPlanes.length){
+    bProc.push({t:"sub", txt:"Plan de respuesta ACCEDER por amenaza"});
+    accederPlanes.forEach(({p,a})=>{
+      bProc.push({t:"sub", txt:grdAmenazaNombre(a)});
+      GRD_ACCEDER_CAMPOS.forEach(campo=>{ if(p[campo]) bProc.push({t:"p", txt:`${GRD_ACCEDER_LABEL[campo]}: ${p[campo]}`}); });
+    });
+  }
+  S.push({titulo:"11. Procedimientos ante emergencias", bloques: bProc.length ? bProc : [{t:"p", txt:"No se seleccionaron procedimientos."}]});
+  const sims = (CACHE.grdSimulacros||[]).slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).map(s=>{
+    const a = (CACHE.grdAmenazas||[]).find(x=>x.id===s.amenazaId);
+    return [fmtDate(s.fecha), s.tipo==="simulacro"?"Simulacro":"Simulación", a?grdAmenazaNombre(a):"—", s.participantes!=null?s.participantes:"—"];
+  });
+  S.push({titulo:"12. Ejecución de simulacros", bloques:[
+    {t:"p", txt:"Todo plan de emergencia debe practicarse para crear conciencia colectiva de las responsabilidades de cada trabajador. Se realizará un simulacro de cada emergencia a lo menos cada doce meses, para detectar deficiencias, corregirlas y divulgarlas, y los ejercicios de evacuación se realizarán con periodicidad semestral. Cada ejercicio se evalúa con la lista de evaluación del Anexo 2."},
+    sims.length ? {t:"tabla", head:["Fecha","Tipo","Amenaza","Participantes"], body:sims} : {t:"p", txt:"Aún no hay simulacros registrados."}]});
+  S.push({titulo:"13. Teléfonos de emergencia", bloques:[(plan.telefonos||[]).length ? {t:"tabla", head:["Contacto","Número"], body:plan.telefonos.map(t=>[t.nombre,t.numero])} : {t:"p", txt:"Sin teléfonos registrados."}]});
+  S.push({titulo:"14. Registros", bloques:[{t:"ul", items:["Lista de evaluación de simulacro de evacuación (Anexo 2) o el registro que utilice el organismo administrador.","Fotografías y videos del simulacro.","Informe de evaluación del simulacro.","Comunicación grupal."]}]});
+  S.push({titulo:"Anexo 1: Croquis de las instalaciones, vías de evacuación y zonas de seguridad", bloques: (plan.croquis||[]).length ? [{t:"imgs", imgs:plan.croquis}] : [{t:"p", txt:"Sin croquis cargados."}]});
+  const SN = ["Sí","No"];
+  S.push({titulo:"Anexo 2: Lista de evaluación de simulacros / emergencias (evacuación)", bloques:[
+    {t:"p", txt:"Zona evaluada: ____________________   Tipo de emergencia: ____________________   Fecha: ____________   Hora de inicio: ________   Evaluado por: ____________________"},
+    {t:"sub", txt:"Evaluación de tiempos"},
+    {t:"tabla", head:["N°","Acción observada","Tiempo (hrs; min; seg)","Observaciones"], body:[["1","Detección de la emergencia","",""],["2","Comunicación al personal de la existencia de la emergencia","",""],["3","Comienza la evacuación","",""],["4","Salida de la primera persona","",""],["5","Salida de la última persona (evacuación total)","",""],["6","Llegada a zona de seguridad (primera persona)","",""],["7","Llegada a zona de seguridad (última persona)","",""],["8","Llegada de organismos externos (Bomberos, ambulancia, Carabineros)","",""]]},
+    {t:"sub", txt:"Sistema de comunicación, líderes y personal"},
+    {t:"tabla", head:["Aspecto evaluado","Sí","No","Observaciones"], body:[
+      "¿La alarma de emergencia fue escuchada en todos los sectores?","¿Se dio alarma externa a Bomberos u otros servicios? (quién la solicitó, a qué hora y a qué hora llegó la ayuda)","¿El líder y los encargados de evacuación usaron algún distintivo para identificarse?","¿Precedieron al grupo, dieron instrucciones claras y precisas y guiaron al personal?","¿Cerraron la fila y verificaron que todos habían salido?","¿El personal interrumpió de inmediato las actividades que realizaba?","¿El personal siguió las instrucciones del líder y los encargados de evacuación?","¿Se siguieron las vías de evacuación establecidas para llegar a las zonas de seguridad?","¿El personal se desplazó en fila, con tranquilidad y en silencio, y usó los pasamanos en las escaleras?"].map(q=>[q,"","",""])},
+    {t:"sub", txt:"Resumen de análisis de fallas, fotografías y observaciones"},
+    {t:"p", txt:"______________________________________________________________________________"},
+    {t:"p", txt:"______________________________________________________________________________"},
+    {t:"p", txt:"Firma del evaluador del simulacro: ______________________________"}]});
+  S.push({titulo:"Anexo 3: Informe de evaluación del simulacro", bloques:[
+    {t:"p", txt:"Fecha: ____________   Tipo de emergencia: ____________________   Participantes: ________"},
+    {t:"p", txt:"Resultados y tiempos de evacuación: ______________________________________________"},
+    {t:"p", txt:"Deficiencias detectadas: _________________________________________________________"},
+    {t:"p", txt:"Mejoras propuestas y responsables: _______________________________________________"}]});
+  S.push({titulo:"Control de cambios", bloques:[(plan.cambios||[]).length ? {t:"tabla", head:["Versión","Cambio","Fecha","Aprobado"], body:plan.cambios.map(c=>[c.version,c.cambio,c.fecha?fmtDate(c.fecha):"—",c.aprobado])} : {t:"tabla", head:["Versión","Cambio","Fecha","Aprobado"], body:[[plan.version||"1","Creación del plan de emergencia", plan.fecha?fmtDate(plan.fecha):"—", plan.aprobado?"Sí":"No"]]}]});
+  S.push({titulo:"Firmas", bloques:[
+    {t:"tabla", head:["Elaboró","Revisó","Aprobó"], body:[["\n\n\n\nNombre / cargo / fecha","\n\n\n\nNombre / cargo / fecha","\n\n\n\nNombre / cargo / fecha"]]}]});
+  return {empresa, centro: plan.centro||"", version: plan.version||"", fecha: plan.fecha||"", aprobado: !!plan.aprobado, secciones: S};
+}
+function planEmNombreArchivo(plan, ext){
+  const base = String((plan.centro||"centro")).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-zA-Z0-9]+/g,"_").replace(/^_|_$/g,"");
+  return `Plan_de_Emergencia_${base}_v${String(plan.version||"1").replace(/[^a-zA-Z0-9.]/g,"")}.${ext}`;
+}
+function planEmDimsImagen(dataUrl){
+  return new Promise(res=>{ const im = new Image(); im.onload = ()=>res({w:im.naturalWidth||1,h:im.naturalHeight||1}); im.onerror = ()=>res(null); im.src = dataUrl; });
+}
+async function planEmDescargarPdf(plan){
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const c = armarContenidoPlanEmergencia(plan);
+  const doc = new JsPDFClass();
+  addLogoPdf(doc);
+  doc.setFontSize(24); doc.text("PLAN DE EMERGENCIA", 105, 80, {align:"center"});
+  doc.setFontSize(14); doc.text(c.centro || "", 105, 95, {align:"center"});
+  doc.setFontSize(11);
+  doc.text(c.empresa, 105, 108, {align:"center"});
+  const linea = datosEmpresaLineaPdf();
+  if(linea){ doc.setFontSize(9); doc.text(doc.splitTextToSize(linea, 170), 105, 116, {align:"center"}); }
+  doc.setFontSize(11);
+  doc.text(`Versión ${c.version||"1"}${c.fecha?"  -  "+fmtDate(c.fecha):""}${c.aprobado?"  -  Aprobado":""}`, 105, 140, {align:"center"});
+  doc.addPage();
+  let y = 16;
+  const indice = c.secciones.map(s=>s.titulo);
+  doc.setFont(undefined,"bold"); doc.setFontSize(14); doc.text("Contenido", 14, y); y += 8;
+  doc.setFont(undefined,"normal"); doc.setFontSize(10);
+  indice.forEach(t=>{ doc.text(t, 18, y); y += 5.5; });
+  doc.addPage(); y = 16;
+  for(const s of c.secciones){
+    if(y > 250){ doc.addPage(); y = 16; }
+    doc.setFont(undefined,"bold"); doc.setFontSize(13);
+    const tl = doc.splitTextToSize(s.titulo, 182); doc.text(tl, 14, y); y += tl.length*6 + 2;
+    doc.setFont(undefined,"normal"); doc.setFontSize(10);
+    for(const b of s.bloques){
+      if(b.t==="p"){ y = escribirTextoPaginado(doc, b.txt, 14, y, {maxWidth:182}) + 2; }
+      else if(b.t==="sub"){
+        if(y > 262){ doc.addPage(); y = 16; }
+        doc.setFont(undefined,"bold"); doc.setFontSize(11); y = escribirTextoPaginado(doc, b.txt, 14, y, {maxWidth:182}) + 1; doc.setFont(undefined,"normal"); doc.setFontSize(10);
+      }
+      else if(b.t==="ul"){ b.items.forEach(it=>{ y = escribirTextoPaginado(doc, "- "+it, 17, y, {maxWidth:179}) + 0.5; }); y += 2; }
+      else if(b.t==="tabla"){
+        if(y > 250){ doc.addPage(); y = 16; }
+        doc.autoTable({ startY:y, head:[b.head], body:b.body, styles:{fontSize:8.5, cellPadding:2, valign:"top"}, headStyles:{fillColor:[236,131,90]} });
+        y = doc.lastAutoTable.finalY + 6;
+      }
+      else if(b.t==="imgs"){
+        for(const img of b.imgs){
+          const dims = await planEmDimsImagen(img.data);
+          if(!dims) continue;
+          const m = /^data:image\/(png|jpe?g);base64,/i.exec(img.data);
+          if(!m) continue;
+          const fmt = m[1].toLowerCase()==="png" ? "PNG" : "JPEG";
+          let w = 182, h = w*(dims.h/dims.w);
+          if(h > 190){ h = 190; w = h*(dims.w/dims.h); }
+          if(y + h + 10 > 280){ doc.addPage(); y = 16; }
+          try{ doc.addImage(img.data, fmt, 14, y, w, h); }catch(e){ continue; }
+          y += h + 5;
+          if(img.nombre){ y = escribirTextoPaginado(doc, img.nombre, 14, y, {maxWidth:182}) + 4; }
+        }
+      }
+    }
+    y += 4;
+  }
+  agregarPiePaginasPdf(doc, "Plan de Emergencia");
+  doc.save(planEmNombreArchivo(plan, "pdf"));
+}
+function planEmDescargarWord(plan){
+  const c = armarContenidoPlanEmergencia(plan);
+  const esc = s => (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const cuerpo = c.secciones.map(s=>`<h2>${esc(s.titulo)}</h2>` + s.bloques.map(b=>{
+    if(b.t==="p") return `<p>${esc(b.txt)}</p>`;
+    if(b.t==="sub") return `<h3>${esc(b.txt)}</h3>`;
+    if(b.t==="ul") return `<ul>${b.items.map(i=>`<li>${esc(i)}</li>`).join("")}</ul>`;
+    if(b.t==="tabla") return `<table><thead><tr>${b.head.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${b.body.map(r=>`<tr>${r.map(v=>`<td>${esc(v).replace(/\n/g,"<br>")}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+    if(b.t==="imgs") return `<p><em>[Insertar aquí los croquis: ${esc(b.imgs.map(i=>i.nombre||"croquis").join(", "))}. Los croquis solo se incluyen en el PDF.]</em></p>`;
+    return "";
+  }).join("")).join("");
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;} h1{font-size:24pt;text-align:center;margin-top:120pt;} h2{font-size:14pt;border-bottom:1px solid #ec835a;margin-top:18pt;} h3{font-size:11.5pt;margin-bottom:2pt;} table{border-collapse:collapse;width:100%;margin:6pt 0;} td,th{border:1px solid #999;padding:3pt 5pt;font-size:10pt;vertical-align:top;} th{background:#ec835a;color:#fff;} .portada{text-align:center;page-break-after:always;}</style></head><body><div class="portada"><h1>PLAN DE EMERGENCIA</h1><p style="font-size:14pt;">${esc(c.centro)}</p><p>${esc(c.empresa)}</p><p>Versión ${esc(c.version||"1")}${c.fecha?" - "+esc(fmtDate(c.fecha)):""}${c.aprobado?" - Aprobado":""}</p></div>${cuerpo}</body></html>`;
+  const blob = new Blob(["﻿", html], {type:"application/msword"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = planEmNombreArchivo(plan, "doc");
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+resetPlanEmForm();
+
 function renderEmergencia(){
+  renderPlanEmergencia();
   renderGrdResumen();
   renderGrdAmenazasTable();
   renderGrdComiteTable();
