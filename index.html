@@ -7427,6 +7427,7 @@ on(document.getElementById("cphysInvestigacionesTable"), "click", (e)=>{
   const sel = document.getElementById("arbolAccidenteSel");
   sel.value = accidenteId;
   sel.dispatchEvent(new Event("change"));
+  subpestanasMostrarDe("hdrArbolCausal");
   const hdr = document.getElementById("hdrArbolCausal");
   if(hdr) hdr.scrollIntoView({behavior:"smooth", block:"start"});
 });
@@ -8836,6 +8837,13 @@ function subpestanasAplicar(viewId){
   }));
   document.querySelectorAll(`#subtabs-${viewId} .grd-tab`).forEach(b=>b.classList.toggle("active", b.dataset.subtab===cfg.activa));
 }
+// Cambia a la pestaña que contiene la tarjeta con ese encabezado (para enlaces entre tarjetas de distintas pestañas).
+function subpestanasMostrarDe(hdrId){
+  Object.entries(SUBPESTANAS).forEach(([viewId, cfg])=>{
+    const g = cfg.grupos.find(x=>x.hdrs.includes(hdrId));
+    if(g && cfg.activa!==g.key){ cfg.activa = g.key; try{ localStorage.setItem("subtab_"+viewId, g.key); }catch(e){} subpestanasAplicar(viewId); }
+  });
+}
 function subpestanasCrear(viewId, grupos){
   const view = document.getElementById("view-"+viewId); if(!view) return;
   const storageKey = "subtab_"+viewId;
@@ -8858,6 +8866,13 @@ subpestanasCrear("matriz", [
   {key:"levantamiento", label:"Levantamiento por área", hdrs:["hdrLevantamiento"]},
   {key:"mapas", label:"Mapas y análisis", hdrs:["hdrMapaDeRiesgosPorAreaProceso","hdrMapaDeRiesgosPlanoDePlantaYSimbologia","hdrMatrizDeRiesgosPorNivelYPorArea","hdrEquidadGenero"]},
   {key:"accion", label:"Plan de acción y controles", hdrs:["hdrPlanDeAccionMatrizDeRiesgos","hdrJerarquiaDeControlesDS44","hdrTraspasosPendientes","hdrEstudioEpp"]},
+]);
+
+subpestanasCrear("accidentabilidad", [
+  {key:"registro", label:"Registro de accidentes", hdrs:["hdrRegistrarAccidenteIncidente","hdrIndicadoresDeSiniestralidadDS67YRegistroHistorico","hdrHorasHombreTrabajadasPorPeriodo"]},
+  {key:"estadisticas", label:"Estadísticas y DS 67", hdrs:["hdrAccidentesPorMes","hdrAccidentesPorArea","hdrControlEstadisticoMensualYAnual","hdrClasificacionDeAccidentesEIncidentes","hdrEvaluacionDeSiniestralidadDS67CotizacionAdicional"]},
+  {key:"arbol", label:"Árbol causal", hdrs:["hdrArbolCausal","hdrArbolCausalListado"]},
+  {key:"transito", label:"Accidentes de tránsito", hdrs:["hdrInvestigacionDeAccidentesDeTransito","hdrInvestigacionesDeTransitoRegistradas"]},
 ]);
 
 /* Pestañas internas de Emergencia: cada pestaña muestra solo las tarjetas
@@ -17301,6 +17316,7 @@ on(document.getElementById("cancelEditArbolBtn"), "click", () => { resetArbolFor
 function startEditArbol(id){
   const rec = CACHE.arbolesCausales.find(a=>a.id===id);
   if(!rec) return;
+  subpestanasMostrarDe("hdrArbolCausal");
   arbolEditingId = id;
   document.getElementById("arbolAccidenteSel").value = rec.accidenteId || "";
   document.getElementById("arbolResponsable").value = rec.responsable || "";
@@ -18096,6 +18112,7 @@ function transitoFormularioARegistro(id){
 function startEditTransito(id){
   const rec = CACHE.transitoInvestigaciones.find(r=>r.id===id);
   if(!rec) return;
+  subpestanasMostrarDe("hdrInvestigacionDeAccidentesDeTransito");
   transitoEditingId = id;
   document.getElementById("transitoFecha").value = rec.fecha || "";
   document.getElementById("transitoHora").value = rec.hora || "";
