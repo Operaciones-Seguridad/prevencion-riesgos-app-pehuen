@@ -118,6 +118,23 @@
   .grd-tab:hover{background:rgba(42,120,214,.08);}
   .grd-tab.active{color:var(--s1);border-bottom-color:var(--s1);}
   .subtab-oculta{display:none !important;}
+  .grd-tabs.estilo-tarjetas{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;border-bottom:none;margin-bottom:16px;}
+  .grd-tabs.estilo-pildoras{gap:8px;border-bottom:none;margin-bottom:16px;}
+  .grd-tabs svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .grd-tab-card{display:flex;gap:10px;align-items:flex-start;text-align:left;position:relative;background:#fff;border:1px solid var(--grid);border-radius:12px;padding:12px 14px;margin:0;color:var(--text-primary);}
+  .grd-tab-card:hover{border-color:var(--s1);background:#fff;}
+  .grd-tab-card.active{border:2px solid var(--s1);background:rgba(42,120,214,.07);padding:11px 13px;}
+  .grd-tab-card .gt-ico{width:36px;height:36px;border-radius:9px;background:rgba(0,0,0,.05);display:flex;align-items:center;justify-content:center;color:var(--text-secondary);flex:none;}
+  .grd-tab-card.active .gt-ico{background:#fff;color:var(--s1);}
+  .grd-tab-card .gt-t{font-size:14px;font-weight:700;line-height:1.3;display:block;}
+  .grd-tab-card .gt-d{font-size:12px;font-weight:400;color:var(--text-secondary);line-height:1.4;display:block;margin-top:2px;}
+  .grd-tab-pill{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--grid);border-radius:22px;padding:8px 15px;margin:0;color:var(--text-secondary);}
+  .grd-tab-pill:hover{border-color:var(--s1);background:#fff;}
+  .grd-tab-pill.active{background:#1c2430;border-color:#1c2430;color:#fff;}
+  .gt-badge{font-size:11px;font-weight:700;padding:1px 8px;border-radius:10px;line-height:18px;white-space:nowrap;}
+  .gt-badge.r{background:#fbdada;color:#8f1f1f;}
+  .gt-badge.y{background:#fff4de;color:#8a5a00;}
+  .grd-tab-card .gt-badge-slot{margin-left:7px;white-space:nowrap;}
   button.btn{background:var(--s1);color:#fff;border:none;padding:11px 18px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;min-height:44px;}
   button.btn:hover{filter:brightness(1.08);}
   button.btn.secondary{background:var(--grid);color:var(--text-primary);}
@@ -2813,14 +2830,6 @@
 
   <!-- EMERGENCIA (v1.61) -->
   <div class="view" id="view-emergencia">
-    <div class="grd-tabs" id="grdTabsBar">
-      <button type="button" class="grd-tab" data-grd-tab="resumen">Resumen</button>
-      <button type="button" class="grd-tab" data-grd-tab="diagnostico">Diagnóstico y vulnerabilidad</button>
-      <button type="button" class="grd-tab" data-grd-tab="respuesta">Comité y plan de respuesta</button>
-      <button type="button" class="grd-tab" data-grd-tab="simulacros">Simulacros y plan de acción</button>
-      <button type="button" class="grd-tab" data-grd-tab="plan">Plan de Emergencia</button>
-      <button type="button" class="grd-tab" data-grd-tab="extintores">Extintores</button>
-    </div>
     <div class="card">
       <div class="card-header-row" id="hdrGrdResumen"><h2>Gestión del Riesgo de Desastres (GRD) — Resumen</h2><button class="collapse-toggle" id="toggleGrdResumen" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyGrdResumen">
@@ -8829,7 +8838,28 @@ resetRxForm();
    grupo siguen visibles en todas las pestañas. La tarjeta se oculta con una
    clase (no con style.display) para no pisar otras reglas que ya muestran
    u ocultan tarjetas (por ejemplo, las solo para administrador). */
-const SUBPESTANAS = {};
+var SUBPESTANAS = {};
+// Íconos de trazo simple (24x24) para las pestañas internas.
+const SUBTAB_ICONOS = {
+  resumen:'<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>',
+  buscar:'<circle cx="10" cy="10" r="6"/><path d="M15 15l5 5"/>',
+  personas:'<circle cx="9" cy="8" r="3"/><path d="M3 20v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1"/><circle cx="17" cy="9" r="2.5"/><path d="M21 19v-1a3.5 3.5 0 0 0-3-3.4"/>',
+  pulso:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',
+  documento:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+  fuego:'<path d="M12 3c1 3.500 5 5.500 5 10a5 5 0 0 1-10 0c0-2 1-3.500 2-4.500.5 1.500 1.500 2.200 2.500 2.200C11 8.500 10.500 5.500 12 3z"/>',
+  lista:'<path d="M9 6h11M9 12h11M9 18h11M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>',
+  mapa:'<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
+  grafico:'<path d="M5 20V10M12 20V4M19 20v-7"/>',
+  registro:'<rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5a3 3 0 0 1 6 0M9 12h6M9 16h4"/>',
+  ast:'<rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5a3 3 0 0 1 6 0M9 14l2 2 4-4"/>',
+  caja:'<path d="M12 3L3 7.500v9L12 21l9-4.500v-9z"/><path d="M3 7.500l9 4.500 9-4.500M12 12v9"/>',
+  alerta:'<path d="M12 4L3 20h18z"/><path d="M12 10v4M12 17h.01"/>',
+  curso:'<circle cx="12" cy="9" r="5"/><path d="M8.500 14L7 21l5-3 5 3-1.500-7"/>',
+  empresa:'<path d="M4 21V8l8-5 8 5v13M9 21v-6h6v6"/>',
+  datos:'<path d="M12 3v12M7 11l5 5 5-5M5 21h14"/>',
+  llave:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+};
+function subtabIcono(nombre){ return SUBTAB_ICONOS[nombre] ? `<svg viewBox="0 0 24 24" aria-hidden="true">${SUBTAB_ICONOS[nombre]}</svg>` : ""; }
 function subpestanasAplicar(viewId){
   const cfg = SUBPESTANAS[viewId]; if(!cfg) return;
   // Un grupo se considera disponible si alguna de sus tarjetas no está oculta por otra regla (por ejemplo, las solo para administrador).
@@ -8844,6 +8874,12 @@ function subpestanasAplicar(viewId){
     const g = cfg.grupos.find(x=>x.key===b.dataset.subtab);
     b.classList.toggle("active", b.dataset.subtab===cfg.activa);
     b.style.display = disponible(g) ? "" : "none";
+    // Contador de alertas con datos reales (solo si la pestaña lo define).
+    const slot = b.querySelector(".gt-badge-slot");
+    if(slot && typeof g.badge==="function"){
+      let bd = null; try{ bd = g.badge(); }catch(e){}
+      slot.innerHTML = bd ? `<span class="gt-badge ${bd.nivel||"r"}">${bd.texto}</span>` : "";
+    }
   });
 }
 // Cambia a la pestaña que contiene la tarjeta con ese encabezado (para enlaces entre tarjetas de distintas pestañas).
@@ -8853,11 +8889,15 @@ function subpestanasMostrarDe(hdrId){
     if(g && cfg.activa!==g.key){ cfg.activa = g.key; try{ localStorage.setItem("subtab_"+viewId, g.key); }catch(e){} subpestanasAplicar(viewId); }
   });
 }
-function subpestanasCrear(viewId, grupos){
+/* estilo "tarjetas": ícono + nombre + descripción (para vistas con muchas secciones);
+   estilo "pildoras": una sola línea, ícono + nombre + contador (3 o 4 secciones). */
+function subpestanasCrear(viewId, grupos, estilo){
   const view = document.getElementById("view-"+viewId); if(!view) return;
   const storageKey = "subtab_"+viewId;
-  const bar = document.createElement("div"); bar.className = "grd-tabs"; bar.id = "subtabs-"+viewId;
-  bar.innerHTML = grupos.map(g=>`<button type="button" class="grd-tab" data-subtab="${g.key}">${g.label}</button>`).join("");
+  const bar = document.createElement("div"); bar.className = "grd-tabs estilo-"+(estilo==="tarjetas"?"tarjetas":"pildoras"); bar.id = "subtabs-"+viewId;
+  bar.innerHTML = grupos.map(g=> estilo==="tarjetas"
+    ? `<button type="button" class="grd-tab grd-tab-card" data-subtab="${g.key}"><span class="gt-ico">${subtabIcono(g.icono)}</span><span><span class="gt-t">${g.label}<span class="gt-badge-slot"></span></span><span class="gt-d">${g.desc||""}</span></span></button>`
+    : `<button type="button" class="grd-tab grd-tab-pill" data-subtab="${g.key}">${subtabIcono(g.icono)}<span>${g.label}</span><span class="gt-badge-slot"></span></button>`).join("");
   view.insertBefore(bar, view.firstChild);
   let activa = grupos[0].key;
   try{ const s = localStorage.getItem(storageKey); if(s && grupos.some(g=>g.key===s)) activa = s; }catch(e){}
@@ -8871,63 +8911,52 @@ function subpestanasCrear(viewId, grupos){
   subpestanasAplicar(viewId);
 }
 subpestanasCrear("matriz", [
-  {key:"matriz", label:"Matriz de riesgos", hdrs:["hdrNuevaLineaDeMatrizDeRiesgosIPER","hdrMatrizIaWrap","hdrMatrizDobleEntrada","hdrMatrizVigente","hdrMatrizHistorial"]},
-  {key:"levantamiento", label:"Levantamiento por área", hdrs:["hdrLevantamiento"]},
-  {key:"mapas", label:"Mapas y análisis", hdrs:["hdrMapaDeRiesgosPorAreaProceso","hdrMapaDeRiesgosPlanoDePlantaYSimbologia","hdrMatrizDeRiesgosPorNivelYPorArea","hdrEquidadGenero"]},
-  {key:"accion", label:"Plan de acción y controles", hdrs:["hdrPlanDeAccionMatrizDeRiesgos","hdrJerarquiaDeControlesDS44","hdrTraspasosPendientes","hdrEstudioEpp"]},
-]);
+  {key:"matriz", icono:"registro", label:"Matriz de riesgos", hdrs:["hdrNuevaLineaDeMatrizDeRiesgosIPER","hdrMatrizIaWrap","hdrMatrizDobleEntrada","hdrMatrizVigente","hdrMatrizHistorial"]},
+  {key:"levantamiento", icono:"lista", label:"Levantamiento por área", hdrs:["hdrLevantamiento"]},
+  {key:"mapas", icono:"mapa", label:"Mapas y análisis", hdrs:["hdrMapaDeRiesgosPorAreaProceso","hdrMapaDeRiesgosPlanoDePlantaYSimbologia","hdrMatrizDeRiesgosPorNivelYPorArea","hdrEquidadGenero"]},
+  {key:"accion", icono:"grafico", label:"Plan de acción y controles", hdrs:["hdrPlanDeAccionMatrizDeRiesgos","hdrJerarquiaDeControlesDS44","hdrTraspasosPendientes","hdrEstudioEpp"],
+    badge:()=>{ const cub = new Set((CACHE.planAccionMatriz||[]).map(p=>p.matrizId)); const n = paLineasRequierenAccion().filter(m=>!cub.has(m.id)).length; return n ? {texto:`${n} sin plan`, nivel:"y"} : null; }},
+], "pildoras");
 
 subpestanasCrear("accidentabilidad", [
-  {key:"registro", label:"Registro de accidentes", hdrs:["hdrRegistrarAccidenteIncidente","hdrIndicadoresDeSiniestralidadDS67YRegistroHistorico","hdrHorasHombreTrabajadasPorPeriodo"]},
-  {key:"estadisticas", label:"Estadísticas y DS 67", hdrs:["hdrAccidentesPorMes","hdrAccidentesPorArea","hdrControlEstadisticoMensualYAnual","hdrClasificacionDeAccidentesEIncidentes","hdrEvaluacionDeSiniestralidadDS67CotizacionAdicional"]},
-  {key:"arbol", label:"Árbol causal", hdrs:["hdrArbolCausal","hdrArbolCausalListado"]},
-  {key:"transito", label:"Accidentes de tránsito", hdrs:["hdrInvestigacionDeAccidentesDeTransito","hdrInvestigacionesDeTransitoRegistradas"]},
-]);
+  {key:"registro", icono:"registro", label:"Registro de accidentes", hdrs:["hdrRegistrarAccidenteIncidente","hdrIndicadoresDeSiniestralidadDS67YRegistroHistorico","hdrHorasHombreTrabajadasPorPeriodo"],
+    badge:()=>{ const n = (CACHE.accidentes||[]).filter(a=>accDenunciaSigla(a.tipo) && a.denunciaRealizada==="no").length; return n ? {texto:`${n} sin DIAT/DIEP`, nivel:"r"} : null; }},
+  {key:"estadisticas", icono:"grafico", label:"Estadísticas y DS 67", hdrs:["hdrAccidentesPorMes","hdrAccidentesPorArea","hdrControlEstadisticoMensualYAnual","hdrClasificacionDeAccidentesEIncidentes","hdrEvaluacionDeSiniestralidadDS67CotizacionAdicional"]},
+  {key:"arbol", icono:"buscar", label:"Árbol causal", hdrs:["hdrArbolCausal","hdrArbolCausalListado"]},
+  {key:"transito", icono:"pulso", label:"Accidentes de tránsito", hdrs:["hdrInvestigacionDeAccidentesDeTransito","hdrInvestigacionesDeTransitoRegistradas"]},
+], "pildoras");
 
 subpestanasCrear("config", [
-  {key:"empresa", label:"Empresa y listas", hdrs:["hdrEmpresa","hdrMetasDeIndicadoresDeAccidentabilidad","hdrGestionarListasDesplegables","hdrPropiedadIntelectual"]},
-  {key:"personas", label:"Áreas y trabajadores", hdrs:["hdrAreasProcesos","hdrTrabajadores","hdrResponsablesDeCierreDeHallazgos"]},
-  {key:"datos", label:"Importar y respaldo", hdrs:["hdrImportarMatrizDeRiesgosDesdeExcel","hdrRespaldoDatosWrap","hdrDatosDeEjemplo"]},
-  {key:"accesos", label:"Accesos y empresas", hdrs:["hdrAccesos","hdrEmpresas"]},
-]);
+  {key:"empresa", icono:"empresa", label:"Empresa y listas", hdrs:["hdrEmpresa","hdrMetasDeIndicadoresDeAccidentabilidad","hdrGestionarListasDesplegables","hdrPropiedadIntelectual"]},
+  {key:"personas", icono:"personas", label:"Áreas y trabajadores", hdrs:["hdrAreasProcesos","hdrTrabajadores","hdrResponsablesDeCierreDeHallazgos"]},
+  {key:"datos", icono:"datos", label:"Importar y respaldo", hdrs:["hdrImportarMatrizDeRiesgosDesdeExcel","hdrRespaldoDatosWrap","hdrDatosDeEjemplo"]},
+  {key:"accesos", icono:"llave", label:"Accesos y empresas", hdrs:["hdrAccesos","hdrEmpresas"]},
+], "pildoras");
 subpestanasCrear("inspecciones", [
-  {key:"formatos", label:"Formatos e historial", hdrs:["hdrFormatosDeInspeccionObservacion","hdrHistorialDeInspeccionesYObservaciones","hdrDescargarResumenesEnPDF"]},
-  {key:"ast", label:"AST", hdrs:["hdrConfeccionDeASTAnalisisDeSeguridadDelTrabajo","hdrASTRegistradas"]},
-  {key:"izaje", label:"Evaluación de carga (izaje)", hdrs:["hdrEvaluacionDeCargaIzaje","hdrEvaluacionesDeCargaRegistradas"]},
-  {key:"estadisticas", label:"Estadísticas", hdrs:["hdrTop10HallazgosRepetitivos","hdrEstadisticaMensualYAnualPorClasificacion"]},
-]);
+  {key:"formatos", icono:"lista", label:"Formatos e historial", hdrs:["hdrFormatosDeInspeccionObservacion","hdrHistorialDeInspeccionesYObservaciones","hdrDescargarResumenesEnPDF"]},
+  {key:"ast", icono:"ast", label:"AST", hdrs:["hdrConfeccionDeASTAnalisisDeSeguridadDelTrabajo","hdrASTRegistradas"]},
+  {key:"izaje", icono:"caja", label:"Evaluación de carga (izaje)", hdrs:["hdrEvaluacionDeCargaIzaje","hdrEvaluacionesDeCargaRegistradas"]},
+  {key:"estadisticas", icono:"grafico", label:"Estadísticas", hdrs:["hdrTop10HallazgosRepetitivos","hdrEstadisticaMensualYAnualPorClasificacion"]},
+], "pildoras");
 subpestanasCrear("capacitacion", [
-  {key:"plan", label:"Plan de capacitación", hdrs:["hdrNuevaCapacitacion","hdrPlanDeCapacitacionCumplimiento","hdrEstadisticasDelPlanDeCapacitacion","hdrCumplimientoDeCapacitacionPorResponsableRelator"]},
-  {key:"iap", label:"Incidentes de alto potencial (IAP)", hdrs:["hdrIap","hdrIapListado"]},
-  {key:"cursos", label:"Cursos DS 44", hdrs:["hdrCursosDs44","hdrRegistroDeCursosCompletados","hdrAlertasDeVencimiento","hdrReporteDeCumplimientoCursosDS44"]},
-]);
+  {key:"plan", icono:"registro", label:"Plan de capacitación", hdrs:["hdrNuevaCapacitacion","hdrPlanDeCapacitacionCumplimiento","hdrEstadisticasDelPlanDeCapacitacion","hdrCumplimientoDeCapacitacionPorResponsableRelator"]},
+  {key:"iap", icono:"alerta", label:"Incidentes de alto potencial (IAP)", hdrs:["hdrIap","hdrIapListado"]},
+  {key:"cursos", icono:"curso", label:"Cursos DS 44", hdrs:["hdrCursosDs44","hdrRegistroDeCursosCompletados","hdrAlertasDeVencimiento","hdrReporteDeCumplimientoCursosDS44"]},
+], "pildoras");
 
-/* Pestañas internas de Emergencia: cada pestaña muestra solo las tarjetas
-   de su grupo (se identifican por el id de su encabezado) y la última
-   pestaña elegida se recuerda en este navegador. */
-const GRD_TABS_TARJETAS = {
-  resumen: ["hdrGrdResumen"],
-  diagnostico: ["hdrGrdAmenazas"],
-  respuesta: ["hdrGrdComite","hdrGrdRespuesta"],
-  simulacros: ["hdrGrdSimulacros","hdrGrdPlanAccion"],
-  plan: ["hdrPlanEmergencia"],
-  extintores: ["hdrExtintores","hdrRegistroExtintores"],
-};
-function grdMostrarTab(tab){
-  if(!GRD_TABS_TARJETAS[tab]) tab = "resumen";
-  Object.entries(GRD_TABS_TARJETAS).forEach(([t, ids])=>{
-    ids.forEach(id=>{ const card = document.getElementById(id) && document.getElementById(id).closest(".card"); if(card) card.style.display = (t===tab) ? "" : "none"; });
-  });
-  document.querySelectorAll("#grdTabsBar .grd-tab").forEach(b=>b.classList.toggle("active", b.dataset.grdTab===tab));
-  try{ localStorage.setItem("grdTabActiva", tab); }catch(e){}
-}
-on(document.getElementById("grdTabsBar"), "click", e=>{
-  const b = e.target.closest("[data-grd-tab]");
-  if(b) grdMostrarTab(b.dataset.grdTab);
-});
-(()=>{ let t = "resumen"; try{ t = localStorage.getItem("grdTabActiva") || "resumen"; }catch(e){} grdMostrarTab(t); })();
+subpestanasCrear("emergencia", [
+  {key:"resumen", icono:"resumen", label:"Resumen", desc:"Estado general del plan de gestión del riesgo", hdrs:["hdrGrdResumen"]},
+  {key:"diagnostico", icono:"buscar", label:"Diagnóstico y vulnerabilidad", desc:"Amenazas, calificación y matriz de vulnerabilidad", hdrs:["hdrGrdAmenazas"]},
+  {key:"respuesta", icono:"personas", label:"Comité y plan de respuesta", desc:"Quién actúa y cómo se responde ante cada amenaza", hdrs:["hdrGrdComite","hdrGrdRespuesta"]},
+  {key:"simulacros", icono:"pulso", label:"Simulacros y plan de acción", desc:"Ejercicios realizados y medidas pendientes", hdrs:["hdrGrdSimulacros","hdrGrdPlanAccion"],
+    badge:()=>{ const n = (CACHE.grdPlanAccion||[]).filter(a=>estadoPrograma(a)==="atrasada").length; return n ? {texto:`${n} atrasada${n===1?"":"s"}`, nivel:"y"} : null; }},
+  {key:"plan", icono:"documento", label:"Plan de Emergencia", desc:"Documento formal en PDF y Word", hdrs:["hdrPlanEmergencia"]},
+  {key:"extintores", icono:"fuego", label:"Extintores", desc:"Levantamiento por recinto y registro con vencimientos", hdrs:["hdrExtintores","hdrRegistroExtintores"],
+    badge:()=>{ const n = (CACHE.registroExtintores||[]).filter(r=>rxEvaluar(r).estado==="No cumple").length; return n ? {texto:`${n} por revisar`, nivel:"r"} : null; }},
+], "tarjetas");
 
 function renderEmergencia(){
+  subpestanasAplicar("emergencia");
   renderExtintores();
   renderPlanEmergencia();
   renderGrdResumen();
@@ -12077,6 +12106,7 @@ document.getElementById("matrizDEModo").addEventListener("change", renderMatrizD
 
 function renderMatrizTable(){
   renderMatrizDobleEntrada();
+  subpestanasAplicar("matriz");
   const fArea = document.getElementById("filterMatrizArea").value;
   const fNivel = document.getElementById("filterMatrizNivel").value;
   const fCategoria = document.getElementById("filterMatrizCategoria").value;
@@ -16444,6 +16474,7 @@ function renderAccFiltrosHistorico(){
 
 function renderAccidentesTable(){
   renderAccFiltrosHistorico();
+  subpestanasAplicar("accidentabilidad");
   const fTipo = document.getElementById("filterAccTipo").value;
   const fMes = document.getElementById("filterAccMes").value;
   const fAnio = document.getElementById("filterAccAnio").value;
