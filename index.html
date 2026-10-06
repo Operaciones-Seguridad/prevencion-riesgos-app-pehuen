@@ -113,6 +113,10 @@
   .pill.pendiente{background:#e8edf7;color:#1c4e91;}
   .pill.proceso{background:#fff4de;color:#8a5a00;}
   .pill.cerrada{background:#e6f7e6;color:#0a6b0a;}
+  .grd-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;border-bottom:2px solid var(--grid);padding-bottom:0;}
+  .grd-tab{background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;padding:9px 14px;font-size:13.5px;font-weight:600;color:var(--text-secondary);cursor:pointer;border-radius:6px 6px 0 0;}
+  .grd-tab:hover{background:rgba(42,120,214,.08);}
+  .grd-tab.active{color:var(--s1);border-bottom-color:var(--s1);}
   button.btn{background:var(--s1);color:#fff;border:none;padding:11px 18px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;min-height:44px;}
   button.btn:hover{filter:brightness(1.08);}
   button.btn.secondary{background:var(--grid);color:var(--text-primary);}
@@ -2808,6 +2812,14 @@
 
   <!-- EMERGENCIA (v1.61) -->
   <div class="view" id="view-emergencia">
+    <div class="grd-tabs" id="grdTabsBar">
+      <button type="button" class="grd-tab" data-grd-tab="resumen">Resumen</button>
+      <button type="button" class="grd-tab" data-grd-tab="diagnostico">Diagnóstico y vulnerabilidad</button>
+      <button type="button" class="grd-tab" data-grd-tab="respuesta">Comité y plan de respuesta</button>
+      <button type="button" class="grd-tab" data-grd-tab="simulacros">Simulacros y plan de acción</button>
+      <button type="button" class="grd-tab" data-grd-tab="plan">Plan de Emergencia</button>
+      <button type="button" class="grd-tab" data-grd-tab="extintores">Extintores</button>
+    </div>
     <div class="card">
       <div class="card-header-row" id="hdrGrdResumen"><h2>Gestión del Riesgo de Desastres (GRD) — Resumen</h2><button class="collapse-toggle" id="toggleGrdResumen" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyGrdResumen">
@@ -8811,6 +8823,31 @@ on($pe("rxExcelBtn"), "click", ()=>{
   XLSX.writeFile(wb, `Registro_extintores_${new Date().toISOString().slice(0,10)}.xlsx`);
 });
 resetRxForm();
+
+/* Pestañas internas de Emergencia: cada pestaña muestra solo las tarjetas
+   de su grupo (se identifican por el id de su encabezado) y la última
+   pestaña elegida se recuerda en este navegador. */
+const GRD_TABS_TARJETAS = {
+  resumen: ["hdrGrdResumen"],
+  diagnostico: ["hdrGrdAmenazas"],
+  respuesta: ["hdrGrdComite","hdrGrdRespuesta"],
+  simulacros: ["hdrGrdSimulacros","hdrGrdPlanAccion"],
+  plan: ["hdrPlanEmergencia"],
+  extintores: ["hdrExtintores","hdrRegistroExtintores"],
+};
+function grdMostrarTab(tab){
+  if(!GRD_TABS_TARJETAS[tab]) tab = "resumen";
+  Object.entries(GRD_TABS_TARJETAS).forEach(([t, ids])=>{
+    ids.forEach(id=>{ const card = document.getElementById(id) && document.getElementById(id).closest(".card"); if(card) card.style.display = (t===tab) ? "" : "none"; });
+  });
+  document.querySelectorAll("#grdTabsBar .grd-tab").forEach(b=>b.classList.toggle("active", b.dataset.grdTab===tab));
+  try{ localStorage.setItem("grdTabActiva", tab); }catch(e){}
+}
+on(document.getElementById("grdTabsBar"), "click", e=>{
+  const b = e.target.closest("[data-grd-tab]");
+  if(b) grdMostrarTab(b.dataset.grdTab);
+});
+(()=>{ let t = "resumen"; try{ t = localStorage.getItem("grdTabActiva") || "resumen"; }catch(e){} grdMostrarTab(t); })();
 
 function renderEmergencia(){
   renderExtintores();
