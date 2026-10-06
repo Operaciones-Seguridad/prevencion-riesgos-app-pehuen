@@ -117,6 +117,7 @@
   .grd-tab{background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;padding:9px 14px;font-size:13.5px;font-weight:600;color:var(--text-secondary);cursor:pointer;border-radius:6px 6px 0 0;}
   .grd-tab:hover{background:rgba(42,120,214,.08);}
   .grd-tab.active{color:var(--s1);border-bottom-color:var(--s1);}
+  .subtab-oculta{display:none !important;}
   button.btn{background:var(--s1);color:#fff;border:none;padding:11px 18px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;min-height:44px;}
   button.btn:hover{filter:brightness(1.08);}
   button.btn.secondary{background:var(--grid);color:var(--text-primary);}
@@ -8821,6 +8822,44 @@ on($pe("rxExcelBtn"), "click", ()=>{
 });
 resetRxForm();
 
+/* Pestañas internas genéricas para las vistas largas. Cada grupo lista los
+   ids de encabezado de sus tarjetas; las tarjetas que no están en ningún
+   grupo siguen visibles en todas las pestañas. La tarjeta se oculta con una
+   clase (no con style.display) para no pisar otras reglas que ya muestran
+   u ocultan tarjetas (por ejemplo, las solo para administrador). */
+const SUBPESTANAS = {};
+function subpestanasAplicar(viewId){
+  const cfg = SUBPESTANAS[viewId]; if(!cfg) return;
+  cfg.grupos.forEach(g=>g.hdrs.forEach(id=>{
+    const h = document.getElementById(id); const card = h && h.closest(".card");
+    if(card) card.classList.toggle("subtab-oculta", g.key!==cfg.activa);
+  }));
+  document.querySelectorAll(`#subtabs-${viewId} .grd-tab`).forEach(b=>b.classList.toggle("active", b.dataset.subtab===cfg.activa));
+}
+function subpestanasCrear(viewId, grupos){
+  const view = document.getElementById("view-"+viewId); if(!view) return;
+  const storageKey = "subtab_"+viewId;
+  const bar = document.createElement("div"); bar.className = "grd-tabs"; bar.id = "subtabs-"+viewId;
+  bar.innerHTML = grupos.map(g=>`<button type="button" class="grd-tab" data-subtab="${g.key}">${g.label}</button>`).join("");
+  view.insertBefore(bar, view.firstChild);
+  let activa = grupos[0].key;
+  try{ const s = localStorage.getItem(storageKey); if(s && grupos.some(g=>g.key===s)) activa = s; }catch(e){}
+  SUBPESTANAS[viewId] = {grupos, activa};
+  on(bar, "click", e=>{
+    const b = e.target.closest("[data-subtab]"); if(!b) return;
+    SUBPESTANAS[viewId].activa = b.dataset.subtab;
+    try{ localStorage.setItem(storageKey, b.dataset.subtab); }catch(err){}
+    subpestanasAplicar(viewId);
+  });
+  subpestanasAplicar(viewId);
+}
+subpestanasCrear("matriz", [
+  {key:"matriz", label:"Matriz de riesgos", hdrs:["hdrNuevaLineaDeMatrizDeRiesgosIPER","hdrMatrizIaWrap","hdrMatrizDobleEntrada","hdrMatrizVigente","hdrMatrizHistorial"]},
+  {key:"levantamiento", label:"Levantamiento por área", hdrs:["hdrLevantamiento"]},
+  {key:"mapas", label:"Mapas y análisis", hdrs:["hdrMapaDeRiesgosPorAreaProceso","hdrMapaDeRiesgosPlanoDePlantaYSimbologia","hdrMatrizDeRiesgosPorNivelYPorArea","hdrEquidadGenero"]},
+  {key:"accion", label:"Plan de acción y controles", hdrs:["hdrPlanDeAccionMatrizDeRiesgos","hdrJerarquiaDeControlesDS44","hdrTraspasosPendientes","hdrEstudioEpp"]},
+]);
+
 /* Pestañas internas de Emergencia: cada pestaña muestra solo las tarjetas
    de su grupo (se identifican por el id de su encabezado) y la última
    pestaña elegida se recuerda en este navegador. */
@@ -11586,6 +11625,7 @@ function moverFormularioMatrizAModal(){
   barraCierre.innerHTML = '<button class="btn secondary small" id="matrizModalCerrarBtn" type="button">Cerrar ventana</button>';
   modalBody.appendChild(barraCierre);
   modalBody.appendChild(card);
+  card.classList.remove("subtab-oculta");
   document.getElementById("bodyNuevaLineaDeMatrizDeRiesgosIPER").classList.remove("collapsed");
   document.getElementById("modalBg").classList.add("open");
   matrizFormEnModal = true;
@@ -11596,6 +11636,7 @@ function cerrarFormularioMatrizModal(){
   const card = document.getElementById("matrizFormCard");
   const anchor = document.getElementById("matrizFormAnchor");
   anchor.parentNode.insertBefore(card, anchor);
+  subpestanasAplicar("matriz");
   document.getElementById("modalBg").classList.remove("open");
   document.getElementById("modalBody").innerHTML = "";
   document.getElementById("modalBody").classList.remove("modal-wide");
