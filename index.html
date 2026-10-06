@@ -86,6 +86,16 @@
   .card-header-row h2{flex:1;}
   .collapse-toggle{background:none;border:1px solid var(--border);border-radius:6px;width:28px;height:28px;font-size:13px;line-height:1;cursor:pointer;color:var(--text-secondary);flex-shrink:0;transition:transform .15s ease;}
   .collapse-toggle:hover{color:var(--text-primary);border-color:var(--text-secondary);}
+  /* Barra de título de las tarjetas plegables: fondo celeste, ícono en cuadro azul y flecha en círculo. */
+  .card > .card-header-row{margin:-18px -18px 0;padding:12px 18px;background:#eef4fc;border-radius:var(--radius) var(--radius) 0 0;gap:12px;}
+  .card > .card-header-row:hover{background:#e6effb;}
+  .card > .card-header-row::before{content:"";width:34px;height:34px;border-radius:9px;flex:none;background:#2a78d6 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='6' height='6' rx='1'/%3E%3Crect x='14' y='4' width='6' height='6' rx='1'/%3E%3Crect x='4' y='14' width='6' height='6' rx='1'/%3E%3Crect x='14' y='14' width='6' height='6' rx='1'/%3E%3C/svg%3E") center/18px no-repeat;}
+  .card > .card-header-row h2{margin:0;font-size:16px;}
+  .card > .card-header-row .collapse-toggle{width:30px;height:30px;border-radius:50%;background:#fff;color:#2a78d6;border:1px solid #c9dbf3;font-size:14px;}
+  .card > .card-header-row .collapse-toggle:hover{color:#1c4e91;border-color:#2a78d6;}
+  .card > .card-header-row + .collapsible-body{margin-top:14px;}
+  .card:has(> .collapsible-body.collapsed){padding-bottom:0;}
+  .card:has(> .collapsible-body.collapsed) > .card-header-row{border-radius:var(--radius);}
   .collapsible-body.collapsed{display:none;}
   .grid-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:18px;}
   .tile{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;}
