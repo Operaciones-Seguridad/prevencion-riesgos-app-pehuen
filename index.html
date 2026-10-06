@@ -1815,9 +1815,9 @@
             <option value="ctp">Accidente de trabajo con tiempo perdido</option>
             <option value="stp">Accidente de trabajo sin tiempo perdido</option>
             <option value="trayecto">Accidente de trayecto</option>
-            <option value="incidente">Incidente / cuasi accidente (sin lesión)</option>
             <option value="enfermedad">Enfermedad profesional</option>
           </select>
+          <div class="kv" style="margin-top:4px;">Los incidentes / cuasi accidentes (sin lesión) se registran en la pestaña "Incidentes y pirámide de Bird".</div>
         </div>
         <div><label>Fecha</label><input id="accFecha" type="date"></div>
         <div><label>Área</label><select id="accArea"></select></div>
@@ -2220,6 +2220,83 @@
       <table>
         <thead><tr><th>Fecha</th><th>Tipo</th><th>Área</th><th>Vehículo</th><th>Velocidad estimada</th><th>Responsable</th><th></th></tr></thead>
         <tbody id="transitoTable"></tbody>
+      </table>
+    </div></div>
+
+    <!-- INCIDENTES Y PIRÁMIDE DE BIRD -->
+    <div class="card">
+      <div class="card-header-row" id="hdrIncRegistro"><h2 id="incFormTitle">Registrar incidente</h2><button class="collapse-toggle" id="toggleIncRegistro" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyIncRegistro">
+      <div class="desc">Un incidente es un hecho no deseado que no dejó lesión (cuasi accidente), con o sin daño a la propiedad: un golpe a un equipo, un objeto que cae sin alcanzar a nadie, una fuga. Registrarlos es la forma más barata de prevenir accidentes: son las señales previas de la pirámide de Bird. Los accidentes con lesión se siguen registrando en la pestaña "Registro de accidentes".</div>
+      <div class="form-grid">
+        <div><label>Fecha</label><input id="incFecha" type="date"></div>
+        <div><label>Área</label><select id="incArea"></select></div>
+        <div><label>Tipo de incidente</label><select id="incTipo"></select></div>
+        <div><label>Foco crítico</label><select id="incFoco"></select></div>
+        <div><label>¿Hubo daño a la propiedad?</label>
+          <select id="incDanio"><option value="no">No (sin lesión ni daño)</option><option value="si">Sí (daño a equipo, instalación o vehículo)</option></select>
+        </div>
+        <div id="incDanioDescWrap" style="display:none;"><label>Descripción del daño</label><input id="incDanioDesc" placeholder="Ej: Rotura de espejo lateral del camión"></div>
+      </div>
+      <label>Causa</label>
+      <input id="incCausa" placeholder="Ej: Carga mal estibada">
+      <label>Descripción</label>
+      <textarea id="incDescripcion" placeholder="Qué ocurrió, circunstancias y medidas inmediatas..."></textarea>
+      <div style="margin-top:16px;"><label style="margin:0;">Trabajadores involucrados</label></div>
+      <div class="toolbar">
+        <div class="field"><label>Trabajador</label><select id="incTrabajadorSel"></select></div>
+        <div><button class="btn small secondary" id="addIncTrabBtn" style="margin-top:20px;">+ Agregar</button></div>
+      </div>
+      <div id="incTrabajadoresWrap"></div>
+      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" id="saveIncBtn">Registrar incidente</button>
+        <button class="btn secondary" id="cancelEditIncBtn" style="display:none;">Cancelar edición</button>
+      </div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrBirdEvaluacion"><h2>Evaluación con la pirámide de Bird</h2><button class="collapse-toggle" id="toggleBirdEvaluacion" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyBirdEvaluacion">
+      <div class="desc">La pirámide de Bird (estudio de 1969 sobre 1.753.498 accidentes de 297 empresas) muestra que por cada lesión grave o incapacitante hay unas 10 lesiones leves, 30 daños a la propiedad y 600 incidentes sin lesión ni daño. Sirve para ver si la base (los incidentes) se está reportando: una base angosta suele indicar que los incidentes no se registran, no que no ocurran. <strong>Es una guía empírica, no una norma legal ni una evaluación certificada.</strong> Los filtros de esta tarjeta también se aplican al control, los rankings y el listado de abajo.</div>
+      <div class="toolbar">
+        <div class="field"><label>Período</label><select id="birdPeriodo"></select></div>
+        <div class="field" id="birdRangoWrap" style="display:none;"><label>Desde</label><input id="birdDesde" type="date"></div>
+        <div class="field" id="birdRangoWrap2" style="display:none;"><label>Hasta</label><input id="birdHasta" type="date"></div>
+        <div class="field"><label>Foco crítico</label><select id="birdFoco"></select></div>
+        <div class="field"><label>Área</label><select id="birdArea"></select></div>
+        <div><button class="btn small secondary" id="downloadBirdPdfBtn" style="margin-top:20px;">Descargar evaluación PDF</button></div>
+      </div>
+      <div id="birdResumenWrap"></div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrIncControl"><h2>Control por tipo de incidente y foco crítico</h2><button class="collapse-toggle" id="toggleIncControl" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyIncControl">
+      <div class="desc">Cantidad de incidentes por tipo (filas) y foco crítico (columnas) en el período y filtros elegidos arriba. Las celdas más oscuras concentran más incidentes.</div>
+      <div id="incCruceWrap" style="overflow-x:auto;"></div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrIncRanking"><h2>Ranking de incidentes</h2><button class="collapse-toggle" id="toggleIncRanking" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyIncRanking">
+      <div class="desc">Los rankings sirven para decidir dónde actuar primero, no para sancionar: una persona que aparece mucho puede estar expuesta a un riesgo que nadie ha controlado.</div>
+      <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));column-gap:24px;">
+        <div>
+          <div class="label" style="font-size:12.5px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;">Por trabajador involucrado</div>
+          <div id="incRankTrab"></div>
+        </div>
+        <div>
+          <div class="label" style="font-size:12.5px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;">Por tipo de incidente</div>
+          <div id="incRankTipo"></div>
+        </div>
+        <div>
+          <div class="label" style="font-size:12.5px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;">Por foco crítico (incidentes vs accidentes)</div>
+          <div id="incRankFoco"></div>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrIncListado"><h2>Incidentes registrados</h2><button class="collapse-toggle" id="toggleIncListado" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyIncListado">
+      <table>
+        <thead><tr><th>Fecha</th><th>Tipo de incidente</th><th>Foco crítico</th><th>Daño a la propiedad</th><th>Área</th><th>Trabajadores</th><th>Causa</th><th></th></tr></thead>
+        <tbody id="incTable"></tbody>
       </table>
     </div></div>
   </div>
@@ -3372,6 +3449,7 @@
             <option value="capTipo">Tipo de capacitación</option>
             <option value="epp">Elemento de protección personal (EPP)</option>
             <option value="focoCritico">Foco crítico (Accidentabilidad)</option>
+            <option value="tipoIncidente">Tipo de incidente (Accidentabilidad)</option>
           </select>
         </div>
         <div class="field"><label>Nueva opción</label><input id="catValor" placeholder="Ej: Nueva situación de riesgo"></div>
@@ -4054,6 +4132,11 @@ setupCollapsible("hdrIndicadoresDeSiniestralidadDS67YRegistroHistorico", "bodyIn
 setupCollapsible("hdrEvaluacionDeSiniestralidadDS67CotizacionAdicional", "bodyEvaluacionDeSiniestralidadDS67CotizacionAdicional", "toggleEvaluacionDeSiniestralidadDS67CotizacionAdicional", "collapsed_evaluacionDeSiniestralidadDS67CotizacionAdicional");
 setupCollapsible("hdrControlEstadisticoMensualYAnual", "bodyControlEstadisticoMensualYAnual", "toggleControlEstadisticoMensualYAnual", "collapsed_controlEstadisticoMensualYAnual");
 setupCollapsible("hdrClasificacionDeAccidentesEIncidentes", "bodyClasificacionDeAccidentesEIncidentes", "toggleClasificacionDeAccidentesEIncidentes", "collapsed_clasificacionDeAccidentesEIncidentes");
+setupCollapsible("hdrIncRegistro", "bodyIncRegistro", "toggleIncRegistro", "collapsed_incRegistro");
+setupCollapsible("hdrBirdEvaluacion", "bodyBirdEvaluacion", "toggleBirdEvaluacion", "collapsed_birdEvaluacion");
+setupCollapsible("hdrIncControl", "bodyIncControl", "toggleIncControl", "collapsed_incControl");
+setupCollapsible("hdrIncRanking", "bodyIncRanking", "toggleIncRanking", "collapsed_incRanking");
+setupCollapsible("hdrIncListado", "bodyIncListado", "toggleIncListado", "collapsed_incListado");
 setupCollapsible("hdrRegistrarInfractor", "bodyRegistrarInfractor", "toggleRegistrarInfractor", "collapsed_registrarInfractor");
 setupCollapsible("hdrInfraccionesPorMotivo", "bodyInfraccionesPorMotivo", "toggleInfraccionesPorMotivo", "collapsed_infraccionesPorMotivo");
 setupCollapsible("hdrTopReincidentes", "bodyTopReincidentes", "toggleTopReincidentes", "collapsed_topReincidentes");
@@ -8880,6 +8963,7 @@ const SUBTAB_ICONOS = {
   empresa:'<path d="M4 21V8l8-5 8 5v13M9 21v-6h6v6"/>',
   datos:'<path d="M12 3v12M7 11l5 5 5-5M5 21h14"/>',
   llave:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  piramide:'<path d="M12 3L3 20h18z"/><path d="M8 14h8M5.500 18h13"/>',
 };
 // Íconos del menú lateral: se agregan a cada botón (el texto del botón no cambia).
 const NAV_ICONOS = {
@@ -8968,6 +9052,8 @@ subpestanasCrear("matriz", [
 subpestanasCrear("accidentabilidad", [
   {key:"registro", icono:"registro", label:"Registro de accidentes", desc:"Registrar accidentes, historial y horas-hombre", hdrs:["hdrRegistrarAccidenteIncidente","hdrIndicadoresDeSiniestralidadDS67YRegistroHistorico","hdrHorasHombreTrabajadasPorPeriodo"],
     badge:()=>{ const n = (CACHE.accidentes||[]).filter(a=>accDenunciaSigla(a.tipo) && a.denunciaRealizada==="no").length; return n ? {texto:`${n} sin DIAT/DIEP`, nivel:"r"} : null; }},
+  {key:"incidentes", icono:"piramide", label:"Incidentes y pirámide de Bird", desc:"Registro de incidentes, control por tipo y foco crítico, rankings y evaluación de Bird", hdrs:["hdrIncRegistro","hdrBirdEvaluacion","hdrIncControl","hdrIncRanking","hdrIncListado"],
+    badge:()=>{ const b = birdBadgeInfo(); return b ? {texto:b, nivel:"y"} : null; }},
   {key:"estadisticas", icono:"grafico", label:"Estadísticas y DS 67", desc:"Indicadores, control mensual y siniestralidad DS 67", hdrs:["hdrAccidentesPorMes","hdrAccidentesPorArea","hdrControlEstadisticoMensualYAnual","hdrClasificacionDeAccidentesEIncidentes","hdrEvaluacionDeSiniestralidadDS67CotizacionAdicional"]},
   {key:"arbol", icono:"buscar", label:"Árbol causal", desc:"Análisis de causa raíz de cada accidente", hdrs:["hdrArbolCausal","hdrArbolCausalListado"]},
   {key:"transito", icono:"pulso", label:"Accidentes de tránsito", desc:"Investigación y reconstrucción de accidentes de tránsito", hdrs:["hdrInvestigacionDeAccidentesDeTransito","hdrInvestigacionesDeTransitoRegistradas"]},
@@ -9222,8 +9308,9 @@ const CATALOG_BASE = {
   capTipo: CAT_TIPO_CAPACITACION,
   epp: CAT_EPP,
   focoCritico: [],
+  tipoIncidente: ["Caída de objetos","Caída de personas","Golpe o atrapamiento","Contacto con energía eléctrica","Derrame o fuga","Conato de incendio","Choque o colisión de vehículo o equipo","Falla de equipo o herramienta","Acto inseguro observado","Condición insegura","Otro"],
 };
-const CATALOG_LABELS = { proceso:"Proceso", actividad:"Actividad", categoria:"Categoría", peligro:"Peligro / Riesgo", capTipo:"Tipo de capacitación", epp:"Elemento de protección personal (EPP)", focoCritico:"Foco crítico (Accidentabilidad)" };
+const CATALOG_LABELS = { proceso:"Proceso", actividad:"Actividad", categoria:"Categoría", peligro:"Peligro / Riesgo", capTipo:"Tipo de capacitación", epp:"Elemento de protección personal (EPP)", focoCritico:"Foco crítico (Accidentabilidad)", tipoIncidente:"Tipo de incidente (Accidentabilidad)" };
 // Catálogo por Rubro (compartido entre empresas del mismo rubro, ver
 // loadCache/CACHE.catalogoRubro) -- tercer nivel, entre el catálogo base
 // (fijo en el código) y catalogosExtra (privado de esta empresa, legado).
@@ -9328,6 +9415,7 @@ function renderCommonSelects(){
   fillSelect(filterAccFocoSel, getCatalog("focoCritico").map(v=>({id:v,label:v})), false);
   filterAccFocoSel.insertAdjacentHTML("afterbegin",'<option value="">Todos</option>');
   filterAccFocoSel.value = getCatalog("focoCritico").includes(curFilterAccFoco) ? curFilterAccFoco : "";
+  renderIncSelects();
 
   const arbolAccidenteSel = document.getElementById("arbolAccidenteSel");
   const curArbolAccidente = arbolAccidenteSel.value;
@@ -16165,6 +16253,8 @@ function renderAccidentabilidad(){
 
   renderAccClasificacion();
 
+  renderIncidentes();
+
   renderDs67();
 }
 
@@ -16407,6 +16497,7 @@ function resetAccForm(){
 function startEditAcc(id){
   const rec = CACHE.accidentes.find(a=>a.id===id);
   if(!rec) return;
+  if(rec.tipo==="incidente"){ startEditInc(id); return; }
   accEditingId = id;
   document.getElementById("accTipo").value = rec.tipo || "ctp";
   document.getElementById("accFecha").value = rec.fecha || "";
@@ -16594,6 +16685,490 @@ on(document.getElementById("accidentesTable"), "click", async (e) => {
     if(accEditingId === rec.id) resetAccForm();
     renderAccidentesTable(); renderAccidentabilidad();
   }
+});
+
+/* =========================================================
+   INCIDENTES Y PIRÁMIDE DE BIRD
+   Los incidentes (tipo "incidente") viven en el mismo almacén "accidentes"
+   para que sigan sumando en los indicadores; solo se agregan campos
+   opcionales: tipoIncidente (lista editable en Configuración),
+   danioPropiedad ("si"/"no") y descripcionDanio. Los registros antiguos sin
+   esos campos cuentan como "Sin clasificar" y sin daño.
+   Bird (1969): 1 lesión grave/incapacitante : 10 lesiones leves :
+   30 daños a la propiedad : 600 incidentes sin lesión ni daño. Es una guía
+   empírica, no una norma legal.
+   ========================================================= */
+var BIRD_NIVELES = [
+  {ref:1,   key:"n1",   label:"Accidentes con tiempo perdido", detalle:"Lesión grave o incapacitante (incluye graves y fatales)"},
+  {ref:10,  key:"n10",  label:"Accidentes sin tiempo perdido", detalle:"Lesiones leves"},
+  {ref:30,  key:"n30",  label:"Incidentes con daño a la propiedad", detalle:"Sin lesión, con daño a equipo, instalación o vehículo"},
+  {ref:600, key:"n600", label:"Incidentes sin lesión ni daño", detalle:"Cuasi accidentes"},
+];
+var incEditingId = null;
+var currentIncTrabajadores = [];
+
+function incEl(id){ return document.getElementById(id); }
+function incEsc(s){ return String(s===undefined||s===null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function incFechaIso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function incPl(n, s, p){ return n===1 ? s : p; }
+
+function incOpcionesTipo(){
+  const base = getCatalog("tipoIncidente");
+  const extra = (CACHE.accidentes||[]).filter(a=>a.tipo==="incidente" && a.tipoIncidente && !base.includes(a.tipoIncidente)).map(a=>a.tipoIncidente);
+  return base.concat(Array.from(new Set(extra)));
+}
+function incOpcionesFoco(){
+  const base = getCatalog("focoCritico");
+  const extra = (CACHE.accidentes||[]).filter(a=>a.focoCritico && !base.includes(a.focoCritico)).map(a=>a.focoCritico);
+  return base.concat(Array.from(new Set(extra)));
+}
+function incAsegurarOpcion(sel, valor){
+  if(valor && !Array.from(sel.options).some(o=>o.value===valor)) sel.insertAdjacentHTML("beforeend", `<option value="${incEsc(valor)}">${incEsc(valor)}</option>`);
+}
+
+function renderIncSelects(){
+  if(!incEl("incArea")) return;
+  const conservar = (sel, armar)=>{ const cur = sel.value; armar(); if(Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur; };
+  const areas = CACHE.areas.map(a=>({id:a.id,label:a.nombre}));
+  conservar(incEl("incArea"), ()=>fillSelect(incEl("incArea"), areas, true));
+  conservar(incEl("incTipo"), ()=>fillSelect(incEl("incTipo"), incOpcionesTipo().map(v=>({id:incEsc(v),label:incEsc(v)})), true));
+  conservar(incEl("incFoco"), ()=>{
+    fillSelect(incEl("incFoco"), incOpcionesFoco().map(v=>({id:incEsc(v),label:incEsc(v)})), false);
+    incEl("incFoco").insertAdjacentHTML("afterbegin",'<option value="">Sin foco crítico asociado</option>');
+  });
+  conservar(incEl("incTrabajadorSel"), ()=>fillSelect(incEl("incTrabajadorSel"), CACHE.trabajadores.map(t=>({id:t.id,label:incEsc(t.nombre)})), true));
+  if(incEditingId){
+    const rec = CACHE.accidentes.find(a=>a.id===incEditingId);
+    if(rec){ incAsegurarOpcion(incEl("incTipo"), rec.tipoIncidente); incAsegurarOpcion(incEl("incFoco"), rec.focoCritico); }
+  }
+  // Filtros de la evaluación
+  conservar(incEl("birdPeriodo"), ()=>{
+    const anioActual = new Date().getFullYear();
+    const anios = Array.from(new Set((CACHE.accidentes||[]).map(a=>+(a.fecha||"").slice(0,4)).filter(Boolean).concat([anioActual]))).sort((a,b)=>b-a);
+    incEl("birdPeriodo").innerHTML = '<option value="12m">Últimos 12 meses</option>' + anios.map(y=>`<option value="${y}">Año ${y}</option>`).join("") + '<option value="todo">Todo el historial</option><option value="rango">Rango de fechas</option>';
+  });
+  if(!incEl("birdPeriodo").value) incEl("birdPeriodo").value = "12m";
+  conservar(incEl("birdFoco"), ()=>{
+    incEl("birdFoco").innerHTML = '<option value="">Todos</option><option value="__sin">Sin foco crítico</option>' + incOpcionesFoco().map(v=>`<option value="${incEsc(v)}">${incEsc(v)}</option>`).join("");
+  });
+  conservar(incEl("birdArea"), ()=>{
+    incEl("birdArea").innerHTML = '<option value="">Todas</option>' + areas.map(a=>`<option value="${a.id}">${incEsc(a.label)}</option>`).join("");
+  });
+  const esRango = incEl("birdPeriodo").value==="rango";
+  incEl("birdRangoWrap").style.display = esRango ? "" : "none";
+  incEl("birdRangoWrap2").style.display = esRango ? "" : "none";
+}
+
+function incRangoPeriodo(){
+  const p = incEl("birdPeriodo").value || "12m";
+  const hoy = new Date();
+  if(p==="12m"){
+    const d = new Date(hoy.getFullYear()-1, hoy.getMonth(), hoy.getDate()+1);
+    return {desde:incFechaIso(d), hasta:incFechaIso(hoy), texto:"últimos 12 meses (del "+fmtDate(incFechaIso(d))+" al "+fmtDate(incFechaIso(hoy))+")"};
+  }
+  if(p==="todo") return {desde:"", hasta:"", texto:"todo el historial"};
+  if(p==="rango"){
+    const desde = incEl("birdDesde").value, hasta = incEl("birdHasta").value;
+    const txt = desde||hasta ? `${desde?"desde el "+fmtDate(desde):""}${desde&&hasta?" ":""}${hasta?"hasta el "+fmtDate(hasta):""}` : "rango de fechas sin definir (se muestra todo)";
+    return {desde, hasta, texto:txt};
+  }
+  return {desde:p+"-01-01", hasta:p+"-12-31", texto:"año "+p};
+}
+function incFiltrarRegistros(){
+  const r = incRangoPeriodo();
+  const foco = incEl("birdFoco").value, area = incEl("birdArea").value;
+  return (CACHE.accidentes||[]).filter(a=>{
+    const f = a.fecha || "";
+    if(r.desde && f < r.desde) return false;
+    if(r.hasta && f > r.hasta) return false;
+    if(foco==="__sin"){ if(a.focoCritico) return false; }
+    else if(foco && a.focoCritico!==foco) return false;
+    if(area && a.areaId!==area) return false;
+    return true;
+  });
+}
+
+/* Cuenta cada nivel de la pirámide y arma la lectura. Nivel 1: accidentes con
+   tiempo perdido y cualquier grave/fatal; nivel 10: accidentes sin tiempo
+   perdido; nivel 30: incidentes con daño a la propiedad; nivel 600: incidentes
+   sin lesión ni daño. Trayecto y enfermedad profesional no entran. El
+   "esperado" se calcula a partir de los accidentes con tiempo perdido (o, si no
+   hay, de los sin tiempo perdido a razón de 10 por cada uno). */
+function birdCalcular(accs){
+  const c = {n1:0,n10:0,n30:0,n600:0,graves:0,fatales:0,excluidos:0};
+  accs.forEach(a=>{
+    if(a.tipo==="ctp" || a.tipo==="stp"){
+      if(a.gravedad==="grave") c.graves++;
+      if(a.gravedad==="fatal") c.fatales++;
+      if(a.tipo==="ctp" || a.gravedad==="grave" || a.gravedad==="fatal") c.n1++; else c.n10++;
+    } else if(a.tipo==="incidente"){
+      if(a.danioPropiedad==="si") c.n30++; else c.n600++;
+    } else c.excluidos++;
+  });
+  c.total = c.n1 + c.n10 + c.n30 + c.n600;
+  let ancla = null, anclaTexto = "";
+  if(c.n1>0){ ancla = c.n1; anclaTexto = `${c.n1} ${incPl(c.n1,"accidente grave o con tiempo perdido","accidentes graves o con tiempo perdido")}`; }
+  else if(c.n10>0){ ancla = c.n10/10; anclaTexto = `${c.n10} ${incPl(c.n10,"accidente sin tiempo perdido","accidentes sin tiempo perdido")} (a razón de 10 por cada accidente grave)`; }
+  c.ancla = ancla; c.anclaTexto = anclaTexto;
+  c.niveles = BIRD_NIVELES.map(nv=>{
+    const obs = c[nv.key];
+    const esperado = ancla===null ? null : nv.ref*ancla;
+    const ratio = esperado ? obs/esperado : null;
+    let estado = null;
+    if(nv.ref>1 && ratio!==null) estado = ratio>=1 ? "ok" : ratio>=0.3 ? "parcial" : "bajo";
+    return Object.assign({}, nv, {obs, esperado, ratio, estado});
+  });
+  const h = [];
+  if(c.total===0 && !c.excluidos){
+    h.push({n:"i", t:"No hay registros en este período con los filtros elegidos."});
+  } else if(ancla===null){
+    h.push({n:"g", t:"No hay accidentes con lesión en este período: la pirámide no tiene punta, que es lo deseable. Sigue registrando incidentes, que son las señales previas."});
+  } else {
+    const [, n10, n30, n600] = c.niveles;
+    const aprox = x=>Math.round(x.esperado*10)/10;
+    if(n600.estado==="bajo") h.push({n:"r", t:`Base angosta: hay ${n600.obs} ${incPl(n600.obs,"incidente sin lesión ni daño","incidentes sin lesión ni daño")} y, con ${c.anclaTexto}, Bird esperaría cerca de ${aprox(n600)}. Lo más probable es que se estén reportando pocos incidentes (subregistro), no que ocurran pocos.`});
+    else if(n600.estado==="parcial") h.push({n:"y", t:`La base está bajo lo esperado: ${n600.obs} incidentes sin lesión ni daño frente a cerca de ${aprox(n600)}. Conviene reforzar el reporte de cuasi accidentes.`});
+    if(n30.estado==="bajo" || n30.estado==="parcial") h.push({n:n30.estado==="bajo"?"r":"y", t:`Daños a la propiedad: ${n30.obs} registrados frente a cerca de ${aprox(n30)} esperados. Revisa si los daños a equipos, instalaciones y vehículos se están reportando como incidentes.`});
+    if(n10.estado==="bajo" || n10.estado==="parcial") h.push({n:n10.estado==="bajo"?"r":"y", t:`Accidentes sin tiempo perdido: ${n10.obs} frente a cerca de ${aprox(n10)} esperados. Puede haber lesiones leves (primeros auxilios, atenciones menores) que no se están registrando.`});
+    if((c.n30+c.n600) < (c.n1+c.n10)) h.push({n:"r", t:"Pirámide invertida: hay más accidentes con lesión que incidentes sin lesión registrados."});
+  }
+  if(c.graves || c.fatales) h.push({n:"r", t:`Incluye ${c.graves} ${incPl(c.graves,"accidente grave","accidentes graves")} y ${c.fatales} ${incPl(c.fatales,"fatal","fatales")} (Compendio SUSESO); cuentan en el nivel 1.`});
+  if(c.excluidos) h.push({n:"i", t:`No se cuentan ${c.excluidos} ${incPl(c.excluidos,"registro","registros")} de trayecto o enfermedad profesional: la pirámide de Bird se refiere a accidentes del trabajo e incidentes.`});
+  if(c.total>0 && c.total<30) h.push({n:"i", t:`Hay pocos eventos en el período (${c.total}): las razones son orientativas. Amplía el período para una lectura más estable.`});
+  const estados = c.niveles.map(n=>n.estado).filter(Boolean);
+  if(c.total===0) c.veredicto = "sin";
+  else if(ancla===null) c.veredicto = "sinpunta";
+  else if(estados.includes("bajo")) c.veredicto = "bajo";
+  else if(estados.includes("parcial")) c.veredicto = "parcial";
+  else c.veredicto = "ok";
+  if(c.veredicto==="ok") h.unshift({n:"g", t:"La base de la pirámide está en línea con lo que Bird espera para este período."});
+  c.hallazgos = h;
+  c.recomendacion = (c.veredicto==="bajo"||c.veredicto==="parcial")
+    ? "Qué hacer: reforzar el reporte de cuasi accidentes y daños menores (un canal simple, a quién avisar y que reportar no se sancione), pedirlos en charlas y reuniones de seguridad, y revisar primero los focos críticos con accidentes y sin incidentes reportados (ver Ranking)."
+    : "";
+  return c;
+}
+var BIRD_VEREDICTO = {
+  sin:{t:"Sin datos para evaluar", c:"#5b6577"},
+  sinpunta:{t:"Sin accidentes con lesión en el período", c:"#0ca30c"},
+  ok:{t:"Base en línea con lo esperado", c:"#0ca30c"},
+  parcial:{t:"Base bajo lo esperado", c:"#e0a000"},
+  bajo:{t:"Base angosta: probable subregistro de incidentes", c:"#d03b3b"},
+};
+function birdColorEstado(estado){ return estado==="ok" ? "#0ca30c" : estado==="parcial" ? "#e0a000" : estado==="bajo" ? "#d03b3b" : "#4a5568"; }
+var BIRD_ESTADO_TEXTO = {ok:"En línea o sobre lo esperado", parcial:"Bajo lo esperado", bajo:"Muy bajo lo esperado"};
+function birdBadgeInfo(){
+  try{
+    const hoy = new Date();
+    const desde = incFechaIso(new Date(hoy.getFullYear()-1, hoy.getMonth(), hoy.getDate()+1)), hasta = incFechaIso(hoy);
+    const c = birdCalcular((CACHE.accidentes||[]).filter(a=>a.fecha && a.fecha>=desde && a.fecha<=hasta));
+    return c.veredicto==="bajo" ? "Base angosta" : null;
+  }catch(e){ return null; }
+}
+
+function renderBirdResumen(accs, rango){
+  const c = birdCalcular(accs);
+  const v = BIRD_VEREDICTO[c.veredicto];
+  const anchos = [32,52,76,100];
+  const piramide = c.niveles.map((n,i)=>`
+    <div style="display:flex;justify-content:center;margin-bottom:4px;">
+      <div style="width:${anchos[i]}%;min-width:210px;background:${birdColorEstado(n.estado)};color:${n.estado==="parcial"?"#222":"#fff"};border-radius:6px;padding:7px 10px;text-align:center;font-size:12.5px;">
+        <strong>Nivel ${n.ref}</strong> · ${n.label}: <strong>${n.obs}</strong>
+      </div>
+    </div>`).join("");
+  const filas = c.niveles.map(n=>`<tr>
+    <td>${n.ref}</td>
+    <td>${n.label}<div class="kv">${n.detalle}</div></td>
+    <td><strong>${n.obs}</strong></td>
+    <td>${n.esperado===null ? "—" : Math.round(n.esperado*10)/10}</td>
+    <td>${n.ref===1 ? '<span class="kv">Base de comparación</span>' : n.estado ? `<span class="pill ${n.estado==="ok"?"vigente":n.estado==="parcial"?"medio":"critico"}">${BIRD_ESTADO_TEXTO[n.estado]}</span><div class="kv">${Math.round(n.ratio*100)}% de lo esperado</div>` : "—"}</td>
+  </tr>`).join("");
+  const hall = c.hallazgos.map(x=>`<div class="desc" style="margin:4px 0;padding:6px 10px;border-radius:8px;background:${x.n==="r"?"#fdecea":x.n==="y"?"#fff8e6":x.n==="g"?"#e8f6ec":"#eef2f7"};">${x.t}</div>`).join("");
+  incEl("birdResumenWrap").innerHTML = `
+    <div style="display:inline-block;background:${v.c};color:${c.veredicto==="parcial"?"#222":"#fff"};border-radius:8px;padding:6px 14px;font-weight:600;margin-bottom:10px;">${v.t}</div>
+    <div class="kv" style="margin-bottom:8px;">Período: ${rango.texto}. Pirámide dibujada con forma de referencia (no a escala); los colores indican qué tan cerca está cada nivel de lo esperado por Bird.</div>
+    <div style="max-width:720px;margin:0 auto 12px;">${piramide}</div>
+    <div style="overflow-x:auto;"><table>
+      <thead><tr><th>Bird</th><th>Qué se cuenta</th><th>Registrados</th><th>Esperado con tu cifra</th><th>Lectura</th></tr></thead>
+      <tbody>${filas}</tbody>
+    </table></div>
+    ${c.ancla!==null ? `<div class="kv" style="margin-top:4px;">Esperado calculado con ${c.anclaTexto}. Criterio de lectura de Pehuén (no de Bird): en línea = 100% o más de lo esperado; bajo lo esperado = entre 30% y 99%; muy bajo = menos de 30%.</div>` : ""}
+    <div style="margin-top:10px;">${hall}</div>
+    ${c.recomendacion ? `<div class="desc" style="margin-top:6px;"><strong>${c.recomendacion}</strong></div>` : ""}
+    <div class="kv" style="margin-top:8px;">Referencia: F. E. Bird Jr., 1969, estudio de 1.753.498 accidentes de 297 empresas (1 : 10 : 30 : 600). Guía empírica de apoyo a la gestión; no es una norma legal ni una evaluación certificada.</div>`;
+}
+
+function renderIncCruce(incs){
+  const wrap = incEl("incCruceWrap");
+  if(!incs.length){ wrap.innerHTML = '<div class="empty">Sin incidentes en el período y filtros elegidos</div>'; return; }
+  const tipoDe = a=>a.tipoIncidente || "Sin clasificar";
+  const focoDe = a=>a.focoCritico || "Sin foco crítico";
+  const celdas = new Map(), totTipo = new Map(), totFoco = new Map(), danioTipo = new Map();
+  incs.forEach(a=>{
+    const t = tipoDe(a), f = focoDe(a), k = t+"\u0000"+f;
+    celdas.set(k, (celdas.get(k)||0)+1);
+    totTipo.set(t, (totTipo.get(t)||0)+1);
+    totFoco.set(f, (totFoco.get(f)||0)+1);
+    if(a.danioPropiedad==="si") danioTipo.set(t, (danioTipo.get(t)||0)+1);
+  });
+  const tipos = Array.from(totTipo.keys()).sort((a,b)=>totTipo.get(b)-totTipo.get(a));
+  const focos = Array.from(totFoco.keys()).sort((a,b)=>totFoco.get(b)-totFoco.get(a));
+  const max = Math.max.apply(null, Array.from(celdas.values()));
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Tipo de incidente</th>${focos.map(f=>`<th style="text-align:center;">${incEsc(f)}</th>`).join("")}<th style="text-align:center;">Total</th><th style="text-align:center;">Con daño a la propiedad</th></tr></thead>
+    <tbody>
+      ${tipos.map(t=>`<tr><td>${incEsc(t)}</td>${focos.map(f=>{
+        const n = celdas.get(t+"\u0000"+f)||0;
+        return `<td style="text-align:center;${n?`background:rgba(235,104,52,${(0.15+0.55*n/max).toFixed(2)});font-weight:600;`:"color:var(--text-secondary);"}">${n||"·"}</td>`;
+      }).join("")}<td style="text-align:center;font-weight:600;">${totTipo.get(t)}</td><td style="text-align:center;">${danioTipo.get(t)||0}</td></tr>`).join("")}
+      <tr><td><strong>Total</strong></td>${focos.map(f=>`<td style="text-align:center;font-weight:600;">${totFoco.get(f)}</td>`).join("")}<td style="text-align:center;font-weight:700;">${incs.length}</td><td style="text-align:center;font-weight:600;">${incs.filter(a=>a.danioPropiedad==="si").length}</td></tr>
+    </tbody></table>`;
+}
+
+function incRankingDatos(accs, incs){
+  const porTrab = new Map(); let sinTrab = 0;
+  incs.forEach(a=>{
+    const ids = accTrabajadoresDe(a);
+    if(!ids.length){ sinTrab++; return; }
+    ids.forEach(id=>porTrab.set(id, (porTrab.get(id)||0)+1));
+  });
+  const trab = Array.from(porTrab.entries()).map(([id,n])=>[trabName(id), n]).sort((a,b)=>b[1]-a[1]);
+  const porTipo = new Map();
+  incs.forEach(a=>{ const t = a.tipoIncidente || "Sin clasificar"; porTipo.set(t, (porTipo.get(t)||0)+1); });
+  const tipo = Array.from(porTipo.entries()).sort((a,b)=>b[1]-a[1]);
+  const focos = new Map();
+  const tocar = f=>{ if(!focos.has(f)) focos.set(f,{inc:0,acc:0}); return focos.get(f); };
+  accs.forEach(a=>{
+    const f = a.focoCritico || "Sin foco crítico";
+    if(a.tipo==="incidente") tocar(f).inc++;
+    else if(a.tipo==="ctp" || a.tipo==="stp") tocar(f).acc++;
+  });
+  const foco = Array.from(focos.entries()).map(([f,v])=>({foco:f, inc:v.inc, acc:v.acc})).filter(r=>r.inc+r.acc>0).sort((a,b)=>(b.inc+b.acc)-(a.inc+a.acc));
+  return {trab, tipo, foco, sinTrab};
+}
+function renderIncRankings(accs, incs){
+  const r = incRankingDatos(accs, incs);
+  const paleta = i=>AREA_CHART_PALETTE[i % AREA_CHART_PALETTE.length];
+  const top = r.trab.slice(0,10);
+  incEl("incRankTrab").innerHTML = top.length
+    ? chartBarsHtml(top.map(([n,c])=>[incEsc(n),c]), (l,i)=>paleta(i), true) + (r.trab.length>10 ? `<div class="kv">Se muestran los 10 primeros de ${r.trab.length}.</div>` : "") + (r.sinTrab ? `<div class="kv">${r.sinTrab} ${incPl(r.sinTrab,"incidente sin","incidentes sin")} trabajador asociado.</div>` : "")
+    : `<div class="empty">Sin incidentes con trabajadores asociados</div>`;
+  incEl("incRankTipo").innerHTML = r.tipo.length
+    ? chartBarsHtml(r.tipo.map(([n,c])=>[incEsc(n),c]), ()=>"#eb6834", true)
+    : `<div class="empty">Sin incidentes en el período</div>`;
+  incEl("incRankFoco").innerHTML = r.foco.length
+    ? `<table><thead><tr><th>Foco crítico</th><th>Incidentes</th><th>Accidentes</th><th></th></tr></thead><tbody>${r.foco.map(f=>`<tr>
+        <td>${incEsc(f.foco)}</td><td>${f.inc}</td><td>${f.acc}</td>
+        <td>${f.acc>0 && f.inc===0 ? '<span class="pill critico">Sin incidentes reportados</span>' : f.acc>f.inc ? '<span class="pill medio">Más accidentes que incidentes</span>' : ""}</td>
+      </tr>`).join("")}</tbody></table><div class="kv">Accidentes = con y sin tiempo perdido (sin trayecto ni enfermedad profesional).</div>`
+    : `<div class="empty">Sin registros en el período</div>`;
+}
+
+function renderIncTabla(incs){
+  const rows = incs.slice().sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||""));
+  incEl("incTable").innerHTML = rows.map(a=>`<tr>
+    <td>${fmtDate(a.fecha)}</td>
+    <td>${incEsc(a.tipoIncidente || "Sin clasificar")}</td>
+    <td>${incEsc(a.focoCritico || "—")}</td>
+    <td>${a.danioPropiedad==="si" ? `<span class="pill alto">Sí</span>${a.descripcionDanio?`<div class="kv">${incEsc(a.descripcionDanio)}</div>`:""}` : "No"}</td>
+    <td>${incEsc(areaName(a.areaId))}</td>
+    <td>${incEsc(accTrabajadoresDe(a).map(id=>trabName(id)).join(", ") || "—")}</td>
+    <td>${incEsc(a.causa || "—")}</td>
+    <td style="white-space:nowrap;">
+      <button class="btn secondary small" data-inc-editar="${a.id}">Editar</button>
+      <button class="btn secondary small" data-inc-pdf="${a.id}">Informe PDF</button>
+      <button class="subtle-btn" data-inc-eliminar="${a.id}">Eliminar</button>
+    </td>
+  </tr>`).join("") || `<tr><td class="empty" colspan="8">Sin incidentes en el período y filtros elegidos</td></tr>`;
+}
+
+function renderIncidentes(){
+  if(!incEl("birdResumenWrap")) return;
+  renderIncSelects();
+  const rango = incRangoPeriodo();
+  const accs = incFiltrarRegistros();
+  const incs = accs.filter(a=>a.tipo==="incidente");
+  renderBirdResumen(accs, rango);
+  renderIncCruce(incs);
+  renderIncRankings(accs, incs);
+  renderIncTabla(incs);
+  drawIncTrabajadores();
+}
+["birdPeriodo","birdDesde","birdHasta","birdFoco","birdArea"].forEach(id=>{ on(incEl(id), "change", renderIncidentes); });
+
+/* ---- Formulario de registro de incidentes ---- */
+function drawIncTrabajadores(){
+  incEl("incTrabajadoresWrap").innerHTML = currentIncTrabajadores.map((tid,idx)=>`
+    <div class="checklist-item">
+      <div>${incEsc(trabName(tid))}</div>
+      <button class="subtle-btn" data-inc-trab-quitar="${idx}">Quitar</button>
+    </div>
+  `).join("") || '<div class="empty">Sin trabajadores asociados</div>';
+}
+on(incEl("addIncTrabBtn"), "click", ()=>{
+  const id = incEl("incTrabajadorSel").value;
+  if(!id) return;
+  if(!currentIncTrabajadores.includes(id)) currentIncTrabajadores.push(id);
+  drawIncTrabajadores();
+});
+on(incEl("incTrabajadoresWrap"), "click", (e)=>{
+  const b = e.target.closest("button[data-inc-trab-quitar]");
+  if(!b) return;
+  currentIncTrabajadores.splice(+b.dataset.incTrabQuitar, 1);
+  drawIncTrabajadores();
+});
+on(incEl("incDanio"), "change", ()=>{ incEl("incDanioDescWrap").style.display = incEl("incDanio").value==="si" ? "" : "none"; });
+
+function resetIncForm(){
+  incEditingId = null;
+  incEl("incFecha").value = "";
+  incEl("incArea").value = "";
+  incEl("incTipo").value = "";
+  incEl("incFoco").value = "";
+  incEl("incDanio").value = "no";
+  incEl("incDanioDesc").value = "";
+  incEl("incDanioDescWrap").style.display = "none";
+  incEl("incCausa").value = "";
+  incEl("incDescripcion").value = "";
+  currentIncTrabajadores = [];
+  drawIncTrabajadores();
+  incEl("incFormTitle").textContent = "Registrar incidente";
+  incEl("saveIncBtn").textContent = "Registrar incidente";
+  incEl("cancelEditIncBtn").style.display = "none";
+}
+function startEditInc(id){
+  const rec = CACHE.accidentes.find(a=>a.id===id);
+  if(!rec) return;
+  incEditingId = id;
+  subpestanasMostrarDe("hdrIncRegistro");
+  renderIncSelects();
+  incAsegurarOpcion(incEl("incTipo"), rec.tipoIncidente);
+  incAsegurarOpcion(incEl("incFoco"), rec.focoCritico);
+  incEl("incFecha").value = rec.fecha || "";
+  incEl("incArea").value = rec.areaId || "";
+  incEl("incTipo").value = rec.tipoIncidente || "";
+  incEl("incFoco").value = rec.focoCritico || "";
+  incEl("incDanio").value = rec.danioPropiedad==="si" ? "si" : "no";
+  incEl("incDanioDesc").value = rec.descripcionDanio || "";
+  incEl("incDanioDescWrap").style.display = rec.danioPropiedad==="si" ? "" : "none";
+  incEl("incCausa").value = rec.causa || "";
+  incEl("incDescripcion").value = rec.descripcion || "";
+  currentIncTrabajadores = accTrabajadoresDe(rec).slice();
+  drawIncTrabajadores();
+  incEl("incFormTitle").textContent = `Editando incidente del ${fmtDate(rec.fecha)}`;
+  incEl("saveIncBtn").textContent = "Guardar cambios";
+  incEl("cancelEditIncBtn").style.display = "";
+  incEl("hdrIncRegistro").scrollIntoView({behavior:"smooth", block:"start"});
+}
+on(incEl("cancelEditIncBtn"), "click", ()=>{ resetIncForm(); });
+
+on(incEl("saveIncBtn"), "click", async ()=>{
+  const fecha = incEl("incFecha").value, areaId = incEl("incArea").value, tipoIncidente = incEl("incTipo").value;
+  if(!fecha || !areaId){ alert("Complete al menos la fecha y el área."); return; }
+  if(!tipoIncidente){ alert("Elige el tipo de incidente (puedes agregar tipos nuevos en Configuración → Gestionar listas desplegables)."); return; }
+  const danio = incEl("incDanio").value==="si" ? "si" : "no";
+  const datos = {
+    tipo:"incidente", fecha, areaId, tipoIncidente,
+    focoCritico: incEl("incFoco").value,
+    danioPropiedad: danio,
+    descripcionDanio: danio==="si" ? incEl("incDanioDesc").value.trim() : "",
+    trabajadoresIds: currentIncTrabajadores.slice(),
+    causa: incEl("incCausa").value.trim(),
+    descripcion: incEl("incDescripcion").value.trim(),
+  };
+  if(incEditingId){
+    const anterior = CACHE.accidentes.find(a=>a.id===incEditingId);
+    if(!anterior){ alert("El incidente que estabas editando ya no existe."); resetIncForm(); return; }
+    await put("accidentes", Object.assign({}, anterior, datos, {fechaModificacion:new Date().toISOString()}));
+    await loadCache();
+    resetIncForm();
+    renderAccidentesTable(); renderAccidentabilidad();
+    alert("Incidente actualizado.");
+    return;
+  }
+  await put("accidentes", Object.assign({id:uid(), gravedad:"leve", criteriosGrave:[], denunciaRealizada:"", fechaDenuncia:"", diasPerdidos:0, sexo:"", informePreliminar:null, informePreliminarNombre:null, fotografia:null, investigado:false}, datos));
+  await loadCache();
+  resetIncForm();
+  renderAccidentesTable(); renderAccidentabilidad();
+  alert("Incidente registrado.");
+});
+on(incEl("incTable"), "click", async (e)=>{
+  const ed = e.target.closest("button[data-inc-editar]");
+  if(ed){ startEditInc(ed.dataset.incEditar); return; }
+  const pdf = e.target.closest("button[data-inc-pdf]");
+  if(pdf){ const rec = CACHE.accidentes.find(a=>a.id===pdf.dataset.incPdf); if(rec) await descargarInformeAccidentePdf(rec); return; }
+  const del = e.target.closest("button[data-inc-eliminar]");
+  if(del){
+    const rec = CACHE.accidentes.find(a=>a.id===del.dataset.incEliminar);
+    if(!rec) return;
+    if(!confirm(`¿Eliminar el incidente del ${fmtDate(rec.fecha)}? Esta acción no se puede deshacer.`)) return;
+    await deleteRecord("accidentes", rec.id);
+    await loadCache();
+    if(incEditingId === rec.id) resetIncForm();
+    renderAccidentesTable(); renderAccidentabilidad();
+  }
+});
+
+/* ---- PDF de la evaluación ---- */
+on(incEl("downloadBirdPdfBtn"), "click", ()=>{
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const rango = incRangoPeriodo();
+  const accs = incFiltrarRegistros();
+  const incs = accs.filter(a=>a.tipo==="incidente");
+  const c = birdCalcular(accs);
+  const rk = incRankingDatos(accs, incs);
+  const doc = new JsPDFClass();
+  let y = grdPdfEncabezado(doc, "Evaluacion con la piramide de Bird");
+  const focoSel = incEl("birdFoco").value, areaSel = incEl("birdArea").value;
+  doc.setFontSize(10);
+  doc.text(`Periodo: ${rango.texto}`, 14, y); y += 5;
+  doc.text(`Foco critico: ${focoSel==="__sin" ? "Sin foco critico" : focoSel || "Todos"}   -   Area: ${areaSel ? areaName(areaSel) : "Todas"}`, 14, y); y += 8;
+  doc.setFontSize(12);
+  doc.text(BIRD_VEREDICTO[c.veredicto].t, 14, y); y += 8;
+  // Piramide (forma de referencia, no a escala)
+  const anchos = [50,85,125,170];
+  c.niveles.forEach((n,i)=>{
+    const col = birdColorEstado(n.estado).replace("#","");
+    doc.setFillColor(parseInt(col.slice(0,2),16), parseInt(col.slice(2,4),16), parseInt(col.slice(4,6),16));
+    doc.rect(105-anchos[i]/2, y, anchos[i], 9, "F");
+    doc.setTextColor(n.estado==="parcial" ? 30 : 255);
+    doc.setFontSize(8.5);
+    doc.text(`Nivel ${n.ref} - ${n.label}: ${n.obs}`, 105, y+5.8, {align:"center"});
+    y += 11;
+  });
+  doc.setTextColor(0);
+  y += 2;
+  doc.autoTable({ startY:y, head:[["Bird","Que se cuenta","Registrados","Esperado","Lectura"]],
+    body: c.niveles.map(n=>[n.ref, `${n.label} (${n.detalle})`, n.obs, n.esperado===null?"-":Math.round(n.esperado*10)/10,
+      n.ref===1 ? "Base de comparacion" : n.estado ? `${BIRD_ESTADO_TEXTO[n.estado]} (${Math.round(n.ratio*100)}%)` : "-"]),
+    styles:{fontSize:8}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 6;
+  doc.setFontSize(9);
+  if(c.ancla!==null){ y = escribirTextoPaginado(doc, `Esperado calculado con ${c.anclaTexto}. Criterio de lectura de Pehuen (no de Bird): en linea = 100% o mas de lo esperado; bajo lo esperado = 30% a 99%; muy bajo = menos de 30%.`, 14, y, {maxWidth:182, lineHeight:4.5}) + 2; }
+  doc.setFontSize(10);
+  c.hallazgos.forEach(h=>{ y = escribirTextoPaginado(doc, "- " + h.t, 14, y, {maxWidth:182, lineHeight:5}) + 1; });
+  if(c.recomendacion){ doc.setFont(undefined,"bold"); y = escribirTextoPaginado(doc, c.recomendacion, 14, y+2, {maxWidth:182, lineHeight:5}); doc.setFont(undefined,"normal"); }
+  y += 4;
+  if(y > 235){ doc.addPage(); y = 16; }
+  doc.setFontSize(12); doc.text("Incidentes por tipo", 14, y); y += 3;
+  doc.autoTable({ startY:y, head:[["Tipo de incidente","Cantidad"]], body: rk.tipo.length ? rk.tipo.map(([n,k])=>[n,k]) : [["Sin incidentes en el periodo",""]], styles:{fontSize:8.5}, headStyles:{fillColor:[236,131,90]} });
+  y = doc.lastAutoTable.finalY + 8;
+  if(y > 235){ doc.addPage(); y = 16; }
+  doc.setFontSize(12); doc.text("Incidentes por trabajador involucrado (primeros 10)", 14, y); y += 3;
+  doc.autoTable({ startY:y, head:[["Trabajador","Incidentes"]], body: rk.trab.length ? rk.trab.slice(0,10).map(([n,k])=>[n,k]) : [["Sin incidentes con trabajadores asociados",""]], styles:{fontSize:8.5}, headStyles:{fillColor:[236,131,90]} });
+  y = doc.lastAutoTable.finalY + 8;
+  if(y > 235){ doc.addPage(); y = 16; }
+  doc.setFontSize(12); doc.text("Por foco critico: incidentes vs accidentes", 14, y); y += 3;
+  doc.autoTable({ startY:y, head:[["Foco critico","Incidentes","Accidentes","Observacion"]],
+    body: rk.foco.length ? rk.foco.map(f=>[f.foco, f.inc, f.acc, f.acc>0&&f.inc===0 ? "Sin incidentes reportados" : f.acc>f.inc ? "Mas accidentes que incidentes" : ""]) : [["Sin registros en el periodo","","",""]],
+    styles:{fontSize:8.5}, headStyles:{fillColor:[236,131,90]} });
+  y = doc.lastAutoTable.finalY + 8;
+  if(y > 260){ doc.addPage(); y = 16; }
+  doc.setFontSize(8);
+  y = escribirTextoPaginado(doc, "Referencia: F. E. Bird Jr., 1969, estudio de 1.753.498 accidentes de 297 empresas (1 : 10 : 30 : 600). Guia empirica de apoyo a la gestion; no es una norma legal ni una evaluacion certificada.", 14, y, {maxWidth:182, lineHeight:4});
+  agregarPiePaginasPdf(doc, "Piramide de Bird");
+  doc.save(`Evaluacion_Piramide_Bird_${new Date().toISOString().slice(0,10)}.pdf`);
 });
 
 /* Logo de la empresa (v1.35), si se cargó en Configuración, se agrega en
