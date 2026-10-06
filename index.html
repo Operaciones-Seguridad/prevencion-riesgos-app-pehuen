@@ -8875,6 +8875,18 @@ subpestanasCrear("accidentabilidad", [
   {key:"transito", label:"Accidentes de tránsito", hdrs:["hdrInvestigacionDeAccidentesDeTransito","hdrInvestigacionesDeTransitoRegistradas"]},
 ]);
 
+subpestanasCrear("inspecciones", [
+  {key:"formatos", label:"Formatos e historial", hdrs:["hdrFormatosDeInspeccionObservacion","hdrHistorialDeInspeccionesYObservaciones","hdrDescargarResumenesEnPDF"]},
+  {key:"ast", label:"AST", hdrs:["hdrConfeccionDeASTAnalisisDeSeguridadDelTrabajo","hdrASTRegistradas"]},
+  {key:"izaje", label:"Evaluación de carga (izaje)", hdrs:["hdrEvaluacionDeCargaIzaje","hdrEvaluacionesDeCargaRegistradas"]},
+  {key:"estadisticas", label:"Estadísticas", hdrs:["hdrTop10HallazgosRepetitivos","hdrEstadisticaMensualYAnualPorClasificacion"]},
+]);
+subpestanasCrear("capacitacion", [
+  {key:"plan", label:"Plan de capacitación", hdrs:["hdrNuevaCapacitacion","hdrPlanDeCapacitacionCumplimiento","hdrEstadisticasDelPlanDeCapacitacion","hdrCumplimientoDeCapacitacionPorResponsableRelator"]},
+  {key:"iap", label:"Incidentes de alto potencial (IAP)", hdrs:["hdrIap","hdrIapListado"]},
+  {key:"cursos", label:"Cursos DS 44", hdrs:["hdrCursosDs44","hdrRegistroDeCursosCompletados","hdrAlertasDeVencimiento","hdrReporteDeCumplimientoCursosDS44"]},
+]);
+
 /* Pestañas internas de Emergencia: cada pestaña muestra solo las tarjetas
    de su grupo (se identifican por el id de su encabezado) y la última
    pestaña elegida se recuerda en este navegador. */
