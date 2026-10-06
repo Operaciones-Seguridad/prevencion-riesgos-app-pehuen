@@ -2832,7 +2832,7 @@
             <option value="otra">Otra amenaza</option>
           </select>
         </div>
-        <div id="grdAmenazaOtroWrap" style="display:none;"><label>Nombre de la otra amenaza</label><input id="grdAmenazaOtro" placeholder="Ej: Caída de material en altura"></div>
+        <div id="grdAmenazaOtroWrap" style="display:none;"><label>Nombre de la otra amenaza</label><input id="grdAmenazaOtro" list="dlGrdAmenazasSugeridas" placeholder="Ej: Caída de material en altura"><datalist id="dlGrdAmenazasSugeridas"><option value="Terremoto"></option><option value="Atropello"></option><option value="Colisión"></option><option value="Choque"></option><option value="Accidente laboral"></option><option value="Artefactos explosivos"></option><option value="Protestas / manifestaciones"></option></datalist></div>
         <div><label>Prioridad</label>
           <select id="grdAmenazaPrioridad">
             <option value="alta">Alta</option>
@@ -2841,6 +2841,24 @@
           </select>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:22px;"><input type="checkbox" id="grdAmenazaPresente" style="width:auto;" checked><label style="margin:0;">Identificada en este centro de trabajo</label></div>
+      </div>
+      <label style="margin-top:14px;">Levantamiento de vulnerabilidad (matriz de vulnerabilidad del Plan de Emergencia)</label>
+      <div class="desc">Clasifica la amenaza y califica qué tan factible es en las instalaciones y en terreno. <strong>Posible</strong>: puede suceder o es factible porque no existen razones históricas y científicas para decir que no sucederá. <strong>Probable</strong>: fenómeno esperado, del cual existen razones técnico-científicas para creer que sucederá. <strong>Inminente</strong>: fenómeno esperado con alta probabilidad de ocurrir. Deja "No aplica" si la amenaza no corresponde a ese ámbito.</div>
+      <div class="form-grid">
+        <div><label>Categoría</label>
+          <select id="grdAmenazaCategoria"><option value="">Sin clasificar</option><option value="natural">Natural</option><option value="tecnologico">Tecnológica</option><option value="social">Social</option></select>
+        </div>
+        <div><label>Fuente de riesgo</label><input id="grdAmenazaFuente" placeholder="Ej: Peligro geológico, Movimiento de vehículos, Eléctricos"></div>
+        <div><label>Calificación en instalaciones</label>
+          <select id="grdAmenazaCalifInst"><option value="">No aplica</option><option value="posible">Posible</option><option value="probable">Probable</option><option value="inminente">Inminente</option></select>
+        </div>
+        <div><label>Calificación en terreno / faenas</label>
+          <select id="grdAmenazaCalifTerreno"><option value="">No aplica</option><option value="posible">Posible</option><option value="probable">Probable</option><option value="inminente">Inminente</option></select>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:22px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:6px;font-weight:400;margin:0;"><input type="checkbox" id="grdAmenazaInterna" style="width:auto;min-height:auto;"> Origen interno</label>
+          <label style="display:flex;align-items:center;gap:6px;font-weight:400;margin:0;"><input type="checkbox" id="grdAmenazaExterna" style="width:auto;min-height:auto;"> Origen externo</label>
+        </div>
       </div>
       <label>Análisis histórico (A)</label>
       <textarea id="grdAmenazaHistorico" placeholder="Emergencias o desastres anteriores que afectaron o podrían afectar este centro de trabajo o su entorno"></textarea>
@@ -2860,6 +2878,16 @@
         <thead><tr><th>Amenaza</th><th>Identificada</th><th>Prioridad</th><th>Diagnóstico</th><th>Acciones</th></tr></thead>
         <tbody id="grdAmenazasTable"></tbody>
       </table>
+      <h2 style="margin-top:22px;">Matriz de vulnerabilidad — emergencias en las instalaciones</h2>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Categoría</th><th>Amenaza</th><th>Interna</th><th>Externa</th><th>Fuente de riesgo</th><th>Calificación</th></tr></thead>
+        <tbody id="grdVulnInstTable"></tbody>
+      </table></div>
+      <h2 style="margin-top:22px;">Matriz de vulnerabilidad — emergencias en terreno / faenas</h2>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Categoría</th><th>Amenaza</th><th>Interna</th><th>Externa</th><th>Fuente de riesgo</th><th>Calificación</th></tr></thead>
+        <tbody id="grdVulnTerrenoTable"></tbody>
+      </table></div>
       </div>
     </div>
 
@@ -7295,6 +7323,12 @@ function renderGrdResumen(){
 }
 
 /* --- Etapa 1: amenazas --- */
+/* Levantamiento de vulnerabilidad: calificación Posible / Probable / Inminente
+   (definiciones del Plan de Emergencia del usuario). Se pinta con los mismos
+   colores que los niveles de la matriz (amarillo, naranja, rojo). */
+const GRD_CALIFICACION_LABEL = {posible:"Posible", probable:"Probable", inminente:"Inminente"};
+const GRD_CALIFICACION_COLOR = {posible:"medio", probable:"alto", inminente:"critico"};
+const GRD_CATEGORIA_LABEL = {natural:"Natural", tecnologico:"Tecnológica", social:"Social"};
 let grdAmenazaEditingId = null;
 on(document.getElementById("grdAmenazaTipo"), "change", (e)=>{
   document.getElementById("grdAmenazaOtroWrap").style.display = e.target.value==="otra" ? "" : "none";
@@ -7306,6 +7340,12 @@ function resetGrdAmenazaForm(){
   document.getElementById("grdAmenazaOtro").value = "";
   document.getElementById("grdAmenazaPrioridad").value = "media";
   document.getElementById("grdAmenazaPresente").checked = true;
+  document.getElementById("grdAmenazaCategoria").value = "";
+  document.getElementById("grdAmenazaFuente").value = "";
+  document.getElementById("grdAmenazaCalifInst").value = "";
+  document.getElementById("grdAmenazaCalifTerreno").value = "";
+  document.getElementById("grdAmenazaInterna").checked = false;
+  document.getElementById("grdAmenazaExterna").checked = false;
   document.getElementById("grdAmenazaHistorico").value = "";
   document.getElementById("grdAmenazaVulnerabilidad").value = "";
   document.getElementById("grdAmenazaRecursos").value = "";
@@ -7324,6 +7364,12 @@ function startEditGrdAmenaza(id){
   document.getElementById("grdAmenazaOtro").value = rec.amenazaOtro || "";
   document.getElementById("grdAmenazaPrioridad").value = rec.prioridad || "media";
   document.getElementById("grdAmenazaPresente").checked = rec.presente!==false;
+  document.getElementById("grdAmenazaCategoria").value = rec.categoria || "";
+  document.getElementById("grdAmenazaFuente").value = rec.fuenteRiesgo || "";
+  document.getElementById("grdAmenazaCalifInst").value = rec.calificacionInstalaciones || "";
+  document.getElementById("grdAmenazaCalifTerreno").value = rec.calificacionTerreno || "";
+  document.getElementById("grdAmenazaInterna").checked = !!rec.origenInterno;
+  document.getElementById("grdAmenazaExterna").checked = !!rec.origenExterno;
   document.getElementById("grdAmenazaHistorico").value = rec.analisisHistorico || "";
   document.getElementById("grdAmenazaVulnerabilidad").value = rec.vulnerabilidad || "";
   document.getElementById("grdAmenazaRecursos").value = rec.recursosBasicos || "";
@@ -7342,6 +7388,12 @@ on(document.getElementById("saveGrdAmenazaBtn"), "click", async () => {
     amenaza, amenazaOtro,
     prioridad: document.getElementById("grdAmenazaPrioridad").value,
     presente: document.getElementById("grdAmenazaPresente").checked,
+    categoria: document.getElementById("grdAmenazaCategoria").value,
+    fuenteRiesgo: document.getElementById("grdAmenazaFuente").value.trim(),
+    calificacionInstalaciones: document.getElementById("grdAmenazaCalifInst").value,
+    calificacionTerreno: document.getElementById("grdAmenazaCalifTerreno").value,
+    origenInterno: document.getElementById("grdAmenazaInterna").checked,
+    origenExterno: document.getElementById("grdAmenazaExterna").checked,
     analisisHistorico: document.getElementById("grdAmenazaHistorico").value.trim(),
     vulnerabilidad: document.getElementById("grdAmenazaVulnerabilidad").value.trim(),
     recursosBasicos: document.getElementById("grdAmenazaRecursos").value.trim(),
@@ -7352,7 +7404,29 @@ on(document.getElementById("saveGrdAmenazaBtn"), "click", async () => {
   resetGrdAmenazaForm();
   renderEmergencia();
 });
+/* Tablas de la matriz de vulnerabilidad (formato del Plan de Emergencia):
+   una para las instalaciones y otra para terreno; una amenaza aparece en la
+   tabla que tenga calificación (puede aparecer en las dos, con calificación
+   distinta en cada una). */
+function renderGrdVulnerabilidad(){
+  const pintar = (tbodyId, campo)=>{
+    const rows = (CACHE.grdAmenazas||[])
+      .filter(a=>a[campo] && GRD_CALIFICACION_LABEL[a[campo]])
+      .sort((a,b)=> (GRD_CATEGORIA_LABEL[a.categoria]||"zzz").localeCompare(GRD_CATEGORIA_LABEL[b.categoria]||"zzz") || grdAmenazaNombre(a).localeCompare(grdAmenazaNombre(b)));
+    document.getElementById(tbodyId).innerHTML = rows.length ? rows.map(a=>`<tr>
+      <td>${GRD_CATEGORIA_LABEL[a.categoria]||"—"}</td>
+      <td>${grdAmenazaNombre(a)}</td>
+      <td style="text-align:center;">${a.origenInterno?"X":""}</td>
+      <td style="text-align:center;">${a.origenExterno?"X":""}</td>
+      <td>${a.fuenteRiesgo||"—"}</td>
+      <td><span class="pill ${GRD_CALIFICACION_COLOR[a[campo]]}">${GRD_CALIFICACION_LABEL[a[campo]]}</span></td>
+    </tr>`).join("") : `<tr><td class="empty" colspan="6">Sin amenazas calificadas para este ámbito. Califícalas al crear o editar una amenaza.</td></tr>`;
+  };
+  pintar("grdVulnInstTable", "calificacionInstalaciones");
+  pintar("grdVulnTerrenoTable", "calificacionTerreno");
+}
 function renderGrdAmenazasTable(){
+  renderGrdVulnerabilidad();
   const rows = (CACHE.grdAmenazas||[]).slice().sort((a,b)=> grdAmenazaNombre(a).localeCompare(grdAmenazaNombre(b)));
   document.getElementById("grdAmenazasTable").innerHTML = rows.length ? rows.map(a=>{
     const completo = grdAmenazaDiagnosticoCompleto(a);
