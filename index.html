@@ -4646,6 +4646,7 @@ function irAVista(nombreVista){
   if(tituloHeader && btn) tituloHeader.textContent = btn.textContent;
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
   document.getElementById("view-"+nombreVista).classList.add("active");
+  if(typeof SUBPESTANAS!=="undefined" && SUBPESTANAS[nombreVista]) subpestanasAplicar(nombreVista);
   if(nombreVista==="dashboard") renderDashboard();
   if(nombreVista==="accidentabilidad") renderAccidentabilidad();
   if(nombreVista==="seguridad"){ renderInfractores(); renderVelocidad(); }
@@ -8831,11 +8832,19 @@ resetRxForm();
 const SUBPESTANAS = {};
 function subpestanasAplicar(viewId){
   const cfg = SUBPESTANAS[viewId]; if(!cfg) return;
+  // Un grupo se considera disponible si alguna de sus tarjetas no está oculta por otra regla (por ejemplo, las solo para administrador).
+  const disponible = g => g.hdrs.some(id=>{ const h = document.getElementById(id); const c = h && h.closest(".card"); return c && c.style.display!=="none"; });
+  const grupoActivo = cfg.grupos.find(g=>g.key===cfg.activa);
+  if(!grupoActivo || !disponible(grupoActivo)){ const primero = cfg.grupos.find(disponible); if(primero) cfg.activa = primero.key; }
   cfg.grupos.forEach(g=>g.hdrs.forEach(id=>{
     const h = document.getElementById(id); const card = h && h.closest(".card");
     if(card) card.classList.toggle("subtab-oculta", g.key!==cfg.activa);
   }));
-  document.querySelectorAll(`#subtabs-${viewId} .grd-tab`).forEach(b=>b.classList.toggle("active", b.dataset.subtab===cfg.activa));
+  document.querySelectorAll(`#subtabs-${viewId} .grd-tab`).forEach(b=>{
+    const g = cfg.grupos.find(x=>x.key===b.dataset.subtab);
+    b.classList.toggle("active", b.dataset.subtab===cfg.activa);
+    b.style.display = disponible(g) ? "" : "none";
+  });
 }
 // Cambia a la pestaña que contiene la tarjeta con ese encabezado (para enlaces entre tarjetas de distintas pestañas).
 function subpestanasMostrarDe(hdrId){
@@ -8875,6 +8884,12 @@ subpestanasCrear("accidentabilidad", [
   {key:"transito", label:"Accidentes de tránsito", hdrs:["hdrInvestigacionDeAccidentesDeTransito","hdrInvestigacionesDeTransitoRegistradas"]},
 ]);
 
+subpestanasCrear("config", [
+  {key:"empresa", label:"Empresa y listas", hdrs:["hdrEmpresa","hdrMetasDeIndicadoresDeAccidentabilidad","hdrGestionarListasDesplegables","hdrPropiedadIntelectual"]},
+  {key:"personas", label:"Áreas y trabajadores", hdrs:["hdrAreasProcesos","hdrTrabajadores","hdrResponsablesDeCierreDeHallazgos"]},
+  {key:"datos", label:"Importar y respaldo", hdrs:["hdrImportarMatrizDeRiesgosDesdeExcel","hdrRespaldoDatosWrap","hdrDatosDeEjemplo"]},
+  {key:"accesos", label:"Accesos y empresas", hdrs:["hdrAccesos","hdrEmpresas"]},
+]);
 subpestanasCrear("inspecciones", [
   {key:"formatos", label:"Formatos e historial", hdrs:["hdrFormatosDeInspeccionObservacion","hdrHistorialDeInspeccionesYObservaciones","hdrDescargarResumenesEnPDF"]},
   {key:"ast", label:"AST", hdrs:["hdrConfeccionDeASTAnalisisDeSeguridadDelTrabajo","hdrASTRegistradas"]},
