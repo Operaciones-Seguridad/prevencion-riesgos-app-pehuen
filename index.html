@@ -792,7 +792,7 @@
       <div class="desc">N° de inspecciones y observaciones registradas por mes (año en curso) y resumen anual acumulado.</div>
       <div id="chartInsMensualWrap"></div>
       <table style="margin-top:14px;">
-        <thead><tr><th>Año</th><th>Inspecciones</th><th>Observaciones</th><th>Hallazgos totales</th><th>Hallazgos alto/crítico</th></tr></thead>
+        <thead><tr><th>Año</th><th>Inspecciones</th><th>Observaciones</th><th>Hallazgos totales</th><th>Hallazgos alto/muy alto</th></tr></thead>
         <tbody id="statsAnualTable"></tbody>
       </table>
     </div></div>
@@ -852,11 +852,11 @@
         </div>
         <div>
           <label>Probabilidad (1-5)</label>
-          <select id="mProb"><option value="1">1 - Muy improbable</option><option value="2">2 - Improbable</option><option value="3" selected>3 - Posible</option><option value="4">4 - Probable</option><option value="5">5 - Muy probable</option></select>
+          <select id="mProb"><option value="1">1 - Raro</option><option value="2">2 - Improbable</option><option value="3" selected>3 - Posible</option><option value="4">4 - Probable</option><option value="5">5 - Casi cierto</option></select>
         </div>
         <div>
           <label>Consecuencia (1-5)</label>
-          <select id="mCons"><option value="1">1 - Leve</option><option value="2">2 - Menor</option><option value="3" selected>3 - Moderada</option><option value="4">4 - Mayor</option><option value="5">5 - Catastrófica</option></select>
+          <select id="mCons"><option value="1">1 - Despreciable</option><option value="2">2 - Menor</option><option value="3" selected>3 - Moderado</option><option value="4">4 - Mayor</option><option value="5">5 - Catastrófico</option></select>
         </div>
       </div>
       <label>Efecto / descripción del riesgo (opcional)</label>
@@ -913,11 +913,11 @@
       <div class="form-grid">
         <div>
           <label>Probabilidad residual (1-5)</label>
-          <select id="mProbResidual"><option value="">— Sin evaluar aún —</option><option value="1">1 - Muy improbable</option><option value="2">2 - Improbable</option><option value="3">3 - Posible</option><option value="4">4 - Probable</option><option value="5">5 - Muy probable</option></select>
+          <select id="mProbResidual"><option value="">— Sin evaluar aún —</option><option value="1">1 - Raro</option><option value="2">2 - Improbable</option><option value="3">3 - Posible</option><option value="4">4 - Probable</option><option value="5">5 - Casi cierto</option></select>
         </div>
         <div>
           <label>Consecuencia residual (1-5)</label>
-          <select id="mConsResidual"><option value="">— Sin evaluar aún —</option><option value="1">1 - Leve</option><option value="2">2 - Menor</option><option value="3">3 - Moderada</option><option value="4">4 - Mayor</option><option value="5">5 - Catastrófica</option></select>
+          <select id="mConsResidual"><option value="">— Sin evaluar aún —</option><option value="1">1 - Despreciable</option><option value="2">2 - Menor</option><option value="3">3 - Moderado</option><option value="4">4 - Mayor</option><option value="5">5 - Catastrófico</option></select>
         </div>
       </div>
       <div style="margin-top:6px;">
@@ -993,13 +993,32 @@
     </div></div>
 
     <div class="card">
+      <div class="card-header-row" id="hdrMatrizDobleEntrada"><h2>Matriz de doble entrada: cómo leer la matriz IPER</h2><button class="collapse-toggle" id="toggleMatrizDobleEntrada" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyMatrizDobleEntrada">
+      <div class="desc">El nivel de riesgo se obtiene cruzando la <strong>Probabilidad</strong> (filas) con la <strong>Consecuencia</strong> (columnas). Cada celda muestra el valor P x C, su nivel y cuántas líneas de tu matriz caen en ella. Toda evaluación cuya consecuencia sea <strong>Catastrófica (5)</strong> se considera automáticamente <strong>Muy alto</strong>, sea cual sea su probabilidad de ocurrencia.</div>
+      <div class="toolbar">
+        <div class="field"><label>Contar las líneas según</label>
+          <select id="matrizDEModo">
+            <option value="efectivo">Riesgo vigente (residual si ya fue evaluado, si no el puro)</option>
+            <option value="puro">Riesgo puro (antes de controles)</option>
+            <option value="residual">Riesgo residual (solo líneas ya evaluadas)</option>
+          </select>
+        </div>
+      </div>
+      <div style="overflow-x:auto;"><div id="matrizDobleEntradaWrap"></div></div>
+      <h3 style="margin-top:18px;font-size:14px;">Magnitud del riesgo: qué significa cada nivel</h3>
+      <div style="overflow-x:auto;"><div id="matrizDELeyendaNiveles"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-header-row" id="hdrMatrizVigente"><h2>Matriz de riesgos vigente</h2><button class="collapse-toggle" id="toggleMatrizVigente" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyMatrizVigente">
       <div class="toolbar">
         <div class="field"><label>Buscar por Peligro / Riesgo</label><input type="text" id="filterMatrizPeligro" placeholder="Ej: ruido, caída, manejo manual..."></div>
         <div class="field"><label>Filtrar por área</label><select id="filterMatrizArea"><option value="">Todas</option></select></div>
         <div class="field"><label>Filtrar por categoría</label><select id="filterMatrizCategoria"><option value="">Todas</option></select></div>
-        <div class="field"><label>Filtrar por nivel</label><select id="filterMatrizNivel"><option value="">Todos</option><option value="bajo">Bajo</option><option value="medio">Medio</option><option value="alto">Alto</option><option value="critico">Crítico</option></select></div>
+        <div class="field"><label>Filtrar por nivel</label><select id="filterMatrizNivel"><option value="">Todos</option><option value="bajo">Bajo</option><option value="medio">Medio</option><option value="alto">Alto</option><option value="critico">Muy alto</option></select></div>
         <div class="field"><label>Filtrar por estado</label><select id="filterMatrizEstado"><option value="">Todos</option><option value="pendiente">Pendiente</option><option value="proceso">En proceso</option><option value="cerrada">Cerrada</option></select></div>
         <div class="field"><label>Especialmente sensible</label><select id="filterMatrizSensible"><option value="">Todas</option><option value="si">Sí</option><option value="no">No</option></select></div>
         <div><button class="btn secondary small" id="exportMatrizBtn" style="margin-top:20px;">Descargar Excel</button></div>
@@ -1062,14 +1081,14 @@
 
     <div class="card">
       <div class="card-header-row" id="hdrPlanDeAccionMatrizDeRiesgos"><h2>Plan de Acción — Matriz de Riesgos</h2><button class="collapse-toggle" id="togglePlanDeAccionMatrizDeRiesgos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyPlanDeAccionMatrizDeRiesgos">
-      <div class="desc">Para todo riesgo que no sea Bajo (Medio, Alto o Crítico), define qué se va a hacer, quién es responsable y con qué plazo, y hazle seguimiento hasta cerrarlo registrando el riesgo residual alcanzado. Metodología: Revisión y Priorización → Definición de Acciones y Controles → Asignación de Recursos y Responsables → Seguimiento y Monitoreo → Actualización Continua.</div>
+      <div class="desc">Para todo riesgo que no sea Bajo (Medio, Alto o Muy alto), define qué se va a hacer, quién es responsable y con qué plazo, y hazle seguimiento hasta cerrarlo registrando el riesgo residual alcanzado. Metodología: Revisión y Priorización → Definición de Acciones y Controles → Asignación de Recursos y Responsables → Seguimiento y Monitoreo → Actualización Continua.</div>
       <div class="toolbar">
         <div class="field"><label>Próxima revisión anual de la matriz</label><input type="date" id="paRevisionAnual"></div>
         <div><button class="btn secondary small" id="paGuardarRevisionAnualBtn" style="margin-top:20px;">Guardar</button></div>
       </div>
 
       <h2 style="margin-top:22px;font-size:15px;">Pendientes de plan de acción</h2>
-      <div class="desc">Líneas de la matriz calificadas Alto o Crítico que todavía no tienen ninguna acción definida.</div>
+      <div class="desc">Líneas de la matriz calificadas Alto o Muy alto que todavía no tienen ninguna acción definida.</div>
       <table>
         <thead><tr><th>Área</th><th>Peligro / Riesgo</th><th>Nivel</th><th></th></tr></thead>
         <tbody id="paPendientesTable"></tbody>
@@ -1077,7 +1096,7 @@
 
       <h2 id="paFormTitle" style="margin-top:22px;font-size:15px;">Nueva acción</h2>
       <div class="form-grid">
-        <div><label>Línea de la matriz (Alto o Crítico)</label><select id="paMatrizId"></select></div>
+        <div><label>Línea de la matriz (Medio, Alto o Muy alto)</label><select id="paMatrizId"></select></div>
       </div>
       <div id="paLineaContexto" class="desc" style="margin-top:6px;">Selecciona una línea de la matriz.</div>
       <div class="form-grid" style="margin-top:10px;">
@@ -2332,10 +2351,10 @@
         <div class="field" style="min-width:150px;"><div class="kv">Bajo</div><div id="resumenRiesgosCountBajo" style="font-size:22px;font-weight:800;color:#0ca30c;"></div></div>
         <div class="field" style="min-width:150px;"><div class="kv">Medio</div><div id="resumenRiesgosCountMedio" style="font-size:22px;font-weight:800;color:#a37a00;"></div></div>
         <div class="field" style="min-width:150px;"><div class="kv">Alto</div><div id="resumenRiesgosCountAlto" style="font-size:22px;font-weight:800;color:#c15b30;"></div></div>
-        <div class="field" style="min-width:150px;"><div class="kv">Crítico</div><div id="resumenRiesgosCountCritico" style="font-size:22px;font-weight:800;color:#a02323;"></div></div>
+        <div class="field" style="min-width:150px;"><div class="kv">Muy alto</div><div id="resumenRiesgosCountCritico" style="font-size:22px;font-weight:800;color:#a02323;"></div></div>
         <div class="field" style="min-width:150px;"><div class="kv">Total líneas en la matriz</div><div id="resumenRiesgosCountTotal" style="font-size:22px;font-weight:800;"></div></div>
       </div>
-      <h3 style="margin-top:16px;">Principales riesgos (nivel Alto y Crítico)</h3>
+      <h3 style="margin-top:16px;">Principales riesgos (nivel Alto y Muy alto)</h3>
       <table>
         <thead><tr><th>Área</th><th>Peligro / Riesgo</th><th>Nivel</th><th>Medidas de control</th><th>Responsable</th><th>Plazo</th></tr></thead>
         <tbody id="resumenRiesgosLegalTable"></tbody>
@@ -2522,6 +2541,11 @@
       <div class="collapsible-body" id="bodyProcMatriz">
       <div class="desc">Se listan, sin repetir, todas las medidas de control <strong>administrativas (jerarquía D del DS N°44)</strong> ya cargadas en la Matriz de riesgos — típicamente instrucciones de trabajo, procedimientos de trabajo seguro y similares — junto con cuántas líneas de la matriz las exigen. El estado "Confeccionado" aparece cuando ya existe un documento de tipo Procedimiento registrado más abajo con exactamente ese mismo texto; si el texto del procedimiento cambia levemente, puede no reconocerse automáticamente.</div>
       <div class="grid-tiles" id="procedimientosMatrizTiles"></div>
+      <div class="toolbar" style="margin-top:14px;">
+        <div class="field" style="flex:2;min-width:260px;"><label>Buscar procedimiento</label><input type="text" id="procMatrizBuscar" placeholder="Ej: altura, difusión, manejo de carga, nombre de un proceso o peligro..."></div>
+        <div class="field"><label>Estado</label><select id="procMatrizEstado"><option value="">Todos</option><option value="pendiente">Pendientes de confeccionar</option><option value="confeccionado">Confeccionados</option></select></div>
+        <div class="field"><div class="kv" id="procMatrizConteo" style="margin-top:22px;"></div></div>
+      </div>
       <table>
         <thead><tr><th>Medida de control administrativa (D) de la Matriz</th><th>Líneas que la exigen</th><th>Estado</th><th>Acción</th></tr></thead>
         <tbody id="procedimientosMatrizTable"></tbody>
@@ -3694,6 +3718,7 @@ function setupCollapsible(headerId, bodyId, toggleId, storageKey, defaultOpen){
 setupCollapsible("hdrMatrizVigente", "bodyMatrizVigente", "toggleMatrizVigente", "collapsed_matrizVigente");
 setupCollapsible("hdrTraspasosPendientes", "bodyTraspasosPendientes", "toggleTraspasosPendientes", "collapsed_traspasosPendientes");
 setupCollapsible("hdrDs44Catalogo", "bodyDs44Catalogo", "toggleDs44Catalogo", "collapsed_ds44Catalogo");
+setupCollapsible("hdrMatrizDobleEntrada", "bodyMatrizDobleEntrada", "toggleMatrizDobleEntrada", "collapsed_matrizDobleEntrada");
 setupCollapsible("hdrResumenRiesgosLegal", "bodyResumenRiesgosLegal", "toggleResumenRiesgosLegal", "collapsed_resumenRiesgosLegal");
 setupCollapsible("hdrFuf", "bodyFuf", "toggleFuf", "collapsed_fuf");
 setupCollapsible("hdrCursosDs44", "bodyCursosDs44", "toggleCursosDs44", "collapsed_cursosDs44");
@@ -4141,14 +4166,28 @@ async function seedCompromisosPorDefecto(){
 /* =========================================================
    UTILIDADES
    ========================================================= */
+/* Matriz de doble entrada de la MIPER (criterio de Angolec, definido por el
+   usuario): fila = probabilidad 1..5, columna = consecuencia 1..5. No es un
+   simple umbral sobre P x C: toda consecuencia Catastrófica (5) queda
+   automáticamente como "Muy Alto" (clave interna "critico") sea cual sea la
+   probabilidad, y Raro (1) x Moderado (3) es una condición especial que da
+   Medio aunque su producto (3) sea Bajo en el resto de la matriz. */
+const MATRIZ_NIVEL_TABLA = {
+  5: {1:"medio", 2:"medio", 3:"alto",  4:"critico", 5:"critico"},
+  4: {1:"medio", 2:"medio", 3:"alto",  4:"alto",    5:"critico"},
+  3: {1:"bajo",  2:"medio", 3:"medio", 4:"alto",    5:"critico"},
+  2: {1:"bajo",  2:"medio", 3:"medio", 4:"medio",   5:"critico"},
+  1: {1:"bajo",  2:"bajo",  3:"medio", 4:"medio",   5:"critico"},
+};
 function nivelRiesgo(p,c){
-  const v = p*c;
-  if(v<=4) return "bajo";
-  if(v<=9) return "medio";
-  if(v<=16) return "alto";
-  return "critico";
+  const fila = MATRIZ_NIVEL_TABLA[Math.round(+p)];
+  const n = fila && fila[Math.round(+c)];
+  return n || "bajo";
 }
-function nivelLabel(n){ return {bajo:"Bajo",medio:"Medio",alto:"Alto",critico:"Crítico"}[n]||n; }
+function nivelLabel(n){ return {bajo:"Bajo",medio:"Medio",alto:"Alto",critico:"Muy alto"}[n]||n; }
+const NIVEL_RANGO = {bajo:0, medio:1, alto:2, critico:3};
+// Orden para listar de mayor a menor riesgo: primero el nivel y, dentro del nivel, P x C (el producto solo ya no ordena bien porque la consecuencia 5 siempre es Muy alto).
+function valorOrdenRiesgoPC(p,c){ return (NIVEL_RANGO[nivelRiesgo(p,c)]||0)*100 + (+p||0)*(+c||0); }
 // Riesgo "efectivo" de una línea de matriz: usa el riesgo residual (post-control)
 // si ya fue evaluado; mientras no se evalúe, sigue usando el riesgo puro tal
 // como funcionaba antes de que existiera la evaluación residual.
@@ -4156,6 +4195,7 @@ function tieneResidualEvaluado(m){ return !!(m && m.probabilidadResidual && m.co
 function probResidualEfectiva(m){ return (m && m.probabilidadResidual) || (m && m.probabilidad); }
 function consResidualEfectiva(m){ return (m && m.consecuenciaResidual) || (m && m.consecuencia); }
 function nivelRiesgoLinea(m){ return nivelRiesgo(probResidualEfectiva(m), consResidualEfectiva(m)); }
+function valorOrdenRiesgoLinea(m){ return valorOrdenRiesgoPC(probResidualEfectiva(m), consResidualEfectiva(m)); }
 
 /* =========================================================
    JERARQUÍA DE CONTROLES (DS N°44)
@@ -4732,7 +4772,7 @@ function renderResumenRiesgosLegal(){
   document.getElementById("resumenRiesgosCountTotal").textContent = total;
   const principales = CACHE.matriz
     .filter(m=>["alto","critico"].includes(nivelRiesgoLinea(m)))
-    .sort((a,b)=> (probResidualEfectiva(b)*consResidualEfectiva(b)) - (probResidualEfectiva(a)*consResidualEfectiva(a)));
+    .sort((a,b)=> valorOrdenRiesgoLinea(b) - valorOrdenRiesgoLinea(a));
   document.getElementById("resumenRiesgosLegalTable").innerHTML = principales.length
     ? principales.map(m=>`<tr>
         <td>${areaName(m.areaId)}</td>
@@ -4742,7 +4782,7 @@ function renderResumenRiesgosLegal(){
         <td>${m.responsable||"—"}</td>
         <td>${m.plazo?fmtDate(m.plazo):"—"}</td>
       </tr>`).join("")
-    : `<tr><td class="empty" colspan="6">Sin líneas de nivel Alto o Crítico en la matriz vigente</td></tr>`;
+    : `<tr><td class="empty" colspan="6">Sin líneas de nivel Alto o Muy alto en la matriz vigente</td></tr>`;
 }
 on(document.getElementById("descargarResumenRiesgosPdfBtn"), "click", () => {
   const JsPDFClass = getJsPDF();
@@ -4752,7 +4792,7 @@ on(document.getElementById("descargarResumenRiesgosPdfBtn"), "click", () => {
   const counts = Object.fromEntries(niveles.map(n=>[n, CACHE.matriz.filter(m=>nivelRiesgoLinea(m)===n).length]));
   const principales = CACHE.matriz
     .filter(m=>["alto","critico"].includes(nivelRiesgoLinea(m)))
-    .sort((a,b)=> (probResidualEfectiva(b)*consResidualEfectiva(b)) - (probResidualEfectiva(a)*consResidualEfectiva(a)));
+    .sort((a,b)=> valorOrdenRiesgoLinea(b) - valorOrdenRiesgoLinea(a));
   const doc = new JsPDFClass();
   addLogoPdf(doc);
   let y = 16;
@@ -4764,15 +4804,15 @@ on(document.getElementById("descargarResumenRiesgosPdfBtn"), "click", () => {
   if(lineaDatos){ doc.text(lineaDatos, 14, y); y += 6; }
   doc.text(`Generado: ${fmtDate(new Date().toISOString())} — según Matriz de riesgos vigente (${total} línea(s))`, 14, y); y += 8;
   doc.autoTable({ startY:y, head:[["Nivel de riesgo","N° de líneas"]], body:[
-    ["Bajo", counts.bajo], ["Medio", counts.medio], ["Alto", counts.alto], ["Crítico", counts.critico],
+    ["Bajo", counts.bajo], ["Medio", counts.medio], ["Alto", counts.alto], ["Muy alto", counts.critico],
   ], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]} });
   y = doc.lastAutoTable.finalY + 8;
-  doc.setFontSize(12); doc.text("Principales riesgos (nivel Alto y Crítico)", 14, y); y += 4;
+  doc.setFontSize(12); doc.text("Principales riesgos (nivel Alto y Muy alto)", 14, y); y += 4;
   doc.autoTable({ startY:y,
     head:[["Área","Peligro","Riesgo","Nivel","Medidas de control","Responsable","Plazo"]],
     body: principales.length
       ? principales.map(m=>[areaName(m.areaId)||"—", m.peligro||"—", m.riesgo||"—", nivelLabel(nivelRiesgoLinea(m)), m.controles||"—", m.responsable||"—", m.plazo?fmtDate(m.plazo):"—"])
-      : [["Sin líneas de nivel Alto o Crítico en la matriz vigente","—","—","—","—","—","—"]],
+      : [["Sin líneas de nivel Alto o Muy alto en la matriz vigente","—","—","—","—","—","—"]],
     styles:{fontSize:8}, headStyles:{fillColor:[42,120,214]} });
   doc.save("resumen_riesgos_empresa.pdf");
 });
@@ -5205,7 +5245,7 @@ function descargarIrlPdf(id){
   doc.autoTable({ startY:y,
     head:[["Área","Peligro","Riesgo","Nivel","Medidas de control"]],
     body: lineasCargo.length
-      ? lineasCargo.slice().sort((a,b)=> (probResidualEfectiva(b)||0)*(consResidualEfectiva(b)||0) - (probResidualEfectiva(a)||0)*(consResidualEfectiva(a)||0))
+      ? lineasCargo.slice().sort((a,b)=> valorOrdenRiesgoLinea(b) - valorOrdenRiesgoLinea(a))
           .map(m=>[areaName(m.areaId)||"—", m.peligro||"—", m.riesgo||"—", nivelLabel(nivelRiesgoLinea(m)), controlesTextoPlano(jerarquiaDe(m)) || "—"])
       : [["Sin líneas registradas en la Matriz de riesgos para las áreas de este cargo","—","—","—","—"]],
     styles:{fontSize:8}, headStyles:{fillColor:[42,120,214]} });
@@ -5787,10 +5827,11 @@ function procedimientosDesdeMatriz(){
       const texto = (it.texto||"").trim();
       if(!texto) return;
       const key = texto.toLowerCase().replace(/\s+/g," ");
-      if(!map.has(key)) map.set(key, {texto, count:0, procesos:new Set(), documentoId:null});
+      if(!map.has(key)) map.set(key, {texto, count:0, procesos:new Set(), documentoId:null, busqueda:new Set()});
       const e = map.get(key);
       e.count++;
       if(m.proceso) e.procesos.add(m.proceso);
+      [m.proceso, m.actividad, m.peligro, m.riesgo].forEach(v=>{ if(v) e.busqueda.add(String(v)); });
       if(!e.documentoId && it.documentoId) e.documentoId = it.documentoId; // representativo del bucket
     });
   });
@@ -5854,7 +5895,19 @@ function documentosVigentesMap(){
 }
 function renderProcedimientosMatriz(){
   const items = procedimientosDesdeMatriz();
-  document.getElementById("procedimientosMatrizTable").innerHTML = items.length ? items.map((it,idx)=>{
+  // El buscador filtra solo lo que se muestra; el índice original (idx) se
+  // conserva porque "Vincular a documento" lo usa para ubicar el procedimiento
+  // dentro de la lista completa (window.__procedimientosMatrizActuales).
+  const terminos = quitarAcentos((document.getElementById("procMatrizBuscar").value||"").toLowerCase()).split(/\s+/).filter(Boolean);
+  const fEstado = document.getElementById("procMatrizEstado").value;
+  const visibles = items.map((it,idx)=>({it,idx})).filter(({it})=>{
+    if(fEstado && (fEstado==="confeccionado") !== !!documentoDeControl(it)) return false;
+    if(!terminos.length) return true;
+    const pajar = quitarAcentos((it.texto+" "+Array.from(it.busqueda).join(" ")).toLowerCase());
+    return terminos.every(t=>pajar.includes(t));
+  });
+  document.getElementById("procMatrizConteo").textContent = (terminos.length||fEstado) ? `Mostrando ${visibles.length} de ${items.length} procedimiento(s)` : "";
+  document.getElementById("procedimientosMatrizTable").innerHTML = visibles.length ? visibles.map(({it,idx})=>{
     const doc = documentoDeControl(it);
     const estadoHtml = doc ? `<span class="pill vigente">Confeccionado (v.${doc.version||"—"})${it.documentoId?" 🔗":""}</span>` : `<span class="pill pendiente">Pendiente</span>`;
     const accionHtml = (doc
@@ -5867,7 +5920,7 @@ function renderProcedimientosMatriz(){
       <td>${estadoHtml}</td>
       <td>${accionHtml}</td>
     </tr>`;
-  }).join("") : `<tr><td class="empty" colspan="4">No hay medidas de control administrativas (D) cargadas en la Matriz de riesgos</td></tr>`;
+  }).join("") : `<tr><td class="empty" colspan="4">${items.length ? "Ningún procedimiento coincide con la búsqueda" : "No hay medidas de control administrativas (D) cargadas en la Matriz de riesgos"}</td></tr>`;
   const pendientes = items.filter(it=>!documentoDeControl(it)).length;
   document.getElementById("procedimientosMatrizTiles").innerHTML = [
     tile("Procedimientos identificados en la Matriz", items.length, "medidas de control administrativas (D) distintas"),
@@ -5876,6 +5929,8 @@ function renderProcedimientosMatriz(){
   ].join("");
   window.__procedimientosMatrizActuales = items;
 }
+document.getElementById("procMatrizBuscar").addEventListener("input", renderProcedimientosMatriz);
+document.getElementById("procMatrizEstado").addEventListener("change", renderProcedimientosMatriz);
 /* Vincula TODAS las líneas de la matriz cuyo control D tenga el mismo texto
    (normalizado) que este bucket a un documento elegido -- resuelve de una
    vez el caso típico de "el mismo procedimiento repetido en N líneas". */
@@ -8394,7 +8449,7 @@ function renderDashboard(){
       tile("Tasa de siniestralidad total (DS 67)", ds67Ultimo ? ds67Ultimo.tasaSiniestralidadTotal.toFixed(2) : "—", ds67Ultimo ? ("evaluación "+ds67Ultimo.anioEvaluacion) : "sin evaluación DS 67 registrada", null, "alert", "var(--s1)"),
     ]) +
     tileSection("Matriz de riesgos", "var(--s1)", [
-      tile("Riesgos críticos en matriz", riesgosCriticos, "de "+CACHE.matriz.length+" líneas", null, "shield", "var(--s1)"),
+      tile("Riesgos muy altos en matriz", riesgosCriticos, "de "+CACHE.matriz.length+" líneas", null, "shield", "var(--s1)"),
       tile("Hallazgos con acción abierta", accionesAbiertas, "requieren seguimiento", null, "shield", "var(--s1)"),
       tile("Análisis de causa raíz realizados", (CACHE.arbolesCausales||[]).length, "árboles causales registrados", null, "shield", "var(--s1)"),
     ]) +
@@ -8425,7 +8480,7 @@ function renderDashboard(){
   // chart 1: riesgos por nivel
   const niveles = ["bajo","medio","alto","critico"];
   const riskRows = niveles.map(n=>({label:nivelLabel(n), value: CACHE.matriz.filter(m=>nivelRiesgoLinea(m)===n).length}));
-  renderBarChart(document.getElementById("chartRiskLevel"), riskRows, r=>NIVEL_COLOR[r.label.toLowerCase()==="crítico"?"critico":r.label.toLowerCase()]);
+  renderBarChart(document.getElementById("chartRiskLevel"), riskRows, r=>NIVEL_COLOR[r.label.toLowerCase()==="muy alto"?"critico":r.label.toLowerCase()]);
 
   // chart 2: cumplimiento por protocolo (solo protocolos que aplican según la matriz)
   const healthRows = protAplicables.map(p=>{
@@ -9597,7 +9652,7 @@ on(document.getElementById("downloadResumenPdfBtn"), "click", async () => {
   const abiertas = enPeriodo.filter(i=>(i.estado||"abierta")==="abierta").length;
   doc.autoTable({ startY:y, head:[["Indicador","Valor"]], body:[
     ["N° Inspecciones", nInsp], ["N° Observaciones", nObs], ["N° total de registros", enPeriodo.length],
-    ["N° hallazgos totales", hallazgos.length], ["N° hallazgos alto/crítico", hallazgosGraves],
+    ["N° hallazgos totales", hallazgos.length], ["N° hallazgos alto/muy alto", hallazgosGraves],
     ["N° registros aún abiertos", abiertas],
   ], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]} });
   y = doc.lastAutoTable.finalY + 8;
@@ -10717,7 +10772,82 @@ on(document.getElementById("matrizIaAgregarBtn"), "click", async () => {
   alert(`${seleccionadas.length} línea(s) agregada(s) a la matriz de riesgos.`);
 });
 
+/* Definiciones de la matriz de doble entrada, tal como las define el usuario
+   (matriz IPER de Angolec). Probabilidad: frecuencia esperada del accidente.
+   Consecuencia: se evalúa con el criterio que corresponda al tipo de evento
+   (accidente laboral, daños materiales o accidente operacional). */
+const MATRIZ_DEF_PROBABILIDAD = {
+  5: {nombre:"Casi cierto", def:"Que el accidente ocurra todos los días."},
+  4: {nombre:"Probable", def:"Que ocurra el accidente en forma semanal."},
+  3: {nombre:"Posible", def:"Que pueda ocurrir cada quince días."},
+  2: {nombre:"Improbable", def:"Que pueda ocurrir una vez al mes."},
+  1: {nombre:"Raro", def:"Que nunca ha ocurrido en la organización."},
+};
+const MATRIZ_DEF_CONSECUENCIA = {
+  1: {nombre:"Despreciable", laboral:"Ambulatorio, sin tiempo perdido.", materiales:"Menor a $250.000.", operacional:"Paro inferior a 3 horas."},
+  2: {nombre:"Menor", laboral:"Con tiempo perdido entre 1 y 6 días.", materiales:"Superior a $250.000 e inferior o igual a $1.000.000.", operacional:"Entre 3 horas y 5 horas."},
+  3: {nombre:"Moderado", laboral:"Con tiempo perdido entre 7 y 14 días.", materiales:"Superior a $1.000.001 e inferior a $3.500.000.", operacional:"Entre 5 horas y 8 horas."},
+  4: {nombre:"Mayor", laboral:"Con tiempo perdido superior a 14 días (límite superior por completar).", materiales:"Superior a $3.500.001 e inferior a $7.000.000.", operacional:"Superior a 1 día e inferior a 2 días."},
+  5: {nombre:"Catastrófico", laboral:"Muerte o incapacidad permanente.", materiales:"Mayor a $7.000.000.", operacional:"Superior a 2 días de paro."},
+};
+const MATRIZ_DEF_NIVEL = {
+  critico: {rango:"20 o más, o cualquier consecuencia Catastrófica (5)", def:"El riesgo pone en peligro los objetivos del proyecto, puede causar muerte o daño o significar una pérdida financiera importante. El proyecto debe priorizar en acciones inmediatas para reducir la categoría del riesgo. Se deben suspender todas las actividades que puedan poner en riesgo a los trabajadores en forma inmediata hasta una reevaluación."},
+  alto: {rango:"Entre 12 y 16", def:"El riesgo pone en peligro la seguridad de los trabajadores, las medidas de seguridad no son adecuadas para el control o mitigación de los riesgos evaluados; se debe realizar una nueva evaluación de los planes de acción verificando que la magnitud del riesgo se encuentre dentro de los parámetros aceptables."},
+  medio: {rango:"Entre 4 y 10 (y Raro x Moderado)", def:"El evento produce un impacto significativo en el programa, costos y/o calidad del proyecto, con posibles consecuencias en otras áreas y afectando a la organización. Debe ser monitoreado cercanamente y ejecutar acciones para reducir probabilidad y/o impacto."},
+  bajo: {rango:"Entre 1 y 3 (excepto Raro x Moderado)", def:"El evento no causa problemas significativos o pérdida financiera importante y no afecta a la organización. Debe ser monitoreado regularmente para asegurar que no aumente su categoría. Se debe mantener en forma constante la supervisión de estas actividades."},
+};
+function renderMatrizDobleEntrada(){
+  const wrap = document.getElementById("matrizDobleEntradaWrap");
+  if(!wrap) return;
+  const modo = document.getElementById("matrizDEModo").value;
+  const conteo = {};
+  let total = 0;
+  CACHE.matriz.forEach(m=>{
+    let p, c;
+    if(modo==="puro"){ p = m.probabilidad; c = m.consecuencia; }
+    else if(modo==="residual"){ if(!tieneResidualEvaluado(m)) return; p = m.probabilidadResidual; c = m.consecuenciaResidual; }
+    else { p = probResidualEfectiva(m); c = consResidualEfectiva(m); }
+    p = Math.round(+p); c = Math.round(+c);
+    if(!(p>=1&&p<=5&&c>=1&&c<=5)) return;
+    conteo[p+"-"+c] = (conteo[p+"-"+c]||0) + 1;
+    total++;
+  });
+  const colorTexto = n => (n==="medio"||n==="bajo") ? "#1a1a1a" : "#fff";
+  const celda = (p,c)=>{
+    const n = nivelRiesgo(p,c);
+    const k = conteo[p+"-"+c]||0;
+    return `<td style="background:${NIVEL_CHART_COLORS[n]};color:${colorTexto(n)};text-align:center;vertical-align:middle;border:1px solid #fff;min-width:110px;padding:8px 6px;">
+      <div style="font-weight:700;">${nivelLabel(n)}</div>
+      <div style="font-size:12px;">(${p*c})</div>
+      <div style="margin-top:4px;font-size:12px;${k?"font-weight:700;":"opacity:.75;"}">${k} línea${k===1?"":"s"}</div>
+    </td>`;
+  };
+  const cab = [1,2,3,4,5].map(c=>`<th style="text-align:center;vertical-align:top;font-size:12px;min-width:150px;">
+    <div style="font-size:13px;">${MATRIZ_DEF_CONSECUENCIA[c].nombre} (${c})</div>
+    <div style="font-weight:400;text-transform:none;margin-top:4px;"><strong>Accidente laboral:</strong> ${MATRIZ_DEF_CONSECUENCIA[c].laboral}</div>
+    <div style="font-weight:400;text-transform:none;margin-top:4px;"><strong>Daños materiales:</strong> ${MATRIZ_DEF_CONSECUENCIA[c].materiales}</div>
+    <div style="font-weight:400;text-transform:none;margin-top:4px;"><strong>Accidente operacional:</strong> ${MATRIZ_DEF_CONSECUENCIA[c].operacional}</div>
+  </th>`).join("");
+  const filas = [5,4,3,2,1].map(p=>`<tr>
+    <td style="font-size:12px;min-width:200px;"><strong>${MATRIZ_DEF_PROBABILIDAD[p].nombre} (${p})</strong><div class="kv">${MATRIZ_DEF_PROBABILIDAD[p].def}</div></td>
+    ${[1,2,3,4,5].map(c=>celda(p,c)).join("")}
+  </tr>`).join("");
+  wrap.innerHTML = `<table style="border-collapse:separate;border-spacing:0;">
+    <thead><tr><th style="font-size:12px;">Probabilidad ↓ / Consecuencia →</th>${cab}</tr></thead>
+    <tbody>${filas}</tbody></table>
+    <div class="kv" style="margin-top:8px;">${total} línea(s) de la matriz contadas según el criterio elegido.</div>`;
+  document.getElementById("matrizDELeyendaNiveles").innerHTML = `<table>
+    <thead><tr><th>Nivel</th><th>Valor P x C</th><th>Qué significa y qué hacer</th></tr></thead>
+    <tbody>${["critico","alto","medio","bajo"].map(n=>`<tr>
+      <td><span class="pill" style="background:${NIVEL_CHART_COLORS[n]};color:${colorTexto(n)};">${nivelLabel(n)}</span></td>
+      <td>${MATRIZ_DEF_NIVEL[n].rango}</td>
+      <td>${MATRIZ_DEF_NIVEL[n].def}</td></tr>`).join("")}</tbody></table>
+    <div class="desc" style="margin-top:8px;"><strong>Nota:</strong> existen condiciones especiales en la categorización de la magnitud del riesgo: todos los peligros evaluados en la condición de Catastrófico, independiente de la probabilidad, se consideran <strong>Muy alto</strong>.</div>`;
+}
+document.getElementById("matrizDEModo").addEventListener("change", renderMatrizDobleEntrada);
+
 function renderMatrizTable(){
+  renderMatrizDobleEntrada();
   const fArea = document.getElementById("filterMatrizArea").value;
   const fNivel = document.getElementById("filterMatrizNivel").value;
   const fCategoria = document.getElementById("filterMatrizCategoria").value;
@@ -10728,7 +10858,7 @@ function renderMatrizTable(){
     .map(m=>({...m, nivel: nivelRiesgoLinea(m)}))
     .filter(m=> (!fArea || m.areaId===fArea) && (!fNivel || m.nivel===fNivel) && (!fCategoria || m.categoria===fCategoria) && (!fEstado || (m.estado||"pendiente")===fEstado) && (!fSensible || (fSensible==="si"?!!m.sensible:!m.sensible))
       && (!fPeligro || quitarAcentos(((m.peligro||"")+" "+(m.riesgo||"")+" "+(m.efecto||"")).toLowerCase()).includes(fPeligro)))
-    .sort((a,b)=> (probResidualEfectiva(b)*consResidualEfectiva(b))-(probResidualEfectiva(a)*consResidualEfectiva(a)));
+    .sort((a,b)=> valorOrdenRiesgoLinea(b) - valorOrdenRiesgoLinea(a));
   document.getElementById("matrizTable").innerHTML = rows.map(m=>`
     <tr>
       <td>${areaName(m.areaId)}</td>
@@ -11458,7 +11588,7 @@ function mapaTileHtml(nombre, rows){
       <span class="pill bajo">${counts.bajo} bajo</span>
       <span class="pill medio">${counts.medio} medio</span>
       <span class="pill alto">${counts.alto} alto</span>
-      <span class="pill critico">${counts.critico} crítico</span>
+      <span class="pill critico">${counts.critico} muy alto</span>
     </div>
     <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:10px;">
       ${visibles.map(simboloChipHtml).join("")}
@@ -11898,7 +12028,7 @@ on(document.getElementById("printPlanoRiesgosBtn"), "click", async () => { impri
 
 /* =========================================================
    PLAN DE ACCIÓN DE LA MATRIZ DE RIESGOS
-   Para cada línea calificada Alto o Crítico, define y hace
+   Para cada línea calificada Medio, Alto o Muy alto, define y hace
    seguimiento de una acción concreta (mitigar/evitar/transferir/
    aceptar), su responsable, plazo y recursos, hasta cerrarla
    registrando el riesgo residual alcanzado. No es 1:1 con la
@@ -11941,7 +12071,7 @@ function renderPaPendientes(){
           <td><button class="btn secondary small" data-pa-nueva="${m.id}">Definir acción</button></td>
         </tr>`;
       }).join("")
-    : `<tr><td colspan="4" class="empty">No hay líneas medio/alto/crítico sin plan de acción</td></tr>`;
+    : `<tr><td colspan="4" class="empty">No hay líneas medio/alto/muy alto sin plan de acción</td></tr>`;
 }
 function paFillMatrizSelect(){
   const sel = document.getElementById("paMatrizId");
@@ -11989,7 +12119,7 @@ on(document.getElementById("paCancelarBtn"), "click", paResetForm);
 on(document.getElementById("paGuardarBtn"), "click", async ()=>{
   const matrizId = document.getElementById("paMatrizId").value;
   const m = paMatrizLinea(matrizId);
-  if(!m){ alert("Selecciona una línea de la matriz (medio, alto o crítico)."); return; }
+  if(!m){ alert("Selecciona una línea de la matriz (medio, alto o muy alto)."); return; }
   const actividad = document.getElementById("paActividad").value.trim();
   const responsable = document.getElementById("paResponsable").value.trim();
   const plazo = document.getElementById("paPlazo").value;
@@ -12149,7 +12279,7 @@ on(document.getElementById("paGuardarRevisionAnualBtn"), "click", async ()=>{
 
 // Impresión: una hoja por área (mismo mecanismo que imprimirMapaRiesgos),
 // con las acciones de esa área agrupadas por las 5 fases de la
-// metodología, más las líneas medio/alto/crítico todavía pendientes.
+// metodología, más las líneas medio/alto/muy alto todavía pendientes.
 function imprimirPlanAccion(){
   const cubiertas = new Set((CACHE.planAccionMatriz||[]).map(p=>p.matrizId));
   const porArea = new Map();
@@ -12167,7 +12297,7 @@ function imprimirPlanAccion(){
     porArea.get(key).pendientes.push(m);
   });
   const bloques = Array.from(porArea.values()).filter(b=>b.acciones.length||b.pendientes.length);
-  if(!bloques.length){ alert("No hay acciones ni riesgos medio/alto/crítico pendientes para imprimir."); return; }
+  if(!bloques.length){ alert("No hay acciones ni riesgos medio/alto/muy alto pendientes para imprimir."); return; }
   const empresaNombre = (CACHE.empresa && CACHE.empresa.razonSocial) || "—";
   const fecha = new Date().toISOString().slice(0,10);
   document.getElementById("valePrintArea").innerHTML = `
@@ -12282,7 +12412,7 @@ on(document.getElementById("exportMatrizBtn"), "click", async () => {
     .map(m=>({...m, nivel: nivelRiesgoLinea(m)}))
     .filter(m=> (!fArea || m.areaId===fArea) && (!fNivel || m.nivel===fNivel) && (!fCategoria || m.categoria===fCategoria) && (!fEstado || (m.estado||"pendiente")===fEstado) && (!fSensible || (fSensible==="si"?!!m.sensible:!m.sensible))
       && (!fPeligro || quitarAcentos(((m.peligro||"")+" "+(m.riesgo||"")+" "+(m.efecto||"")).toLowerCase()).includes(fPeligro)))
-    .sort((a,b)=> (probResidualEfectiva(b)*consResidualEfectiva(b))-(probResidualEfectiva(a)*consResidualEfectiva(a)));
+    .sort((a,b)=> valorOrdenRiesgoLinea(b) - valorOrdenRiesgoLinea(a));
   if(!rows.length){ alert("No hay líneas para exportar con el filtro actual."); return; }
   if(typeof XLSX === "undefined"){ alert("No se pudo cargar el generador de Excel (revisa tu conexión a internet e intenta de nuevo)."); return; }
   const estadoLabel = {pendiente:"Pendiente", proceso:"En proceso", cerrada:"Cerrada"};
@@ -15382,7 +15512,7 @@ function datosInformeGerencia(){
   const usaRirda = !!(CACHE.empresa && CACHE.empresa.usarRirdaLdr);
   const indicadoresBody = [
     ["Días sin accidentes con tiempo perdido", racha.actual===null?"—":racha.actual],
-    ["Riesgos críticos en matriz", riesgosCriticos+" de "+CACHE.matriz.length+" líneas"],
+    ["Riesgos muy altos en matriz", riesgosCriticos+" de "+CACHE.matriz.length+" líneas"],
     ["Cumplimiento vigilancia de salud", cumplPct+"% ("+vigentes+" de "+totalAsig+" vigentes)"],
     ["Hallazgos de inspección con acción abierta", accionesAbiertas],
     ["Cumplimiento programa de seguridad", pgPct+"% ("+pgRealizadas+" de "+pgTotal+")"],
