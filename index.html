@@ -3225,7 +3225,7 @@
         <div><label>Fecha de la última mantención</label><input id="rxMant" type="date"></div>
         <div><label>Servicio técnico que la realizó</label><input id="rxMantEmpresa"></div>
         <div><label>Fecha de la última prueba hidrostática</label><input id="rxPH" type="date"></div>
-        <div><label>Vigencia de la prueba hidrostática (años)</label><input id="rxPHAnios" type="number" min="1" step="1" placeholder="Según la etiqueta o el servicio técnico"></div>
+        <div><label>Vigencia de la prueba hidrostática (años)</label><input id="rxPHAnios" type="number" min="1" step="1" placeholder="Se sugiere según el tipo"><div class="kv" id="rxPHSugerencia" style="margin-top:3px;"></div></div>
       </div>
       <label>Observaciones</label>
       <textarea id="rxObs"></textarea>
@@ -3520,12 +3520,6 @@
         <label class="btn secondary small" style="cursor:pointer;">Importar respaldo JSON<input type="file" id="importarDatosEmpresaInput" accept="application/json" style="display:none;"></label>
       </div>
       <div id="importarDatosResultado" style="display:none;margin-top:8px;font-size:13px;"></div>
-    </div></div>
-
-    <div class="card">
-      <div class="card-header-row" id="hdrDatosDeEjemplo"><h2>Datos de ejemplo</h2><button class="collapse-toggle" id="toggleDatosDeEjemplo" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyDatosDeEjemplo">
-      <div class="desc">Reemplaza los datos actuales por datos de ejemplo.</div>
-      <button class="btn secondary small" id="resetDataBtn">Restaurar datos de ejemplo</button>
     </div></div>
 
     <div class="card">
@@ -4077,7 +4071,6 @@ setupCollapsible("hdrAreasProcesos", "bodyAreasProcesos", "toggleAreasProcesos",
 setupCollapsible("hdrResponsablesDeCierreDeHallazgos", "bodyResponsablesDeCierreDeHallazgos", "toggleResponsablesDeCierreDeHallazgos", "collapsed_responsablesDeCierreDeHallazgos");
 setupCollapsible("hdrImportarMatrizDeRiesgosDesdeExcel", "bodyImportarMatrizDeRiesgosDesdeExcel", "toggleImportarMatrizDeRiesgosDesdeExcel", "collapsed_importarMatrizDeRiesgosDesdeExcel");
 setupCollapsible("hdrRespaldoDatosWrap", "bodyRespaldoDatosWrap", "toggleRespaldoDatosWrap", "collapsed_respaldoDatosWrap");
-setupCollapsible("hdrDatosDeEjemplo", "bodyDatosDeEjemplo", "toggleDatosDeEjemplo", "collapsed_datosDeEjemplo");
 setupCollapsible("hdrPropiedadIntelectual", "bodyPropiedadIntelectual", "togglePropiedadIntelectual", "collapsed_propiedadIntelectual");
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
 
@@ -8723,6 +8716,17 @@ resetExForm();
    ========================================================= */
 const RX_UBIC_LABEL = {recinto:"Recinto / instalación", vehiculo:"Vehículo", otro:"Otro"};
 const RX_ALERTA_MANT_DIAS = 30, RX_ALERTA_PH_DIAS = 60;
+/* Vigencia sugerida de la prueba hidrostática según el tipo de extintor (criterio
+   indicado por el usuario, coincide con NCh 2056): 5 años para CO2, agua
+   presurizada, espuma y agentes químicos húmedos; 12 años para polvo químico seco
+   (PQS) con casco de acero dulce. Es solo una sugerencia: si el usuario ingresa
+   otra vigencia, se usa la ingresada. El polvo especial (D) no tiene sugerencia. */
+const RX_PH_ANIOS_SUGERIDOS = {co2:5, agua:5, espuma:5, pqs_abc:12, pqs_bc:12};
+function rxPhAnios(r){
+  if(+r.phAnios > 0) return {anios:+r.phAnios, sugerida:false};
+  const s = RX_PH_ANIOS_SUGERIDOS[r.tipo];
+  return s ? {anios:s, sugerida:true} : {anios:null, sugerida:false};
+}
 function rxSumarAnios(fecha, anios){
   const d = parseFechaLocal(fecha);
   if(isNaN(d)) return null;
@@ -8738,10 +8742,11 @@ function rxEvaluar(r){
     if(diasMant < 0) faltas.push(`Mantención vencida: debía realizarse antes del ${fmtDate(proxMant)} (última: ${fmtDate(r.mantencion)}).`);
     else if(diasMant <= RX_ALERTA_MANT_DIAS) alertas.push(`La mantención vence el ${fmtDate(proxMant)} (en ${diasMant} día(s)).`);
   }
+  const phv = rxPhAnios(r);
   if(!r.pruebaHidro) pendientes.push("Falta la fecha de la última prueba hidrostática.");
-  else if(!(+r.phAnios>0)) pendientes.push("Falta definir la vigencia de la prueba hidrostática (años).");
+  else if(!phv.anios) pendientes.push("Falta definir la vigencia de la prueba hidrostática (años).");
   else {
-    proxPH = rxSumarAnios(r.pruebaHidro, +r.phAnios); diasPH = daysUntil(proxPH);
+    proxPH = rxSumarAnios(r.pruebaHidro, phv.anios); diasPH = daysUntil(proxPH);
     if(diasPH < 0) faltas.push(`Prueba hidrostática vencida: debía realizarse antes del ${fmtDate(proxPH)} (última: ${fmtDate(r.pruebaHidro)}).`);
     else if(diasPH <= RX_ALERTA_PH_DIAS) alertas.push(`La prueba hidrostática vence el ${fmtDate(proxPH)} (en ${diasPH} día(s)).`);
   }
@@ -8756,11 +8761,16 @@ function rxActualizarEtiquetaUbic(){
   $pe("rxUbicDetalle").placeholder = t==="vehiculo" ? "Ej: ABCD-12, camioneta" : "Ej: Bodega, acceso principal";
 }
 $pe("rxUbicTipo").addEventListener("change", rxActualizarEtiquetaUbic);
+function rxActualizarSugerenciaPH(){
+  const s = RX_PH_ANIOS_SUGERIDOS[$pe("rxTipo").value];
+  $pe("rxPHSugerencia").textContent = s ? `Sugerida para este tipo: ${s} años (se usa si lo dejas vacío).` : "Este tipo no tiene vigencia sugerida: ingrésala.";
+}
+$pe("rxTipo").addEventListener("change", rxActualizarSugerenciaPH);
 function resetRxForm(){
   rxEditingId = null;
   Object.keys(RX_CAMPOS).forEach(id=>$pe(id).value = "");
   $pe("rxTipo").value = "pqs_abc"; $pe("rxPotA").value = "10"; $pe("rxUbicTipo").value = "recinto";
-  rxActualizarEtiquetaUbic();
+  rxActualizarEtiquetaUbic(); rxActualizarSugerenciaPH();
   $pe("rxFormTitle").textContent = "Registro de extintores (certificación, mantención y prueba hidrostática)";
   $pe("rxSaveBtn").textContent = "Guardar extintor"; $pe("rxCancelBtn").style.display = "none";
 }
@@ -8769,7 +8779,7 @@ function startEditRx(id){
   const r = (CACHE.registroExtintores||[]).find(x=>x.id===id); if(!r) return;
   rxEditingId = id;
   Object.entries(RX_CAMPOS).forEach(([cid,k])=>{ $pe(cid).value = (r[k]===null||r[k]===undefined) ? "" : r[k]; });
-  rxActualizarEtiquetaUbic();
+  rxActualizarEtiquetaUbic(); rxActualizarSugerenciaPH();
   $pe("rxFormTitle").textContent = `Editando extintor ${r.codigo||""}`;
   $pe("rxSaveBtn").textContent = "Guardar cambios"; $pe("rxCancelBtn").style.display = "";
   $pe("hdrRegistroExtintores").scrollIntoView({behavior:"smooth", block:"start"});
@@ -8819,7 +8829,7 @@ function renderRegistroExtintores(){
       <td>${RX_UBIC_LABEL[r.ubicTipo]||"—"}<div class="kv">${r.ubicDetalle||""}</div>${r.responsable?`<div class="kv">Resp.: ${r.responsable}</div>`:""}</td>
       <td>${(r.certificado||"").trim() ? r.certificado : '<span class="pill critico">Sin registro</span>'}</td>
       <td>${rxCeldaFecha(r.mantencion, ev.proxMant, ev.diasMant, RX_ALERTA_MANT_DIAS)}${r.mantEmpresa?`<div class="kv">${r.mantEmpresa}</div>`:""}</td>
-      <td>${rxCeldaFecha(r.pruebaHidro, ev.proxPH, ev.diasPH, RX_ALERTA_PH_DIAS)}${r.phAnios?`<div class="kv">Vigencia: ${r.phAnios} año(s)</div>`:""}</td>
+      <td>${rxCeldaFecha(r.pruebaHidro, ev.proxPH, ev.diasPH, RX_ALERTA_PH_DIAS)}${(()=>{ const v = rxPhAnios(r); return v.anios ? `<div class="kv">Vigencia: ${v.anios} año(s)${v.sugerida?" (sugerida según el tipo)":""}</div>` : ""; })()}</td>
       <td><span class="pill ${color}">${ev.estado}</span>${notas.length?`<ul style="margin:4px 0 0 16px;padding:0;font-size:12px;">${notas.map(n=>`<li>${n}</li>`).join("")}</ul>`:""}</td>
       <td style="white-space:nowrap;"><button class="btn secondary small" data-rx-editar="${r.id}">Editar</button> <button class="subtle-btn" data-rx-eliminar="${r.id}">Eliminar</button></td></tr>`;
   }).join("") : `<tr><td class="empty" colspan="7">Aún no hay extintores registrados para el filtro seleccionado.</td></tr>`;
@@ -8837,7 +8847,7 @@ on($pe("rxExcelBtn"), "click", ()=>{
   if(!rows.length){ alert("Aún no hay extintores registrados para exportar."); return; }
   if(typeof XLSX === "undefined"){ alert("No se pudo cargar el generador de Excel (revisa tu conexión a internet e intenta de nuevo)."); return; }
   const iso = d => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` : "";
-  const data = rows.map(r=>{ const ev = rxEvaluar(r); return {"Código / N° de serie":r.codigo||"","Tipo":EX_TIPO_LABEL[r.tipo]||r.tipo||"","Potencial A":r.potA||"","Potencial B":r.potB||"","Capacidad (kg)":r.capacidad||"","Dónde está":RX_UBIC_LABEL[r.ubicTipo]||"","Detalle de ubicación":r.ubicDetalle||"","Responsable":r.responsable||"","Registro de certificación":r.certificado||"","Última mantención":r.mantencion||"","Próxima mantención":iso(ev.proxMant),"Servicio técnico":r.mantEmpresa||"","Última prueba hidrostática":r.pruebaHidro||"","Vigencia prueba hidrostática (años)":r.phAnios||"","Próxima prueba hidrostática":iso(ev.proxPH),"Estado":ev.estado,"Incumplimientos":ev.faltas.join(" | "),"Alertas":ev.alertas.join(" | "),"Datos por completar":ev.pendientes.join(" | "),"Observaciones":r.obs||""}; });
+  const data = rows.map(r=>{ const ev = rxEvaluar(r); return {"Código / N° de serie":r.codigo||"","Tipo":EX_TIPO_LABEL[r.tipo]||r.tipo||"","Potencial A":r.potA||"","Potencial B":r.potB||"","Capacidad (kg)":r.capacidad||"","Dónde está":RX_UBIC_LABEL[r.ubicTipo]||"","Detalle de ubicación":r.ubicDetalle||"","Responsable":r.responsable||"","Registro de certificación":r.certificado||"","Última mantención":r.mantencion||"","Próxima mantención":iso(ev.proxMant),"Servicio técnico":r.mantEmpresa||"","Última prueba hidrostática":r.pruebaHidro||"","Vigencia prueba hidrostática (años)":rxPhAnios(r).anios||"","Vigencia sugerida por tipo":rxPhAnios(r).sugerida?"Sí":"No","Próxima prueba hidrostática":iso(ev.proxPH),"Estado":ev.estado,"Incumplimientos":ev.faltas.join(" | "),"Alertas":ev.alertas.join(" | "),"Datos por completar":ev.pendientes.join(" | "),"Observaciones":r.obs||""}; });
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Registro de extintores");
   XLSX.writeFile(wb, `Registro_extintores_${new Date().toISOString().slice(0,10)}.xlsx`);
 });
@@ -8921,38 +8931,38 @@ function subpestanasCrear(viewId, grupos, estilo){
   subpestanasAplicar(viewId);
 }
 subpestanasCrear("matriz", [
-  {key:"matriz", icono:"registro", label:"Matriz de riesgos", hdrs:["hdrNuevaLineaDeMatrizDeRiesgosIPER","hdrMatrizIaWrap","hdrMatrizDobleEntrada","hdrMatrizVigente","hdrMatrizHistorial"]},
-  {key:"levantamiento", icono:"lista", label:"Levantamiento por área", hdrs:["hdrLevantamiento"]},
-  {key:"mapas", icono:"mapa", label:"Mapas y análisis", hdrs:["hdrMapaDeRiesgosPorAreaProceso","hdrMapaDeRiesgosPlanoDePlantaYSimbologia","hdrMatrizDeRiesgosPorNivelYPorArea","hdrEquidadGenero"]},
-  {key:"accion", icono:"grafico", label:"Plan de acción y controles", hdrs:["hdrPlanDeAccionMatrizDeRiesgos","hdrJerarquiaDeControlesDS44","hdrTraspasosPendientes","hdrEstudioEpp"],
+  {key:"matriz", icono:"registro", label:"Matriz de riesgos", desc:"Líneas de riesgo, matriz vigente e histórico", hdrs:["hdrNuevaLineaDeMatrizDeRiesgosIPER","hdrMatrizIaWrap","hdrMatrizDobleEntrada","hdrMatrizVigente","hdrMatrizHistorial"]},
+  {key:"levantamiento", icono:"lista", label:"Levantamiento por área", desc:"Levantamiento IPER por área de trabajo", hdrs:["hdrLevantamiento"]},
+  {key:"mapas", icono:"mapa", label:"Mapas y análisis", desc:"Mapas de riesgo, niveles y equidad de género", hdrs:["hdrMapaDeRiesgosPorAreaProceso","hdrMapaDeRiesgosPlanoDePlantaYSimbologia","hdrMatrizDeRiesgosPorNivelYPorArea","hdrEquidadGenero"]},
+  {key:"accion", icono:"grafico", label:"Plan de acción y controles", desc:"Plan de acción, controles DS 44 y EPP", hdrs:["hdrPlanDeAccionMatrizDeRiesgos","hdrJerarquiaDeControlesDS44","hdrTraspasosPendientes","hdrEstudioEpp"],
     badge:()=>{ const cub = new Set((CACHE.planAccionMatriz||[]).map(p=>p.matrizId)); const n = paLineasRequierenAccion().filter(m=>!cub.has(m.id)).length; return n ? {texto:`${n} sin plan`, nivel:"y"} : null; }},
-], "pildoras");
+], "tarjetas");
 
 subpestanasCrear("accidentabilidad", [
-  {key:"registro", icono:"registro", label:"Registro de accidentes", hdrs:["hdrRegistrarAccidenteIncidente","hdrIndicadoresDeSiniestralidadDS67YRegistroHistorico","hdrHorasHombreTrabajadasPorPeriodo"],
+  {key:"registro", icono:"registro", label:"Registro de accidentes", desc:"Registrar accidentes, historial y horas-hombre", hdrs:["hdrRegistrarAccidenteIncidente","hdrIndicadoresDeSiniestralidadDS67YRegistroHistorico","hdrHorasHombreTrabajadasPorPeriodo"],
     badge:()=>{ const n = (CACHE.accidentes||[]).filter(a=>accDenunciaSigla(a.tipo) && a.denunciaRealizada==="no").length; return n ? {texto:`${n} sin DIAT/DIEP`, nivel:"r"} : null; }},
-  {key:"estadisticas", icono:"grafico", label:"Estadísticas y DS 67", hdrs:["hdrAccidentesPorMes","hdrAccidentesPorArea","hdrControlEstadisticoMensualYAnual","hdrClasificacionDeAccidentesEIncidentes","hdrEvaluacionDeSiniestralidadDS67CotizacionAdicional"]},
-  {key:"arbol", icono:"buscar", label:"Árbol causal", hdrs:["hdrArbolCausal","hdrArbolCausalListado"]},
-  {key:"transito", icono:"pulso", label:"Accidentes de tránsito", hdrs:["hdrInvestigacionDeAccidentesDeTransito","hdrInvestigacionesDeTransitoRegistradas"]},
-], "pildoras");
+  {key:"estadisticas", icono:"grafico", label:"Estadísticas y DS 67", desc:"Indicadores, control mensual y siniestralidad DS 67", hdrs:["hdrAccidentesPorMes","hdrAccidentesPorArea","hdrControlEstadisticoMensualYAnual","hdrClasificacionDeAccidentesEIncidentes","hdrEvaluacionDeSiniestralidadDS67CotizacionAdicional"]},
+  {key:"arbol", icono:"buscar", label:"Árbol causal", desc:"Análisis de causa raíz de cada accidente", hdrs:["hdrArbolCausal","hdrArbolCausalListado"]},
+  {key:"transito", icono:"pulso", label:"Accidentes de tránsito", desc:"Investigación y reconstrucción de accidentes de tránsito", hdrs:["hdrInvestigacionDeAccidentesDeTransito","hdrInvestigacionesDeTransitoRegistradas"]},
+], "tarjetas");
 
 subpestanasCrear("config", [
-  {key:"empresa", icono:"empresa", label:"Empresa y listas", hdrs:["hdrEmpresa","hdrMetasDeIndicadoresDeAccidentabilidad","hdrGestionarListasDesplegables","hdrPropiedadIntelectual"]},
-  {key:"personas", icono:"personas", label:"Áreas y trabajadores", hdrs:["hdrAreasProcesos","hdrTrabajadores","hdrResponsablesDeCierreDeHallazgos"]},
-  {key:"datos", icono:"datos", label:"Importar y respaldo", hdrs:["hdrImportarMatrizDeRiesgosDesdeExcel","hdrRespaldoDatosWrap","hdrDatosDeEjemplo"]},
-  {key:"accesos", icono:"llave", label:"Accesos y empresas", hdrs:["hdrAccesos","hdrEmpresas"]},
-], "pildoras");
+  {key:"empresa", icono:"empresa", label:"Empresa y listas", desc:"Datos de la empresa, metas y listas desplegables", hdrs:["hdrEmpresa","hdrMetasDeIndicadoresDeAccidentabilidad","hdrGestionarListasDesplegables","hdrPropiedadIntelectual"]},
+  {key:"personas", icono:"personas", label:"Áreas y trabajadores", desc:"Áreas, trabajadores y responsables de cierre", hdrs:["hdrAreasProcesos","hdrTrabajadores","hdrResponsablesDeCierreDeHallazgos"]},
+  {key:"datos", icono:"datos", label:"Importar y respaldo", desc:"Importar la matriz desde Excel y respaldar datos", hdrs:["hdrImportarMatrizDeRiesgosDesdeExcel","hdrRespaldoDatosWrap"]},
+  {key:"accesos", icono:"llave", label:"Accesos y empresas", desc:"Perfiles de acceso y empresas de la plataforma", hdrs:["hdrAccesos","hdrEmpresas"]},
+], "tarjetas");
 subpestanasCrear("inspecciones", [
-  {key:"formatos", icono:"lista", label:"Formatos e historial", hdrs:["hdrFormatosDeInspeccionObservacion","hdrHistorialDeInspeccionesYObservaciones","hdrDescargarResumenesEnPDF"]},
-  {key:"ast", icono:"ast", label:"AST", hdrs:["hdrConfeccionDeASTAnalisisDeSeguridadDelTrabajo","hdrASTRegistradas"]},
-  {key:"izaje", icono:"caja", label:"Evaluación de carga (izaje)", hdrs:["hdrEvaluacionDeCargaIzaje","hdrEvaluacionesDeCargaRegistradas"]},
-  {key:"estadisticas", icono:"grafico", label:"Estadísticas", hdrs:["hdrTop10HallazgosRepetitivos","hdrEstadisticaMensualYAnualPorClasificacion"]},
-], "pildoras");
+  {key:"formatos", icono:"lista", label:"Formatos e historial", desc:"Formatos, historial y resúmenes en PDF", hdrs:["hdrFormatosDeInspeccionObservacion","hdrHistorialDeInspeccionesYObservaciones","hdrDescargarResumenesEnPDF"]},
+  {key:"ast", icono:"ast", label:"AST", desc:"Análisis de seguridad del trabajo", hdrs:["hdrConfeccionDeASTAnalisisDeSeguridadDelTrabajo","hdrASTRegistradas"]},
+  {key:"izaje", icono:"caja", label:"Evaluación de carga (izaje)", desc:"Evaluación de carga en maniobras de izaje", hdrs:["hdrEvaluacionDeCargaIzaje","hdrEvaluacionesDeCargaRegistradas"]},
+  {key:"estadisticas", icono:"grafico", label:"Estadísticas", desc:"Hallazgos repetitivos y estadística mensual", hdrs:["hdrTop10HallazgosRepetitivos","hdrEstadisticaMensualYAnualPorClasificacion"]},
+], "tarjetas");
 subpestanasCrear("capacitacion", [
-  {key:"plan", icono:"registro", label:"Plan de capacitación", hdrs:["hdrNuevaCapacitacion","hdrPlanDeCapacitacionCumplimiento","hdrEstadisticasDelPlanDeCapacitacion","hdrCumplimientoDeCapacitacionPorResponsableRelator"]},
-  {key:"iap", icono:"alerta", label:"Incidentes de alto potencial (IAP)", hdrs:["hdrIap","hdrIapListado"]},
-  {key:"cursos", icono:"curso", label:"Cursos DS 44", hdrs:["hdrCursosDs44","hdrRegistroDeCursosCompletados","hdrAlertasDeVencimiento","hdrReporteDeCumplimientoCursosDS44"]},
-], "pildoras");
+  {key:"plan", icono:"registro", label:"Plan de capacitación", desc:"Plan, cumplimiento y estadísticas de capacitación", hdrs:["hdrNuevaCapacitacion","hdrPlanDeCapacitacionCumplimiento","hdrEstadisticasDelPlanDeCapacitacion","hdrCumplimientoDeCapacitacionPorResponsableRelator"]},
+  {key:"iap", icono:"alerta", label:"Incidentes de alto potencial (IAP)", desc:"Incidentes de alto potencial y su difusión", hdrs:["hdrIap","hdrIapListado"]},
+  {key:"cursos", icono:"curso", label:"Cursos DS 44", desc:"Cursos obligatorios, completados y alertas", hdrs:["hdrCursosDs44","hdrRegistroDeCursosCompletados","hdrAlertasDeVencimiento","hdrReporteDeCumplimientoCursosDS44"]},
+], "tarjetas");
 
 subpestanasCrear("emergencia", [
   {key:"resumen", icono:"resumen", label:"Resumen", desc:"Estado general del plan de gestión del riesgo", hdrs:["hdrGrdResumen"]},
@@ -20354,13 +20364,6 @@ on(document.getElementById("importMatrizBtn"), "click", async () => {
     ? `\n\nNo se encontró una columna de Área con datos propios por línea en el archivo (o no coincidió el texto con ninguna área ya creada) -- las ${importadas} línea(s) se asignaron a la Área por defecto que elegiste: "${areaDefaultNombre}". Si el archivo tenía distintas áreas por fila, revisa que el nombre de esa columna sea "Área" y que el texto coincida exactamente con el de un área ya creada en Configuración → Áreas.`
     : "";
   alert(`Importación completa (formato ${formato}): ${importadas} línea(s) ${reemplazar? "cargadas":"agregadas"} en la Matriz de riesgos.${avisoArea}`);
-});
-
-on(document.getElementById("resetDataBtn"), "click", async () => {
-  if(!confirm("Esto reemplazará todos los datos actuales por los datos de ejemplo. ¿Continuar?")) return;
-  await seedData(true);
-  await refreshAll();
-  alert("Datos de ejemplo restaurados.");
 });
 
 /* --- Multi-empresa: listar/eliminar empresas (superAdmin), crear empresa nueva, exportar/importar respaldo --- */
