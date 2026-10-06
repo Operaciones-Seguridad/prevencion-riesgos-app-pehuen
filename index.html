@@ -3146,6 +3146,20 @@
         <div><button class="btn small secondary" id="exAddExtBtn" type="button" style="margin-top:20px;">+ Agregar extintor</button></div>
       </div>
       <div id="exExtintoresWrap"></div>
+      <label style="margin-top:16px;">Carga de fuego (carga combustible) del recinto</label>
+      <div class="desc">Ingresa cada material combustible del recinto con su masa y su calor de combustión (de la NCh 1993 o de un estudio de carga combustible; la app no trae valores precargados). Calcula la carga combustible total, la densidad en MJ/m² y, si indicas el calor de combustión de la madera de referencia, su equivalente en kg de madera por m². No clasifica el recinto según la OGUC.</div>
+      <div class="toolbar">
+        <div class="field"><label>Material</label><input id="exCfMaterial" placeholder="Ej: Madera, cartón, plástico"></div>
+        <div class="field"><label>Masa (kg)</label><input id="exCfMasa" type="number" min="0" step="0.1" style="max-width:110px;"></div>
+        <div class="field"><label>Calor de combustión (MJ/kg)</label><input id="exCfCalor" type="number" min="0" step="0.01" style="max-width:130px;"></div>
+        <div><button class="btn small secondary" id="exAddCfBtn" type="button" style="margin-top:20px;">+ Agregar material</button></div>
+      </div>
+      <div id="exCfWrap"></div>
+      <div class="form-grid" style="margin-top:8px;">
+        <div><label>Calor de combustión de la madera de referencia (MJ/kg)</label><input id="exCfMadera" type="number" min="0" step="0.01" placeholder="Del estudio o norma que uses"></div>
+        <div><label>Fuente de los calores de combustión</label><input id="exCfFuente" placeholder="Ej: NCh 1993, estudio de carga combustible"></div>
+      </div>
+      <div id="exCfResultado" style="margin-top:8px;"></div>
       <h3 style="margin-top:16px;font-size:14px;">Evaluación según DS 594</h3>
       <div id="exEvalWrap"></div>
       <div class="toolbar" style="margin-top:14px;">
@@ -3157,6 +3171,44 @@
       <div style="overflow-x:auto;"><table>
         <thead><tr><th>Edificio / recinto</th><th>m²</th><th>Extintores</th><th>Cobertura</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody id="exTable"></tbody>
+      </table></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrRegistroExtintores"><h2 id="rxFormTitle">Registro de extintores (certificación, mantención y prueba hidrostática)</h2><button class="collapse-toggle" id="toggleRegistroExtintores" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyRegistroExtintores">
+      <div class="desc">Inventario de extintores independiente de los recintos, para incluir también los de vehículos, camiones, buses y camionetas. Por cada extintor se registra su certificación, la fecha de la última mantención (la próxima se calcula sumando 1 año, DS 594 art. 51) y la fecha de la última prueba hidrostática. Si algo no se cumple (sin certificación, mantención vencida o prueba hidrostática vencida), queda informado como "No cumple". Es un levantamiento, no una inspección.</div>
+      <div class="grid-tiles" id="rxTiles"></div>
+      <div class="form-grid" style="margin-top:14px;">
+        <div><label>Código / N° de serie</label><input id="rxCodigo" placeholder="Ej: EXT-014 o N° de serie"></div>
+        <div><label>Tipo</label><select id="rxTipo"><option value="pqs_abc">PQS ABC</option><option value="pqs_bc">PQS BC</option><option value="co2">CO2</option><option value="agua">Agua presurizada</option><option value="espuma">Espuma</option><option value="polvo_d">Polvo químico especial (D)</option></select></div>
+        <div><label>Potencial A</label><select id="rxPotA"><option value="">Sin potencial A</option><option value="2">2A</option><option value="4">4A</option><option value="6">6A</option><option value="10" selected>10A</option><option value="20">20A</option><option value="30">30A</option><option value="40">40A</option></select></div>
+        <div><label>Potencial B</label><input id="rxPotB" type="number" min="0" placeholder="Ej: 10 (10B)"></div>
+        <div><label>Capacidad (kg)</label><input id="rxCapacidad" type="number" min="0" step="0.1" placeholder="Ej: 6"></div>
+        <div><label>Dónde está</label><select id="rxUbicTipo"><option value="recinto">Recinto / instalación</option><option value="vehiculo">Vehículo (camión, bus, camioneta)</option><option value="otro">Otro</option></select></div>
+        <div><label id="rxUbicLabel">Recinto o ubicación</label><input id="rxUbicDetalle" placeholder="Ej: Bodega, acceso principal"></div>
+        <div><label>Responsable</label><input id="rxResponsable" placeholder="Nombre o cargo"></div>
+        <div><label>Registro de certificación (N° de certificado o sello)</label><input id="rxCertificado" placeholder="Obligatorio para cumplir"></div>
+        <div><label>Fecha de la última mantención</label><input id="rxMant" type="date"></div>
+        <div><label>Servicio técnico que la realizó</label><input id="rxMantEmpresa"></div>
+        <div><label>Fecha de la última prueba hidrostática</label><input id="rxPH" type="date"></div>
+        <div><label>Vigencia de la prueba hidrostática (años)</label><input id="rxPHAnios" type="number" min="1" step="1" placeholder="Según la etiqueta o el servicio técnico"></div>
+      </div>
+      <label>Observaciones</label>
+      <textarea id="rxObs"></textarea>
+      <div class="toolbar" style="margin-top:10px;">
+        <button class="btn" id="rxSaveBtn">Guardar extintor</button>
+        <button class="btn secondary" id="rxCancelBtn" style="display:none;">Cancelar edición</button>
+        <button class="btn secondary" id="rxExcelBtn">Descargar Excel</button>
+      </div>
+      <div class="toolbar" style="margin-top:14px;">
+        <div class="field"><label>Filtrar por ubicación</label><select id="rxFiltroUbic"><option value="">Todas</option><option value="recinto">Recintos</option><option value="vehiculo">Vehículos</option><option value="otro">Otras</option></select></div>
+        <div class="field"><label>Filtrar por estado</label><select id="rxFiltroEstado"><option value="">Todos</option><option value="No cumple">No cumple</option><option value="Incompleto">Incompleto</option><option value="Cumple">Cumple</option><option value="porvencer">Con vencimiento próximo</option></select></div>
+      </div>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Código / tipo</th><th>Dónde está</th><th>Certificación</th><th>Mantención</th><th>Prueba hidrostática</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody id="rxTable"></tbody>
       </table></div>
       </div>
     </div>
@@ -3474,8 +3526,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 36;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones"];
+const DB_VERSION = 37;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -3928,6 +3980,7 @@ setupCollapsible("hdrGrdSimulacros", "bodyGrdSimulacros", "toggleGrdSimulacros",
 setupCollapsible("hdrGrdPlanAccion", "bodyGrdPlanAccion", "toggleGrdPlanAccion", "collapsed_grdPlanAccion");
 setupCollapsible("hdrPlanEmergencia", "bodyPlanEmergencia", "togglePlanEmergencia", "collapsed_planEmergencia");
 setupCollapsible("hdrExtintores", "bodyExtintores", "toggleExtintores", "collapsed_extintores");
+setupCollapsible("hdrRegistroExtintores", "bodyRegistroExtintores", "toggleRegistroExtintores", "collapsed_registroExtintores");
 setupCollapsible("hdrIap", "bodyIap", "toggleIap", "collapsed_iap");
 setupCollapsible("hdrIapListado", "bodyIapListado", "toggleIapListado", "collapsed_iapListado");
 setupCollapsible("hdrAccesos", "bodyAccesos", "toggleAccesos", "collapsed_accesos");
@@ -4508,14 +4561,23 @@ function jerarquiaBadgeHtml(code){
   if(!j) return `<span class="pill pendiente">Sin clasificar</span>`;
   return `<span class="pill" style="background:${j.color}22;color:${j.color};border:1px solid ${j.color}55;">${j.code} · ${j.label}</span>`;
 }
+/* Las fechas guardadas ("AAAA-MM-DD", de los <input type=date>) se leen como
+   fecha LOCAL. Con new Date("2026-10-04") JavaScript las toma como medianoche
+   UTC y en Chile (UTC-3/-4) terminaban mostrándose un día antes. Los valores
+   con hora (ISO completo) se siguen interpretando tal cual. */
+function parseFechaLocal(d){
+  if(d instanceof Date) return d;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d||"").trim());
+  return m ? new Date(+m[1], +m[2]-1, +m[3]) : new Date(d);
+}
 function addMonths(dateStr, months){
-  const d = new Date(dateStr);
+  const d = parseFechaLocal(dateStr);
   d.setMonth(d.getMonth()+months);
   return d;
 }
 function fmtDate(d){
   if(!d) return "—";
-  const dt = (d instanceof Date)? d : new Date(d);
+  const dt = parseFechaLocal(d);
   if(isNaN(dt)) return "—";
   return dt.toLocaleDateString("es-CL");
 }
@@ -4548,7 +4610,7 @@ function fillTextFilter(selectEl, valores, placeholder){
 }
 function daysUntil(d){
   const now = new Date(); now.setHours(0,0,0,0);
-  const dt = new Date(d); dt.setHours(0,0,0,0);
+  const dt = new Date(parseFechaLocal(d)); dt.setHours(0,0,0,0);
   return Math.round((dt-now)/86400000);
 }
 function estadoVencimiento(d){
@@ -7003,7 +7065,7 @@ function renderCphysReunionesTiles(){
   const rows = CACHE.cphysReuniones || [];
   const ordinarias = rows.filter(r=>r.tipo==="ordinaria");
   const anioActual = new Date().getFullYear();
-  const ordinariasEsteAnio = ordinarias.filter(r=> r.fecha && new Date(r.fecha).getFullYear()===anioActual).length;
+  const ordinariasEsteAnio = ordinarias.filter(r=> r.fecha && parseFechaLocal(r.fecha).getFullYear()===anioActual).length;
   const ultima = rows.slice().sort((a,b)=> new Date(b.fecha)-new Date(a.fecha))[0];
   const ultimaOrdinaria = ordinarias.slice().sort((a,b)=> new Date(b.fecha)-new Date(a.fecha))[0];
   let diasDesdeOrdinaria = null;
@@ -8147,7 +8209,7 @@ on($pe("planEmTable"), "click", async (e)=>{
     renderEmergencia();
   }
 });
-function renderExtintores(){ renderExTable(); }
+function renderExtintores(){ renderExTable(); renderRegistroExtintores(); }
 function renderPlanEmergencia(){
   fillDatalist($pe("dlPlanEmComite"), (CACHE.grdComite||[]).map(m=>m.nombre).filter(Boolean));
   if(!planEmEditingId && !$pe("planEmDireccion").value && !$pe("planEmCentro").value) $pe("planEmDireccion").value = (CACHE.empresa && CACHE.empresa.direccion) || "";
@@ -8426,7 +8488,21 @@ function exEvaluar(rec){
   const estado = faltas.length ? "No cumple" : (pendientes.length ? "Incompleto" : "Cumple");
   return {m2, cobertura, requeridos, faltas, pendientes, estado, clases:Array.from(clases)};
 }
-let exEditingId = null, exMateriales = [], exExtintores = [];
+/* Carga combustible: C = suma(masa x calor de combustión), en MJ; densidad =
+   C / superficie (MJ/m²). El equivalente en kg de madera por m² solo se
+   calcula si el usuario informa el calor de combustión de la madera de
+   referencia (no se asume ningún valor). Los calores de combustión los
+   ingresa el usuario desde la NCh 1993 o un estudio. */
+function exCargaCalc(rec){
+  const mats = (rec.cargaMateriales||[]).filter(m=>(+m.masa||0)>0 && (+m.calor||0)>0);
+  const totalMJ = mats.reduce((s,m)=>s + (+m.masa)*(+m.calor), 0);
+  const m2 = (+rec.ancho||0)*(+rec.largo||0);
+  const densidad = (m2 && mats.length) ? totalMJ/m2 : null;
+  const calorMadera = +rec.calorMadera || 0;
+  const eqMadera = (densidad!==null && calorMadera>0) ? densidad/calorMadera : null;
+  return {n:mats.length, totalMJ, m2, densidad, calorMadera, eqMadera};
+}
+let exEditingId = null, exMateriales = [], exExtintores = [], exCarga = [];
 function exLeerForm(){
   const v = id => $pe(id).value;
   return { ancho: parseFloat(v("exAncho")) || 0, largo: parseFloat(v("exLargo")) || 0, materiales: exMateriales, extintores: exExtintores,
@@ -8437,7 +8513,25 @@ function exDibujarListas(){
   $pe("exExtintoresWrap").innerHTML = exExtintores.length ? `<table><thead><tr><th>Tipo</th><th>Potencial</th><th>Ubicación</th><th>Distancia (m)</th><th>Altura (m)</th><th>Mantención</th><th>Señalizado</th><th></th></tr></thead><tbody>${exExtintores.map((e,i)=>`<tr><td>${EX_TIPO_LABEL[e.tipo]||e.tipo}</td><td>${e.potA?e.potA+"A":""}${e.potA&&e.potB?" / ":""}${e.potB?e.potB+"B":""}${!e.potA&&!e.potB?"—":""}</td><td>${e.ubicacion||"—"}</td><td>${e.distancia!==null&&e.distancia!==""&&e.distancia!==undefined?e.distancia:"—"}</td><td>${e.altura!==null&&e.altura!==""&&e.altura!==undefined?e.altura:"—"}</td><td>${e.mantencion?fmtDate(e.mantencion):"—"}</td><td>${e.senalizado?"Sí":"No"}</td><td><button class="subtle-btn" data-ex-ext-del="${i}" type="button">Quitar</button></td></tr>`).join("")}</tbody></table>` : '<div class="kv">Sin extintores registrados (el recinto quedaría sin extintores).</div>';
   exDibujarEval();
 }
+function exDibujarCarga(){
+  const r = {ancho:parseFloat($pe("exAncho").value)||0, largo:parseFloat($pe("exLargo").value)||0, cargaMateriales:exCarga, calorMadera:$pe("exCfMadera").value};
+  const c = exCargaCalc(r);
+  $pe("exCfWrap").innerHTML = exCarga.length ? `<table><thead><tr><th>Material</th><th>Masa (kg)</th><th>Calor de combustión (MJ/kg)</th><th>Carga (MJ)</th><th></th></tr></thead><tbody>${exCarga.map((m,i)=>`<tr><td>${m.material}</td><td>${m.masa}</td><td>${m.calor}</td><td>${Math.round((+m.masa)*(+m.calor)*100)/100}</td><td><button class="subtle-btn" data-ex-cf-del="${i}" type="button">Quitar</button></td></tr>`).join("")}</tbody></table>` : '<div class="kv">Sin materiales combustibles registrados (la carga de fuego no está evaluada).</div>';
+  if(!c.n){ $pe("exCfResultado").innerHTML = ""; return; }
+  $pe("exCfResultado").innerHTML = `<div><strong>Carga combustible total:</strong> ${Math.round(c.totalMJ*100)/100} MJ</div>
+    <div><strong>Densidad de carga combustible:</strong> ${c.densidad!==null ? (Math.round(c.densidad*100)/100)+" MJ/m²" : "ingresa las dimensiones del recinto"}</div>
+    <div><strong>Equivalente en madera:</strong> ${c.eqMadera!==null ? (Math.round(c.eqMadera*100)/100)+" kg de madera/m²" : "indica el calor de combustión de la madera de referencia para calcularlo"}</div>`;
+}
+on($pe("exAddCfBtn"), "click", ()=>{
+  const material = $pe("exCfMaterial").value.trim(), masa = parseFloat($pe("exCfMasa").value), calor = parseFloat($pe("exCfCalor").value);
+  if(!material || !(masa>0) || !(calor>0)){ alert("Indica el material, su masa en kg y su calor de combustión en MJ/kg (ambos mayores que cero)."); return; }
+  exCarga.push({material, masa, calor});
+  ["exCfMaterial","exCfMasa","exCfCalor"].forEach(id=>$pe(id).value=""); exDibujarCarga();
+});
+on($pe("exCfWrap"), "click", e=>{ const b = e.target.closest("[data-ex-cf-del]"); if(b){ exCarga.splice(+b.dataset.exCfDel,1); exDibujarCarga(); } });
+$pe("exCfMadera").addEventListener("input", exDibujarCarga);
 function exDibujarEval(){
+  exDibujarCarga();
   const r = exLeerForm(); const ev = exEvaluar(r);
   $pe("exM2").textContent = ev.m2 ? (Math.round(ev.m2*100)/100)+" m²" : "—";
   const color = ev.estado==="Cumple" ? "vigente" : (ev.estado==="Incompleto" ? "medio" : "critico");
@@ -8466,7 +8560,8 @@ on($pe("exExtintoresWrap"), "click", e=>{ const b = e.target.closest("[data-ex-e
 const EX_CAMPOS_TEXTO = ["exNombre","exUbicacion","exUso","exFecha","exInformante","exCielo","exParedes","exSuelo","exOtroSistemaCual","exSeccionCable","exPotenciaInstalada","exPotenciaMaxima","exIntensidadMaxima"];
 const EX_CAMPOS_SELECT = {exAlmacen:"almacen", exCargaFuego:"cargaFuego", exInflamable:"inflamable", exCombustible:"combustible", exOtroSistema:"otroSistema", exAlarma:"alarma", exAutomatico:"automatico", exRedElectrica:"redElectrica", exRiesgoElectrico:"riesgoElectrico"};
 function resetExForm(){
-  exEditingId = null; exMateriales = []; exExtintores = [];
+  exEditingId = null; exMateriales = []; exExtintores = []; exCarga = [];
+  $pe("exCfMadera").value = ""; $pe("exCfFuente").value = "";
   EX_CAMPOS_TEXTO.forEach(id=>$pe(id).value = ""); $pe("exAncho").value = ""; $pe("exLargo").value = "";
   Object.keys(EX_CAMPOS_SELECT).forEach(id=>$pe(id).value = "no");
   $pe("exFecha").value = new Date().toISOString().slice(0,10);
@@ -8483,6 +8578,7 @@ function startEditEx(id){
   $pe("exAncho").value = r.ancho || ""; $pe("exLargo").value = r.largo || "";
   Object.entries(EX_CAMPOS_SELECT).forEach(([cid,k])=>{ $pe(cid).value = r[k] || "no"; });
   exMateriales = (r.materiales||[]).map(m=>({...m})); exExtintores = (r.extintores||[]).map(e=>({...e}));
+  exCarga = (r.cargaMateriales||[]).map(m=>({...m})); $pe("exCfMadera").value = r.calorMadera || ""; $pe("exCfFuente").value = r.fuenteCalor || "";
   $pe("exFormTitle").textContent = `Editando "${r.nombre||"recinto"}"`;
   $pe("saveExBtn").textContent = "Guardar cambios"; $pe("cancelEditExBtn").style.display = "";
   exDibujarListas();
@@ -8496,6 +8592,8 @@ function exArmarRegistro(id){
     otroSistemaCual:$pe("exOtroSistemaCual").value.trim(), seccionCable:$pe("exSeccionCable").value.trim(), potenciaInstalada:$pe("exPotenciaInstalada").value.trim(),
     potenciaMaxima:$pe("exPotenciaMaxima").value.trim(), intensidadMaxima:$pe("exIntensidadMaxima").value.trim()};
   Object.entries(EX_CAMPOS_SELECT).forEach(([cid,k])=>{ rec[k] = $pe(cid).value; });
+  rec.cargaMateriales = exCarga.slice(); rec.calorMadera = parseFloat($pe("exCfMadera").value) || null; rec.fuenteCalor = $pe("exCfFuente").value.trim();
+  if(exCargaCalc(rec).n) rec.cargaFuego = "si";
   return rec;
 }
 on($pe("saveExBtn"), "click", async ()=>{
@@ -8511,7 +8609,7 @@ function renderExTable(){
     const color = ev.estado==="Cumple" ? "vigente" : (ev.estado==="Incompleto" ? "medio" : "critico");
     return `<tr><td><strong>${r.nombre||"—"}</strong><div class="kv">${[r.uso,r.ubicacion].filter(Boolean).join(" · ")}</div></td>
       <td>${ev.m2?Math.round(ev.m2*100)/100:"—"}</td><td>${(r.extintores||[]).length}</td><td>${Math.round(ev.cobertura)} m²</td>
-      <td><span class="pill ${color}">${ev.estado}</span>${ev.faltas.length?`<div class="kv">${ev.faltas.length} incumplimiento(s)</div>`:""}</td>
+      <td><span class="pill ${color}">${ev.estado}</span>${ev.faltas.length?`<div class="kv">${ev.faltas.length} incumplimiento(s)</div>`:""}${(()=>{ const c = exCargaCalc(r); return c.densidad!==null ? `<div class="kv">Carga combustible: ${Math.round(c.densidad*100)/100} MJ/m²${c.eqMadera!==null?` (${Math.round(c.eqMadera*100)/100} kg madera/m²)`:""}</div>` : ""; })()}</td>
       <td style="white-space:nowrap;"><button class="btn secondary small" data-ex-editar="${r.id}">Editar</button>
       <button class="btn secondary small" data-ex-pdf="${r.id}">PDF</button>
       <button class="subtle-btn" data-ex-eliminar="${r.id}">Eliminar</button></td></tr>`;
@@ -8552,6 +8650,11 @@ function exDescargarPdf(r){
     EX_TIPO_LABEL[e.tipo]||e.tipo, `${e.potA?e.potA+"A":""}${e.potA&&e.potB?" / ":""}${e.potB?e.potB+"B":""}`||"—", e.ubicacion||"—",
     (e.distancia===null||e.distancia===""||e.distancia===undefined)?"—":e.distancia, (e.altura===null||e.altura===""||e.altura===undefined)?"—":e.altura, e.mantencion?fmtDate(e.mantencion):"—", e.senalizado?"Sí":"No"]) : [["Sin extintores","—","—","—","—","—","—"]], [236,131,90]);
   tabla(["Extintor de potencial","Cubre (m2)","Distancia máx. (m)","N° mínimo para este recinto"], ev.requeridos.map(t=>[`${t.pot}A`, t.cub, t.dist, ev.m2?t.n:"—"]));
+  const cf = exCargaCalc(r);
+  if(cf.n){
+    tabla(["Material combustible","Masa (kg)","Calor de combustión (MJ/kg)","Carga (MJ)"], r.cargaMateriales.filter(m=>(+m.masa||0)>0&&(+m.calor||0)>0).map(m=>[m.material, m.masa, m.calor, Math.round((+m.masa)*(+m.calor)*100)/100]), [236,131,90]);
+    y = escribirTextoPaginado(doc, `Carga de fuego: carga combustible total ${Math.round(cf.totalMJ*100)/100} MJ; densidad ${cf.densidad!==null?(Math.round(cf.densidad*100)/100)+" MJ/m2":"sin dimensiones del recinto"}${cf.eqMadera!==null?`; equivalente ${Math.round(cf.eqMadera*100)/100} kg de madera/m2 (calor de combustión de la madera de referencia: ${cf.calorMadera} MJ/kg)`:""}. Fuente de los calores de combustión: ${r.fuenteCalor||"no indicada"}. No incluye clasificación según la OGUC.`, 14, y, {maxWidth:182}) + 3;
+  }
   y = escribirTextoPaginado(doc, `Resultado: ${ev.estado}. Cobertura instalada: ${Math.round(ev.cobertura)} m2 de ${ev.m2?Math.round(ev.m2*100)/100:0} m2. Fundamento: DS 594, artículos 45 a 51.`, 14, y, {maxWidth:182}) + 3;
   doc.setFont(undefined,"bold"); y = escribirTextoPaginado(doc, "Incumplimientos", 14, y, {maxWidth:182}); doc.setFont(undefined,"normal");
   (ev.faltas.length ? ev.faltas : ["Sin incumplimientos."]).forEach(f=>{ y = escribirTextoPaginado(doc, "- "+f, 16, y, {maxWidth:180}); });
@@ -8566,15 +8669,148 @@ on($pe("exExcelBtn"), "click", ()=>{
   const rows = CACHE.grdExtintores||[];
   if(!rows.length){ alert("Aún no hay recintos evaluados para exportar."); return; }
   if(typeof XLSX === "undefined"){ alert("No se pudo cargar el generador de Excel (revisa tu conexión a internet e intenta de nuevo)."); return; }
-  const resumen = rows.map(r=>{ const ev = exEvaluar(r); return {"Edificio / recinto":r.nombre||"","Ubicación":r.ubicacion||"","Uso":r.uso||"","Ancho (m)":r.ancho||0,"Largo (m)":r.largo||0,"Superficie (m2)":Math.round(ev.m2*100)/100,"N° de extintores":(r.extintores||[]).length,"Cobertura instalada (m2)":Math.round(ev.cobertura),"Estado":ev.estado,"Incumplimientos":ev.faltas.join(" | "),"Datos por completar":ev.pendientes.join(" | "),"Fecha evaluación":r.fecha||"","Informe realizado por":r.informante||""}; });
+  const resumen = rows.map(r=>{ const ev = exEvaluar(r); const cf = exCargaCalc(r); return {"Edificio / recinto":r.nombre||"","Ubicación":r.ubicacion||"","Uso":r.uso||"","Ancho (m)":r.ancho||0,"Largo (m)":r.largo||0,"Superficie (m2)":Math.round(ev.m2*100)/100,"N° de extintores":(r.extintores||[]).length,"Cobertura instalada (m2)":Math.round(ev.cobertura),"Estado":ev.estado,"Incumplimientos":ev.faltas.join(" | "),"Datos por completar":ev.pendientes.join(" | "),"Fecha evaluación":r.fecha||"","Informe realizado por":r.informante||"","Carga combustible (MJ/m2)":cf.densidad!==null?Math.round(cf.densidad*100)/100:"","Equivalente (kg madera/m2)":cf.eqMadera!==null?Math.round(cf.eqMadera*100)/100:""}; });
   const detalle = [];
   rows.forEach(r=>(r.extintores||[]).forEach(e=>detalle.push({"Edificio / recinto":r.nombre||"","Tipo":EX_TIPO_LABEL[e.tipo]||e.tipo,"Potencial A":e.potA||"","Potencial B":e.potB||"","Ubicación":e.ubicacion||"","Distancia de traslado (m)":e.distancia===null?"":e.distancia,"Altura de la base (m)":e.altura===null?"":e.altura,"Última mantención":e.mantencion||"","Señalizado":e.senalizado?"Sí":"No"})));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumen), "Recintos");
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detalle.length?detalle:[{"Edificio / recinto":"Sin extintores registrados"}]), "Extintores");
+  const carga = [];
+  rows.forEach(r=>(r.cargaMateriales||[]).forEach(m=>carga.push({"Edificio / recinto":r.nombre||"","Material":m.material,"Masa (kg)":m.masa,"Calor de combustión (MJ/kg)":m.calor,"Carga (MJ)":Math.round((+m.masa)*(+m.calor)*100)/100,"Fuente":r.fuenteCalor||""})));
+  if(carga.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(carga), "Carga combustible");
   XLSX.writeFile(wb, `Levantamiento_extintores_${new Date().toISOString().slice(0,10)}.xlsx`);
 });
 resetExForm();
+
+/* =========================================================
+   REGISTRO DE EXTINTORES (store registroExtintores)
+   Inventario independiente de los recintos (incluye extintores de vehículos).
+   Cumple si tiene registro de certificación, la mantención está vigente
+   (última + 1 año, DS 594 art. 51) y la prueba hidrostática está vigente
+   (última + vigencia en años que informa el usuario según la etiqueta o el
+   servicio técnico: no se asume una periodicidad por tipo de agente).
+   ========================================================= */
+const RX_UBIC_LABEL = {recinto:"Recinto / instalación", vehiculo:"Vehículo", otro:"Otro"};
+const RX_ALERTA_MANT_DIAS = 30, RX_ALERTA_PH_DIAS = 60;
+function rxSumarAnios(fecha, anios){
+  const d = parseFechaLocal(fecha);
+  if(isNaN(d)) return null;
+  return new Date(d.getFullYear()+anios, d.getMonth(), d.getDate());
+}
+function rxEvaluar(r){
+  const faltas = [], pendientes = [], alertas = [];
+  let proxMant = null, diasMant = null, proxPH = null, diasPH = null;
+  if(!(r.certificado||"").trim()) faltas.push("Sin registro de certificación (DS 594 art. 45; DS 44/2018 de Economía).");
+  if(!r.mantencion) pendientes.push("Falta la fecha de la última mantención.");
+  else {
+    proxMant = rxSumarAnios(r.mantencion, 1); diasMant = daysUntil(proxMant);
+    if(diasMant < 0) faltas.push(`Mantención vencida: debía realizarse antes del ${fmtDate(proxMant)} (última: ${fmtDate(r.mantencion)}).`);
+    else if(diasMant <= RX_ALERTA_MANT_DIAS) alertas.push(`La mantención vence el ${fmtDate(proxMant)} (en ${diasMant} día(s)).`);
+  }
+  if(!r.pruebaHidro) pendientes.push("Falta la fecha de la última prueba hidrostática.");
+  else if(!(+r.phAnios>0)) pendientes.push("Falta definir la vigencia de la prueba hidrostática (años).");
+  else {
+    proxPH = rxSumarAnios(r.pruebaHidro, +r.phAnios); diasPH = daysUntil(proxPH);
+    if(diasPH < 0) faltas.push(`Prueba hidrostática vencida: debía realizarse antes del ${fmtDate(proxPH)} (última: ${fmtDate(r.pruebaHidro)}).`);
+    else if(diasPH <= RX_ALERTA_PH_DIAS) alertas.push(`La prueba hidrostática vence el ${fmtDate(proxPH)} (en ${diasPH} día(s)).`);
+  }
+  const estado = faltas.length ? "No cumple" : (pendientes.length ? "Incompleto" : "Cumple");
+  return {estado, faltas, pendientes, alertas, proxMant, diasMant, proxPH, diasPH};
+}
+let rxEditingId = null;
+const RX_CAMPOS = {rxCodigo:"codigo", rxTipo:"tipo", rxPotA:"potA", rxPotB:"potB", rxCapacidad:"capacidad", rxUbicTipo:"ubicTipo", rxUbicDetalle:"ubicDetalle", rxResponsable:"responsable", rxCertificado:"certificado", rxMant:"mantencion", rxMantEmpresa:"mantEmpresa", rxPH:"pruebaHidro", rxPHAnios:"phAnios", rxObs:"obs"};
+function rxActualizarEtiquetaUbic(){
+  const t = $pe("rxUbicTipo").value;
+  $pe("rxUbicLabel").textContent = t==="vehiculo" ? "Patente y tipo de vehículo" : (t==="recinto" ? "Recinto o ubicación" : "Detalle de la ubicación");
+  $pe("rxUbicDetalle").placeholder = t==="vehiculo" ? "Ej: ABCD-12, camioneta" : "Ej: Bodega, acceso principal";
+}
+$pe("rxUbicTipo").addEventListener("change", rxActualizarEtiquetaUbic);
+function resetRxForm(){
+  rxEditingId = null;
+  Object.keys(RX_CAMPOS).forEach(id=>$pe(id).value = "");
+  $pe("rxTipo").value = "pqs_abc"; $pe("rxPotA").value = "10"; $pe("rxUbicTipo").value = "recinto";
+  rxActualizarEtiquetaUbic();
+  $pe("rxFormTitle").textContent = "Registro de extintores (certificación, mantención y prueba hidrostática)";
+  $pe("rxSaveBtn").textContent = "Guardar extintor"; $pe("rxCancelBtn").style.display = "none";
+}
+on($pe("rxCancelBtn"), "click", ()=> resetRxForm());
+function startEditRx(id){
+  const r = (CACHE.registroExtintores||[]).find(x=>x.id===id); if(!r) return;
+  rxEditingId = id;
+  Object.entries(RX_CAMPOS).forEach(([cid,k])=>{ $pe(cid).value = (r[k]===null||r[k]===undefined) ? "" : r[k]; });
+  rxActualizarEtiquetaUbic();
+  $pe("rxFormTitle").textContent = `Editando extintor ${r.codigo||""}`;
+  $pe("rxSaveBtn").textContent = "Guardar cambios"; $pe("rxCancelBtn").style.display = "";
+  $pe("hdrRegistroExtintores").scrollIntoView({behavior:"smooth", block:"start"});
+}
+on($pe("rxSaveBtn"), "click", async ()=>{
+  if(!$pe("rxCodigo").value.trim()){ alert("Indica el código o N° de serie del extintor."); return; }
+  const rec = {id: rxEditingId || uid()};
+  Object.entries(RX_CAMPOS).forEach(([cid,k])=>{
+    const v = $pe(cid).value.trim();
+    rec[k] = ["potA","potB","capacidad","phAnios"].includes(k) ? (v===""?null:parseFloat(v)) : v;
+  });
+  await put("registroExtintores", rec);
+  await loadCache(); resetRxForm(); renderEmergencia();
+  alert("Extintor guardado.");
+});
+function rxFiltrados(){
+  const fu = $pe("rxFiltroUbic").value, fe = $pe("rxFiltroEstado").value;
+  return (CACHE.registroExtintores||[]).map(r=>({r, ev:rxEvaluar(r)})).filter(({r,ev})=>{
+    if(fu && r.ubicTipo!==fu) return false;
+    if(fe==="porvencer") return ev.alertas.length>0;
+    if(fe && ev.estado!==fe) return false;
+    return true;
+  });
+}
+function rxCeldaFecha(ultima, prox, dias, limite){
+  if(!ultima) return '<span class="kv">Sin dato</span>';
+  if(!prox) return `Última: ${fmtDate(ultima)}<div class="kv">Falta la vigencia para calcular la próxima</div>`;
+  const cls = dias<0 ? "critico" : (dias<=limite ? "medio" : "vigente");
+  const txt = dias<0 ? `Vencida hace ${-dias} día(s)` : (dias<=limite ? `Vence en ${dias} día(s)` : "Vigente");
+  return `Última: ${fmtDate(ultima)}<div>Próxima: <strong>${fmtDate(prox)}</strong></div><span class="pill ${cls}">${txt}</span>`;
+}
+function renderRegistroExtintores(){
+  const todos = (CACHE.registroExtintores||[]).map(r=>({r, ev:rxEvaluar(r)}));
+  const cuenta = f => todos.filter(f).length;
+  $pe("rxTiles").innerHTML = [
+    tile("Extintores registrados", todos.length, `${cuenta(x=>x.r.ubicTipo==="vehiculo")} en vehículos`),
+    tile("No cumple", cuenta(x=>x.ev.estado==="No cumple"), "sin certificación, mantención vencida o prueba hidrostática vencida"),
+    tile("Con vencimiento próximo", cuenta(x=>x.ev.alertas.length>0), `mantención a ${RX_ALERTA_MANT_DIAS} días o prueba hidrostática a ${RX_ALERTA_PH_DIAS} días`),
+    tile("Incompletos", cuenta(x=>x.ev.estado==="Incompleto"), "faltan fechas por registrar"),
+  ].join("");
+  const rows = rxFiltrados().sort((a,b)=>{ const o = {"No cumple":0,"Incompleto":1,"Cumple":2}; return (o[a.ev.estado]-o[b.ev.estado]) || (a.r.codigo||"").localeCompare(b.r.codigo||""); });
+  $pe("rxTable").innerHTML = rows.length ? rows.map(({r,ev})=>{
+    const color = ev.estado==="Cumple" ? "vigente" : (ev.estado==="Incompleto" ? "medio" : "critico");
+    const notas = [...ev.faltas, ...ev.alertas, ...ev.pendientes];
+    return `<tr>
+      <td><strong>${r.codigo||"—"}</strong><div class="kv">${EX_TIPO_LABEL[r.tipo]||r.tipo||""}${r.potA?" "+r.potA+"A":""}${r.potB?" / "+r.potB+"B":""}${r.capacidad?" · "+r.capacidad+" kg":""}</div></td>
+      <td>${RX_UBIC_LABEL[r.ubicTipo]||"—"}<div class="kv">${r.ubicDetalle||""}</div>${r.responsable?`<div class="kv">Resp.: ${r.responsable}</div>`:""}</td>
+      <td>${(r.certificado||"").trim() ? r.certificado : '<span class="pill critico">Sin registro</span>'}</td>
+      <td>${rxCeldaFecha(r.mantencion, ev.proxMant, ev.diasMant, RX_ALERTA_MANT_DIAS)}${r.mantEmpresa?`<div class="kv">${r.mantEmpresa}</div>`:""}</td>
+      <td>${rxCeldaFecha(r.pruebaHidro, ev.proxPH, ev.diasPH, RX_ALERTA_PH_DIAS)}${r.phAnios?`<div class="kv">Vigencia: ${r.phAnios} año(s)</div>`:""}</td>
+      <td><span class="pill ${color}">${ev.estado}</span>${notas.length?`<ul style="margin:4px 0 0 16px;padding:0;font-size:12px;">${notas.map(n=>`<li>${n}</li>`).join("")}</ul>`:""}</td>
+      <td style="white-space:nowrap;"><button class="btn secondary small" data-rx-editar="${r.id}">Editar</button> <button class="subtle-btn" data-rx-eliminar="${r.id}">Eliminar</button></td></tr>`;
+  }).join("") : `<tr><td class="empty" colspan="7">Aún no hay extintores registrados para el filtro seleccionado.</td></tr>`;
+}
+["rxFiltroUbic","rxFiltroEstado"].forEach(id=>$pe(id).addEventListener("change", renderRegistroExtintores));
+on($pe("rxTable"), "click", async e=>{
+  const ed = e.target.closest("[data-rx-editar]"); if(ed){ startEditRx(ed.dataset.rxEditar); return; }
+  const del = e.target.closest("[data-rx-eliminar]");
+  if(del){ const r = (CACHE.registroExtintores||[]).find(x=>x.id===del.dataset.rxEliminar); if(!r) return;
+    if(!confirm(`¿Eliminar el extintor ${r.codigo}? Esta acción no se puede deshacer.`)) return;
+    await deleteRecord("registroExtintores", r.id); await loadCache(); if(rxEditingId===r.id) resetRxForm(); renderEmergencia(); }
+});
+on($pe("rxExcelBtn"), "click", ()=>{
+  const rows = CACHE.registroExtintores||[];
+  if(!rows.length){ alert("Aún no hay extintores registrados para exportar."); return; }
+  if(typeof XLSX === "undefined"){ alert("No se pudo cargar el generador de Excel (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const iso = d => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` : "";
+  const data = rows.map(r=>{ const ev = rxEvaluar(r); return {"Código / N° de serie":r.codigo||"","Tipo":EX_TIPO_LABEL[r.tipo]||r.tipo||"","Potencial A":r.potA||"","Potencial B":r.potB||"","Capacidad (kg)":r.capacidad||"","Dónde está":RX_UBIC_LABEL[r.ubicTipo]||"","Detalle de ubicación":r.ubicDetalle||"","Responsable":r.responsable||"","Registro de certificación":r.certificado||"","Última mantención":r.mantencion||"","Próxima mantención":iso(ev.proxMant),"Servicio técnico":r.mantEmpresa||"","Última prueba hidrostática":r.pruebaHidro||"","Vigencia prueba hidrostática (años)":r.phAnios||"","Próxima prueba hidrostática":iso(ev.proxPH),"Estado":ev.estado,"Incumplimientos":ev.faltas.join(" | "),"Alertas":ev.alertas.join(" | "),"Datos por completar":ev.pendientes.join(" | "),"Observaciones":r.obs||""}; });
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Registro de extintores");
+  XLSX.writeFile(wb, `Registro_extintores_${new Date().toISOString().slice(0,10)}.xlsx`);
+});
+resetRxForm();
 
 function renderEmergencia(){
   renderExtintores();
@@ -13796,8 +14032,8 @@ function renderGanttChart(){
   const wrap = document.getElementById("ganttChartWrap");
   const rows = ganttFiltrado();
   if(!rows.length){ wrap.innerHTML = '<div class="empty">Sin actividades para mostrar en la carta Gantt</div>'; return; }
-  const starts = rows.map(g=>new Date(g.fechaInicio).getTime()).filter(t=>!isNaN(t));
-  const ends = rows.map(g=>new Date(g.fechaFin).getTime()).filter(t=>!isNaN(t));
+  const starts = rows.map(g=>parseFechaLocal(g.fechaInicio).getTime()).filter(t=>!isNaN(t));
+  const ends = rows.map(g=>parseFechaLocal(g.fechaFin).getTime()).filter(t=>!isNaN(t));
   const rangeStart = Math.min(...starts, ...ends);
   const rangeEnd = Math.max(...starts, ...ends);
   const totalMs = Math.max(1, rangeEnd - rangeStart);
