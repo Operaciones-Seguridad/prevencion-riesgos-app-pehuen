@@ -56,6 +56,7 @@
   #closeSidebarBtn{display:none;}
   nav#mainNav{display:flex;flex-direction:column;gap:6px;padding:10px;flex:1;overflow-y:auto;}
   nav#mainNav button{display:flex;align-items:center;gap:10px;border:1px solid var(--grid);background:#fff;padding:9px 12px;border-radius:10px;font-size:14px;font-weight:600;color:var(--text-secondary);cursor:pointer;white-space:normal;line-height:1.25;min-height:44px;text-align:left;width:100%;}
+  nav#mainNav button[data-badge]::after{content:attr(data-badge);margin-left:auto;background:#d03b3b;color:#fff;font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px;line-height:1.4;}
   nav#mainNav button svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:var(--s1);}
   nav#mainNav button.active{background:var(--s1);border-color:var(--s1);color:#fff;}
   nav#mainNav button.active svg{color:#fff;}
@@ -303,6 +304,7 @@
 
     <nav id="mainNav">
       <button data-view="dashboard" class="active">Dashboard</button>
+      <button data-view="mis-pendientes">Mis pendientes</button>
       <button data-view="diagnostico">Diagnóstico</button>
       <button data-view="matriz">Matriz de riesgos</button>
       <button data-view="cumplimiento">Cumplimiento legal</button>
@@ -454,6 +456,28 @@
        prevención de riesgos. -->
 
   <!-- DIAGNÓSTICO -->
+  <div class="view" id="view-mis-pendientes">
+    <div class="desc" style="margin:0 0 10px;">Todo lo que tienes por hacer en un solo lugar: tus hallazgos por cerrar, tu programa de actividades y tus capacitaciones. Solo ves lo asignado a tu nombre.</div>
+    <div class="grid-tiles" id="misPendientesTiles" style="margin-bottom:14px;"></div>
+    <div class="card" id="cardMisActividadesMensuales">
+      <div class="card-header-row" id="hdrMisActividadesMensuales"><h2>Mis actividades mensuales</h2><button class="collapse-toggle" id="toggleMisActividadesMensuales" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMisActividadesMensuales">
+      <div class="desc">Resumen mensual de las actividades del Programa de seguridad (incluida la Capacitación) asignadas como responsable al usuario que inició sesión, indicando el tipo de cada actividad a desarrollar y el nivel de cumplimiento según su realización. Si participas en el programa por cargo, tu programa del mes aparece primero y se actualiza solo con tus inspecciones, observaciones, reuniones del comité y capacitaciones registradas.</div>
+      <div id="misProgramaCargoWrap"></div>
+      <table>
+        <thead><tr><th>Mes</th><th>Actividades a desarrollar (tipo)</th><th>Programadas</th><th>Realizadas</th><th>% Cumplimiento</th></tr></thead>
+        <tbody id="misActividadesMensualesTable"></tbody>
+      </table>
+    </div></div>
+
+    <div class="card" id="cardMisHallazgos">
+      <div class="card-header-row" id="hdrMisHallazgos"><h2>Mis hallazgos asignados</h2><button class="collapse-toggle" id="toggleMisHallazgos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMisHallazgos">
+      <div class="desc">Hallazgos de inspecciones y observaciones cuyo responsable coincide con el usuario que inició sesión, para que pueda cerrar sus propias acciones directamente desde aquí.</div>
+      <label>Seleccionar hallazgo</label>
+      <select id="misHallazgosSelect"></select>
+      <div id="misHallazgosWrap"></div>
+    </div></div>
+  </div>
+
   <div class="view" id="view-diagnostico">
     <div class="card">
       <div class="card-header-row" id="hdrDiagIndicadores"><h2>Indicadores actuales</h2><button class="collapse-toggle" id="toggleDiagIndicadores" type="button" aria-label="Contraer o expandir">▾</button></div>
@@ -580,24 +604,6 @@
         <button class="btn" id="saveInspeccionBtn">Guardar inspección</button>
         <button class="btn secondary" id="cancelEditInsBtn" style="display:none;">Cancelar edición</button>
       </div>
-    </div></div>
-
-    <div class="card" id="cardMisActividadesMensuales">
-      <div class="card-header-row" id="hdrMisActividadesMensuales"><h2>Mis actividades mensuales</h2><button class="collapse-toggle" id="toggleMisActividadesMensuales" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMisActividadesMensuales">
-      <div class="desc">Resumen mensual de las actividades del Programa de seguridad (incluida la Capacitación) asignadas como responsable al usuario que inició sesión, indicando el tipo de cada actividad a desarrollar y el nivel de cumplimiento según su realización. Si participas en el programa por cargo, tu programa del mes aparece primero y se actualiza solo con tus inspecciones, observaciones, reuniones del comité y capacitaciones registradas.</div>
-      <div id="misProgramaCargoWrap"></div>
-      <table>
-        <thead><tr><th>Mes</th><th>Actividades a desarrollar (tipo)</th><th>Programadas</th><th>Realizadas</th><th>% Cumplimiento</th></tr></thead>
-        <tbody id="misActividadesMensualesTable"></tbody>
-      </table>
-    </div></div>
-
-    <div class="card" id="cardMisHallazgos">
-      <div class="card-header-row" id="hdrMisHallazgos"><h2>Mis hallazgos asignados</h2><button class="collapse-toggle" id="toggleMisHallazgos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMisHallazgos">
-      <div class="desc">Hallazgos de inspecciones y observaciones cuyo responsable coincide con el usuario que inició sesión, para que pueda cerrar sus propias acciones directamente desde aquí.</div>
-      <label>Seleccionar hallazgo</label>
-      <select id="misHallazgosSelect"></select>
-      <div id="misHallazgosWrap"></div>
     </div></div>
   </div>
 
@@ -4828,6 +4834,7 @@ function irAVista(nombreVista){
   if(nombreVista==="dashboard") renderDashboard();
   if(nombreVista==="accidentabilidad") renderAccidentabilidad();
   if(nombreVista==="programa") renderProgramaCargo();
+  if(nombreVista==="mis-pendientes"){ renderMisActividadesMensuales(); renderMisHallazgos(); renderMisPendientes(); }
   if(nombreVista==="seguridad"){ renderInfractores(); renderVelocidad(); }
   if(nombreVista==="cphys") renderCphys();
   if(nombreVista==="cumplimiento") renderResumenRiesgosLegal();
@@ -9050,6 +9057,7 @@ const SUBTAB_ICONOS = {
 // Íconos del menú lateral: se agregan a cada botón (el texto del botón no cambia).
 const NAV_ICONOS = {
   "dashboard":'<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>',
+  "mis-pendientes":'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9l2 2 4-4M9 15h6"/>',
   "diagnostico":'<circle cx="10" cy="10" r="6"/><path d="M15 15l5 5"/>',
   "matriz":'<rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5a3 3 0 0 1 6 0M9 12h6M9 16h4"/>',
   "cumplimiento":'<path d="M12 3l8 3v6c0 5-3.500 8-8 9-4.500-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
@@ -10704,6 +10712,7 @@ function renderMisActividadesMensuales(){
   const tbody = document.getElementById("misActividadesMensualesTable");
   if(!tbody) return;
   renderMisProgramaCargo();
+  renderMisPendientes();
   const usuario = usuarioDeSesion();
   if(!usuario || !usuario.nombre){
     tbody.innerHTML = '<tr><td class="empty" colspan="5">Inicie sesión para ver sus actividades asignadas.</td></tr>';
@@ -10752,6 +10761,41 @@ function renderMisActividadesMensuales(){
   }).join("");
 }
 
+/* Mis pendientes: resumen de la pestaña y contador del menú. Cuenta los
+   hallazgos asignados al usuario sin cerrar y sus actividades atrasadas
+   (programa general, capacitaciones como relator y programa por cargo del
+   mes en curso: actividades con alguna semana vencida sin cumplir). */
+function misPendientesCalcular(){
+  const r = {hallazgos:0, atrasadas:0, pct:null};
+  const usuario = usuarioDeSesion();
+  if(!usuario || !usuario.nombre) return r;
+  const n = normalizarNombreTexto(usuario.nombre);
+  r.hallazgos = misHallazgosDelUsuario().filter(it=>it.f.estado!=="cerrada").length;
+  (CACHE.programa||[]).forEach(p=>{ if(p.responsable && normalizarNombreTexto(p.responsable)===n && estadoPrograma(p)==="atrasada") r.atrasadas++; });
+  (CACHE.capacitaciones||[]).forEach(c=>{ if(c.relator && normalizarNombreTexto(c.relator)===n && estadoCapacitacion(c)==="atrasada") r.atrasadas++; });
+  const per = (CACHE.programaPersonas||[]).find(x=>normalizarNombreTexto(x.nombre)===n);
+  if(per){
+    const hoy = new Date(), hoja = pcBuscarPrograma(hoy.getFullYear(), hoy.getMonth()+1, per);
+    if(hoja){
+      const c = pcCalcular(hoja);
+      r.pct = c.mensual;
+      c.filas.forEach(f=>{ for(let s=0;s<4;s++){ if(f.proy[s]>f.real[s] && pcSemanaVencida(hoja.anio, hoja.mes, s)){ r.atrasadas++; break; } } });
+    }
+  }
+  return r;
+}
+function renderMisPendientes(){
+  const r = misPendientesCalcular(), total = r.hallazgos + r.atrasadas;
+  const btn = document.querySelector('#mainNav button[data-view="mis-pendientes"]');
+  if(btn){ if(total) btn.setAttribute("data-badge", total>99 ? "99+" : String(total)); else btn.removeAttribute("data-badge"); }
+  const tiles = document.getElementById("misPendientesTiles");
+  if(tiles) tiles.innerHTML = [
+    tile("Hallazgos por cerrar", r.hallazgos, "asignados a mi nombre"),
+    tile("Actividades atrasadas", r.atrasadas, "programa y capacitaciones"),
+    tile("Cumplimiento del mes", r.pct===null ? "—" : pcPct(r.pct), "mi programa por cargo"),
+  ].join("");
+}
+
 const MIS_HALLAZGOS_EVIDENCIA = {};
 let misHallazgosSeleccionKey = "";
 function misHallazgosDelUsuario(){
@@ -10775,6 +10819,7 @@ function renderMisHallazgos(){
   const sel = document.getElementById("misHallazgosSelect");
   const wrap = document.getElementById("misHallazgosWrap");
   if(!sel || !wrap) return;
+  renderMisPendientes();
   const usuario = usuarioDeSesion();
   if(!usuario){
     sel.innerHTML = "";
@@ -22044,7 +22089,8 @@ function aplicarPermisosSesion(){
   const perfil = perfilDeSesion();
   const permitidas = perfil ? (perfil.vistas||[]) : APP_VISTAS.map(v=>v.id);
   document.querySelectorAll("#mainNav button[data-view]").forEach(btn=>{
-    btn.style.display = permitidas.includes(btn.dataset.view) ? "" : "none";
+    // "Mis pendientes" es personal de cada usuario: se muestra a todos los perfiles.
+    btn.style.display = (permitidas.includes(btn.dataset.view) || btn.dataset.view==="mis-pendientes") ? "" : "none";
   });
   const activeBtn = document.querySelector("#mainNav button.active");
   if(activeBtn && activeBtn.style.display==="none" && permitidas.length){
