@@ -738,6 +738,32 @@
         <button class="btn small secondary" id="astCargarMatrizBtn">Cargar riesgos desde la Matriz de riesgos</button>
       </div>
 
+      <div id="astFotoWrap" style="display:none;border:1px solid var(--grid);border-radius:8px;padding:10px 12px;margin-top:12px;">
+        <h3 style="margin:0 0 6px;font-size:15px;">Evaluar con fotos (IA)</h3>
+        <div class="desc" style="margin-top:0;">Suba hasta 6 fotos del lugar o de la tarea (use el área y la actividad de arriba) y la IA propone los peligros, riesgos y medidas de control de <strong>esta tarea</strong>, sin repetir los que ya tiene la AST. Usted revisa y elige cuáles agregar: <strong>nunca se agregan solos</strong>. Las fotos se reducen en su equipo antes de enviarse y no se guardan en Pehuén.</div>
+        <div class="form-grid">
+          <div><label>Cantidad de riesgos a sugerir</label><input type="number" id="astFotoCantidad" value="5" min="1" max="12"></div>
+          <div style="grid-column:1/-1;"><label>Fotos (máximo 6)</label><input type="file" id="astFotoFiles" accept="image/*" multiple></div>
+        </div>
+        <div id="astFotoMiniaturas" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;"></div>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;"><input type="checkbox" id="astFotoAviso" style="width:auto;min-height:auto;margin-top:3px;"> Entiendo que las fotos se envían al servicio de IA solo para este análisis y no se guardan en Pehuén. Evitaré fotografiar rostros o datos personales.</label>
+        <div class="toolbar" style="margin-top:8px;">
+          <button class="btn secondary" id="astFotoAnalizarBtn" type="button">Analizar fotos con IA</button>
+          <span id="astFotoEstado" class="kv"></span>
+        </div>
+        <div id="astFotoObs" class="kv" style="display:none;background:#eef4fb;border:1px solid #b9d0ee;border-radius:8px;padding:8px 10px;margin-top:8px;"></div>
+        <div id="astIaPreviewWrap" style="display:none;margin-top:12px;">
+          <table>
+            <thead><tr><th></th><th>Peligro / riesgo</th><th>Medida de control</th><th>Qué se ve en las fotos</th></tr></thead>
+            <tbody id="astIaPreviewTable"></tbody>
+          </table>
+          <div class="toolbar" style="margin-top:10px;">
+            <button class="btn" id="astIaAgregarBtn" type="button">Agregar seleccionados a la AST</button>
+            <button class="btn secondary" id="astIaDescartarBtn" type="button">Descartar sugerencias</button>
+          </div>
+        </div>
+      </div>
+
       <div style="margin-top:18px;">
         <label style="margin:0;">Riesgos identificados y medidas de control</label>
       </div>
@@ -12493,7 +12519,7 @@ function drawAstRiesgos(){
           <td>${idx+1}</td>
           <td>${r.texto}</td>
           <td>${r.medida || "—"}</td>
-          <td><span class="pill ${r.origen==='matriz'?'pendiente':'bajo'}">${r.origen==='matriz'?'Matriz de riesgos':'Manual'}</span></td>
+          <td><span class="pill ${r.origen==='matriz'?'pendiente':'bajo'}">${r.origen==='matriz'?'Matriz de riesgos':(r.origen==='fotos'?'IA con fotos':'Manual')}</span></td>
           <td><button class="subtle-btn" data-ast-riesgo-quitar="${idx}">Quitar</button></td>
         </tr>
       `).join("")
@@ -12533,6 +12559,104 @@ on(document.getElementById("addAstRiesgoBtn"), "click", () => {
   drawAstRiesgos();
 });
 
+/* --- Evaluación de la tarea desde FOTOS (IA) para la AST ---
+   Mismo mecanismo que la Matriz (fotos reducidas en el navegador, no se guardan, la IA
+   solo propone): el usuario revisa y elige qué riesgos pasan a la AST. */
+let astFotos = [];
+let astSugerenciasIA = [];
+let astIaAnalizando = false;
+function renderAstFotos(){
+  document.getElementById("astFotoMiniaturas").innerHTML = astFotos.map((f,i)=>
+    `<div style="position:relative;"><img src="${f.url}" alt="Foto ${i+1}" style="width:96px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--grid);"><button type="button" data-ast-foto-quitar="${i}" aria-label="Quitar foto ${i+1}" style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:none;background:#c0392b;color:#fff;cursor:pointer;line-height:20px;padding:0;">×</button><div class="kv" style="text-align:center;">Foto ${i+1}</div></div>`).join("");
+}
+function astMedidaDeSugerencia(s){
+  return (s.controlesJerarquizados||[]).filter(c=>c && c.texto).map(c=>`${c.jerarquia}) ${c.texto}`).join("; ");
+}
+function renderAstIaPreview(){
+  const wrap = document.getElementById("astIaPreviewWrap");
+  wrap.style.display = astSugerenciasIA.length ? "" : "none";
+  document.getElementById("astIaPreviewTable").innerHTML = astSugerenciasIA.map((s,i)=>`
+    <tr>
+      <td><input type="checkbox" data-ast-ia-check="${i}" checked style="width:auto;min-height:auto;"></td>
+      <td><strong>${incEsc(s.peligro||"—")}</strong>${s.riesgo?`<br>${incEsc(s.riesgo)}`:""}</td>
+      <td>${incEsc(astMedidaDeSugerencia(s)||"—")}</td>
+      <td class="kv">${incEsc(s.evidencia||"—")}</td>
+    </tr>`).join("");
+}
+function astFotosLimpiar(){
+  astFotos = []; astSugerenciasIA = [];
+  renderAstFotos(); renderAstIaPreview();
+  document.getElementById("astFotoEstado").textContent = "";
+  document.getElementById("astFotoObs").style.display = "none";
+  document.getElementById("astFotoAviso").checked = false;
+}
+on(document.getElementById("astFotoFiles"), "change", async (e)=>{
+  const input = e.target, archivos = Array.from(input.files||[]);
+  const estado = document.getElementById("astFotoEstado");
+  let omitidas = 0, fallidas = [];
+  for(const f of archivos){
+    if(astFotos.length >= MATRIZ_FOTOS_MAX){ omitidas++; continue; }
+    try{ astFotos.push(await matrizFotoReducir(f)); }
+    catch(err){ fallidas.push(f.name); }
+  }
+  input.value = "";
+  renderAstFotos();
+  estado.textContent = [omitidas ? `Solo se admiten ${MATRIZ_FOTOS_MAX} fotos: se omitieron ${omitidas}.` : "", fallidas.length ? `No se pudo leer: ${fallidas.join(", ")} (use fotos JPG o PNG).` : ""].filter(Boolean).join(" ");
+});
+on(document.getElementById("astFotoMiniaturas"), "click", (e)=>{
+  const b = e.target.closest("[data-ast-foto-quitar]"); if(!b) return;
+  astFotos.splice(+b.dataset.astFotoQuitar, 1);
+  renderAstFotos();
+});
+on(document.getElementById("astFotoAnalizarBtn"), "click", async ()=>{
+  const estado = document.getElementById("astFotoEstado"), obsBox = document.getElementById("astFotoObs");
+  if(storageMode !== "api"){ alert("Evaluar con fotos usa IA y solo está disponible cuando la app está conectada al servidor."); return; }
+  if(!astFotos.length){ alert("Suba al menos una foto de la tarea."); return; }
+  if(!document.getElementById("astFotoAviso").checked){ alert("Marque la casilla de aviso: las fotos se envían al servicio de IA para este análisis."); return; }
+  const btn = document.getElementById("astFotoAnalizarBtn"); btn.disabled = true; astIaAnalizando = true;
+  estado.textContent = `Analizando ${astFotos.length} foto(s) con la IA… puede tardar hasta un minuto.`;
+  try{
+    const resp = await apiFetch("POST", "/api/ia/evaluar-fotos", {
+      modo: "ast",
+      imagenes: astFotos.map(f=>({tipo:f.tipo, data:f.data})),
+      areaId: document.getElementById("astArea").value,
+      actividad: document.getElementById("astActividad").value.trim(),
+      cantidad: +document.getElementById("astFotoCantidad").value || 5,
+      yaCargados: currentAstRiesgos.map(r=>r.texto),
+    });
+    astSugerenciasIA = resp.sugerencias || [];
+    estado.textContent = astSugerenciasIA.length ? `${astSugerenciasIA.length} riesgo(s) sugerido(s). Revíselos en la tabla de abajo antes de agregarlos.${resp.parcial ? " La respuesta de la IA se cortó: se muestran solo los completos; puede pedir menos riesgos para obtener todos." : ""}` : "La IA no encontró riesgos nuevos que proponer con estas fotos. Pruebe con otras fotos o indique la tarea.";
+    if(resp.observaciones){ obsBox.innerHTML = `<strong>Lo que la IA observa en las fotos:</strong> ${incEsc(resp.observaciones)}<br><span class="kv">Es un borrador de apoyo: verifíquelo en terreno antes de usarlo en la AST.</span>`; obsBox.style.display = ""; }
+    else obsBox.style.display = "none";
+    renderAstIaPreview();
+  }catch(err){
+    estado.textContent = "";
+    alert("No se pudo evaluar con IA: " + err.message);
+  }finally{ btn.disabled = false; astIaAnalizando = false; }
+});
+on(document.getElementById("astIaAgregarBtn"), "click", ()=>{
+  const checks = [...document.querySelectorAll("#astIaPreviewTable [data-ast-ia-check]:checked")];
+  if(!checks.length){ alert("Seleccione al menos un riesgo para agregar."); return; }
+  let agregados = 0;
+  checks.forEach(c=>{
+    const s = astSugerenciasIA[+c.dataset.astIaCheck]; if(!s) return;
+    const texto = `${s.peligro||"—"}${s.riesgo ? " — "+s.riesgo : ""}`;
+    if(currentAstRiesgos.some(r=>r.texto===texto)) return;
+    currentAstRiesgos.push({id:uid(), texto, medida: astMedidaDeSugerencia(s) || "(sin medida de control indicada)", origen:"fotos", evidencia: s.evidencia||""});
+    agregados++;
+  });
+  drawAstRiesgos();
+  astSugerenciasIA = []; renderAstIaPreview();
+  document.getElementById("astFotoObs").style.display = "none";
+  document.getElementById("astFotoEstado").textContent = "";
+  alert(agregados ? `${agregados} riesgo(s) agregado(s) a la AST.` : "Esos riesgos ya estaban en la AST.");
+});
+on(document.getElementById("astIaDescartarBtn"), "click", ()=>{
+  astSugerenciasIA = []; renderAstIaPreview();
+  document.getElementById("astFotoObs").style.display = "none";
+  document.getElementById("astFotoEstado").textContent = "";
+});
+
 function drawAstTrabajadores(){
   document.getElementById("astTrabajadoresWrap").innerHTML = currentAstTrabajadores.length
     ? currentAstTrabajadores.map((tid,idx)=>`
@@ -12564,6 +12688,7 @@ function resetAstForm(){
   document.getElementById("astActividad").value = "";
   document.getElementById("astResponsable").value = "";
   currentAstRiesgos = []; currentAstTrabajadores = [];
+  astFotosLimpiar();
   drawAstRiesgos(); drawAstTrabajadores();
   document.getElementById("astFormTitle").textContent = "Confección de AST (Análisis de Seguridad del Trabajo)";
   document.getElementById("saveAstBtn").textContent = "Guardar AST";
@@ -12581,6 +12706,7 @@ function startEditAst(id){
   document.getElementById("astResponsable").value = rec.responsable || "";
   currentAstRiesgos = (rec.riesgos||[]).slice();
   currentAstTrabajadores = (rec.participantesIds||[]).slice();
+  astFotosLimpiar();
   drawAstRiesgos(); drawAstTrabajadores();
   document.getElementById("astFormTitle").textContent = `Editando AST del ${fmtDate(rec.fecha)}`;
   document.getElementById("saveAstBtn").textContent = "Guardar cambios";
@@ -26861,6 +26987,8 @@ function aplicarPermisosSesion(){
   if(respaldoDatosWrap) respaldoDatosWrap.style.display = (esAdmin && storageMode==="api") ? "" : "none";
   const matrizIaWrap = document.getElementById("matrizIaWrap");
   if(matrizIaWrap) matrizIaWrap.style.display = storageMode==="api" ? "" : "none";
+  const astFotoWrap = document.getElementById("astFotoWrap");
+  if(astFotoWrap) astFotoWrap.style.display = storageMode==="api" ? "" : "none";
   /* Permiso a nivel de acción (no solo de pestaña): si el perfil del
      usuario en sesión tiene descargaDashboard=false, se ocultan los
      botones de descarga del Dashboard (PDF/PPT para gerencia), aunque el
