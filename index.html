@@ -3834,6 +3834,15 @@
     </div>
 
     <div class="card">
+      <div class="card-header-row" id="hdrPlanosEmergencia"><h2>Planos de emergencia</h2><button class="collapse-toggle" id="togglePlanosEmergencia" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyPlanosEmergencia">
+      <div class="desc">Dibuja el plano de emergencias del centro de trabajo con el editor de planos: muros, recintos, puertas y los símbolos de emergencia (salidas de emergencia, vías de evacuación, zonas de seguridad, extintores, red húmeda, pulsadores de alarma, botiquín, camilla, lavaojos, cortes de electricidad y gas, «Usted está aquí»). Puedes partir de un plano de planta ya dibujado para no repetir los muros. Al guardar, la app agrega sola la leyenda con los símbolos usados, y el plano sale en el Anexo 1 del Plan de Emergencia (PDF).</div>
+      <div class="toolbar"><button class="btn" id="planosEmNuevoBtn" type="button">✏️ Dibujar plano de emergencias</button></div>
+      <div id="planosEmergenciaWrap" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-header-row" id="hdrExtintores"><h2 id="exFormTitle">Levantamiento de extintores</h2><button class="collapse-toggle" id="toggleExtintores" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyExtintores">
       <div class="desc">Evaluación de riesgos de la aplicación de extintores, un registro por edificio o recinto, según el DS 594 (art. 45 a 51): cantidad exigida según la superficie y el potencial de extinción (art. 46), agente adecuado a la clase de fuego (art. 50), altura máxima de 1,30 m y señalización (art. 47) y mantención anual (art. 51). La app calcula sola la cobertura, la distancia de traslado y las observaciones. Esta evaluación no incluye el cálculo de carga combustible.</div>
@@ -4731,6 +4740,7 @@ setupCollapsible("hdrGrdRespuesta", "bodyGrdRespuesta", "toggleGrdRespuesta", "c
 setupCollapsible("hdrGrdSimulacros", "bodyGrdSimulacros", "toggleGrdSimulacros", "collapsed_grdSimulacros");
 setupCollapsible("hdrGrdPlanAccion", "bodyGrdPlanAccion", "toggleGrdPlanAccion", "collapsed_grdPlanAccion");
 setupCollapsible("hdrPlanEmergencia", "bodyPlanEmergencia", "togglePlanEmergencia", "collapsed_planEmergencia");
+setupCollapsible("hdrPlanosEmergencia", "bodyPlanosEmergencia", "togglePlanosEmergencia", "collapsed_planosEmergencia");
 setupCollapsible("hdrExtintores", "bodyExtintores", "toggleExtintores", "collapsed_extintores");
 setupCollapsible("hdrRegistroExtintores", "bodyRegistroExtintores", "toggleRegistroExtintores", "collapsed_registroExtintores");
 setupCollapsible("hdrIap", "bodyIap", "toggleIap", "collapsed_iap");
@@ -9665,7 +9675,8 @@ function armarContenidoPlanEmergencia(plan){
     sims.length ? {t:"tabla", head:["Fecha","Tipo","Amenaza","Participantes"], body:sims} : {t:"p", txt:"Aún no hay simulacros registrados."}]});
   S.push({titulo:"13. Teléfonos de emergencia", bloques:[(plan.telefonos||[]).length ? {t:"tabla", head:["Contacto","Número"], body:plan.telefonos.map(t=>[t.nombre,t.numero])} : {t:"p", txt:"Sin teléfonos registrados."}]});
   S.push({titulo:"14. Registros", bloques:[{t:"ul", items:["Lista de evaluación de simulacro de evacuación (Anexo 2) o el registro que utilice el organismo administrador.","Fotografías y videos del simulacro.","Informe de evaluación del simulacro.","Comunicación grupal."]}]});
-  S.push({titulo:"Anexo 1: Croquis de las instalaciones, vías de evacuación y zonas de seguridad", bloques: (plan.croquis||[]).length ? [{t:"imgs", imgs:plan.croquis}] : [{t:"p", txt:"Sin croquis cargados."}]});
+  const imgsAnexo1 = (plan.croquis||[]).concat(planosEmergencia().filter(p=>p.imagen).map(p=>({nombre:"Plano de emergencias: "+p.nombre, data:p.imagen})));
+  S.push({titulo:"Anexo 1: Croquis de las instalaciones, vías de evacuación y zonas de seguridad", bloques: imgsAnexo1.length ? [{t:"imgs", imgs:imgsAnexo1}] : [{t:"p", txt:"Sin croquis ni planos de emergencia cargados."}]});
   const SN = ["Sí","No"];
   S.push({titulo:"Anexo 2: Lista de evaluación de simulacros / emergencias (evacuación)", bloques:[
     {t:"p", txt:"Zona evaluada: ____________________   Tipo de emergencia: ____________________   Fecha: ____________   Hora de inicio: ________   Evaluado por: ____________________"},
@@ -9743,7 +9754,7 @@ async function planEmDescargarPdf(plan){
           let w = 182, h = w*(dims.h/dims.w);
           if(h > 190){ h = 190; w = h*(dims.w/dims.h); }
           if(y + h + 10 > 280){ doc.addPage(); y = 16; }
-          try{ doc.addImage(img.data, fmt, 14, y, w, h); }catch(e){ continue; }
+          try{ doc.addImage(img.data, fmt, 14, y, w, h, undefined, "FAST"); }catch(e){ continue; }
           y += h + 5;
           if(img.nombre){ y = escribirTextoPaginado(doc, img.nombre, 14, y, {maxWidth:182}) + 4; }
         }
@@ -10334,6 +10345,7 @@ subpestanasCrear("emergencia", [
   {key:"simulacros", icono:"pulso", label:"Simulacros y plan de acción", desc:"Ejercicios realizados y medidas pendientes", hdrs:["hdrGrdSimulacros","hdrGrdPlanAccion"],
     badge:()=>{ const n = (CACHE.grdPlanAccion||[]).filter(a=>estadoPrograma(a)==="atrasada").length; return n ? {texto:`${n} atrasada${n===1?"":"s"}`, nivel:"y"} : null; }},
   {key:"plan", icono:"documento", label:"Plan de Emergencia", desc:"Documento formal en PDF y Word", hdrs:["hdrPlanEmergencia"]},
+  {key:"planos", icono:"mapa", label:"Planos de emergencia", desc:"Plano con salidas, vías de evacuación, zonas de seguridad y equipos", hdrs:["hdrPlanosEmergencia"]},
   {key:"extintores", icono:"fuego", label:"Extintores", desc:"Levantamiento por recinto y registro con vencimientos", hdrs:["hdrExtintores","hdrRegistroExtintores"],
     badge:()=>{ const n = (CACHE.registroExtintores||[]).filter(r=>rxEvaluar(r).estado==="No cumple").length; return n ? {texto:`${n} por revisar`, nivel:"r"} : null; }},
 ], "tarjetas");
@@ -10342,6 +10354,7 @@ function renderEmergencia(){
   subpestanasAplicar("emergencia");
   renderExtintores();
   renderPlanEmergencia();
+  renderPlanosEmergencia();
   renderGrdResumen();
   renderGrdAmenazasTable();
   renderGrdComiteTable();
@@ -14876,7 +14889,7 @@ function renderPlanoRiesgos(){
   const wrap = document.getElementById("planoRiesgosWrap");
   const leyendaWrap = document.getElementById("planoLeyendaWrap");
   if(!wrap) return;
-  const planos = CACHE.planoRiesgos||[];
+  const planos = (CACHE.planoRiesgos||[]).filter(p=>p.tipoPlano!=="emergencia"); // los planos de emergencia viven en Emergencia
   if(planoActualId === undefined){
     planoActualId = planos.length ? planos[0].id : null; // primera carga: elegir el primero si existe
   } else if(planoActualId && !planos.some(p=>p.id===planoActualId)){
@@ -15019,7 +15032,84 @@ const PE_HERRAMIENTAS = [
   {id:"seleccionar", label:"↖ Seleccionar / mover"}, {id:"muro", label:"▬ Muro"}, {id:"zona", label:"▭ Recinto"},
   {id:"puerta", label:"🚪 Puerta"}, {id:"ventana", label:"▤ Ventana"}, {id:"flecha", label:"➜ Flecha"}, {id:"texto", label:"T Texto"},
 ];
-const PE_COLOR_BASE = {muro:"#222222", zona:"#cfe3ff", puerta:"#8a5a00", ventana:"#2a78d6", flecha:"#c0392b", texto:"#111111"};
+const PE_COLOR_BASE = {muro:"#222222", zona:"#cfe3ff", puerta:"#8a5a00", ventana:"#2a78d6", flecha:"#c0392b", texto:"#111111", evac:"#1e8f4e"};
+const PE_HERR_EMERGENCIA = {id:"evac", label:"➜ Vía de evacuación"};
+/* Símbolos de emergencia (plano de emergencias): se dibujan como vectores en
+   un cuadro local de -50..50 (centrado en la forma, escalado por `tam`) con
+   colores de señalética de seguridad: verde = evacuación/primeros auxilios,
+   rojo = equipos contra incendio, amarillo = corte de suministros, azul = información. */
+function peRRect(ctx, x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function peIcFondo(ctx, color, borde){ ctx.fillStyle = color; peRRect(ctx,-48,-48,96,96,12); ctx.fill(); ctx.strokeStyle = borde||"#fff"; ctx.lineWidth = 3; peRRect(ctx,-42,-42,84,84,8); ctx.stroke(); ctx.strokeStyle = "#fff"; ctx.fillStyle = "#fff"; ctx.lineWidth = 5; }
+function peIcPersona(ctx, cx, cy, k){
+  ctx.save(); ctx.translate(cx,cy); ctx.scale(k,k); ctx.strokeStyle = "#fff"; ctx.fillStyle = "#fff"; ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.beginPath(); ctx.arc(4,-24,6,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(2,-16); ctx.lineTo(-2,4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(1,-12); ctx.lineTo(-12,-6); ctx.moveTo(1,-12); ctx.lineTo(14,-8); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-2,4); ctx.lineTo(-14,20); ctx.moveTo(-2,4); ctx.lineTo(12,14); ctx.lineTo(10,28); ctx.stroke();
+  ctx.restore();
+}
+const PE_VERDE = "#1e8f4e", PE_ROJO = "#c8201f", PE_AMARILLO = "#f2c200", PE_AZUL = "#1f5fbf";
+const PE_ICONOS_EMERGENCIA = [
+  {id:"salida", nombre:"Salida de emergencia", dib:ctx=>{ peIcFondo(ctx, PE_VERDE); ctx.lineWidth = 4; ctx.strokeRect(16,-30,18,60); peIcPersona(ctx,-8,4,.8); }},
+  {id:"zona", nombre:"Zona de seguridad", dib:ctx=>{ peIcFondo(ctx, PE_VERDE);
+    for(let a=0;a<4;a++){ ctx.save(); ctx.rotate(a*Math.PI/2); ctx.beginPath(); ctx.moveTo(-9,-39); ctx.lineTo(9,-39); ctx.lineTo(0,-25); ctx.closePath(); ctx.fill(); ctx.restore(); }
+    peIcPersona(ctx,0,-1,.6); }},
+  {id:"extintor", nombre:"Extintor", dib:ctx=>{ peIcFondo(ctx, PE_ROJO); peRRect(ctx,-11,-4,22,34,6); ctx.fill(); ctx.fillRect(-4,-12,8,9);
+    ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-7,-15); ctx.lineTo(8,-15); ctx.lineTo(12,-10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(11,-7); ctx.quadraticCurveTo(26,0,21,20); ctx.stroke(); }},
+  {id:"redhumeda", nombre:"Red húmeda", dib:ctx=>{ peIcFondo(ctx, PE_ROJO); ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(-4,-4,20,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(-4,-4,7,0,Math.PI*2); ctx.fill(); ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(14,10); ctx.lineTo(28,28); ctx.stroke(); }},
+  {id:"pulsador", nombre:"Pulsador de alarma", dib:ctx=>{ peIcFondo(ctx, PE_ROJO); ctx.beginPath(); ctx.arc(0,0,15,0,Math.PI*2); ctx.fill(); ctx.lineWidth = 4;
+    for(let a=0;a<8;a++){ const r = a*Math.PI/4; ctx.beginPath(); ctx.moveTo(Math.cos(r)*22,Math.sin(r)*22); ctx.lineTo(Math.cos(r)*31,Math.sin(r)*31); ctx.stroke(); } }},
+  {id:"botiquin", nombre:"Botiquín de primeros auxilios", dib:ctx=>{ peIcFondo(ctx, PE_VERDE); ctx.fillRect(-8,-28,16,56); ctx.fillRect(-28,-8,56,16); }},
+  {id:"camilla", nombre:"Camilla", dib:ctx=>{ peIcFondo(ctx, PE_VERDE); ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(-30,-2); ctx.lineTo(30,-2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(-22,-12,7,0,Math.PI*2); ctx.fill(); ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-16,-8); ctx.lineTo(22,-8); ctx.stroke();
+    ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-20,-2); ctx.lineTo(-20,16); ctx.moveTo(20,-2); ctx.lineTo(20,16); ctx.stroke();
+    ctx.beginPath(); ctx.arc(-20,22,5,0,Math.PI*2); ctx.arc(20,22,5,0,Math.PI*2); ctx.fill(); }},
+  {id:"lavaojos", nombre:"Lavaojos / ducha", dib:ctx=>{ peIcFondo(ctx, PE_VERDE); ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(0,12,22,11,0,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,12,5,0,Math.PI*2); ctx.fill();
+    [[-14,-14],[0,-24],[14,-14]].forEach(([x,y])=>{ ctx.beginPath(); ctx.moveTo(x,y-8); ctx.bezierCurveTo(x+7,y,x+6,y+8,x,y+8); ctx.bezierCurveTo(x-6,y+8,x-7,y,x,y-8); ctx.fill(); }); }},
+  {id:"corteelec", nombre:"Corte de energía eléctrica", dib:ctx=>{ peIcFondo(ctx, PE_AMARILLO, "#111"); ctx.fillStyle = "#111"; ctx.beginPath(); ctx.moveTo(6,-34); ctx.lineTo(-14,4); ctx.lineTo(-2,4); ctx.lineTo(-8,34); ctx.lineTo(16,-8); ctx.lineTo(2,-8); ctx.closePath(); ctx.fill(); }},
+  {id:"cortegas", nombre:"Corte de gas", dib:ctx=>{ peIcFondo(ctx, PE_AMARILLO, "#111"); ctx.fillStyle = "#111"; ctx.beginPath(); ctx.moveTo(0,-34); ctx.bezierCurveTo(26,-10,26,22,0,30); ctx.bezierCurveTo(-26,22,-22,-6,0,-34); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = PE_AMARILLO; ctx.font = "bold 15px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("GAS", 0, 10); }},
+  {id:"ustedaqui", nombre:"Usted está aquí", dib:ctx=>{ peIcFondo(ctx, PE_AZUL); ctx.beginPath(); ctx.arc(0,-10,17,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-14,-1); ctx.lineTo(14,-1); ctx.lineTo(0,32); ctx.closePath(); ctx.fill(); ctx.fillStyle = PE_AZUL; ctx.beginPath(); ctx.arc(0,-10,7,0,Math.PI*2); ctx.fill(); }},
+];
+function peDibujarIcono(ctx, f){
+  const def = PE_ICONOS_EMERGENCIA.find(i=>i.id===f.icono); if(!def) return;
+  const s = f.tam||60;
+  ctx.save(); ctx.translate(f.x1,f.y1); ctx.scale(s/100,s/100); ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.setLineDash([]); def.dib(ctx); ctx.restore();
+  if(f.texto){
+    ctx.save(); ctx.font = "bold 18px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.lineWidth = 5; ctx.strokeStyle = "#fff"; ctx.strokeText(f.texto, f.x1, f.y1+s/2+4); ctx.fillStyle = "#111"; ctx.fillText(f.texto, f.x1, f.y1+s/2+4); ctx.restore();
+  }
+}
+/* Leyenda automática del plano de emergencias: solo los símbolos que el dibujo realmente usa. */
+function peLeyendaItems(formas){
+  const usados = new Set(formas.filter(f=>f.tipo==="icono").map(f=>f.icono));
+  const items = PE_ICONOS_EMERGENCIA.filter(i=>usados.has(i.id)).map(i=>({icono:i.id, nombre:i.nombre}));
+  if(formas.some(f=>f.tipo==="flecha" && f.estilo==="evac")) items.unshift({icono:"evac", nombre:"Vía de evacuación"});
+  return items;
+}
+const PE_LEY_COL = 440, PE_LEY_FILA = 60;
+function peLeyendaAlto(items, w){
+  if(!items.length) return 0;
+  const cols = Math.max(1, Math.floor((w-40)/PE_LEY_COL));
+  return 56 + Math.ceil(items.length/cols)*PE_LEY_FILA + 10;
+}
+function peDibujarLeyenda(ctx, items, w, y0){
+  if(!items.length) return;
+  const alto = peLeyendaAlto(items, w), cols = Math.max(1, Math.floor((w-40)/PE_LEY_COL));
+  ctx.save(); ctx.fillStyle = "#f4f5f7"; ctx.fillRect(0, y0, w, alto); ctx.strokeStyle = "#999"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0,y0); ctx.lineTo(w,y0); ctx.stroke();
+  ctx.fillStyle = "#111"; ctx.font = "bold 26px Arial"; ctx.textBaseline = "middle"; ctx.textAlign = "left"; ctx.fillText("SIMBOLOGÍA", 20, y0+28);
+  items.forEach((it,i)=>{
+    const cx = 20 + (i%cols)*PE_LEY_COL, cy = y0 + 56 + Math.floor(i/cols)*PE_LEY_FILA + PE_LEY_FILA/2;
+    if(it.icono==="evac") peDibujarFormas(ctx, [{id:"l", tipo:"flecha", estilo:"evac", x1:cx, y1:cy, x2:cx+50, y2:cy, color:PE_COLOR_BASE.evac, grosor:6}], null);
+    else peDibujarIcono(ctx, {icono:it.icono, x1:cx+25, y1:cy, tam:46});
+    ctx.fillStyle = "#111"; ctx.font = "22px Arial"; ctx.textBaseline = "middle"; ctx.textAlign = "left"; ctx.fillText(it.nombre, cx+64, cy);
+  });
+  ctx.restore();
+}
 const PE_ZONAS_COLORES = ["#cfe3ff","#d5f0d5","#fff1c2","#ffd6d6","#e6dcf5","#e3e3e3"];
 let pe = null;
 function peEl(id){ return document.getElementById(id); }
@@ -15034,6 +15124,12 @@ function peCajaTexto(ctx, f){ ctx.font = `bold ${f.tam||28}px Arial`; return {x:
 function peHit(ctx, f, x, y){
   if(f.tipo==="zona"){ const x1=Math.min(f.x1,f.x2), x2=Math.max(f.x1,f.x2), y1=Math.min(f.y1,f.y2), y2=Math.max(f.y1,f.y2); return x>=x1 && x<=x2 && y>=y1 && y<=y2; }
   if(f.tipo==="texto"){ const c = peCajaTexto(ctx, f); return x>=c.x-4 && x<=c.x+c.w+4 && y>=c.y-4 && y<=c.y+c.h+4; }
+  if(f.tipo==="icono"){
+    const r = (f.tam||60)/2+6;
+    if(Math.abs(x-f.x1)<=r && Math.abs(y-f.y1)<=r) return true;
+    if(f.texto){ ctx.font = "bold 18px Arial"; return Math.abs(x-f.x1) <= ctx.measureText(f.texto).width/2+4 && y>=f.y1+r-6 && y<=f.y1+r+26; }
+    return false;
+  }
   return peDistSeg(x, y, f.x1, f.y1, f.x2, f.y2) <= Math.max(12, (f.grosor||8)/2+6);
 }
 function peDibujarFormas(ctx, formas, selId){
@@ -15058,12 +15154,15 @@ function peDibujarFormas(ctx, formas, selId){
       ctx.strokeStyle = f.color; ctx.lineWidth = 2; linea(f.x1,f.y1,f.x2,f.y2);
     } else if(f.tipo==="flecha"){
       const a = Math.atan2(f.y2-f.y1, f.x2-f.x1), cab = 16+(f.grosor||5)*2;
-      ctx.strokeStyle = f.color; ctx.fillStyle = f.color; ctx.lineWidth = f.grosor||5; linea(f.x1,f.y1,f.x2-Math.cos(a)*cab*0.6,f.y2-Math.sin(a)*cab*0.6);
+      ctx.strokeStyle = f.color; ctx.fillStyle = f.color; ctx.lineWidth = f.grosor||5; if(f.estilo==="evac") ctx.setLineDash([18,12]);
+      linea(f.x1,f.y1,f.x2-Math.cos(a)*cab*0.6,f.y2-Math.sin(a)*cab*0.6); ctx.setLineDash([]);
       ctx.beginPath(); ctx.moveTo(f.x2, f.y2); ctx.lineTo(f.x2-Math.cos(a-0.45)*cab, f.y2-Math.sin(a-0.45)*cab); ctx.lineTo(f.x2-Math.cos(a+0.45)*cab, f.y2-Math.sin(a+0.45)*cab); ctx.closePath(); ctx.fill();
     } else if(f.tipo==="texto"){
       ctx.font = `bold ${f.tam||28}px Arial`; ctx.textBaseline = "top";
       ctx.lineWidth = 6; ctx.strokeStyle = "#fff"; ctx.strokeText(f.texto||"", f.x1, f.y1);
       ctx.fillStyle = f.color; ctx.fillText(f.texto||"", f.x1, f.y1);
+    } else if(f.tipo==="icono"){
+      peDibujarIcono(ctx, f);
     }
     ctx.restore();
   });
@@ -15071,10 +15170,11 @@ function peDibujarFormas(ctx, formas, selId){
   if(s){
     ctx.save(); ctx.strokeStyle = "#2a78d6"; ctx.fillStyle = "#fff"; ctx.lineWidth = 2; ctx.setLineDash([6,4]);
     if(s.tipo==="texto"){ const c = peCajaTexto(ctx, s); ctx.strokeRect(c.x-4, c.y-4, c.w+8, c.h+8); }
+    else if(s.tipo==="icono"){ const r = (s.tam||60)/2+4; ctx.strokeRect(s.x1-r, s.y1-r, r*2, r*2); }
     else if(s.tipo==="zona"){ ctx.strokeRect(Math.min(s.x1,s.x2)-3, Math.min(s.y1,s.y2)-3, Math.abs(s.x2-s.x1)+6, Math.abs(s.y2-s.y1)+6); }
     else linea(s.x1,s.y1,s.x2,s.y2);
     ctx.setLineDash([]);
-    if(s.tipo!=="texto") [[s.x1,s.y1],[s.x2,s.y2]].forEach(([px,py])=>{ ctx.beginPath(); ctx.arc(px,py,9,0,Math.PI*2); ctx.fill(); ctx.stroke(); });
+    if(s.tipo!=="texto" && s.tipo!=="icono") [[s.x1,s.y1],[s.x2,s.y2]].forEach(([px,py])=>{ ctx.beginPath(); ctx.arc(px,py,9,0,Math.PI*2); ctx.fill(); ctx.stroke(); });
     ctx.restore();
   }
 }
@@ -15107,6 +15207,11 @@ function peOrtogonal(f){
 function peSincronizarControles(){
   const f = pe.sel ? peForma(pe.sel) : null;
   if(f){
+    if(f.tipo==="icono"){
+      if(peEl("peIconoTam")) peEl("peIconoTam").value = String(f.tam||60);
+      if(peEl("peEtiqueta")) peEl("peEtiqueta").value = f.texto||"";
+      return;
+    }
     peEl("peColor").value = f.color; if(f.grosor) peEl("peGrosor").value = String(f.grosor); if(f.tam) peEl("peTam").value = String(f.tam);
     if(f.tipo==="texto") peEl("peTexto").value = f.texto||"";
   }
@@ -15116,19 +15221,28 @@ function peActualizarHerramientas(){
     const act = b.dataset.peHerr===pe.herr;
     b.style.background = act ? "var(--s1)" : ""; b.style.color = act ? "#fff" : "";
   });
+  document.querySelectorAll("#peOverlay [data-pe-icono]").forEach(b=>{
+    const act = pe.herr==="icono" && b.dataset.peIcono===pe.iconoSel;
+    b.style.outline = act ? "3px solid var(--s1)" : ""; b.style.background = act ? "#e8f1ff" : "#fff";
+  });
   const ayudas = {seleccionar:"Haga clic en un elemento para seleccionarlo y arrástrelo; arrastre los puntos azules de los extremos para cambiar su largo.",
     muro:"Arrastre en el plano para dibujar un muro (con «Ortogonal» queda recto).", zona:"Arrastre para marcar un recinto o zona; elija su color arriba.",
     puerta:"Arrastre sobre un muro desde la bisagra hasta el otro lado del vano: se dibuja la puerta con su giro.", ventana:"Arrastre sobre un muro para marcar una ventana.",
-    flecha:"Arrastre para dibujar una flecha (rutas de evacuación, accesos).", texto:"Escriba el texto en la casilla de la barra y haga clic en el plano donde quiere ponerlo."};
+    flecha:"Arrastre para dibujar una flecha (rutas de evacuación, accesos).",
+    evac:"Arrastre para dibujar una vía de evacuación (flecha verde discontinua) desde el puesto de trabajo hasta la salida o la zona de seguridad.",
+    icono:"Haga clic en el plano para colocar el símbolo elegido (puede escribir antes una etiqueta, ej. «Extintor PQS 10 kg»). Con «Seleccionar» puede moverlo, cambiar su tamaño o eliminarlo.", texto:"Escriba el texto en la casilla de la barra y haga clic en el plano donde quiere ponerlo."};
   peEl("peAyuda").textContent = ayudas[pe.herr] || "";
 }
 function peAplicarPropiedad(prop, valor){
   const f = pe.sel ? peForma(pe.sel) : null;
   if(f){ peSnapshot(); f[prop] = valor; peRender(); }
 }
-function peNuevaForma(tipo, x, y){
-  const color = pe.colorPorHerr[tipo] || PE_COLOR_BASE[tipo];
-  return {id:uid(), tipo, x1:x, y1:y, x2:x, y2:y, color, grosor:(tipo==="flecha"?5:(+peEl("peGrosor").value||8))};
+function peNuevaForma(herr, x, y){
+  const tipo = herr==="evac" ? "flecha" : herr;
+  const color = pe.colorPorHerr[herr] || PE_COLOR_BASE[herr];
+  const f = {id:uid(), tipo, x1:x, y1:y, x2:x, y2:y, color, grosor:(herr==="evac"?6:(tipo==="flecha"?5:(+peEl("peGrosor").value||8)))};
+  if(herr==="evac") f.estilo = "evac";
+  return f;
 }
 function peOnDown(e){
   e.preventDefault();
@@ -15136,7 +15250,7 @@ function peOnDown(e){
   const p = peCoord(e), ctx = cv.getContext("2d");
   if(pe.herr==="seleccionar"){
     const s = pe.sel ? peForma(pe.sel) : null;
-    if(s && s.tipo!=="texto"){
+    if(s && s.tipo!=="texto" && s.tipo!=="icono"){
       if(Math.hypot(p.x-s.x1, p.y-s.y1) < 16) pe.drag = {modo:"p1", id:s.id};
       else if(Math.hypot(p.x-s.x2, p.y-s.y2) < 16) pe.drag = {modo:"p2", id:s.id};
     }
@@ -15154,6 +15268,13 @@ function peOnDown(e){
     peSnapshot();
     const f = {id:uid(), tipo:"texto", x1:peSnap(p.x), y1:peSnap(p.y), x2:peSnap(p.x), y2:peSnap(p.y), texto:t, tam:+peEl("peTam").value||28, color:pe.colorPorHerr.texto||PE_COLOR_BASE.texto};
     pe.formas.push(f); pe.sel = null; peActualizarHerramientas();
+  } else if(pe.herr==="icono"){
+    if(!pe.iconoSel){ peEl("peAyuda").textContent = "Primero elija un símbolo de la paleta."; return; }
+    peSnapshot();
+    const et = peEl("peEtiqueta").value.trim();
+    const f = {id:uid(), tipo:"icono", icono:pe.iconoSel, x1:peSnap(p.x), y1:peSnap(p.y), x2:peSnap(p.x), y2:peSnap(p.y), tam:+peEl("peIconoTam").value||60};
+    if(et) f.texto = et;
+    pe.formas.push(f); pe.sel = null; peEl("peEtiqueta").value = "";
   } else {
     peSnapshot();
     const f = peNuevaForma(pe.herr, peSnap(p.x), peSnap(p.y));
@@ -15192,21 +15313,28 @@ function peOnKey(e){
   if(e.key==="Delete" || e.key==="Backspace"){ e.preventDefault(); peEliminarSeleccion(); }
   else if(e.key==="Escape"){ if(pe.sel){ pe.sel = null; peRender(); } else planoEditorCerrar(); }
 }
-function planoEditorAbrir(planoId, orientacion){
+/* tipoPlano "emergencia" activa la paleta de símbolos de emergencia y la leyenda automática;
+   baseId (opcional, solo planos nuevos) copia el dibujo de otro plano como punto de partida. */
+function planoEditorAbrir(planoId, orientacion, tipoPlano, baseId){
   const rec = planoId ? (CACHE.planoRiesgos||[]).find(p=>p.id===planoId) : null;
   if(planoId && (!rec || !rec.dibujo)){ alert("Este plano no tiene un dibujo editable (fue subido como imagen)."); return; }
-  const horizontal = rec ? rec.dibujo.ancho >= rec.dibujo.alto : orientacion!=="vertical";
+  const base = (!rec && baseId) ? (CACHE.planoRiesgos||[]).find(p=>p.id===baseId && p.dibujo) : null;
+  const origen = rec || base;
+  const tipo = rec ? (rec.tipoPlano||"riesgos") : (tipoPlano||"riesgos");
+  const horizontal = origen ? origen.dibujo.ancho >= origen.dibujo.alto : orientacion!=="vertical";
   pe = {
-    planoId: rec ? rec.id : null, w: rec ? rec.dibujo.ancho : (horizontal ? 1600 : 1000), h: rec ? rec.dibujo.alto : (horizontal ? 1000 : 1400),
-    formas: rec ? JSON.parse(JSON.stringify(rec.dibujo.formas||[])) : [], undo: [], redo: [], herr: "muro", sel: null, drag: null,
-    snap: true, orto: true, rejilla: true, dirty: false, colorPorHerr: {},
+    planoId: rec ? rec.id : null, tipo, w: origen ? origen.dibujo.ancho : (horizontal ? 1600 : 1000), h: origen ? origen.dibujo.alto : (horizontal ? 1000 : 1400),
+    formas: origen ? JSON.parse(JSON.stringify(origen.dibujo.formas||[])).map(f=>base ? Object.assign(f, {id:uid()}) : f) : [], undo: [], redo: [], herr: "muro", sel: null, drag: null,
+    snap: true, orto: true, rejilla: true, dirty: !!base, colorPorHerr: {}, iconoSel: null,
   };
+  const emerg = tipo==="emergencia";
+  const herramientas = emerg ? PE_HERRAMIENTAS.concat([PE_HERR_EMERGENCIA]) : PE_HERRAMIENTAS;
   const ov = document.createElement("div"); ov.id = "peOverlay";
   ov.style.cssText = "position:fixed;inset:0;z-index:99990;background:#f4f5f7;display:flex;flex-direction:column;";
   ov.innerHTML = `
     <div style="background:#fff;border-bottom:1px solid #ddd;padding:8px 10px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;">
       <input id="peNombre" placeholder="Nombre del plano" value="${incEsc(rec?rec.nombre:"")}" style="max-width:200px;">
-      <span id="peHerramientas" style="display:inline-flex;flex-wrap:wrap;gap:4px;">${PE_HERRAMIENTAS.map(h=>`<button type="button" class="btn secondary small" data-pe-herr="${h.id}">${h.label}</button>`).join("")}</span>
+      <span id="peHerramientas" style="display:inline-flex;flex-wrap:wrap;gap:4px;">${herramientas.map(h=>`<button type="button" class="btn secondary small" data-pe-herr="${h.id}">${h.label}</button>`).join("")}</span>
       <label style="display:inline-flex;align-items:center;gap:4px;font-weight:400;">Color <input type="color" id="peColor" value="#222222" style="width:38px;min-height:30px;padding:0;"></label>
       <span id="peZonasColores" style="display:inline-flex;gap:3px;">${PE_ZONAS_COLORES.map(c=>`<button type="button" data-pe-zcolor="${c}" title="Color de recinto" style="width:20px;height:20px;border-radius:4px;border:1px solid #888;background:${c};padding:0;cursor:pointer;"></button>`).join("")}</span>
       <label style="display:inline-flex;align-items:center;gap:4px;font-weight:400;">Grosor <select id="peGrosor" style="width:auto;"><option>4</option><option selected>8</option><option>12</option><option>16</option></select></label>
@@ -15223,11 +15351,32 @@ function planoEditorAbrir(planoId, orientacion){
       <button type="button" class="btn small" id="peGuardarBtn">Guardar plano</button>
       <button type="button" class="btn secondary small" id="peCerrarBtn">Cerrar</button>
     </div>
+    ${emerg ? `<div style="background:#fff;border-bottom:1px solid #ddd;padding:6px 10px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;">
+      <strong style="font-size:13px;">Símbolos de emergencia</strong>
+      <span id="peIconos" style="display:inline-flex;flex-wrap:wrap;gap:5px;">${PE_ICONOS_EMERGENCIA.map(i=>`<button type="button" data-pe-icono="${i.id}" title="${incEsc(i.nombre)}" style="width:46px;height:46px;padding:2px;border:1px solid #bbb;border-radius:8px;background:#fff;cursor:pointer;"><canvas width="40" height="40" data-pe-icono-cv="${i.id}" style="width:40px;height:40px;pointer-events:none;"></canvas></button>`).join("")}</span>
+      <label style="display:inline-flex;align-items:center;gap:4px;font-weight:400;">Tamaño <select id="peIconoTam" style="width:auto;"><option value="40">Pequeño</option><option value="60" selected>Mediano</option><option value="80">Grande</option><option value="100">Muy grande</option></select></label>
+      <input id="peEtiqueta" placeholder="Etiqueta del símbolo (opcional)" style="max-width:230px;">
+      <button type="button" class="btn secondary small" id="peAplicarEtiquetaBtn">Actualizar etiqueta</button>
+    </div>` : ""}
     <div style="flex:1;overflow:auto;padding:10px;"><canvas id="peCanvas" width="${pe.w}" height="${pe.h}" style="background:#fff;width:100%;max-width:${horizontal?1400:900}px;touch-action:none;border:1px solid #ccc;display:block;margin:0 auto;cursor:crosshair;"></canvas></div>
     <div id="peAyuda" class="kv" style="padding:6px 12px;background:#fff;border-top:1px solid #ddd;"></div>`;
   document.body.appendChild(ov);
   const cv = peEl("peCanvas");
   on(cv, "pointerdown", peOnDown); on(cv, "pointermove", peOnMove); on(cv, "pointerup", peOnUp); on(cv, "pointercancel", peOnUp);
+  if(emerg){
+    document.querySelectorAll("#peOverlay [data-pe-icono-cv]").forEach(c=>{
+      const x = c.getContext("2d"); x.translate(20,20); x.scale(.4,.4); (PE_ICONOS_EMERGENCIA.find(i=>i.id===c.dataset.peIconoCv)||{dib:()=>{}}).dib(x);
+    });
+    document.querySelectorAll("#peOverlay [data-pe-icono]").forEach(b=>on(b, "click", ()=>{
+      pe.herr = "icono"; pe.iconoSel = b.dataset.peIcono; pe.sel = null; cv.style.cursor = "crosshair"; peActualizarHerramientas(); peRender();
+    }));
+    on(peEl("peIconoTam"), "change", ()=>{ const f = pe.sel ? peForma(pe.sel) : null; if(f && f.tipo==="icono") peAplicarPropiedad("tam", +peEl("peIconoTam").value); });
+    on(peEl("peAplicarEtiquetaBtn"), "click", ()=>{
+      const f = pe.sel ? peForma(pe.sel) : null;
+      if(f && f.tipo==="icono"){ peSnapshot(); const t = peEl("peEtiqueta").value.trim(); if(t) f.texto = t; else delete f.texto; peRender(); }
+      else peEl("peAyuda").textContent = "Seleccione un símbolo (herramienta «Seleccionar») y escriba su nueva etiqueta.";
+    });
+  }
   document.querySelectorAll("#peOverlay [data-pe-herr]").forEach(b=>on(b, "click", ()=>{
     pe.herr = b.dataset.peHerr; if(pe.herr!=="seleccionar"){ pe.sel = null; peEl("peColor").value = pe.colorPorHerr[pe.herr] || PE_COLOR_BASE[pe.herr]; }
     cv.style.cursor = pe.herr==="seleccionar" ? "default" : "crosshair"; peActualizarHerramientas(); peRender();
@@ -15266,17 +15415,27 @@ async function planoEditorGuardar(){
   const nombre = peEl("peNombre").value.trim();
   if(!nombre){ alert("Indique el nombre del plano."); peEl("peNombre").focus(); return; }
   if(!pe.formas.length){ alert("El dibujo está vacío: agregue al menos un muro, recinto o texto."); return; }
-  const cv = document.createElement("canvas"); cv.width = pe.w; cv.height = pe.h;
-  const ctx = cv.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, pe.w, pe.h);
+  const emerg = pe.tipo==="emergencia";
+  const leyenda = emerg ? peLeyendaItems(pe.formas) : [];
+  const altoLey = peLeyendaAlto(leyenda, pe.w);
+  const cv = document.createElement("canvas"); cv.width = pe.w; cv.height = pe.h + altoLey;
+  const ctx = cv.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, pe.w, pe.h + altoLey);
   peDibujarFormas(ctx, pe.formas, null);
+  peDibujarLeyenda(ctx, leyenda, pe.w, pe.h);
   const imagen = cv.toDataURL("image/png");
   const previo = pe.planoId ? (CACHE.planoRiesgos||[]).find(p=>p.id===pe.planoId) : null;
   const rec = Object.assign({}, previo || {}, {
-    id: previo ? previo.id : uid(), nombre, imagen,
+    id: previo ? previo.id : uid(), nombre, imagen, tipoPlano: pe.tipo||"riesgos", actualizado: new Date().toISOString().slice(0,10),
     dibujo: {ancho: pe.w, alto: pe.h, formas: JSON.parse(JSON.stringify(pe.formas))},
     marcas: previo ? (previo.marcas||{}) : {}, iconos: previo ? (previo.iconos||{}) : {},
   });
   await savePlanoConfig(rec);
+  if(emerg){
+    planoEditorCerrar(true);
+    renderPlanosEmergencia();
+    alert("Plano de emergencias guardado.");
+    return;
+  }
   const eraNuevo = !previo;
   planoActualId = rec.id;
   planoEditorCerrar(true);
@@ -15323,6 +15482,67 @@ on(document.getElementById("planoDibujarBtn"), "click", ()=>{
 });
 on(document.getElementById("planoEditarDibujoBtn"), "click", ()=>planoEditorAbrir(planoActualId));
 on(document.getElementById("planoAsignarBtn"), "click", ()=>{ if(planoActualId) planoAsignarAreas(planoActualId); });
+
+/* =========================================================
+   PLANOS DE EMERGENCIA (sección Emergencia)
+   Mismos registros `planoRiesgos` con tipoPlano:"emergencia": se dibujan con
+   el editor de planos (símbolos de emergencia + leyenda automática), no
+   aparecen en el Mapa de riesgos y salen en el Anexo 1 del Plan de Emergencia.
+   ========================================================= */
+function planosEmergencia(){ return (CACHE.planoRiesgos||[]).filter(p=>p.tipoPlano==="emergencia"); }
+function renderPlanosEmergencia(){
+  const wrap = document.getElementById("planosEmergenciaWrap"); if(!wrap) return;
+  const lista = planosEmergencia();
+  if(!lista.length){ wrap.innerHTML = '<div class="empty">Aún no hay planos de emergencia. Use «Dibujar plano de emergencias».</div>'; return; }
+  wrap.innerHTML = `<div class="grid-tiles" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));">${lista.map(p=>`
+    <div style="border:1px solid var(--border);border-radius:8px;padding:10px;">
+      <img src="${p.imagen}" alt="${incEsc(p.nombre)}" style="display:block;width:100%;border:1px solid var(--border);border-radius:6px;background:#fff;">
+      <div style="font-weight:700;margin:8px 0 2px;">${incEsc(p.nombre)}</div>
+      <div class="kv">${p.actualizado ? "Actualizado el "+fmtDate(p.actualizado)+" · " : ""}${peLeyendaItems((p.dibujo&&p.dibujo.formas)||[]).length} símbolo(s) distinto(s)</div>
+      <div class="toolbar" style="margin-top:8px;">
+        <button class="btn small" type="button" data-pem-editar="${p.id}">Editar</button>
+        <button class="btn secondary small" type="button" data-pem-pdf="${p.id}">Descargar PDF</button>
+        <button class="btn secondary small" type="button" data-pem-eliminar="${p.id}">Eliminar</button>
+      </div>
+    </div>`).join("")}</div>`;
+  wrap.querySelectorAll("[data-pem-editar]").forEach(b=>on(b, "click", ()=>planoEditorAbrir(b.dataset.pemEditar)));
+  wrap.querySelectorAll("[data-pem-pdf]").forEach(b=>on(b, "click", ()=>planoEmergenciaPdf(b.dataset.pemPdf)));
+  wrap.querySelectorAll("[data-pem-eliminar]").forEach(b=>on(b, "click", async ()=>{
+    const p = lista.find(x=>x.id===b.dataset.pemEliminar); if(!p) return;
+    if(!confirm(`¿Eliminar el plano de emergencias «${p.nombre}»? No se puede deshacer.`)) return;
+    await deleteRecord("planoRiesgos", p.id); await loadCache(); renderPlanosEmergencia();
+  }));
+}
+on(document.getElementById("planosEmNuevoBtn"), "click", ()=>{
+  const bases = (CACHE.planoRiesgos||[]).filter(p=>p.tipoPlano!=="emergencia" && p.dibujo);
+  openModal(`
+    <h3>Dibujar plano de emergencias</h3>
+    <div class="kv" style="margin-bottom:10px;">Dibuje los muros y recintos y ubique sobre ellos los símbolos de emergencia (salidas, vías de evacuación, zonas de seguridad, extintores, etc.). Al guardar se agrega la leyenda con los símbolos usados.</div>
+    ${bases.length ? `<label>Punto de partida</label><select id="pemBase"><option value="">Plano en blanco</option>${bases.map(p=>`<option value="${p.id}">Copiar el plano de planta «${incEsc(p.nombre)}»</option>`).join("")}</select>
+    <div class="kv" style="margin:4px 0 10px;">Si copia un plano de planta, se parte con sus muros, recintos, puertas y ventanas (el original no se modifica). La orientación se toma del original.</div>` : ""}
+    <div class="toolbar"><button class="btn" id="pemHBtn" type="button">Horizontal (recomendado)</button><button class="btn secondary" id="pemVBtn" type="button">Vertical</button><button class="btn secondary" id="pemCancelBtn" type="button">Cancelar</button></div>`);
+  const abrir = ori=>{ const sel = document.getElementById("pemBase"); const baseId = sel ? sel.value : ""; closeModal(); planoEditorAbrir(null, ori, "emergencia", baseId); };
+  on(document.getElementById("pemHBtn"), "click", ()=>abrir("horizontal"));
+  on(document.getElementById("pemVBtn"), "click", ()=>abrir("vertical"));
+  on(document.getElementById("pemCancelBtn"), "click", closeModal);
+});
+async function planoEmergenciaPdf(id){
+  const p = (CACHE.planoRiesgos||[]).find(x=>x.id===id); if(!p) return;
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const dims = await planEmDimsImagen(p.imagen);
+  if(!dims){ alert("No se pudo leer la imagen del plano."); return; }
+  const horizontal = dims.w >= dims.h;
+  const doc = new JsPDFClass({orientation: horizontal ? "landscape" : "portrait"});
+  const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
+  const y = grdPdfEncabezado(doc, `Plano de emergencias — ${p.nombre}`);
+  let w = pw-28, h = w*(dims.h/dims.w);
+  if(h > ph-y-16){ h = ph-y-16; w = h*(dims.w/dims.h); }
+  try{ doc.addImage(p.imagen, "PNG", 14, y, w, h, undefined, "FAST"); }catch(e){ alert("No se pudo insertar el plano en el PDF."); return; }
+  agregarPiePaginasPdf(doc, "Plano de emergencias");
+  const base = String(p.nombre||"plano").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-zA-Z0-9]+/g,"_").replace(/^_|_$/g,"");
+  doc.save(`Plano_de_emergencias_${base}.pdf`);
+}
 function imprimirPlanoRiesgos(){
   const cfg = planoConfigActual();
   const bloques = planoBloques(planoActualId);
@@ -25824,7 +26044,7 @@ on(document.getElementById("addAreaBtn"), "click", async () => {
   renderCommonSelects(); renderAreasTable();
 });
 function renderAreasTable(){
-  const planoOpts = (CACHE.planoRiesgos||[]).map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
+  const planoOpts = (CACHE.planoRiesgos||[]).filter(p=>p.tipoPlano!=="emergencia").map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
   document.getElementById("areasTable").innerHTML = CACHE.areas.map(a=>`
     <tr>
       <td>${a.nombre}</td>
