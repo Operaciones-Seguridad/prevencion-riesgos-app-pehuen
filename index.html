@@ -64,6 +64,9 @@
   .sidebar-footer{border-top:1px solid var(--border);padding:12px 14px;font-size:12px;}
   .sidebar-footer .sesion-nombre{font-weight:700;color:var(--text-primary);font-size:13px;}
   .sidebar-footer .sesion-cargo{color:var(--text-secondary);margin-bottom:8px;}
+  .sidebar-footer .sesion-toggle{display:flex;width:100%;align-items:center;justify-content:space-between;gap:8px;background:transparent;border:none;padding:2px 0;min-height:0;cursor:pointer;text-align:left;font:inherit;color:inherit;}
+  .sidebar-footer .sesion-chevron{color:var(--text-secondary);font-size:14px;transition:transform .15s;}
+  .sidebar-footer .sesion-toggle[aria-expanded="true"] .sesion-chevron{transform:rotate(180deg);}
   .app-main{flex:1;min-width:0;}
   header{background:var(--surface-1);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;gap:10px;}
   header h1{font-size:18px;margin:0;}
@@ -329,11 +332,13 @@
     </nav>
 
     <div class="sidebar-footer">
-      <div class="sesion-nombre" id="sesionNombre">—</div>
-      <div class="sesion-cargo" id="sesionCargo">—</div>
-      <button type="button" id="miCorreoBtn" style="width:100%;background:transparent;border:none;color:var(--text-secondary);text-decoration:underline;font-size:11.5px;padding:2px 0;">Mi correo (para ingresar con correo)</button>
-      <button class="btn small secondary" id="cerrarSesionBtn" style="width:100%;">Cerrar sesión</button>
-      <button class="btn small secondary" id="cambiarEmpresaSidebarBtn" style="width:100%;margin-top:6px;">Cambiar de empresa</button>
+      <button type="button" class="sesion-toggle" id="sesionToggleBtn" aria-expanded="false" aria-controls="sesionDetalle" title="Mostrar u ocultar las opciones de la sesión"><span class="sesion-nombre" id="sesionNombre">—</span><span class="sesion-chevron" id="sesionChevron" aria-hidden="true">▾</span></button>
+      <div id="sesionDetalle" style="display:none;margin-top:4px;">
+        <div class="sesion-cargo" id="sesionCargo">—</div>
+        <button type="button" id="miCorreoBtn" style="width:100%;background:transparent;border:none;color:var(--text-secondary);text-decoration:underline;font-size:11.5px;padding:2px 0;">Mi correo (para ingresar con correo)</button>
+        <button class="btn small secondary" id="cerrarSesionBtn" style="width:100%;">Cerrar sesión</button>
+        <button class="btn small secondary" id="cambiarEmpresaSidebarBtn" style="width:100%;margin-top:6px;">Cambiar de empresa</button>
+      </div>
     </div>
   </aside>
   <div id="sidebarBackdrop"></div>
@@ -11047,6 +11052,7 @@ function renderDashboard(){
   // trabajadores con examen vigente; sin nómina se mantiene el cálculo anterior por bitácora.
   const vsG = vsGlobal();
   const vsUsaNomina = vsG.activos > 0;
+  const mn = dashModulosNuevos();
 
   const pgTotal = CACHE.programa.length;
   const pgRealizadas = CACHE.programa.filter(p=>estadoPrograma(p)==="realizada").length;
@@ -11158,6 +11164,7 @@ function renderDashboard(){
       tile("Riesgos muy altos en matriz", riesgosCriticos, "de "+CACHE.matriz.length+" líneas", null, "shield", "var(--s1)"),
       tile("Hallazgos con acción abierta", accionesAbiertas, "requieren seguimiento", null, "shield", "var(--s1)"),
       tile("Análisis de causa raíz realizados", (CACHE.arbolesCausales||[]).length, "árboles causales registrados", null, "shield", "var(--s1)"),
+      tile("MIPER — versión vigente", mn.miper.version ? "V"+mn.miper.version : "—", dashMiperPie(mn.miper), dashMiperSemaforo(mn.miper), "shield", "var(--s1)"),
     ]) +
     tileSection("Cumplimiento legal y documental", "var(--s1)", [
       tile("Cumplimiento legal DS 44 (FUF)", fufPct+"%", fufCounts.cumple+" de "+fufEvaluables+" ítems evaluables", null, "document", "var(--s1)"),
@@ -11171,6 +11178,10 @@ function renderDashboard(){
         ? tile("Cumplimiento vigilancia de salud", vsG.pct+"%", vsG.vigentes+" de "+vsG.activos+" expuestos con examen vigente", null, "health", "var(--s1)")
         : tile("Cumplimiento vigilancia de salud", cumplPct+"%", vigentes+" de "+totalAsig+" vigentes", null, "health", "var(--s1)"),
       ...(vsG.evalTotal || vsG.medidasTotal ? [tile("Vigilancia — casos rojos abiertos", vsG.casosRojos, vsG.medidasAtrasadas+" medida(s) correctora(s) atrasada(s) · "+vsG.evalVencidas+" evaluación(es) vencida(s)", null, "health", "var(--s1)")] : []),
+      ...(mn.oc.conExamen ? [
+        tile("Exámenes ocupacionales vigentes", mn.oc.vigentes+" de "+mn.oc.total, mn.oc.vencidos+" vencido(s) · "+mn.oc.porVencer+" por vencer · "+mn.oc.sinExamen+" sin examen registrado", mn.ocSem, "health", "var(--s1)"),
+        tile("Exámenes ocupacionales — no aptos", mn.oc.noAptos, mn.oc.restricciones+" con restricciones · "+mn.oc.drogasAtencion+" examen(es) de drogas por atender", mn.ocAptSem, "health", "var(--s1)"),
+      ] : []),
       tile("TMERT — puestos críticos", tmertCriticos, "de "+tmertRepetitivos.length+" con trabajo repetitivo evaluado", tmertCriticos>0?"alto":"bajo", "health", "var(--s1)"),
     ]) +
     tileSection("Programa, capacitación e inspecciones", "var(--s1)", [
@@ -11183,6 +11194,8 @@ function renderDashboard(){
       tile("CPHyS — días desde última reunión ordinaria", cphysDiasDesdeOrdinaria===null?"—":cphysDiasDesdeOrdinaria, cphysDiasDesdeOrdinaria===null?"sin reuniones ordinarias registradas":(cphysDiasDesdeOrdinaria<=31?"dentro del plazo mensual":"sobre el plazo mensual"), cphysSemaforoReunion, "people", "var(--s1)"),
       tile("CPHyS — investigaciones pendientes", cphysPendientesInvestigar, "de "+cphysAccidentesAll.length+" accidentes/incidentes", cphysPendientesInvestigar>0?"alto":"bajo", "people", "var(--s1)"),
       tile("GRD — cumplimiento global", grdPct+"%", "diagnóstico, plan de respuesta y simulacros", grdEtapaSemaforo(grdPct), "people", "var(--s1)"),
+      ...(mn.ext.total ? [tile("Extintores por revisar", mn.ext.no+mn.ext.inc, "de "+mn.ext.total+" registrados · "+mn.ext.no+" no cumple · "+mn.ext.inc+" incompleto(s)", mn.ext.no>0?"alto":(mn.ext.inc>0?"medio":"bajo"), "people", "var(--s1)")] : []),
+      tile("Planos de emergencia", mn.planos, mn.planos ? "dibujados con símbolos de emergencia" : "sin plano de emergencias dibujado", null, "people", "var(--s1)"),
       tile("Vales de EPP entregados", eppTotalVales, periodoTexto, null, "people", "var(--s1)"),
       tile("Infracciones registradas", periodo.infRows.length, periodoTexto, null, "people", "var(--s1)"),
     ]);
@@ -11215,6 +11228,7 @@ function renderDashboard(){
   CACHE.matriz.forEach(m=>{ if(m.plazo && m.estado!=="cerrada"){ const days=daysUntil(m.plazo); if(days<=30) upcoming.push({tipo:"Acción de control", desc:`${m.peligro} (${areaName(m.areaId)})`, fecha:m.plazo, days}); }});
   protAplicables.forEach(p=>{ if(vsTieneNomina(p.id)) return; const v = protocoloVigenciaBitacora(p); if(v && v.vigenteHasta){ const days = daysUntil(v.vigenteHasta); if(days<=30) upcoming.push({tipo:"Vigencia protocolo "+p.nombre, desc: "Próxima reevaluación", fecha:v.vigenteHasta, days}); } });
   vsProximosVencimientos().filter(u=>u.days<=30).forEach(u=>upcoming.push(u));
+  ocupProximosVencimientos().filter(u=>u.days<=30).forEach(u=>upcoming.push(u));
   CACHE.ganttProtocolo.forEach(g=>{ if(ganttEstadoDerivado(g)!=="cumplido" && g.fechaFin){ const days = daysUntil(g.fechaFin); if(days<=30) upcoming.push({tipo:"Actividad "+protoName(g.protocoloId), desc: g.actividad, fecha:g.fechaFin, days}); } });
   CACHE.programa.forEach(p=>{ if(!p.fechaRealizada && p.fechaProgramada){ const days = daysUntil(p.fechaProgramada); if(days<=30) upcoming.push({tipo:"Programa: "+p.nombre, desc: areaName(p.areaId), fecha:p.fechaProgramada, days}); }});
   CACHE.capacitaciones.forEach(c=>{ if(!c.fechaRealizada && c.fechaProgramada){ const days = daysUntil(c.fechaProgramada); if(days<=30) upcoming.push({tipo:"Capacitación: "+c.nombre, desc: (c.participantes||[]).length+" convocados", fecha:c.fechaProgramada, days}); }});
@@ -23143,6 +23157,34 @@ on(document.getElementById("downloadAccGerenciaAnioBtn"), "click", () => {
    (indicadores, tablas por módulo), usados tanto por la descarga en PDF
    como por la descarga en PPT, para que ambos formatos muestren siempre
    exactamente la misma información. */
+/* Exámenes ocupacionales, MIPER y emergencia: cifras que comparten el Dashboard y el informe a gerencia. */
+function dashModulosNuevos(){
+  const oc = vsOcupResumen();
+  const v = miperVigente(), mp = miperPendientes();
+  const rx = CACHE.registroExtintores||[];
+  const estRx = rx.map(r=>rxEvaluar(r).estado);
+  const planos = planosEmergencia().length;
+  return {
+    oc,
+    ocSem: oc.vencidos>0 ? "alto" : (oc.porVencer>0 ? "medio" : "bajo"),
+    ocAptSem: oc.noAptos>0 ? "alto" : ((oc.restricciones>0 || oc.drogasAtencion>0) ? "medio" : "bajo"),
+    miper: {version: v?v.version:null, fecha: v?v.fecha:null, pendientes: mp.total, lineas: mp.lineas, vencida: miperRevisionVencida(), lineasMatriz: CACHE.matriz.length},
+    ext: {total: rx.length, no: estRx.filter(e=>e==="No cumple").length, inc: estRx.filter(e=>e==="Incompleto").length},
+    planos,
+  };
+}
+function dashMiperSemaforo(m){ return !m.version ? (m.lineasMatriz ? "alto" : null) : (m.vencida ? "alto" : (m.pendientes ? "medio" : "bajo")); }
+function dashMiperPie(m){
+  if(!m.version) return m.lineasMatriz ? "sin versión emitida: emita la primera en Matriz de riesgos" : "sin matriz de riesgos cargada";
+  return `revisada el ${fmtDate(m.fecha)} · ${m.pendientes ? m.pendientes+" cambio(s) sin versionar en "+m.lineas+" línea(s)" : "sin cambios pendientes"}${m.vencida ? " · revisión anual vencida" : ""}`;
+}
+/* Próximos vencimientos de exámenes ocupacionales/preocupacionales (una fila por estado, como en Vigilancia). */
+function ocupProximosVencimientos(){
+  const vig = vsOcupVigentes(), vencidos = [], porVencer = [];
+  (CACHE.trabajadores||[]).forEach(t=>{ const x = vig.get(t.id); if(!x) return; const e = vsOcupEstado(x); if(e.sem==="vencido") vencidos.push(e); else if(e.sem==="por_vencer") porVencer.push(e); });
+  const fila = (lista, tipo)=>{ if(!lista.length) return null; const e0 = lista.slice().sort((a,b)=>a.dias-b.dias)[0]; return {tipo, desc: lista.length+" trabajador(es)", fecha: e0.vence, days: e0.dias}; };
+  return [fila(vencidos, "Exámenes ocupacionales vencidos"), fila(porVencer, "Exámenes ocupacionales por vencer")].filter(Boolean);
+}
 function datosInformeGerencia(){
   const racha = computeRachas();
   const findingsAll = CACHE.inspecciones.flatMap(i=>i.findings||[]);
@@ -23153,6 +23195,7 @@ function datosInformeGerencia(){
   const vigentes = protAplicables.filter(p=>{ const v = protocoloVigenciaBitacora(p); return v && v.estado==="vigente"; }).length;
   const cumplPct = totalAsig? Math.round(vigentes/totalAsig*100) : 0;
   const vsG = vsGlobal();
+  const mn = dashModulosNuevos();
   const pgTotal = CACHE.programa.length;
   const pgRealizadas = CACHE.programa.filter(p=>estadoPrograma(p)==="realizada").length;
   const pgPct = pgTotal? Math.round(pgRealizadas/pgTotal*100) : 0;
@@ -23175,10 +23218,12 @@ function datosInformeGerencia(){
   const indicadoresBody = [
     ["Días sin accidentes con tiempo perdido", racha.actual===null?"—":racha.actual],
     ["Riesgos muy altos en matriz", riesgosCriticos+" de "+CACHE.matriz.length+" líneas"],
+    ["MIPER", (mn.miper.version ? "versión "+mn.miper.version+" - " : "")+dashMiperPie(mn.miper)],
     vsG.activos > 0
       ? ["Cumplimiento vigilancia de salud", vsG.pct+"% ("+vsG.vigentes+" de "+vsG.activos+" expuestos con examen vigente; "+(vsG.vencidos+vsG.sinExamen)+" vencidos o sin examen)"]
       : ["Cumplimiento vigilancia de salud", cumplPct+"% ("+vigentes+" de "+totalAsig+" vigentes)"],
     ...(vsG.evalTotal || vsG.medidasTotal ? [["Vigilancia: casos rojos abiertos / medidas atrasadas", vsG.casosRojos+" / "+vsG.medidasAtrasadas]] : []),
+    ...(mn.oc.conExamen ? [["Exámenes ocupacionales", mn.oc.vigentes+" vigentes de "+mn.oc.total+" trabajadores; "+mn.oc.vencidos+" vencidos, "+mn.oc.porVencer+" por vencer, "+mn.oc.sinExamen+" sin examen; "+mn.oc.noAptos+" no aptos, "+mn.oc.restricciones+" con restricciones, "+mn.oc.drogasAtencion+" examen(es) de drogas por atender"]] : []),
     ["Hallazgos de inspección con acción abierta", accionesAbiertas],
     ["Cumplimiento programa de seguridad", pgPct+"% ("+pgRealizadas+" de "+pgTotal+")"],
     ["Cumplimiento plan de capacitación", capPct+"% ("+capAsistieron+" de "+capConvocados+")"],
@@ -23199,6 +23244,9 @@ function datosInformeGerencia(){
     ["Puestos evaluados TMERT", (CACHE.tmertRegistros||[]).length],
     ["Análisis de causa raíz realizados", (CACHE.arbolesCausales||[]).length],
   );
+  if(mn.ext.total) indicadoresBody.push(["Extintores por revisar", (mn.ext.no+mn.ext.inc)+" de "+mn.ext.total+" registrados ("+mn.ext.no+" no cumplen, "+mn.ext.inc+" incompletos)"]);
+  indicadoresBody.push(["Planos de emergencia dibujados", mn.planos]);
+  { const ro = objResumenAnio(new Date().getFullYear()); if(ro.total) indicadoresBody.push(["Indicadores de gestión en meta ("+new Date().getFullYear()+")", ro.conDatos ? ro.enMeta+" de "+ro.conDatos+" ("+ro.fuera+" fuera de meta)" : "sin datos del año en curso"]); }
 
   const accTipos = ["ctp","stp","trayecto","incidente","enfermedad"];
   const accTipoBody = accTipos.map(t=>[ACC_TIPO_LABEL[t], periodo.accs.filter(a=>a.tipo===t).length]);
@@ -23216,6 +23264,7 @@ function datosInformeGerencia(){
   CACHE.matriz.forEach(m=>{ if(m.plazo && m.estado!=="cerrada"){ const days=daysUntil(m.plazo); if(days<=30) upcoming.push(["Acción de control", `${m.peligro} (${areaName(m.areaId)})`, fmtDate(m.plazo), days]); }});
   protAplicables.forEach(p=>{ if(vsTieneNomina(p.id)) return; const v = protocoloVigenciaBitacora(p); if(v && v.vigenteHasta){ const days = daysUntil(v.vigenteHasta); if(days<=30) upcoming.push(["Vigencia protocolo "+p.nombre, "Próxima reevaluación", fmtDate(v.vigenteHasta), days]); } });
   vsProximosVencimientos().filter(u=>u.days<=30).forEach(u=>upcoming.push([u.tipo, u.desc, fmtDate(u.fecha), u.days]));
+  ocupProximosVencimientos().filter(u=>u.days<=30).forEach(u=>upcoming.push([u.tipo, u.desc, fmtDate(u.fecha), u.days]));
   CACHE.programa.forEach(p=>{ if(!p.fechaRealizada && p.fechaProgramada){ const days = daysUntil(p.fechaProgramada); if(days<=30) upcoming.push(["Programa: "+p.nombre, areaName(p.areaId), fmtDate(p.fechaProgramada), days]); }});
   CACHE.capacitaciones.forEach(c=>{ if(!c.fechaRealizada && c.fechaProgramada){ const days = daysUntil(c.fechaProgramada); if(days<=30) upcoming.push(["Capacitación: "+c.nombre, (c.participantes||[]).length+" convocados", fmtDate(c.fechaProgramada), days]); }});
   upcoming.sort((a,b)=>a[3]-b[3]);
@@ -27203,6 +27252,21 @@ on(document.getElementById("miCorreoBtn"), "click", async () => {
     alert("No se pudo guardar el correo: " + e.message);
   }
 });
+/* Bloque de sesión del menú lateral: plegado por defecto (solo el nombre); la elección se recuerda en este navegador. */
+function sesionAplicarPlegado(abierto){
+  document.getElementById("sesionDetalle").style.display = abierto ? "" : "none";
+  document.getElementById("sesionToggleBtn").setAttribute("aria-expanded", abierto ? "true" : "false");
+}
+(function(){
+  let abierto = false;
+  try{ abierto = localStorage.getItem("sesion_detalle_abierto") === "1"; }catch(e){}
+  sesionAplicarPlegado(abierto);
+  on(document.getElementById("sesionToggleBtn"), "click", ()=>{
+    abierto = document.getElementById("sesionToggleBtn").getAttribute("aria-expanded") !== "true";
+    sesionAplicarPlegado(abierto);
+    try{ localStorage.setItem("sesion_detalle_abierto", abierto ? "1" : "0"); }catch(e){}
+  });
+})();
 on(document.getElementById("cerrarSesionBtn"), "click", () => {
   SESION.usuarioId = null;
   SESION.superAdmin = false;
