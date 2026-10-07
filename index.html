@@ -1093,6 +1093,21 @@
     </div></div>
 
     <div class="card">
+      <div class="card-header-row" id="hdrMatrizRevision"><h2>Revisión de la matriz: procesos, actividades y líneas repetidas</h2><button class="collapse-toggle" id="toggleMatrizRevision" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMatrizRevision">
+      <div class="desc">Muestra qué procesos y actividades se han levantado en la matriz y detecta las <strong>líneas repetidas</strong> (idénticas: misma área, proceso, actividad, peligro, riesgo, probabilidad, consecuencia y medidas de control, sin importar mayúsculas ni tildes), por ejemplo cuando se importó el mismo Excel más de una vez. Al limpiar, se conserva de cada grupo la línea más completa (con plan de acción, revisada, con riesgo residual o con más medidas de control), los planes de acción de las copias se pasan a la que queda, y se descarga un respaldo de lo eliminado.</div>
+      <div class="grid-tiles" id="matrizRevTiles"></div>
+      <h3 style="margin:14px 0 6px;font-size:14px;">Líneas repetidas</h3>
+      <div id="matrizRevRepetidosWrap" style="overflow-x:auto;"></div>
+      <div class="toolbar" style="margin-top:8px;"><button class="btn secondary" id="matrizRevLimpiarBtn" type="button" style="display:none;">Eliminar repetidos y dejar una de cada una</button></div>
+      <h3 style="margin:16px 0 6px;font-size:14px;">Procesos y actividades levantados</h3>
+      <div class="toolbar">
+        <div class="field"><label>Área</label><select id="matrizRevArea"></select></div>
+        <div><button class="btn small secondary" id="matrizRevExcelBtn" type="button" style="margin-top:20px;">Descargar inventario (Excel)</button></div>
+      </div>
+      <div id="matrizRevInventarioWrap" style="overflow-x:auto;"></div>
+    </div></div>
+
+    <div class="card">
       <div class="card-header-row" id="hdrMatrizDobleEntrada"><h2>Matriz de doble entrada: cómo leer la matriz IPER</h2><button class="collapse-toggle" id="toggleMatrizDobleEntrada" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyMatrizDobleEntrada">
       <div class="desc">El nivel de riesgo se obtiene cruzando la <strong>Probabilidad</strong> (filas) con la <strong>Consecuencia</strong> (columnas). Cada celda muestra el valor P x C, su nivel y cuántas líneas de tu matriz caen en ella. Toda evaluación cuya consecuencia sea <strong>Catastrófica (5)</strong> se considera automáticamente <strong>Muy alto</strong>, sea cual sea su probabilidad de ocurrencia.</div>
@@ -4223,6 +4238,7 @@ function setupCollapsible(headerId, bodyId, toggleId, storageKey, defaultOpen){
   header.addEventListener("click", (e)=>{ if(e.target.closest("select,input,button,a,label")) return; toggle(); });
 }
 setupCollapsible("hdrMatrizVigente", "bodyMatrizVigente", "toggleMatrizVigente", "collapsed_matrizVigente");
+setupCollapsible("hdrMatrizRevision", "bodyMatrizRevision", "toggleMatrizRevision", "collapsed_matrizRevision");
 setupCollapsible("hdrTraspasosPendientes", "bodyTraspasosPendientes", "toggleTraspasosPendientes", "collapsed_traspasosPendientes");
 setupCollapsible("hdrDs44Catalogo", "bodyDs44Catalogo", "toggleDs44Catalogo", "collapsed_ds44Catalogo");
 setupCollapsible("hdrMatrizDobleEntrada", "bodyMatrizDobleEntrada", "toggleMatrizDobleEntrada", "collapsed_matrizDobleEntrada");
@@ -9256,7 +9272,7 @@ function subpestanasCrear(viewId, grupos, estilo){
   subpestanasAplicar(viewId);
 }
 subpestanasCrear("matriz", [
-  {key:"matriz", icono:"registro", label:"Matriz de riesgos", desc:"Líneas de riesgo, matriz vigente e histórico", hdrs:["hdrNuevaLineaDeMatrizDeRiesgosIPER","hdrMatrizIaWrap","hdrMatrizDobleEntrada","hdrMatrizVigente","hdrMatrizHistorial"]},
+  {key:"matriz", icono:"registro", label:"Matriz de riesgos", desc:"Líneas de riesgo, matriz vigente e histórico", hdrs:["hdrNuevaLineaDeMatrizDeRiesgosIPER","hdrMatrizIaWrap","hdrMatrizRevision","hdrMatrizDobleEntrada","hdrMatrizVigente","hdrMatrizHistorial"]},
   {key:"levantamiento", icono:"lista", label:"Levantamiento por área", desc:"Levantamiento IPER por área de trabajo", hdrs:["hdrLevantamiento"]},
   {key:"mapas", icono:"mapa", label:"Mapas y análisis", desc:"Mapas de riesgo, niveles y equidad de género", hdrs:["hdrMapaDeRiesgosPorAreaProceso","hdrMapaDeRiesgosPlanoDePlantaYSimbologia","hdrMatrizDeRiesgosPorNivelYPorArea","hdrEquidadGenero"]},
   {key:"accion", icono:"grafico", label:"Plan de acción y controles", desc:"Plan de acción, controles DS 44 y EPP", hdrs:["hdrPlanDeAccionMatrizDeRiesgos","hdrJerarquiaDeControlesDS44","hdrTraspasosPendientes","hdrEstudioEpp"],
@@ -12559,8 +12575,118 @@ function renderMatrizDobleEntrada(){
 }
 document.getElementById("matrizDEModo").addEventListener("change", renderMatrizDobleEntrada);
 
+/* --- Revisión de la matriz: inventario de procesos/actividades y líneas repetidas --- */
+function matrizNorm(t){ return String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim(); }
+/* Una línea cuenta como repetida solo si es IDÉNTICA: misma área, proceso,
+   actividad, peligro, riesgo, probabilidad, consecuencia y medidas de control
+   (así no se pierden líneas que se parecen pero difieren en algo). */
+function matrizClaveLinea(m){
+  const controles = jerarquiaDe(m).map(c=>(c.jerarquia||"")+":"+matrizNorm(c.texto)).sort().join(";");
+  return [m.areaId||"", matrizNorm(m.proceso), matrizNorm(m.actividad), matrizNorm(m.peligro), matrizNorm(m.riesgo), m.probabilidad||"", m.consecuencia||"", controles].join("|");
+}
+function matrizGruposRepetidos(){
+  const grupos = new Map();
+  (CACHE.matriz||[]).forEach(m=>{ const k = matrizClaveLinea(m); if(!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(m); });
+  return Array.from(grupos.values()).filter(g=>g.length>1);
+}
+function matrizPuntajeCompletitud(m, conPlan){
+  let s = 0;
+  if(conPlan.has(m.id)) s += 100;
+  if(m.revisado) s += 20;
+  if(tieneResidualEvaluado(m)) s += 10;
+  s += Math.min(jerarquiaDe(m).length, 10);
+  if(m.efecto) s += 1;
+  if(m.estado==="cerrada") s += 2;
+  return s;
+}
+/* De cada grupo se conserva la línea más completa; a igualdad, la más antigua
+   (sus ids son los que ya pueden estar referenciados en otros lugares). */
+function matrizElegirConservada(grupo, conPlan){
+  return grupo.slice().sort((a,b)=> matrizPuntajeCompletitud(b, conPlan)-matrizPuntajeCompletitud(a, conPlan) || String(a.fechaCreacion||"").localeCompare(String(b.fechaCreacion||"")))[0];
+}
+function renderMatrizRevision(){
+  const wrapRep = document.getElementById("matrizRevRepetidosWrap");
+  if(!wrapRep) return;
+  const matriz = CACHE.matriz || [];
+  const conPlan = new Set((CACHE.planAccionMatriz||[]).map(p=>p.matrizId));
+  const grupos = matrizGruposRepetidos();
+  const sobrantes = grupos.reduce((s,g)=>s+g.length-1, 0);
+  const procesos = new Set(matriz.map(m=>matrizNorm(m.proceso)).filter(Boolean));
+  const actividades = new Set(matriz.map(m=>matrizNorm(m.proceso)+"|"+matrizNorm(m.actividad)).filter(k=>!k.endsWith("|")));
+  document.getElementById("matrizRevTiles").innerHTML = [
+    tile("Líneas en la matriz", matriz.length, "incluye las repetidas"),
+    tile("Procesos distintos", procesos.size, "levantados"),
+    tile("Actividades distintas", actividades.size, "levantadas"),
+    tile("Líneas repetidas", sobrantes, grupos.length ? `${grupos.length} grupo(s) con copias` : "sin repetidos"),
+  ].join("");
+  wrapRep.innerHTML = grupos.length ? `<table><thead><tr><th>Área</th><th>Proceso / actividad</th><th>Peligro / riesgo</th><th style="text-align:center;">Copias</th><th>Se conservaría</th></tr></thead><tbody>${grupos.sort((a,b)=>b.length-a.length).map(g=>{
+    const k = matrizElegirConservada(g, conPlan), m = g[0];
+    const conPlanBorrar = g.filter(x=>x.id!==k.id && conPlan.has(x.id)).length;
+    return `<tr><td>${incEsc(areaName(m.areaId))}</td><td>${m.proceso?`<div class="kv">${incEsc(m.proceso)}</div>`:""}${incEsc(m.actividad||"—")}</td>
+      <td><strong>${incEsc(m.peligro||"—")}</strong><div class="kv">${incEsc(m.riesgo||"")}</div></td>
+      <td style="text-align:center;font-weight:600;">${g.length}</td>
+      <td>${k.revisado?"Revisada · ":""}${conPlan.has(k.id)?"con plan de acción · ":""}${jerarquiaDe(k).length} medida(s)${conPlanBorrar?`<div class="kv">Los planes de acción de ${conPlanBorrar} copia(s) pasarán a esta línea.</div>`:""}</td></tr>`;
+  }).join("")}</tbody></table>` : '<div class="empty">No hay líneas repetidas en la matriz.</div>';
+  document.getElementById("matrizRevLimpiarBtn").style.display = grupos.length ? "" : "none";
+
+  const selA = document.getElementById("matrizRevArea"), cur = selA.value;
+  selA.innerHTML = '<option value="">Todas</option>' + (CACHE.areas||[]).map(a=>`<option value="${a.id}">${incEsc(a.nombre)}</option>`).join("");
+  if(cur && Array.from(selA.options).some(o=>o.value===cur)) selA.value = cur;
+  const inv = matrizInventario(selA.value);
+  document.getElementById("matrizRevInventarioWrap").innerHTML = inv.length ? `<table><thead><tr><th>Proceso</th><th>Actividad</th><th>Áreas</th><th style="text-align:center;">Líneas</th><th style="text-align:center;">Peligros distintos</th><th style="text-align:center;">Copias repetidas</th></tr></thead><tbody>${inv.map(f=>`<tr><td>${incEsc(f.proceso)}</td><td>${incEsc(f.actividad)}</td><td>${incEsc(f.areas.join(", ")||"—")}</td><td style="text-align:center;">${f.lineas}</td><td style="text-align:center;">${f.peligros}</td><td style="text-align:center;${f.repetidas?"font-weight:700;color:#d03b3b;":""}">${f.repetidas}</td></tr>`).join("")}</tbody></table>` : '<div class="empty">Sin líneas en la matriz para el filtro elegido.</div>';
+}
+function matrizInventario(areaId){
+  const mapa = new Map();
+  (CACHE.matriz||[]).filter(m=>!areaId || m.areaId===areaId).forEach(m=>{
+    const proceso = (m.proceso||"").trim() || "(sin proceso)", actividad = (m.actividad||"").trim() || "(sin actividad)";
+    const key = matrizNorm(proceso)+"|"+matrizNorm(actividad);
+    if(!mapa.has(key)) mapa.set(key, {proceso, actividad, areas:new Set(), lineas:0, peligros:new Set(), claves:new Set()});
+    const f = mapa.get(key);
+    f.lineas++; f.peligros.add(matrizNorm(m.peligro)); f.claves.add(matrizClaveLinea(m));
+    if(m.areaId) f.areas.add(areaName(m.areaId));
+  });
+  return Array.from(mapa.values()).map(f=>({proceso:f.proceso, actividad:f.actividad, areas:Array.from(f.areas).sort(), lineas:f.lineas, peligros:f.peligros.size, repetidas:f.lineas-f.claves.size}))
+    .sort((a,b)=>a.proceso.localeCompare(b.proceso) || a.actividad.localeCompare(b.actividad));
+}
+on(document.getElementById("matrizRevArea"), "change", renderMatrizRevision);
+on(document.getElementById("matrizRevExcelBtn"), "click", ()=>{
+  if(typeof XLSX==="undefined"){ alert("No se pudo cargar el lector de Excel (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const inv = matrizInventario(document.getElementById("matrizRevArea").value);
+  const aoa = [["Proceso","Actividad","Áreas","Líneas","Peligros distintos","Copias repetidas"]].concat(inv.map(f=>[f.proceso, f.actividad, f.areas.join(", "), f.lineas, f.peligros, f.repetidas]));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), "Inventario");
+  XLSX.writeFile(wb, `Inventario_matriz_${incFechaIso(new Date())}.xlsx`);
+});
+on(document.getElementById("matrizRevLimpiarBtn"), "click", async ()=>{
+  const grupos = matrizGruposRepetidos();
+  if(!grupos.length){ alert("No hay líneas repetidas."); return; }
+  const conPlan = new Set((CACHE.planAccionMatriz||[]).map(p=>p.matrizId));
+  const aEliminar = [];
+  grupos.forEach(g=>{ const k = matrizElegirConservada(g, conPlan); g.filter(x=>x.id!==k.id).forEach(x=>aEliminar.push({linea:x, conservadaId:k.id})); });
+  if(!confirm(`Se eliminarán ${aEliminar.length} línea(s) repetida(s) y quedará una de cada grupo (${grupos.length} grupo(s)). Antes se descargará un respaldo de lo eliminado y los planes de acción de las copias pasarán a la línea que queda. ¿Continuar?`)) return;
+  // Respaldo de lo que se elimina (por si hubiera que recuperar algo)
+  try{
+    const blob = new Blob([JSON.stringify({fecha:new Date().toISOString(), lineasEliminadas:aEliminar.map(x=>x.linea)}, null, 2)], {type:"application/json"});
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `respaldo_matriz_repetidos_${incFechaIso(new Date())}.json`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  }catch(e){}
+  let planesPasados = 0;
+  for(const {linea, conservadaId} of aEliminar){
+    for(const p of (CACHE.planAccionMatriz||[]).filter(x=>x.matrizId===linea.id)){
+      p.matrizId = conservadaId; await put("planAccionMatriz", p); planesPasados++;
+    }
+    await deleteRecord("matriz", linea.id);
+    const k = CACHE.matriz.find(x=>x.id===conservadaId);
+    await logHistorial(conservadaId, k?matrizLineLabel(k):matrizLineLabel(linea), "Línea repetida eliminada", "copia repetida", "Eliminada desde la revisión de la matriz");
+  }
+  await loadCache();
+  renderMatrizTable(); renderEquidadGenero(); renderMatrizCharts(); renderJerarquiaControles(); renderEppEstudioCobertura(); renderEppEstPeligroOptions(); renderMapaRiesgos(); renderPlanoRiesgos(); renderPlanAccion(); renderTraspasosPendientes(); renderMatrizHistorialTable();
+  alert(`Se eliminaron ${aEliminar.length} línea(s) repetida(s)${planesPasados?` y se pasaron ${planesPasados} plan(es) de acción a la línea que se conservó`:""}.`);
+});
+
 function renderMatrizTable(){
   renderMatrizDobleEntrada();
+  renderMatrizRevision();
   subpestanasAplicar("matriz");
   const fArea = document.getElementById("filterMatrizArea").value;
   const fNivel = document.getElementById("filterMatrizNivel").value;
@@ -22699,6 +22825,17 @@ on(document.getElementById("importMatrizBtn"), "click", async () => {
   if(reemplazar){
     if(!confirm(`Esto eliminará las ${CACHE.matriz.length} línea(s) actuales de la matriz antes de importar ${lineas.length} línea(s) nueva(s). ¿Continuar?`)) return;
     await clearStore("matriz");
+  } else {
+    // Protección contra importar dos veces el mismo archivo: se avisa de las
+    // líneas que ya existen (misma área, proceso, actividad, peligro y riesgo).
+    const existentes = new Set((CACHE.matriz||[]).map(matrizClaveLinea));
+    const claveImp = l=>matrizClaveLinea({...l, areaId: l.areaId || defaultAreaId});
+    const yaExisten = lineas.filter(l=>existentes.has(claveImp(l)));
+    if(yaExisten.length){
+      if(!confirm(`${yaExisten.length} de las ${lineas.length} línea(s) del archivo ya existen en la matriz (idénticas: misma área, proceso, actividad, peligro, riesgo, probabilidad, consecuencia y medidas de control).\n\nAceptar: omitir esas y cargar solo las nuevas.\nCancelar: no importar nada (si quieres rehacer la matriz completa, marca "Reemplazar" antes de importar).`)) return;
+      lineas = lineas.filter(l=>!existentes.has(claveImp(l)));
+      if(!lineas.length){ alert("Todas las líneas del archivo ya existían en la matriz, así que no se importó nada."); return; }
+    }
   }
 
   for(const l of lineas){
