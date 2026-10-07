@@ -3990,7 +3990,19 @@ function getAll(store){
   if(storageMode === "localstorage") return Promise.resolve(lsGetAll(store) || []);
   return Promise.resolve(memStore[store] || []);
 }
+/* Refresco selectivo del caché: en modo API, loadCache() pedía las ~66
+   tablas completas después de CADA guardado (66 viajes al servidor, con
+   fotos y documentos incluidos), y eso hacía lento guardar cualquier cosa.
+   Ahora put/deleteRecord/clearStore marcan la tabla modificada como
+   "sucia" y loadCache() solo vuelve a pedir esas; la carga completa se
+   mantiene al iniciar sesión, cuando cambia la sesión o la empresa, tras
+   importar un respaldo, y cada 2 minutos como máximo de antigüedad (para
+   ver cambios de otros usuarios). */
+var CACHE_SUCIO = new Map(), CACHE_TODO_SUCIO = true, CACHE_ULTIMA_COMPLETA = 0, CACHE_ULTIMA_LLAVE = null, CACHE_RUBRO_SUCIO = true;
+function marcarStoreSucio(store){ CACHE_SUCIO.set(store, (CACHE_SUCIO.get(store)||0)+1); pcInvalidarIndice(); }
+function marcarTodoSucio(){ CACHE_TODO_SUCIO = true; }
 function put(store, obj){
+  marcarStoreSucio(store);
   if(storageMode === "api"){
     if(OFFLINE_STORES.has(store)) return putConSoporteOffline(store, obj);
     return apiFetch("POST", `/api/${store}`, obj);
@@ -4015,6 +4027,7 @@ function put(store, obj){
   return Promise.resolve(obj);
 }
 function deleteRecord(store, id){
+  marcarStoreSucio(store);
   if(storageMode === "api") return apiFetch("DELETE", `/api/${store}/${encodeURIComponent(id)}`);
   if(storageMode === "indexeddb"){
     return new Promise((resolve,reject)=>{
@@ -4031,6 +4044,7 @@ function deleteRecord(store, id){
   return Promise.resolve();
 }
 function clearStore(store){
+  marcarStoreSucio(store);
   if(storageMode === "api") return apiFetch("DELETE", `/api/${store}`);
   if(storageMode === "indexeddb"){
     return new Promise((resolve,reject)=>{
@@ -4136,6 +4150,7 @@ async function intentarSincronizarOffline(){
     for(const item of items){
       try{
         await apiFetch("POST", `/api/${item.store}`, item.payload, {timeoutMs: OFFLINE_TIMEOUT_MS});
+        marcarStoreSucio(item.store);
         await offlineQueueRemove(item.queueId);
         sincronizados++;
       }catch(err){
@@ -4967,23 +4982,38 @@ async function loadCache(){
   // y "Levantamiento de riesgos" sigan funcionando sin señal (ver
   // OFFLINE_STORES); es un cambio puramente defensivo, con conexión
   // se comporta exactamente igual que antes.
-  const resultados = await Promise.allSettled(STORES.map((store) => getAll(store)));
-  STORES.forEach((store, i) => {
+  // Refresco selectivo (ver marcarStoreSucio): en modo API solo se vuelven a
+  // pedir las tablas modificadas, salvo carga completa (inicio, cambio de
+  // sesión/empresa, respaldo importado o más de 2 minutos desde la última).
+  const llaveSesion = (typeof authToken !== "undefined" && authToken) ? authToken : "";
+  const completa = storageMode !== "api" || CACHE_TODO_SUCIO || llaveSesion !== CACHE_ULTIMA_LLAVE || (Date.now() - CACHE_ULTIMA_COMPLETA) > 120000;
+  const versiones = new Map(CACHE_SUCIO);
+  const aPedir = completa ? STORES : STORES.filter((s) => CACHE_SUCIO.has(s));
+  const resultados = await Promise.allSettled(aPedir.map((store) => getAll(store)));
+  let huboFallo = false;
+  aPedir.forEach((store, i) => {
     const r = resultados[i];
-    if(r.status === "fulfilled") CACHE[store] = store === "empresa" ? r.value[0] : r.value;
+    if(r.status === "fulfilled"){
+      CACHE[store] = store === "empresa" ? r.value[0] : r.value;
+      if(CACHE_SUCIO.get(store) === versiones.get(store)) CACHE_SUCIO.delete(store);
+    } else huboFallo = true;
   });
+  if(completa && !huboFallo){ CACHE_TODO_SUCIO = false; CACHE_ULTIMA_COMPLETA = Date.now(); CACHE_ULTIMA_LLAVE = llaveSesion; }
   // Catálogo de Proceso/Actividad/Categoría/Peligro compartido por Rubro
   // (no es un store genérico por-empresa, así que no entra en STORES;
   // solo existe en modo API, donde hay un backend real que puede
   // compartir datos entre las empresas de un mismo rubro).
   if(storageMode==="api"){
-    try{ CACHE.catalogoRubro = await apiFetch("GET", "/api/catalogo-rubro"); }
-    catch(e){ /* sin conexión: se conserva el CACHE.catalogoRubro anterior */ }
+    if(completa || CACHE_RUBRO_SUCIO){
+      try{ CACHE.catalogoRubro = await apiFetch("GET", "/api/catalogo-rubro"); CACHE_RUBRO_SUCIO = false; }
+      catch(e){ /* sin conexión: se conserva el CACHE.catalogoRubro anterior */ }
+    }
   } else {
     CACHE.catalogoRubro = [];
   }
   await aplicarColaOfflinePendienteACache();
   actualizarBannerOffline();
+  pcInvalidarIndice();
 }
 function areaName(id){ return (CACHE.areas.find(a=>a.id===id)||{}).nombre || "—"; }
 function trabName(id){ return (CACHE.trabajadores.find(t=>t.id===id)||{}).nombre || "—"; }
@@ -9530,6 +9560,7 @@ async function addCatalogValue(tipo, value){
     // guarda como privado salvo que no haya backend real (otros modos de
     // almacenamiento, sin empresas para compartir).
     await apiFetch("POST", "/api/catalogo-rubro", { tipo, valor: value });
+    CACHE_RUBRO_SUCIO = true;
   } else {
     let rec = (CACHE.catalogosExtra||[]).find(c=>c.id===tipo);
     if(!rec){ rec = { id: tipo, valores: [] }; }
@@ -15326,7 +15357,35 @@ var pcPlEditId = null, pcPlActs = [], pcHojaId = null, pcPendiente = null, pcMig
 var PC_FUENTE_LABEL = {manual:"Manual", inspeccion:"Inspección (automático)", observacion:"Observación (automático)", comite:"Reunión del Comité Paritario (automático)", capacitacion:"Capacitación como relator (automático)"};
 
 function pcEl(id){ return document.getElementById(id); }
-function pcNorm(s){ return normalizarNombreTexto(s||""); }
+var PC_NORM_CACHE = new Map(), PC_IDX = null;
+function pcNorm(s){
+  const k = s||"";
+  if(!PC_NORM_CACHE) return normalizarNombreTexto(k);
+  let v = PC_NORM_CACHE.get(k);
+  if(v===undefined){ v = normalizarNombreTexto(k); if(PC_NORM_CACHE.size>20000) PC_NORM_CACHE.clear(); PC_NORM_CACHE.set(k, v); }
+  return v;
+}
+function pcInvalidarIndice(){ PC_IDX = null; }
+/* Índice de los registros que cuentan para el realizado automático, armado
+   una sola vez por cambio de datos (antes se recorrían todas las
+   inspecciones por cada actividad de cada hoja, y la pantalla se ponía lenta). */
+function pcIndice(){
+  if(PC_IDX) return PC_IDX;
+  const ins = new Map(), com = new Map(), caps = [];
+  const sumar = (mapa, k, v)=>{ if(!mapa.has(k)) mapa.set(k, []); mapa.get(k).push(v); };
+  (CACHE.inspecciones||[]).forEach(i=>{
+    const rec = {tipo:i.tipoRegistro||"inspeccion", tipoId:i.tipoId||"", fecha:i.fecha||""};
+    if(i.inspectorId) sumar(ins, "id:"+i.inspectorId, rec);
+    const n = pcNorm(i.inspector); if(n) sumar(ins, "n:"+n, rec);
+  });
+  const miembros = new Map((CACHE.cphysMiembros||[]).map(m=>[m.id, m]));
+  (CACHE.cphysReuniones||[]).forEach(re=>{
+    new Set((re.asistentesIds||[]).map(id=>miembros.get(id)).filter(Boolean).map(m=>pcNorm(m.nombre))).forEach(n=>sumar(com, n, re.fecha));
+  });
+  (CACHE.capacitaciones||[]).forEach(c=>{ if(c.fechaRealizada && c.relator) caps.push({rel:pcNorm(c.relator), fecha:c.fechaRealizada}); });
+  PC_IDX = {ins, com, caps};
+  return PC_IDX;
+}
 function pcNum(v){ const n = parseInt(v, 10); return isNaN(n) || n < 0 ? 0 : n; }
 function pcSem4(a){ const r = [0,0,0,0]; if(Array.isArray(a)) for(let i=0;i<4;i++) r[i] = pcNum(a[i]); return r; }
 function pcProgramas(){ return CACHE.programaCargo || []; }
@@ -15357,21 +15416,20 @@ function pcRealAuto(prog, a){
   const n = pcNorm(prog.nombre);
   const r = [0,0,0,0];
   const suma = fecha=>{ const s = pcSemanaDe(fecha, prog.anio, prog.mes); if(s>=0) r[s]++; };
+  const idx = pcIndice();
   if(f.tipo==="inspeccion" || f.tipo==="observacion"){
-    (CACHE.inspecciones||[]).forEach(i=>{
-      if((i.tipoRegistro||"inspeccion")!==f.tipo) return;
+    const propios = new Set();
+    if(trabId) (idx.ins.get("id:"+trabId)||[]).forEach(x=>propios.add(x));
+    (idx.ins.get("n:"+n)||[]).forEach(x=>propios.add(x));
+    propios.forEach(i=>{
+      if(i.tipo!==f.tipo) return;
       if(f.formatoId && i.tipoId!==f.formatoId) return;
-      if((i.inspectorId && trabId && i.inspectorId===trabId) || pcNorm(i.inspector)===n) suma(i.fecha);
+      suma(i.fecha);
     });
   } else if(f.tipo==="comite"){
-    (CACHE.cphysReuniones||[]).forEach(re=>{
-      const asist = (re.asistentesIds||[]).map(id=>(CACHE.cphysMiembros||[]).find(m=>m.id===id)).filter(Boolean);
-      if(asist.some(m=>pcNorm(m.nombre)===n)) suma(re.fecha);
-    });
+    (idx.com.get(n)||[]).forEach(fecha=>suma(fecha));
   } else if(f.tipo==="capacitacion"){
-    (CACHE.capacitaciones||[]).forEach(c=>{
-      if(c.fechaRealizada && c.relator && pcNorm(c.relator).includes(n)) suma(c.fechaRealizada);
-    });
+    idx.caps.forEach(c=>{ if(c.rel.includes(n)) suma(c.fecha); });
   }
   return r;
 }
@@ -22741,6 +22799,7 @@ on(document.getElementById("importarDatosEmpresaInput"), "change", async (ev) =>
       return;
     }
     const resp = await apiFetch("POST", "/api/admin/import", { stores: datos.stores });
+    marcarTodoSucio();
     let msg = `Importación completa: ${resp.importados} registros cargados.`;
     if(resp.claveTemporalAsignada > 0){
       msg += ` Por seguridad, el respaldo no trae la clave real de los usuarios: se asignó la clave temporal "${resp.claveTemporalUsada}" a ${resp.claveTemporalAsignada} usuario(s) importado(s) — avísales que deben cambiarla en su primer ingreso (Configuración → Gestión de accesos).`;
@@ -23047,6 +23106,7 @@ on(document.getElementById("miCorreoBtn"), "click", async () => {
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert("Indica un correo válido."); return; }
   try{
     await apiFetch("POST", "/api/accesoUsuarios", { ...usuario, email });
+    marcarStoreSucio("accesoUsuarios");
     await loadCache();
     alert(email ? "Correo guardado. Ya puedes ingresar con correo+clave la próxima vez." : "Correo eliminado.");
   }catch(e){
