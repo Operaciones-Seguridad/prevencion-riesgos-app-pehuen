@@ -1404,7 +1404,7 @@
       <h3 style="margin:18px 0 6px;font-size:15px;">Alertas por trabajador</h3>
       <div class="toolbar">
         <div class="field"><label>Protocolo</label><select id="vsAlertaProtocolo"></select></div>
-        <div class="field"><label>Mostrar</label><select id="vsAlertaTipo"><option value="">Todas las alertas</option><option value="vencido">Examen vencido</option><option value="sin_examen">Sin examen</option><option value="por_vencer">Por vencer</option><option value="sin_irl">Sin IRL</option><option value="falta_plan">Falta plan de readecuación</option></select></div>
+        <div class="field"><label>Mostrar</label><select id="vsAlertaTipo"><option value="">Todas las alertas</option><option value="vencido">Examen vencido</option><option value="sin_examen">Sin examen</option><option value="por_vencer">Por vencer</option><option value="sin_irl">Sin IRL</option><option value="falta_plan">Falta plan de readecuación</option><option value="cambio_puesto">Cambió de cargo o área</option><option value="irl_tardia">IRL posterior a la exposición</option></select></div>
         <div class="field"><div class="kv" id="vsAlertaConteo" style="margin-top:22px;"></div></div>
       </div>
       <div style="overflow-x:auto;"><table>
@@ -1469,6 +1469,27 @@
       <div style="overflow-x:auto;"><table>
         <thead><tr><th>Trabajador</th><th>Cargo / Área</th><th>Puesto / GES</th><th>Puesto evaluado</th><th>IRL</th><th>Último examen</th><th>Aptitud</th><th>Vence</th><th>Estado</th><th></th></tr></thead>
         <tbody id="vsNomTable"></tbody>
+      </table></div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrVsCambios"><h2>Cambios de puesto de los expuestos</h2><button class="collapse-toggle" id="toggleVsCambios" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyVsCambios">
+      <div class="desc">Cuando un trabajador de la nómina cambia de cargo o de área (movilidad interna) hay que revisar si sigue expuesto, si tiene la IRL de su nuevo puesto y si su examen sigue al día. El aviso sale al comparar el cargo y el área actuales con los que tenía al incorporarlo a la nómina; cada decisión queda registrada. <strong>Los cambios hechos antes de activar esta función no se detectan.</strong></div>
+      <h3 style="margin:10px 0 6px;font-size:15px;">Por revisar</h3>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Trabajador</th><th>Protocolo</th><th>Antes</th><th>Ahora</th><th></th></tr></thead>
+        <tbody id="vsCambiosTable"></tbody>
+      </table></div>
+      <h3 style="margin:18px 0 6px;font-size:15px;">Posibles incorporaciones</h3>
+      <div class="kv" style="margin-bottom:6px;">Trabajadores de las áreas donde la matriz activa un protocolo que aplica y que todavía no están en su nómina. Solo es una sugerencia: agregue a quien realmente esté expuesto.</div>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Protocolo</th><th>Trabajador</th><th>Cargo / Área</th><th></th></tr></thead>
+        <tbody id="vsPosiblesTable"></tbody>
+      </table></div>
+      <h3 style="margin:18px 0 6px;font-size:15px;">Historial de cambios</h3>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Fecha</th><th>Trabajador</th><th>Protocolo</th><th>Antes</th><th>Ahora</th><th>Decisión</th><th>Observaciones</th><th></th></tr></thead>
+        <tbody id="vsMovTable"></tbody>
       </table></div>
     </div></div>
 
@@ -1571,6 +1592,25 @@
         <thead><tr><th>Fecha</th><th>Protocolo</th><th>Tipo</th><th>Integrantes</th><th>Acuerdos / observaciones</th><th>Próxima revisión</th><th>Documento</th><th></th></tr></thead>
         <tbody id="vsCdaTable"></tbody>
       </table></div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrVsCons"><h2>Conservación de registros</h2><button class="collapse-toggle" id="toggleVsCons" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyVsCons">
+      <div class="desc">Defina por protocolo cuántos años deben conservarse sus registros (exámenes, evaluaciones, medidas correctoras, CDA y cambios de puesto). <strong>Pehuén no trae plazos precargados: confírmelos según la norma de cada protocolo y con su mutualidad.</strong> Con los años definidos, eliminar un registro que aún está dentro del período exige escribir ELIMINAR.</div>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Protocolo</th><th>Años de conservación</th><th>Registros</th><th>Más antiguo</th><th>Dentro del período</th><th>Todo liberable desde</th></tr></thead>
+        <tbody id="vsConsTable"></tbody>
+      </table></div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrVsFiscal"><h2>Informe para fiscalización y respaldo</h2><button class="collapse-toggle" id="toggleVsFiscal" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyVsFiscal">
+      <div class="desc">Genere un informe en PDF por protocolo con todo lo que suele pedirse en una fiscalización: resumen, registros del CDA, evaluaciones por puesto, medidas correctoras, nómina de expuestos y cambios de puesto. También puede descargar un respaldo completo en Excel con la fecha hasta la que debe conservarse cada registro. <strong>Ambos archivos incluyen la aptitud de personas: guárdelos y compártalos con cuidado.</strong></div>
+      <div class="toolbar">
+        <div class="field"><label>Protocolo</label><select id="fiscProtocolo"></select></div>
+        <div><button class="btn small" id="fiscPdfBtn" type="button" style="margin-top:20px;">Descargar informe PDF del protocolo</button></div>
+        <div><button class="btn small secondary" id="fiscExcelBtn" type="button" style="margin-top:20px;">Descargar respaldo Excel (protocolo elegido o todos)</button></div>
+      </div>
     </div></div>
 
     <div class="card">
@@ -4073,8 +4113,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 42;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones"];
+const DB_VERSION = 43;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -15367,6 +15407,44 @@ async function vsAsegurarProtocolos(){
   catch(e){ console.warn("No se pudieron crear los protocolos básicos", e); return false; }
   finally{ vsAsegurando = false; }
 }
+/* Línea base de cargo y área de cada expuesto (Etapa 3): se guarda al incorporarlo y, una sola vez, se completa en los
+   registros anteriores con el cargo y el área actuales. Solo actúa con trabajadores ya cargados. */
+let vsAsegurandoBase = false;
+async function vsAsegurarLineaBase(){
+  if(vsAsegurandoBase || !Array.isArray(CACHE.vsExpuestos) || !CACHE.vsExpuestos.length || !(CACHE.trabajadores||[]).length) return false;
+  if(storageMode==="api" && !(typeof authToken!=="undefined" && authToken)) return false;
+  const tr = new Map(CACHE.trabajadores.map(t=>[t.id,t]));
+  const faltan = CACHE.vsExpuestos.filter(e=>e.cargoBase===undefined && e.areaBase===undefined && tr.has(e.trabajadorId));
+  if(!faltan.length) return false;
+  vsAsegurandoBase = true;
+  try{
+    for(const e of faltan){ const t = tr.get(e.trabajadorId); await put("vsExpuestos", Object.assign({}, e, {cargoBase:t.cargo||"", areaBase:t.areaId||""})); }
+    await loadCache(); return true;
+  }
+  catch(err){ console.warn("No se pudo registrar la línea base de cargo y área", err); return false; }
+  finally{ vsAsegurandoBase = false; }
+}
+function vsNuevoExpuesto(protoId, t, extra){
+  return Object.assign({id:uid(), protocoloId:protoId, trabajadorId:t.id, puesto:"", desde:"", estado:"activo", irlFecha:"", cargoBase:t.cargo||"", areaBase:t.areaId||""}, extra||{});
+}
+/* Conservación de registros (Etapa 3): años editables por protocolo, sin valor precargado. Si el registro aún está
+   dentro del período configurado, eliminarlo exige escribir ELIMINAR. */
+function vsRetencionHasta(fecha, p){
+  const a = p ? +p.conservacionAnios : 0;
+  if(!fecha || !(a>0)) return null;
+  const d = parseFechaLocal(fecha); if(isNaN(d)) return null;
+  d.setFullYear(d.getFullYear()+a);
+  return vsIso(d);
+}
+function vsConfirmarEliminar(fecha, protocoloId, texto){
+  const p = (CACHE.protocolos||[]).find(x=>x.id===protocoloId);
+  const hasta = vsRetencionHasta(fecha, p);
+  if(hasta && daysUntil(hasta) > 0){
+    const r = prompt(`${texto}\n\nEste registro debe conservarse hasta el ${fmtDate(hasta)} (${p.conservacionAnios} años configurados para ${p.nombre}). Para eliminarlo igual, escriba ELIMINAR.`);
+    return String(r||"").trim().toUpperCase()==="ELIMINAR";
+  }
+  return confirm(texto);
+}
 
 /* Contexto de cálculo: trabajadores por id y exámenes agrupados por
    trabajador|protocolo (más reciente primero), armado una sola vez por render. */
@@ -15419,7 +15497,13 @@ function vsEvaluar(e, ctx){
   }
   const faltaPlan = !!(examen && examen.resultado==="restricciones" && !String(examen.readecuacion||"").trim());
   const evalPuesto = e.puesto ? (ctx.evVig.get(e.protocoloId+"|"+matrizNorm(e.puesto)) || null) : null;
-  return {e, t, p, examen, citacion, vence, dias, sem, irlFecha, irlOrigen, faltaPlan, evalPuesto, activo:(e.estado||"activo")==="activo"};
+  // Etapa 3: cambio de cargo o área respecto de la línea base guardada al incorporar o confirmar al expuesto.
+  let cambio = null;
+  if(e.cargoBase!==undefined || e.areaBase!==undefined){
+    const cargoAnt = e.cargoBase||"", areaAnt = e.areaBase||"";
+    if(matrizNorm(t.cargo)!==matrizNorm(cargoAnt) || (t.areaId||"")!==areaAnt) cambio = {cargoAnt, cargoNuevo:t.cargo||"", areaAnt, areaNueva:t.areaId||""};
+  }
+  return {e, t, p, examen, citacion, vence, dias, sem, irlFecha, irlOrigen, faltaPlan, evalPuesto, cambio, activo:(e.estado||"activo")==="activo"};
 }
 function vsCdaDe(protoId){
   return (CACHE.vsCda||[]).filter(c=>c.protocoloId===protoId).sort((a,b)=> String(b.fecha||"").localeCompare(String(a.fecha||"")));
@@ -15438,14 +15522,24 @@ function vsResumen(protoId, ctx){
     vencidos:n(f=>f.sem==="vencido"), sinExamen:n(f=>f.sem==="sin_examen"), faltaPlan:n(f=>f.faltaPlan), cda:vsCdaDe(protoId),
     evalTotal:evs.length, evalVencidas:evEst.filter(s=>s.sem==="vencida").length, evalPorVencer:evEst.filter(s=>s.sem==="por_vencer").length,
     casosRojos:evs.filter(ev=>ev.nivel==="rojo" && ev.estadoCaso!=="cerrado").length,
-    medidasTotal:meds.length, medidasAtrasadas:meds.filter(vsMedidaAtrasada).length };
+    medidasTotal:meds.length, medidasAtrasadas:meds.filter(vsMedidaAtrasada).length,
+    cambios:n(f=>f.cambio) };
+}
+/* Trabajadores de las áreas que activan un protocolo en la matriz y que aún no están en su nómina (solo informativo). */
+function vsPosiblesExpuestos(protoId){
+  const areas = new Set(protocoloLineasMatriz(protoId).map(l=>l.areaId).filter(Boolean));
+  if(!areas.size) return [];
+  const yaEn = new Set((CACHE.vsExpuestos||[]).filter(e=>e.protocoloId===protoId).map(e=>e.trabajadorId));
+  return (CACHE.trabajadores||[]).filter(t=>areas.has(t.areaId) && !yaEn.has(t.id));
 }
 function vsGlobal(){
   const ctx = vsCtx();
   const g = {activos:0, vigentes:0, porVencer:0, vencidos:0, sinExamen:0, conIrl:0, faltaPlan:0, protocolos:0, sinCda:0,
-    evalTotal:0, evalVencidas:0, evalPorVencer:0, casosRojos:0, medidasTotal:0, medidasAtrasadas:0};
+    evalTotal:0, evalVencidas:0, evalPorVencer:0, casosRojos:0, medidasTotal:0, medidasAtrasadas:0, cambios:0, posibles:0};
   (CACHE.protocolos||[]).forEach(p=>{
     const r = vsResumen(p.id, ctx);
+    g.cambios += r.cambios;
+    if(protocoloAplica(p)) g.posibles += vsPosiblesExpuestos(p.id).length;
     g.evalTotal += r.evalTotal; g.evalVencidas += r.evalVencidas; g.evalPorVencer += r.evalPorVencer; g.casosRojos += r.casosRojos;
     g.medidasTotal += r.medidasTotal; g.medidasAtrasadas += r.medidasAtrasadas;
     if(!r.activos) return;
@@ -15485,10 +15579,12 @@ function vsMotivos(f){
   else if(f.sem==="por_vencer") m.push({tipo:"por_vencer", txt:`Vence en ${f.dias} día(s)`});
   if(!f.irlFecha) m.push({tipo:"sin_irl", txt:"Sin IRL"});
   if(f.faltaPlan) m.push({tipo:"falta_plan", txt:"Con restricciones: falta plan de readecuación"});
+  if(f.cambio) m.push({tipo:"cambio_puesto", txt:"Cambió de cargo/área: revisar su exposición"});
+  if(f.e.desde && f.irlFecha && f.irlFecha > f.e.desde) m.push({tipo:"irl_tardia", txt:"IRL posterior al inicio de la exposición"});
   return m;
 }
-/* Alertas rojas del módulo: exámenes vencidos o faltantes, evaluaciones de puesto vencidas, casos rojos abiertos y medidas atrasadas. */
-function vsAlertasTotal(g){ return g.vencidos + g.sinExamen + g.evalVencidas + g.casosRojos + g.medidasAtrasadas; }
+/* Alertas rojas del módulo: exámenes vencidos o faltantes, evaluaciones de puesto vencidas, casos rojos abiertos, medidas atrasadas y cambios de puesto por revisar. */
+function vsAlertasTotal(g){ return g.vencidos + g.sinExamen + g.evalVencidas + g.casosRojos + g.medidasAtrasadas + g.cambios; }
 function vsActualizarInsignias(){
   const btn = document.querySelector('#mainNav button[data-view="vigilancia"]');
   if(!btn) return;
@@ -15513,6 +15609,10 @@ function vsFillSelects(){
   vsEl("filterCdaProtocolo").value = fcda || "";
   paFillAreaSelect("vsNomArea");
   paFillAreaSelect("vsAddArea");
+  const fisc = val("fiscProtocolo");
+  fillSelect(vsEl("fiscProtocolo"), items, false);
+  vsEl("fiscProtocolo").insertAdjacentHTML("afterbegin", '<option value="">Todos los protocolos (solo Excel)</option>');
+  vsEl("fiscProtocolo").value = items.some(i=>i.id===fisc) ? fisc : "";
 }
 
 /* --- Tablero y alertas --- */
@@ -15528,6 +15628,8 @@ function renderVsTablero(){
     tile("Evaluaciones de puesto", g.evalVencidas+g.evalPorVencer, g.evalVencidas+" vencida(s) · "+g.evalPorVencer+" por vencer · "+g.evalTotal+" vigente(s) en total", null, "calendar", "var(--s1)"),
     tile("Casos rojos abiertos", g.casosRojos, "puestos con evaluación roja sin cerrar", null, "alert", "var(--s1)"),
     tile("Medidas correctoras atrasadas", g.medidasAtrasadas, "de "+g.medidasTotal+" registradas", null, "alert", "var(--s1)"),
+    tile("Cambios de puesto por revisar", g.cambios, "expuestos que cambiaron de cargo o área", null, "people", "var(--s1)"),
+    tile("Posibles incorporaciones", g.posibles, "trabajadores de áreas con el riesgo, fuera de la nómina", null, "people", "var(--s1)"),
   ].join("");
   const protos = vsProtocolosOrdenados().filter(p=>protocoloAplica(p) || (CACHE.vsExpuestos||[]).some(e=>e.protocoloId===p.id) || (CACHE.vsEvaluaciones||[]).some(e=>e.protocoloId===p.id));
   const pill = (n, clase) => n ? `<span class="pill ${clase}">${n}</span>` : "0";
@@ -15564,7 +15666,7 @@ function renderVsAlertas(ctx){
     <td>${incEsc(vsEtiqueta(f.p))}</td>
     <td><strong>${incEsc(f.t.nombre)}</strong><div class="kv">${incEsc(f.t.rut||"")}</div></td>
     <td>${incEsc(f.t.cargo||"—")}<div class="kv">${incEsc(areaName(f.t.areaId))}</div></td>
-    <td>${m.map(x=>`<span class="pill ${x.tipo==="vencido"||x.tipo==="sin_examen"?"vencido":"proximo"}" style="margin:0 4px 4px 0;display:inline-block;">${incEsc(x.txt)}</span>`).join("")}</td>
+    <td>${m.map(x=>`<span class="pill ${x.tipo==="vencido"||x.tipo==="sin_examen"||x.tipo==="cambio_puesto"?"vencido":"proximo"}" style="margin:0 4px 4px 0;display:inline-block;">${incEsc(x.txt)}</span>`).join("")}</td>
     <td>${f.vence ? fmtDate(f.vence) : "—"}</td>
   </tr>`).join("") || `<tr><td class="empty" colspan="5">Sin alertas con el filtro elegido</td></tr>`;
 }
@@ -15605,8 +15707,8 @@ function renderVsNomina(){
       <td>${ex}${cit}</td>
       <td>${apt}</td>
       <td>${vence}</td>
-      <td style="white-space:nowrap;">${estadoTxt}</td>
-      <td style="white-space:nowrap;"><button class="btn secondary small" data-vs-edit="${f.e.id}">Control</button> <button class="subtle-btn" data-vs-quitar="${f.e.id}">Quitar</button></td>
+      <td style="white-space:nowrap;">${estadoTxt}${f.cambio && f.activo ? '<div><span class="pill vencido" style="margin-top:4px;display:inline-block;">Cambió de cargo/área</span></div>' : ""}</td>
+      <td style="white-space:nowrap;">${f.cambio && f.activo ? `<button class="btn small" data-vs-cambio="${f.e.id}">Revisar cambio</button> ` : ""}<button class="btn secondary small" data-vs-edit="${f.e.id}">Control</button> <button class="subtle-btn" data-vs-quitar="${f.e.id}">Quitar</button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="10">${r.filas.length ? "Ningún trabajador coincide con los filtros" : "Aún no hay trabajadores en la nómina de este protocolo"}</td></tr>`;
 }
@@ -15635,12 +15737,14 @@ on(vsEl("vsTableroTable"), "click", (e)=>{
   vsEl("hdrVsNomina").scrollIntoView({behavior:"smooth", block:"start"});
 });
 on(vsEl("vsNomTable"), "click", async (e)=>{
+  const cb = e.target.closest("[data-vs-cambio]");
+  if(cb){ vsAbrirModalCambio(cb.dataset.vsCambio); return; }
   const ed = e.target.closest("[data-vs-edit]");
   if(ed){ vsAbrirModalExpuesto(ed.dataset.vsEdit); return; }
   const q = e.target.closest("[data-vs-quitar]");
   if(q){
     const rec = (CACHE.vsExpuestos||[]).find(x=>x.id===q.dataset.vsQuitar); if(!rec) return;
-    if(!confirm(`¿Quitar a ${trabName(rec.trabajadorId)} de la nómina de ${protoName(rec.protocoloId)}? Sus exámenes ya registrados no se borran.`)) return;
+    if(!confirm(`¿Quitar a ${trabName(rec.trabajadorId)} de la nómina de ${protoName(rec.protocoloId)}? Sus exámenes ya registrados no se borran. Si solo dejó de estar expuesto, es mejor marcarlo como Inactivo desde «Control», para conservar su historial en la nómina.`)) return;
     await deleteRecord("vsExpuestos", rec.id);
     await loadCache();
     vsRefrescarTodo();
@@ -15698,7 +15802,8 @@ on(vsEl("vsAddGuardarBtn"), "click", async ()=>{
   const puesto = vsEl("vsAddPuesto").value.trim(), desde = vsEl("vsAddDesde").value;
   const yaEn = new Set((CACHE.vsExpuestos||[]).filter(e=>e.protocoloId===protoId).map(e=>e.trabajadorId));
   const nuevos = Array.from(vsAddSel).filter(id=>!yaEn.has(id));
-  await vsEscribirLote(nuevos.map(id=>["vsExpuestos", {id:uid(), protocoloId:protoId, trabajadorId:id, puesto, desde, estado:"activo", irlFecha:""}]));
+  const trAdd = new Map((CACHE.trabajadores||[]).map(t=>[t.id,t]));
+  await vsEscribirLote(nuevos.filter(id=>trAdd.has(id)).map(id=>["vsExpuestos", vsNuevoExpuesto(protoId, trAdd.get(id), {puesto, desde})]));
   await loadCache();
   vsAddSel = new Set(); vsEl("vsAddPuesto").value = ""; vsEl("vsAddDesde").value = "";
   vsRefrescarTodo();
@@ -15754,7 +15859,7 @@ async function vsImportarFilas(filas){
     }
     let exp = existentes.get(t.id);
     if(!exp){
-      exp = {id:uid(), protocoloId:protoId, trabajadorId:t.id, puesto:fila.puesto?String(fila.puesto).trim():"", desde:"", estado:"activo", irlFecha:""};
+      exp = vsNuevoExpuesto(protoId, t, {puesto:fila.puesto?String(fila.puesto).trim():""});
       existentes.set(t.id, exp); escrituras.push(["vsExpuestos", exp]); res.nuevos++;
     } else {
       res.yaEstaban++;
@@ -15901,6 +16006,10 @@ function vsAbrirModalExpuesto(id, examenEditId){
         <td style="white-space:nowrap;"><button class="btn secondary small" data-vsm-ed="${x.id}">Editar</button> <button class="subtle-btn" data-vsm-del="${x.id}">Eliminar</button></td>
       </tr>`).join("") || `<tr><td class="empty" colspan="6">Sin exámenes ni citaciones registrados</td></tr>`}</tbody>
     </table></div>
+    ${(function(){
+      const movs = (CACHE.vsMovimientos||[]).filter(x=>x.trabajadorId===e.trabajadorId && x.protocoloId===e.protocoloId).sort((a,b)=>String(b.fecha||"").localeCompare(String(a.fecha||"")));
+      return movs.length ? `<h4 style="margin:16px 0 4px;">Cambios de puesto registrados</h4><div style="overflow-x:auto;"><table><thead><tr><th>Fecha</th><th>Antes</th><th>Ahora</th><th>Decisión</th><th>Observaciones</th></tr></thead><tbody>${movs.map(x=>`<tr><td>${fmtDate(x.fecha)}</td><td>${incEsc(x.cargoAnterior||"—")}<div class="kv">${incEsc(areaName(x.areaAnteriorId))}</div></td><td>${incEsc(x.cargoNuevo||"—")}<div class="kv">${incEsc(areaName(x.areaNuevaId))}</div></td><td>${VS_DECISION_LABEL[x.decision]||""}</td><td>${incEsc(x.obs||"—")}</td></tr>`).join("")}</tbody></table></div>` : "";
+    })()}
     <div class="toolbar" style="margin-top:12px;"><button class="btn secondary" id="vsmCerrarBtn" type="button">Cerrar</button></div>
   `, {wide:true});
   on(vsEl("vsmCerrarBtn"), "click", closeModal);
@@ -15930,7 +16039,8 @@ function vsAbrirModalExpuesto(id, examenEditId){
     if(b){ vsAbrirModalExpuesto(id, b.dataset.vsmEd); return; }
     const d = ev.target.closest("[data-vsm-del]");
     if(d){
-      if(!confirm("¿Eliminar este registro de examen o citación? Esta acción no se puede deshacer.")) return;
+      const exDel = (CACHE.examenes||[]).find(x=>x.id===d.dataset.vsmDel);
+      if(!vsConfirmarEliminar(exDel ? (exDel.fecha||exDel.citacionFecha) : "", e.protocoloId, "¿Eliminar este registro de examen o citación? Esta acción no se puede deshacer.")) return;
       await deleteRecord("examenes", d.dataset.vsmDel);
       await loadCache();
       vsRefrescarTodo();
@@ -16084,7 +16194,7 @@ on(vsEl("vsEvalTable"), "click", async (e)=>{
     await put("vsEvaluaciones", ev); await loadCache(); vsRefrescarTodo();
   } else if(b.dataset.evDel){
     const n = vsMedidasDe(ev.id).length;
-    if(!confirm(`¿Eliminar la evaluación de "${ev.puesto}" del ${fmtDate(ev.fechaInforme)}?${n?` También se eliminarán sus ${n} medida(s) correctora(s).`:""} Esta acción no se puede deshacer.`)) return;
+    if(!vsConfirmarEliminar(ev.fechaInforme, ev.protocoloId, `¿Eliminar la evaluación de "${ev.puesto}" del ${fmtDate(ev.fechaInforme)}?${n?` También se eliminarán sus ${n} medida(s) correctora(s).`:""} Esta acción no se puede deshacer.`)) return;
     for(const m of vsMedidasDe(ev.id)) await deleteRecord("medidasControlVS", m.id);
     await deleteRecord("vsEvaluaciones", ev.id);
     await loadCache();
@@ -16207,7 +16317,7 @@ on(vsEl("vsMedidasTable"), "click", async (e)=>{
   const del = e.target.closest("[data-md-del]");
   if(del){
     const m = (CACHE.medidasControlVS||[]).find(x=>x.id===del.dataset.mdDel); if(!m) return;
-    if(!confirm("¿Eliminar esta medida correctora? Esta acción no se puede deshacer.")) return;
+    if(!vsConfirmarEliminar(m.fechaAplicacion||m.plazo, m.protocoloId, "¿Eliminar esta medida correctora? Esta acción no se puede deshacer.")) return;
     await deleteRecord("medidasControlVS", m.id);
     await loadCache();
     if(mdEditingId===m.id) resetMdForm();
@@ -16238,6 +16348,271 @@ on(vsEl("evExportBtn"), "click", ()=>{
   const emp = (CACHE.empresa && CACHE.empresa.razonSocial) ? CACHE.empresa.razonSocial.replace(/[^a-zA-Z0-9]+/g,"_") : "Empresa";
   XLSX.writeFile(wb, `Vigilancia_evaluaciones_medidas_${emp}_${new Date().toISOString().slice(0,10)}.xlsx`);
 });
+
+/* --- Cambios de puesto, conservación de registros e informe de fiscalización (Etapa 3) --- */
+const VS_DECISION_LABEL = {continua:"Sigue expuesto", retirado:"Ya no está expuesto", agregado:"Agregado a otro protocolo"};
+function vsAntesAhora(cargo, areaId){ return `${incEsc(cargo||"sin cargo")}<div class="kv">${incEsc(areaName(areaId))}</div>`; }
+function renderVsCambios(){
+  const ctx = vsCtx(), pend = [];
+  vsProtocolosOrdenados().forEach(p=>vsResumen(p.id, ctx).filas.forEach(f=>{ if(f.activo && f.cambio) pend.push(f); }));
+  pend.sort((a,b)=>String(a.t.nombre).localeCompare(String(b.t.nombre)));
+  vsEl("vsCambiosTable").innerHTML = pend.map(f=>`<tr>
+    <td><strong>${incEsc(f.t.nombre)}</strong><div class="kv">${incEsc(f.t.rut||"sin RUT")}</div></td>
+    <td>${incEsc(vsEtiqueta(f.p))}</td>
+    <td>${vsAntesAhora(f.cambio.cargoAnt, f.cambio.areaAnt)}</td><td>${vsAntesAhora(f.cambio.cargoNuevo, f.cambio.areaNueva)}</td>
+    <td><button class="btn small" data-vsc-revisar="${f.e.id}">Revisar</button></td></tr>`).join("") || `<tr><td class="empty" colspan="5">No hay cambios de puesto por revisar</td></tr>`;
+  const posibles = [], tope = 200;
+  vsProtocolosOrdenados().filter(p=>protocoloAplica(p)).forEach(p=>vsPosiblesExpuestos(p.id).forEach(t=>posibles.push({p, t})));
+  vsEl("vsPosiblesTable").innerHTML = posibles.slice(0, tope).map(({p, t})=>`<tr>
+    <td>${incEsc(vsEtiqueta(p))}</td><td><strong>${incEsc(t.nombre)}</strong><div class="kv">${incEsc(t.rut||"sin RUT")}</div></td>
+    <td>${vsAntesAhora(t.cargo, t.areaId)}</td>
+    <td><button class="btn secondary small" data-vs-posible="${p.id}|${t.id}">Agregar a la nómina</button></td></tr>`).join("")
+    + (posibles.length>tope ? `<tr><td class="kv" colspan="4">Se muestran los primeros ${tope} de ${posibles.length}.</td></tr>` : "")
+    || `<tr><td class="empty" colspan="4">No hay trabajadores pendientes de incorporar según la matriz</td></tr>`;
+  const movs = (CACHE.vsMovimientos||[]).slice().sort((a,b)=>String(b.fecha||"").localeCompare(String(a.fecha||"")) || String(b.id).localeCompare(String(a.id))).slice(0, 200);
+  vsEl("vsMovTable").innerHTML = movs.map(m=>`<tr>
+    <td>${fmtDate(m.fecha)}</td><td>${incEsc(trabName(m.trabajadorId))}</td><td>${incEsc(protoName(m.protocoloId))}</td>
+    <td>${vsAntesAhora(m.cargoAnterior, m.areaAnteriorId)}</td><td>${vsAntesAhora(m.cargoNuevo, m.areaNuevaId)}</td>
+    <td>${VS_DECISION_LABEL[m.decision]||""}${m.usuario?`<div class="kv">${incEsc(m.usuario)}</div>`:""}</td><td>${incEsc(m.obs||"—")}</td>
+    <td><button class="subtle-btn" data-vsc-del="${m.id}">Eliminar</button></td></tr>`).join("") || `<tr><td class="empty" colspan="8">Aún no hay cambios de puesto registrados</td></tr>`;
+}
+function vsRegistrarMovimiento(f, decision, obs, protoId){
+  const c = f.cambio || {cargoAnt:"", areaAnt:"", cargoNuevo:f.t.cargo||"", areaNueva:f.t.areaId||""};
+  return {id:uid(), fecha:new Date().toISOString().slice(0,10), trabajadorId:f.t.id, protocoloId:protoId||f.e.protocoloId,
+    cargoAnterior:c.cargoAnt, areaAnteriorId:c.areaAnt, cargoNuevo:c.cargoNuevo, areaNuevaId:c.areaNueva,
+    decision, obs:obs||"", usuario:(usuarioDeSesion()||{}).nombre||""};
+}
+function vsAbrirModalCambio(expId){
+  const e = (CACHE.vsExpuestos||[]).find(x=>x.id===expId); if(!e) return;
+  const ctx = vsCtx(), f = vsEvaluar(e, ctx);
+  if(!f || !f.cambio){ alert("Este expuesto ya no tiene un cambio de puesto pendiente."); renderVigilancia(); return; }
+  const c = f.cambio;
+  const otros = vsProtocolosOrdenados().filter(p=>p.id!==e.protocoloId && protocoloAplica(p) &&
+    !(CACHE.vsExpuestos||[]).some(x=>x.protocoloId===p.id && x.trabajadorId===e.trabajadorId) &&
+    protocoloLineasMatriz(p.id).some(l=>l.areaId===c.areaNueva));
+  const irlTxt = f.irlOrigen==="entrega" ? `La IRL del cargo actual figura entregada el ${fmtDate(f.irlFecha)}.`
+    : f.irlOrigen==="manual" ? `Hay una IRL registrada a mano (${fmtDate(f.irlFecha)}): verifique que corresponda al nuevo cargo.`
+    : "No hay IRL registrada para el nuevo cargo: regístrela en «Inducción y cumplimiento» antes de que empiece la exposición.";
+  openModal(`
+    <h3>Cambio de puesto — ${incEsc(f.t.nombre)}</h3>
+    <div class="kv" style="margin-bottom:8px;">${incEsc(vsEtiqueta(f.p))}</div>
+    <div class="form-grid">
+      <div><label>Antes</label><div>${vsAntesAhora(c.cargoAnt, c.areaAnt)}</div></div>
+      <div><label>Ahora</label><div>${vsAntesAhora(c.cargoNuevo, c.areaNueva)}</div></div>
+    </div>
+    <div class="kv" style="margin:8px 0;">${incEsc(irlTxt)} ${f.sem==="vigente"?"":"Su examen está "+VS_SEM_LABEL[f.sem].toLowerCase()+"."}</div>
+    <h4 style="margin:10px 0 4px;">¿Qué corresponde para este protocolo?</h4>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:400;"><input type="radio" name="vscDecision" value="continua" style="width:auto;min-height:auto;"> Sigue expuesto en su nuevo puesto</label>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:400;"><input type="radio" name="vscDecision" value="retirado" style="width:auto;min-height:auto;"> Ya no está expuesto (pasa a Inactivo)</label>
+    <div class="form-grid" style="margin-top:8px;">
+      <div><label>Puesto / GES nuevo (si sigue expuesto)</label><input id="vscPuesto" value="${incEsc(e.puesto||"")}"></div>
+      <div><label>Fecha de término de la exposición (si ya no está expuesto)</label><input type="date" id="vscTermino" value="${new Date().toISOString().slice(0,10)}"></div>
+    </div>
+    <label>Observaciones (opcional)</label><input id="vscObs">
+    <div class="toolbar" style="margin-top:10px;"><button class="btn" id="vscGuardarBtn" type="button">Guardar decisión</button><button class="btn secondary" id="vscCerrarBtn" type="button">Cerrar</button></div>
+    <h4 style="margin:16px 0 4px;">Otros protocolos que podrían aplicar al nuevo puesto</h4>
+    ${otros.length ? `<div class="kv">Según las líneas de la matriz del área nueva (${incEsc(areaName(c.areaNueva))}).</div>` + otros.map(p=>`<div style="margin:4px 0;">${incEsc(vsEtiqueta(p))} <button class="btn secondary small" data-vsc-add="${p.id}">Agregar a la nómina</button></div>`).join("") : '<div class="kv">Ninguno según la matriz.</div>'}
+  `, {wide:true});
+  on(vsEl("vscCerrarBtn"), "click", closeModal);
+  on(vsEl("vscGuardarBtn"), "click", async ()=>{
+    const dec = document.querySelector('input[name="vscDecision"]:checked');
+    if(!dec){ alert("Elija si sigue expuesto o si ya no está expuesto."); return; }
+    const obs = vsEl("vscObs").value.trim(), termino = vsEl("vscTermino").value;
+    if(dec.value==="retirado" && !termino){ alert("Indique la fecha de término de la exposición."); return; }
+    const mov = vsRegistrarMovimiento(f, dec.value, (dec.value==="retirado" ? "Término de exposición: "+fmtDate(termino)+(obs?". ":"") : "")+obs);
+    e.cargoBase = f.t.cargo||""; e.areaBase = f.t.areaId||"";
+    if(dec.value==="continua") e.puesto = vsEl("vscPuesto").value.trim();
+    else { e.estado = "inactivo"; e.fechaTermino = termino; }
+    await put("vsExpuestos", e);
+    await put("vsMovimientos", mov);
+    await loadCache();
+    closeModal(); vsRefrescarTodo();
+  });
+  document.querySelectorAll("#modalBody [data-vsc-add]").forEach(btn=>on(btn, "click", async ()=>{
+    btn.disabled = true;
+    const protoId = btn.dataset.vscAdd;
+    await put("vsExpuestos", vsNuevoExpuesto(protoId, f.t, {puesto:e.puesto||""}));
+    await put("vsMovimientos", vsRegistrarMovimiento(f, "agregado", "Agregado a la nómina de "+protoName(protoId), protoId));
+    await loadCache();
+    vsRefrescarTodo();
+    vsAbrirModalCambio(expId);
+  }));
+}
+on(vsEl("vsCambiosTable"), "click", (e)=>{ const b = e.target.closest("[data-vsc-revisar]"); if(b) vsAbrirModalCambio(b.dataset.vscRevisar); });
+on(vsEl("vsPosiblesTable"), "click", async (e)=>{
+  const b = e.target.closest("[data-vs-posible]"); if(!b) return;
+  const [protoId, trabId] = b.dataset.vsPosible.split("|");
+  const t = (CACHE.trabajadores||[]).find(x=>x.id===trabId); if(!t) return;
+  if((CACHE.vsExpuestos||[]).some(x=>x.protocoloId===protoId && x.trabajadorId===trabId)) return;
+  await put("vsExpuestos", vsNuevoExpuesto(protoId, t));
+  await loadCache();
+  vsRefrescarTodo();
+});
+on(vsEl("vsMovTable"), "click", async (e)=>{
+  const b = e.target.closest("[data-vsc-del]"); if(!b) return;
+  const m = (CACHE.vsMovimientos||[]).find(x=>x.id===b.dataset.vscDel); if(!m) return;
+  if(!vsConfirmarEliminar(m.fecha, m.protocoloId, "¿Eliminar este registro del historial de cambios de puesto? Esta acción no se puede deshacer.")) return;
+  await deleteRecord("vsMovimientos", m.id);
+  await loadCache();
+  vsRefrescarTodo();
+});
+
+/* Conservación de registros: fechas de todos los registros de un protocolo (exámenes, evaluaciones, medidas, CDA y cambios de puesto). */
+function vsFechasRegistros(protoId){
+  return [].concat(
+    (CACHE.examenes||[]).filter(x=>x.protocoloId===protoId).map(x=>x.fecha||x.citacionFecha||""),
+    (CACHE.vsEvaluaciones||[]).filter(x=>x.protocoloId===protoId).map(x=>x.fechaInforme||""),
+    (CACHE.medidasControlVS||[]).filter(x=>x.protocoloId===protoId).map(x=>x.fechaAplicacion||x.plazo||""),
+    (CACHE.vsCda||[]).filter(x=>x.protocoloId===protoId).map(x=>x.fecha||""),
+    (CACHE.vsMovimientos||[]).filter(x=>x.protocoloId===protoId).map(x=>x.fecha||"")
+  ).filter(Boolean).sort();
+}
+function renderVsCons(){
+  const tbody = vsEl("vsConsTable");
+  if(tbody.contains(document.activeElement)) return;
+  tbody.innerHTML = vsProtocolosOrdenados().map(p=>{
+    const fechas = vsFechasRegistros(p.id);
+    const n = {ex:(CACHE.examenes||[]).filter(x=>x.protocoloId===p.id).length, ev:(CACHE.vsEvaluaciones||[]).filter(x=>x.protocoloId===p.id).length,
+      md:(CACHE.medidasControlVS||[]).filter(x=>x.protocoloId===p.id).length, cda:(CACHE.vsCda||[]).filter(x=>x.protocoloId===p.id).length,
+      mv:(CACHE.vsMovimientos||[]).filter(x=>x.protocoloId===p.id).length};
+    const anios = +p.conservacionAnios>0;
+    const dentro = anios ? fechas.filter(f=>{ const h = vsRetencionHasta(f, p); return h && daysUntil(h)>0; }).length : null;
+    const libre = anios && fechas.length ? vsRetencionHasta(fechas[fechas.length-1], p) : null;
+    return `<tr>
+      <td><strong>${incEsc(vsEtiqueta(p))}</strong></td>
+      <td><input type="number" min="1" max="100" data-cons-anios="${p.id}" value="${anios ? p.conservacionAnios : ""}" placeholder="Sin definir" style="max-width:110px;"></td>
+      <td>${n.ex} examen(es) · ${n.ev} evaluación(es) · ${n.md} medida(s) · ${n.cda} CDA · ${n.mv} cambio(s)</td>
+      <td>${fechas.length ? fmtDate(fechas[0]) : "—"}</td>
+      <td>${anios ? `${dentro} de ${fechas.length}` : '<span class="kv">Defina los años</span>'}</td>
+      <td>${libre ? fmtDate(libre) : "—"}</td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="6">Sin protocolos</td></tr>`;
+}
+on(vsEl("vsConsTable"), "change", async (e)=>{
+  const inp = e.target.closest("[data-cons-anios]"); if(!inp) return;
+  const p = (CACHE.protocolos||[]).find(x=>x.id===inp.dataset.consAnios); if(!p) return;
+  const raw = inp.value.trim(), n = parseInt(raw, 10);
+  if(raw && !(n>=1 && n<=100)){ alert("Los años de conservación deben ser un número entre 1 y 100, o quedar vacíos."); inp.value = +p.conservacionAnios>0 ? p.conservacionAnios : ""; return; }
+  p.conservacionAnios = raw ? n : null;
+  await put("protocolos", p);
+  await loadCache();
+  inp.blur();
+  renderVsCons();
+});
+
+/* Respaldo en Excel de todos los registros de vigilancia (con la fecha hasta la que conservarlos). */
+function vsConservarHasta(fecha, protoId){
+  const p = (CACHE.protocolos||[]).find(x=>x.id===protoId), h = vsRetencionHasta(fecha, p);
+  return h ? fmtDate(h) : "Sin plazo definido";
+}
+on(vsEl("fiscExcelBtn"), "click", ()=>{
+  if(typeof XLSX==="undefined"){ alert("No se pudo cargar el generador de Excel (revise su conexión a internet e intente de nuevo)."); return; }
+  const fp = vsEl("fiscProtocolo").value, ok = id => !fp || id===fp;
+  const tr = new Map((CACHE.trabajadores||[]).map(t=>[t.id,t]));
+  const nom = id => (tr.get(id)||{}).nombre || "(trabajador eliminado)", rut = id => (tr.get(id)||{}).rut || "";
+  const hojas = [
+    ["Nómina", ["Protocolo","RUT","Nombre","Cargo actual","Área actual","Puesto / GES","Situación","Expuesto desde","Fecha de término","IRL (fecha)","Cargo al incorporar","Área al incorporar"],
+      (CACHE.vsExpuestos||[]).filter(x=>ok(x.protocoloId)).map(x=>{ const t = tr.get(x.trabajadorId)||{}; return [protoName(x.protocoloId), rut(x.trabajadorId), nom(x.trabajadorId), t.cargo||"", areaName(t.areaId), x.puesto||"", VS_ESTADO_LABEL[x.estado||"activo"]||"", x.desde?fmtDate(x.desde):"", x.fechaTermino?fmtDate(x.fechaTermino):"", x.irlFecha?fmtDate(x.irlFecha):"", x.cargoBase||"", x.areaBase?areaName(x.areaBase):""]; })],
+    ["Exámenes", ["Protocolo","RUT","Nombre","Fecha citación","Fecha examen","Aptitud","Próxima citación","Plan de readecuación","Observaciones","Conservar hasta"],
+      (CACHE.examenes||[]).filter(x=>ok(x.protocoloId)).sort((a,b)=>String(b.fecha||"").localeCompare(String(a.fecha||""))).map(x=>[protoName(x.protocoloId), rut(x.trabajadorId), nom(x.trabajadorId), x.citacionFecha?fmtDate(x.citacionFecha):"", x.fecha?fmtDate(x.fecha):"", VS_APTITUD_LABEL[x.resultado]||x.resultado||"", x.proximaFecha?fmtDate(x.proximaFecha):"", x.readecuacion||"", x.obs||"", vsConservarHasta(x.fecha||x.citacionFecha, x.protocoloId)])],
+    ["Evaluaciones", ["Protocolo","Puesto / GES","Área","Fecha informe","Organismo","Nivel","Valor informado","Próxima evaluación","Caso","Fecha de cierre","Observaciones","Conservar hasta"],
+      (CACHE.vsEvaluaciones||[]).filter(x=>ok(x.protocoloId)).map(x=>[protoName(x.protocoloId), x.puesto||"", x.areaId?areaName(x.areaId):"", x.fechaInforme?fmtDate(x.fechaInforme):"", x.organismo||"", VS_NIVEL_LABEL[x.nivel]||"", x.valor||"", x.proximaFecha?fmtDate(x.proximaFecha):"", x.nivel==="verde"?"":(x.estadoCaso==="cerrado"?"Cerrado":"Abierto"), x.cierreFecha?fmtDate(x.cierreFecha):"", x.obs||"", vsConservarHasta(x.fechaInforme, x.protocoloId)])],
+    ["Medidas correctoras", ["Protocolo","Puesto / GES","Medida","Jerarquía","Responsable","Plazo","Estado","Fecha de aplicación","Evidencia","Conservar hasta"],
+      (CACHE.medidasControlVS||[]).filter(x=>ok(x.protocoloId)).map(x=>[protoName(x.protocoloId), x.puesto||"", x.descripcion||"", x.jerarquia?(x.jerarquia+") "+(JERARQUIA_LABEL[x.jerarquia]||"")):"", x.responsable||"", x.plazo?fmtDate(x.plazo):"", vsMedidaAtrasada(x)?"Atrasada":(VS_MEDIDA_ESTADO_LABEL[x.estado]||""), x.fechaAplicacion?fmtDate(x.fechaAplicacion):"", x.evidenciaData?"Sí":"No", vsConservarHasta(x.fechaAplicacion||x.plazo, x.protocoloId)])],
+    ["CDA", ["Protocolo","Fecha","Tipo","Integrantes","Acuerdos y observaciones","Próxima revisión","Documento","Conservar hasta"],
+      (CACHE.vsCda||[]).filter(x=>ok(x.protocoloId)).map(x=>[protoName(x.protocoloId), x.fecha?fmtDate(x.fecha):"", CDA_TIPO_LABEL[x.tipo]||"", x.integrantes||"", x.obs||"", x.proximaRevision?fmtDate(x.proximaRevision):"", x.archivoNombre||"", vsConservarHasta(x.fecha, x.protocoloId)])],
+    ["Cambios de puesto", ["Fecha","Protocolo","RUT","Nombre","Cargo anterior","Área anterior","Cargo nuevo","Área nueva","Decisión","Observaciones","Registrado por","Conservar hasta"],
+      (CACHE.vsMovimientos||[]).filter(x=>ok(x.protocoloId)).map(x=>[x.fecha?fmtDate(x.fecha):"", protoName(x.protocoloId), rut(x.trabajadorId), nom(x.trabajadorId), x.cargoAnterior||"", x.areaAnteriorId?areaName(x.areaAnteriorId):"", x.cargoNuevo||"", x.areaNuevaId?areaName(x.areaNuevaId):"", VS_DECISION_LABEL[x.decision]||"", x.obs||"", x.usuario||"", vsConservarHasta(x.fecha, x.protocoloId)])],
+  ];
+  if(hojas.every(h=>!h[2].length)){ alert("No hay registros de vigilancia para respaldar."); return; }
+  const wb = XLSX.utils.book_new();
+  hojas.forEach(([nombre, cab, filas])=>XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([cab, ...filas]), nombre));
+  const emp = (CACHE.empresa && CACHE.empresa.razonSocial) ? CACHE.empresa.razonSocial.replace(/[^a-zA-Z0-9]+/g,"_") : "Empresa";
+  XLSX.writeFile(wb, `Respaldo_vigilancia_${fp||"todos"}_${emp}_${new Date().toISOString().slice(0,10)}.xlsx`);
+});
+
+/* Informe PDF para fiscalización (un protocolo). Solo caracteres compatibles con las fuentes base de jsPDF. */
+function vsInformeFiscalizacionPdf(){
+  const protoId = vsEl("fiscProtocolo").value;
+  if(!protoId){ alert("Elija un protocolo para generar el informe PDF."); return; }
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const p = (CACHE.protocolos||[]).find(x=>x.id===protoId); if(!p) return;
+  const ctx = vsCtx(), r = vsResumen(protoId, ctx), hoyIso = new Date().toISOString().slice(0,10);
+  const corto = (t, n)=>{ t = String(t||"").replace(/\s+/g," ").trim(); return t.length>n ? t.slice(0,n-3).trim()+"..." : t; };
+  const pct = (a, b) => b ? Math.round(a/b*100)+"% ("+a+" de "+b+")" : "-";
+  const doc = new JsPDFClass();
+  let y = grdPdfEncabezado(doc, "Informe de vigilancia de la salud - "+p.nombre);
+  const nuevaPagina = (minimo) => { if(y > minimo){ doc.addPage(); y = 16; } };
+  const titulo = (txt) => { nuevaPagina(245); doc.setFontSize(12); doc.setTextColor(0); doc.text(txt, 14, y); y += 3; };
+  doc.setFontSize(9); doc.text(corto("Agente / factor: "+(p.agente||"-"), 110)+"   Periodicidad de examen: cada "+(p.periodicidadMeses||"-")+" meses (referencial)", 14, y-2); y += 4;
+  doc.autoTable({ startY:y, head:[["Resumen de control","Valor"]], body:[
+    ["Expuestos activos", r.activos],
+    ["Con IRL registrada", pct(r.conIrl, r.activos)],
+    ["Con examen vigente", pct(r.vigentes, r.activos)],
+    ["Examen por vencer", r.porVencer], ["Examen vencido", r.vencidos], ["Sin examen registrado", r.sinExamen],
+    ["Con restricciones y sin plan de readecuacion", r.faltaPlan],
+    ["Cambios de cargo/area por revisar", r.cambios],
+    ["Evaluaciones de puesto (vigentes / vencidas)", r.evalTotal+" / "+r.evalVencidas],
+    ["Casos rojos abiertos", r.casosRojos],
+    ["Medidas correctoras (total / atrasadas)", r.medidasTotal+" / "+r.medidasAtrasadas],
+    ["Registros de CDA", r.cda.length],
+    ["Anos de conservacion de registros definidos", +p.conservacionAnios>0 ? p.conservacionAnios : "sin definir"],
+  ], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]}, columnStyles:{1:{halign:"center"}} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  titulo(`Comite de Aplicacion (CDA) - ${r.cda.length} registro(s)`);
+  doc.autoTable({ startY:y, head:[["Fecha","Tipo","Integrantes","Acuerdos / observaciones","Proxima revision","Documento"]],
+    body: r.cda.length ? r.cda.map(c=>[fmtDate(c.fecha), CDA_TIPO_LABEL[c.tipo]||"-", corto(c.integrantes, 140)||"-", corto(c.obs, 140)||"-", c.proximaRevision?fmtDate(c.proximaRevision):"-", c.archivoNombre?"Si":"No"]) : [["","Sin registros de CDA para este protocolo.","","","",""]],
+    styles:{fontSize:7.5, cellPadding:1.6}, headStyles:{fillColor:[42,120,214]}, columnStyles:{0:{cellWidth:20}, 1:{cellWidth:28}, 4:{cellWidth:22}, 5:{cellWidth:18}} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  const evs = Array.from(ctx.evVig.values()).filter(ev=>ev.protocoloId===protoId).sort((a,b)=>String(a.puesto).localeCompare(String(b.puesto)));
+  titulo(`Evaluaciones ambientales por puesto (vigentes) - ${evs.length}`);
+  doc.autoTable({ startY:y, head:[["Puesto / GES","Informe","Nivel","Valor","Vigencia","Caso","Medidas"]],
+    body: evs.length ? evs.map(ev=>{
+      const st = vsEvalEstado(ev, p), meds = vsMedidasDe(ev.id);
+      return [corto(ev.puesto, 40), fmtDate(ev.fechaInforme)+"\n"+corto(ev.organismo, 24), VS_NIVEL_LABEL[ev.nivel]||"-", corto(ev.valor, 28)||"-",
+        VS_EVAL_VIG_LABEL[st.sem]+(st.vence?"\n"+fmtDate(st.vence):""), ev.nivel==="verde"?"-":(ev.estadoCaso==="cerrado"?"Cerrado":"ABIERTO"), meds.length?meds.filter(m=>m.estado==="aplicada").length+" de "+meds.length+" aplicadas":"-"];
+    }) : [["Sin evaluaciones registradas","","","","","",""]],
+    styles:{fontSize:7.5, cellPadding:1.6}, headStyles:{fillColor:[42,120,214]},
+    didParseCell:(d)=>{ if(d.section==="body" && d.column.index===2){ const v = String(d.cell.raw); if(v==="Rojo") d.cell.styles.textColor=[192,57,43]; else if(v==="Amarillo") d.cell.styles.textColor=[160,100,0]; } } });
+  y = doc.lastAutoTable.finalY + 8;
+
+  const meds = (CACHE.medidasControlVS||[]).filter(m=>m.protocoloId===protoId).sort((a,b)=>String(a.plazo||"9999").localeCompare(String(b.plazo||"9999")));
+  titulo(`Medidas correctoras - ${meds.length}`);
+  doc.autoTable({ startY:y, head:[["Puesto / GES","Medida","Responsable","Plazo","Estado","Evidencia"]],
+    body: meds.length ? meds.map(m=>[corto(m.puesto, 30), corto(m.descripcion, 150)+(m.jerarquia?"\n("+m.jerarquia+") "+(JERARQUIA_LABEL[m.jerarquia]||""):""), corto(m.responsable, 26)||"-", m.plazo?fmtDate(m.plazo):"-", vsMedidaAtrasada(m)?"ATRASADA":(VS_MEDIDA_ESTADO_LABEL[m.estado]||"-")+(m.fechaAplicacion?"\n"+fmtDate(m.fechaAplicacion):""), m.evidenciaData?"Si":"No"]) : [["Sin medidas correctoras registradas","","","","",""]],
+    styles:{fontSize:7.5, cellPadding:1.6}, headStyles:{fillColor:[42,120,214]}, columnStyles:{3:{cellWidth:20}, 4:{cellWidth:24}, 5:{cellWidth:16}},
+    didParseCell:(d)=>{ if(d.section==="body" && d.column.index===4 && String(d.cell.raw).startsWith("ATRASADA")) d.cell.styles.textColor=[192,57,43]; } });
+  y = doc.lastAutoTable.finalY + 8;
+
+  const filas = r.filas.slice().sort((a,b)=> ((a.activo?VS_SEM_ORDEN[a.sem]:9)-(b.activo?VS_SEM_ORDEN[b.sem]:9)) || String(a.t.nombre).localeCompare(String(b.t.nombre)));
+  titulo(`Nomina de expuestos - ${filas.length}`);
+  doc.autoTable({ startY:y, head:[["Trabajador","Cargo / puesto","IRL","Ultimo examen","Aptitud","Vence","Estado"]],
+    body: filas.length ? filas.map(f=>[
+      corto(f.t.nombre, 34)+"\n"+(f.t.rut||"sin RUT"), corto(f.t.cargo, 26)+(f.e.puesto?"\n"+corto(f.e.puesto, 26):""), f.irlFecha?fmtDate(f.irlFecha):"SIN IRL",
+      f.examen?fmtDate(f.examen.fecha):"-", f.examen&&f.examen.resultado?(VS_APTITUD_LABEL[f.examen.resultado]||"-")+(f.faltaPlan?"\n(sin plan)":""):"-",
+      f.vence?fmtDate(f.vence):"-", f.activo?VS_SEM_LABEL[f.sem]+(f.cambio?"\nCambio de puesto":""):(VS_ESTADO_LABEL[f.e.estado]||"Inactivo")]) : [["Sin trabajadores en la nomina","","","","","",""]],
+    styles:{fontSize:7, cellPadding:1.4}, headStyles:{fillColor:[42,120,214]}, columnStyles:{2:{cellWidth:18}, 3:{cellWidth:18}, 5:{cellWidth:18}, 6:{cellWidth:26}},
+    didParseCell:(d)=>{ if(d.section==="body" && (d.column.index===6 || d.column.index===2)){ const v = String(d.cell.raw); if(v.startsWith("Vencido")||v.startsWith("Sin examen")||v==="SIN IRL") d.cell.styles.textColor=[192,57,43]; } } });
+  y = doc.lastAutoTable.finalY + 8;
+
+  const movs = (CACHE.vsMovimientos||[]).filter(m=>m.protocoloId===protoId).sort((a,b)=>String(b.fecha||"").localeCompare(String(a.fecha||"")));
+  if(movs.length){
+    titulo(`Cambios de puesto registrados - ${movs.length}`);
+    doc.autoTable({ startY:y, head:[["Fecha","Trabajador","Antes","Ahora","Decision"]],
+      body: movs.map(m=>[fmtDate(m.fecha), corto(trabName(m.trabajadorId), 32), corto(m.cargoAnterior, 24)+"\n"+areaName(m.areaAnteriorId), corto(m.cargoNuevo, 24)+"\n"+areaName(m.areaNuevaId), VS_DECISION_LABEL[m.decision]||"-"]),
+      styles:{fontSize:7.5, cellPadding:1.6}, headStyles:{fillColor:[42,120,214]}, columnStyles:{0:{cellWidth:20}} });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+  nuevaPagina(262);
+  doc.setFontSize(8);
+  escribirTextoPaginado(doc, "Este informe refleja los registros cargados en Pehuen por la empresa a la fecha de emision y no reemplaza los documentos de respaldo ni los informes de la mutualidad. Contiene la aptitud de personas: trate el documento con reserva. No se registran diagnosticos.", 14, y, {maxWidth:182, lineHeight:4});
+  agregarPiePaginasPdf(doc, "Vigilancia de la salud - "+p.nombre);
+  doc.save(`Informe_vigilancia_${p.id}_${((CACHE.empresa&&CACHE.empresa.razonSocial)||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}_${hoyIso}.pdf`);
+}
+on(vsEl("fiscPdfBtn"), "click", vsInformeFiscalizacionPdf);
 
 /* --- Comité de Aplicación (CDA) por protocolo --- */
 let cdaEditingId = null;
@@ -16308,7 +16683,7 @@ on(vsEl("vsCdaTable"), "click", async (e)=>{
   if(del){
     const c = (CACHE.vsCda||[]).find(x=>x.id===del.dataset.cdaDel); if(!c) return;
     const usadoEn = (CACHE.vsEvaluaciones||[]).filter(ev=>ev.cierreCdaId===c.id).length;
-    if(!confirm(`¿Eliminar el registro de CDA del ${fmtDate(c.fecha)} (${protoName(c.protocoloId)})? Esta acción no se puede deshacer.${usadoEn?` Respalda el cierre de ${usadoEn} caso(s) de evaluación, que quedarán sin acta de CDA.`:""}`)) return;
+    if(!vsConfirmarEliminar(c.fecha, c.protocoloId, `¿Eliminar el registro de CDA del ${fmtDate(c.fecha)} (${protoName(c.protocoloId)})? Esta acción no se puede deshacer.${usadoEn?` Respalda el cierre de ${usadoEn} caso(s) de evaluación, que quedarán sin acta de CDA.`:""}`)) return;
     await deleteRecord("vsCda", c.id);
     await loadCache();
     if(cdaEditingId===c.id) resetCdaForm();
@@ -16325,23 +16700,30 @@ function renderVigilancia(){
   vsFillSelectsEtapa2();
   renderVsEval();
   renderVsMedidas();
+  renderVsCambios();
+  renderVsCons();
   renderVsCda();
   vsActualizarInsignias();
   subpestanasAplicar("vigilancia");
-  vsAsegurarProtocolos().then(cambio=>{ if(cambio) renderVigilancia(); });
+  vsAsegurarProtocolos().then(a=>vsAsegurarLineaBase().then(b=>{ if(a||b) renderVigilancia(); }));
 }
 subpestanasCrear("vigilancia", [
   {key:"tablero", icono:"grafico", label:"Tablero y alertas", desc:"Qué vence y quién no tiene examen o IRL", hdrs:["hdrVsTablero"],
     badge:()=>{ const g = vsGlobal(), n = vsAlertasTotal(g); return n ? {texto:`${n} alerta${n===1?"":"s"}`, nivel:"r"} : (g.porVencer ? {texto:`${g.porVencer} por vencer`, nivel:"y"} : null); }},
-  {key:"nomina", icono:"personas", label:"Nómina y control", desc:"Expuestos por protocolo: IRL, examen, aptitud y vencimiento", hdrs:["hdrVsNomina"]},
+  {key:"nomina", icono:"personas", label:"Nómina y control", desc:"Expuestos por protocolo: IRL, examen, aptitud, vencimiento y cambios de puesto", hdrs:["hdrVsNomina","hdrVsCambios"],
+    badge:()=>{ const g = vsGlobal(); return g.cambios ? {texto:`${g.cambios} cambio${g.cambios===1?"":"s"} de puesto`, nivel:"y"} : null; }},
   {key:"evaluacion", icono:"buscar", label:"Evaluación y medidas", desc:"Evaluación ambiental por puesto, medidas correctoras y cierre de casos", hdrs:["hdrVsEval","hdrVsMedidas"],
     badge:()=>{ const g = vsGlobal(), n = g.evalVencidas+g.casosRojos+g.medidasAtrasadas; return n ? {texto:`${n} por atender`, nivel:"r"} : null; }},
   {key:"cda", icono:"documento", label:"CDA por protocolo", desc:"Comité de Aplicación de cada protocolo y sus actas", hdrs:["hdrVsCda"],
     badge:()=>{ const g = vsGlobal(); return g.sinCda ? {texto:`${g.sinCda} sin CDA`, nivel:"y"} : null; }},
+  {key:"fiscal", icono:"datos", label:"Conservación y fiscalización", desc:"Años de conservación, informe PDF por protocolo y respaldo en Excel", hdrs:["hdrVsCons","hdrVsFiscal"]},
   {key:"protocolos", icono:"lista", label:"Protocolos y matriz", desc:"Qué protocolos aplican según la matriz y su matriz por protocolo", hdrs:["hdrProtocolosAplicablesSegunLaMatrizDeRiesgos","hdrMatrizDeRiesgosPorProtocolo"]},
 ], "tarjetas");
 setupCollapsible("hdrVsTablero", "bodyVsTablero", "toggleVsTablero", "collapsed_vsTablero");
 setupCollapsible("hdrVsNomina", "bodyVsNomina", "toggleVsNomina", "collapsed_vsNomina");
+setupCollapsible("hdrVsCambios", "bodyVsCambios", "toggleVsCambios", "collapsed_vsCambios");
+setupCollapsible("hdrVsCons", "bodyVsCons", "toggleVsCons", "collapsed_vsCons");
+setupCollapsible("hdrVsFiscal", "bodyVsFiscal", "toggleVsFiscal", "collapsed_vsFiscal");
 setupCollapsible("hdrVsEval", "bodyVsEval", "toggleVsEval", "collapsed_vsEval");
 setupCollapsible("hdrVsMedidas", "bodyVsMedidas", "toggleVsMedidas", "collapsed_vsMedidas");
 setupCollapsible("hdrVsCda", "bodyVsCda", "toggleVsCda", "collapsed_vsCda");
