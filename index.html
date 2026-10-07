@@ -537,6 +537,28 @@
         <div><button class="btn small secondary" id="addDiagHallazgoBtn" style="margin-top:20px;">+ Agregar hallazgo</button></div>
       </div>
       <div id="diagHallazgosWrap"></div>
+
+      <h3 style="margin:22px 0 6px;font-size:15px;">Historial de accidentes de la empresa (información general)</h3>
+      <div class="desc" style="margin-top:0;">No es un registro de accidentes: anote solo la información relevante que entregue la empresa (cuántos accidentes y cuánto tiempo perdido por año, y por qué focos o causas). Se guarda con este diagnóstico y se puede editar cuando quiera. Con eso se calculan los focos críticos y el nivel de riesgo.</div>
+      <label>Por año</label>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th style="width:90px;">Año</th><th>N° de trabajadores (promedio)</th><th>Horas-hombre (opcional)</th><th>Accidentes con tiempo perdido</th><th>Días perdidos</th><th>Fatales</th><th></th></tr></thead>
+        <tbody id="diagHistAniosTable"></tbody>
+      </table></div>
+      <button class="btn small secondary" id="diagHistAnioAddBtn" type="button" style="margin-top:6px;">+ Agregar año</button>
+      <label style="margin-top:14px;">Por foco o causa (total del período)</label>
+      <datalist id="diagFocosOptions"></datalist>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Foco o causa (ej: caídas, golpes, sobreesfuerzo, tránsito)</th><th style="width:140px;">Accidentes</th><th style="width:140px;">Días perdidos</th><th></th></tr></thead>
+        <tbody id="diagHistFocosTable"></tbody>
+      </table></div>
+      <button class="btn small secondary" id="diagHistFocoAddBtn" type="button" style="margin-top:6px;">+ Agregar foco</button>
+      <div class="kv" id="diagHistAviso" style="margin-top:6px;"></div>
+
+      <h3 style="margin:22px 0 6px;font-size:15px;">Rubro de la empresa según DS 110</h3>
+      <div class="form-grid"><div style="grid-column:1/-1;"><label>Actividad (elija la principal o la de mayor cotización)</label><select id="diagRubroDs110"></select></div></div>
+      <div id="diagAnalisisWrap" style="margin-top:14px;"></div>
+
       <div class="form-grid" style="margin-top:10px;">
         <div style="grid-column:1/-1;"><label>Observaciones generales</label><textarea id="diagObservaciones" rows="3"></textarea></div>
         <div style="grid-column:1/-1;"><label>Recomendaciones / próximos pasos</label><textarea id="diagRecomendaciones" rows="3"></textarea></div>
@@ -554,7 +576,7 @@
       <div class="desc">Consolidado de todas las empresas diagnosticadas, sean prospectos o tu propia empresa, con el estado de si contrataron el servicio.</div>
       <div class="grid-tiles" id="diagResumenTiles"></div>
       <table>
-        <thead><tr><th>Fecha</th><th>Empresa/cliente</th><th>Responsable</th><th>Hallazgos</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Empresa/cliente</th><th>Responsable</th><th>Trabajadores</th><th>Nivel de riesgo</th><th>Hallazgos</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody id="diagnosticoTable"></tbody>
       </table>
       </div>
@@ -6521,6 +6543,7 @@ document.getElementById("diagChecklistTable").addEventListener("change",(e)=>{
     const numero = sel.dataset.diagCheckEstado;
     diagChecklistEstado[numero] = diagChecklistEstado[numero] || {estado:"",observacion:""};
     diagChecklistEstado[numero].estado = sel.value;
+    renderDiagAnalisis();
   }
 });
 document.getElementById("diagChecklistTable").addEventListener("input",(e)=>{
@@ -6567,6 +6590,7 @@ function renderDiagnosticoAsistente(){
     ${esProspecto ? `<div class="empty" style="margin-bottom:6px;">Esto refleja la Matriz de riesgos de tu propia cuenta, no la del prospecto (todavía no existe) -- se completará de verdad cuando el prospecto se convierta en cliente y cargues su matriz.</div>` : ""}
     ${protocolos.length ? `<ul style="margin:6px 0 0;padding-left:18px;">${protocolos.map(p=>`<li>${p.nombre}</li>`).join("")}</ul>` : `<div class="empty">Aún no hay líneas en la Matriz de riesgos que activen algún protocolo -- esta lista se va a ir completando a medida que la cargues.</div>`}
   `;
+  renderDiagAnalisis(); // el tamaño de la empresa cambia el resumen y el tramo
 }
 on(document.getElementById("diagNombreEmpresa"), "input", renderDiagnosticoAsistente);
 on(document.getElementById("diagNumTrabajadores"), "input", renderDiagnosticoAsistente);
@@ -6586,6 +6610,182 @@ function renderDiagIndicadores(){
     tile("Tasa de siniestralidad total (DS 67)", ds67 ? ds67.tasaSiniestralidadTotal.toFixed(2) : "—", ds67 ? ("evaluación "+ds67.anioEvaluacion) : "sin evaluación DS 67 registrada"),
   ].join("");
 }
+
+/* =========================================================
+   DIAGNÓSTICO: historial de accidentes (información general), focos
+   críticos y nivel de riesgo de la empresa, para dimensionar el servicio.
+   Datos de referencia (verificar vigencia antes de usarlos en una propuesta):
+   - DS 110 (1968): cotización adicional diferenciada por actividad (0 - 0,85 -
+     1,70 - 2,55 - 3,40 %). Texto publicado el 29-05-1968 (copia en sigweb.cl).
+   - DS 67 (1999), art. 5, con la modificación del Dto 34/2001: tabla de la
+     tasa de siniestralidad total y su cotización adicional.
+   El nivel global es el MÁS ALTO entre el del rubro (DS 110) y el de la
+   siniestralidad histórica, ambos llevados a la misma escala de porcentajes.
+   No calcula ni sugiere precios.
+   ========================================================= */
+const DS110_ACTIVIDADES = [
+  {id:"d0", nombre:"División 0 — Agricultura, caza, silvicultura y pesca", pct:1.70},
+  {id:"d0-aserraderos", sub:true, nombre:"Aserraderos", pct:2.55}, {id:"d0-tala", sub:true, nombre:"Tala y corta de árboles", pct:2.55}, {id:"d0-pesca", sub:true, nombre:"Empresas de pesca", pct:2.55},
+  {id:"d1", nombre:"División 1 — Explotación de minas y canteras", pct:3.40},
+  {id:"d23", nombre:"Divisiones 2-3 — Industrias manufactureras", pct:1.70},
+  {id:"d23-conservas", sub:true, nombre:"Fábricas de conservas", pct:2.55}, {id:"d23-aceite", sub:true, nombre:"Fábricas o refinerías de aceite", pct:2.55},
+  {id:"d23-vinos", sub:true, nombre:"Elaboración de vinos y chichas", pct:2.55}, {id:"d23-madera", sub:true, nombre:"Fábricas de muebles, puertas, ventanas, cajones, envases y otros productos de la madera", pct:2.55},
+  {id:"d23-barracas", sub:true, nombre:"Barracas", pct:2.55}, {id:"d23-maquinarias", sub:true, nombre:"Fabricación, instalación y reparación de maquinarias", pct:2.55},
+  {id:"d23-garaje", sub:true, nombre:"Garaje de reparación de vehículos", pct:2.55}, {id:"d23-maestranza", sub:true, nombre:"Talleres de maestranza y mecánica", pct:2.55},
+  {id:"d23-pernos", sub:true, nombre:"Fábricas de pernos, tornillos, tuercas, clavos y otros productos metálicos", pct:2.55}, {id:"d23-mueblesmet", sub:true, nombre:"Fábricas de muebles metálicos y cromados, y otros de industrias metálicas", pct:2.55},
+  {id:"d23-cerrajerias", sub:true, nombre:"Cerrajerías en general", pct:2.55}, {id:"d23-carrocerias", sub:true, nombre:"Carrocerías en general", pct:2.55},
+  {id:"d23-fundicion", sub:true, nombre:"Fundición y refinación de metales", pct:3.40}, {id:"d23-calderer", sub:true, nombre:"Caldererías en general", pct:3.40}, {id:"d23-astilleros", sub:true, nombre:"Astilleros", pct:3.40},
+  {id:"d23-cemento", sub:true, nombre:"Fábricas de cemento y cal, con canteras", pct:3.40}, {id:"d23-vidrios", sub:true, nombre:"Fábricas de vidrios, espejos, botellas, tubos, envases y otros productos de vidrio", pct:3.40},
+  {id:"d23-explosivos", sub:true, nombre:"Fábricas y depósitos de explosivos, pólvora, municiones, fulminantes, guías para minas y fuegos artificiales", pct:3.40},
+  {id:"d4", nombre:"División 4 — Construcción", pct:2.55},
+  {id:"d4-gasfiteria", sub:true, nombre:"Gasfitería y hojalatería, interior y exterior en edificios de cualquier número de pisos", pct:3.40}, {id:"d4-demolicion", sub:true, nombre:"Demolición de construcciones", pct:3.40},
+  {id:"d5", nombre:"División 5 — Electricidad, gas, agua y servicios sanitarios", pct:1.70},
+  {id:"d6", nombre:"División 6 — Comercio", pct:0.00}, {id:"d6-bencina", sub:true, nombre:"Bombas de bencina, parafina y otros productos combustibles", pct:2.55},
+  {id:"d7", nombre:"División 7 — Transportes, almacenaje y comunicaciones", pct:2.55},
+  {id:"d7-buques", sub:true, nombre:"Carga y descarga de buques", pct:3.40}, {id:"d7-frigorificos", sub:true, nombre:"Frigoríficos", pct:3.40},
+  {id:"d8", nombre:"División 8 — Servicios", pct:0.00},
+  {id:"d8-lavanderias", sub:true, nombre:"Lavanderías y tintorerías", pct:0.85}, {id:"d8-fumigacion", sub:true, nombre:"Empresas de fumigación aérea", pct:3.40},
+];
+const DS67_TABLA_SINIESTRALIDAD = [
+  [32,0.00],[64,0.34],[96,0.68],[128,1.02],[160,1.36],[192,1.70],[224,2.04],[272,2.38],[320,2.72],[368,3.06],[416,3.40],
+  [464,3.74],[512,4.08],[560,4.42],[630,4.76],[700,5.10],[770,5.44],[840,5.78],[910,6.12],[980,6.46],[Infinity,6.80],
+];
+const DIAG_NIVEL_EMP_LABEL = ["", "Bajo", "Medio-bajo", "Medio", "Alto", "Muy alto"];
+const DIAG_NIVEL_EMP_PILL = ["", "bajo", "bajo", "medio", "alto", "critico"];
+function ds67PctDeTasa(tasa){
+  const t = Math.max(0, Math.round(tasa));
+  for(const [tope, pct] of DS67_TABLA_SINIESTRALIDAD){ if(t <= tope) return pct; }
+  return 6.80;
+}
+/* Lleva un % de cotización adicional a la escala de 5 niveles del DS 110 (0 / 0,85 / 1,70 / 2,55 / 3,40). */
+function diagNivelDePct(pct){ return [0.85,1.70,2.55,3.40].filter(u=>pct >= u-1e-9).length + 1; }
+function diagTramoTamano(n){
+  if(!(n>0)) return "Sin dato de trabajadores";
+  if(n < 10) return "Menos de 10 trabajadores";
+  if(n <= 25) return "10 a 25 trabajadores (Delegado de SST)";
+  if(n <= 100) return "26 a 100 trabajadores (Comité Paritario)";
+  return "Más de 100 trabajadores (Comité Paritario y Departamento de Prevención)";
+}
+function diagAnalisisCalcular({anios, focos, rubroId, n, checklist}){
+  const nFallback = +n || 0;
+  const filas = (anios||[]).filter(a=>a && (a.anio||a.accidentes||a.diasPerdidos)).map(a=>{
+    const tr = +a.trabajadores || nFallback, acc = +a.accidentes || 0, dias = +a.diasPerdidos || 0, hh = +a.hh || 0, fat = +a.fatales || 0;
+    return {anio:+a.anio||0, tr, acc, dias, hh, fat, idx: tr ? acc/tr*100 : null, sin: tr ? dias/tr*100 : null, tf: hh ? acc*1e6/hh : null, tg: hh ? dias*1e6/hh : null};
+  }).sort((a,b)=>a.anio-b.anio);
+  const prom = (k)=>{ const v = filas.map(f=>f[k]).filter(x=>x!==null); return v.length ? v.reduce((s,x)=>s+x,0)/v.length : null; };
+  const conHH = filas.filter(f=>f.hh>0);
+  const sumHH = conHH.reduce((s,f)=>s+f.hh,0);
+  const tot = {acc:filas.reduce((s,f)=>s+f.acc,0), dias:filas.reduce((s,f)=>s+f.dias,0), fat:filas.reduce((s,f)=>s+f.fat,0)};
+  const hist = {filas, idxProm:prom("idx"), sinProm:prom("sin"),
+    tf: sumHH ? conHH.reduce((s,f)=>s+f.acc,0)*1e6/sumHH : null, tg: sumHH ? conHH.reduce((s,f)=>s+f.dias,0)*1e6/sumHH : null, tot};
+  // Focos: se agrupan por nombre (sin tildes ni mayúsculas), ordenados por días perdidos y luego por accidentes.
+  const mapa = new Map();
+  (focos||[]).forEach(f=>{
+    const nombre = String(f.foco||"").trim(); if(!nombre) return;
+    const k = matrizNorm(nombre); if(!mapa.has(k)) mapa.set(k, {foco:nombre, acc:0, dias:0});
+    const g = mapa.get(k); g.acc += +f.accidentes||0; g.dias += +f.diasPerdidos||0;
+  });
+  const todos = Array.from(mapa.values()).sort((a,b)=>(b.dias-a.dias)||(b.acc-a.acc)||a.foco.localeCompare(b.foco));
+  const totDias = todos.reduce((s,f)=>s+f.dias,0), totAcc = todos.reduce((s,f)=>s+f.acc,0);
+  let acumDias = 0;
+  const top = todos.slice(0,6).map(f=>{ acumDias += f.dias; return {...f, pctDias: totDias ? f.dias/totDias*100 : 0, acumDias: totDias ? acumDias/totDias*100 : 0}; });
+  const resto = todos.slice(6);
+  const focosRes = {top, otros:{n:resto.length, acc:resto.reduce((s,f)=>s+f.acc,0), dias:resto.reduce((s,f)=>s+f.dias,0)}, totDias, totAcc, nFocos:todos.length};
+  const act = DS110_ACTIVIDADES.find(a=>a.id===rubroId) || null;
+  const pctRubro = act ? act.pct : null;
+  const nivelRubro = pctRubro!==null ? diagNivelDePct(pctRubro) : null;
+  const pctDs67 = hist.sinProm!==null ? ds67PctDeTasa(hist.sinProm) : null;
+  const nivelSin = pctDs67!==null ? diagNivelDePct(Math.min(pctDs67, 3.40)) : null;
+  const niveles = [nivelRubro, nivelSin].filter(x=>x!==null);
+  const nivelGlobal = niveles.length ? Math.max(...niveles) : null;
+  const cl = Object.values(checklist||{}).filter(c=>c && (c.estado==="cumple" || c.estado==="no_cumple"));
+  const chequeo = {evaluados:cl.length, cumplen:cl.filter(c=>c.estado==="cumple").length};
+  return {hist, focos:focosRes, act, pctRubro, nivelRubro, pctDs67, nivelSin, nivelGlobal, n:nFallback, tramo:diagTramoTamano(nFallback), chequeo};
+}
+const diagFmtNum = (v, d=1) => v===null || v===undefined ? "—" : (Math.round(v*Math.pow(10,d))/Math.pow(10,d)).toLocaleString("es-CL");
+let diagHistAnios = [], diagHistFocos = [];
+function diagRubroOptionsHtml(sel){
+  return '<option value="">Sin definir</option>' + DS110_ACTIVIDADES.map(a=>`<option value="${a.id}"${sel===a.id?" selected":""}>${a.sub?"   ↳ ":""}${incEsc(a.nombre)} — ${a.pct.toFixed(2).replace(".",",")} %</option>`).join("");
+}
+function drawDiagHist(){
+  const num = (v)=>v===undefined||v===null?"":v;
+  document.getElementById("diagHistAniosTable").innerHTML = diagHistAnios.length ? diagHistAnios.map((a,i)=>`<tr>
+    <td><input type="number" min="1990" max="2100" data-dh-anio="${i}|anio" value="${num(a.anio)}"></td>
+    <td><input type="number" min="0" data-dh-anio="${i}|trabajadores" value="${num(a.trabajadores)}"></td>
+    <td><input type="number" min="0" data-dh-anio="${i}|hh" value="${num(a.hh)}"></td>
+    <td><input type="number" min="0" data-dh-anio="${i}|accidentes" value="${num(a.accidentes)}"></td>
+    <td><input type="number" min="0" data-dh-anio="${i}|diasPerdidos" value="${num(a.diasPerdidos)}"></td>
+    <td><input type="number" min="0" data-dh-anio="${i}|fatales" value="${num(a.fatales)}"></td>
+    <td><button class="subtle-btn" type="button" data-dh-anio-quitar="${i}">Quitar</button></td></tr>`).join("")
+    : `<tr><td class="empty" colspan="7">Sin años agregados</td></tr>`;
+  document.getElementById("diagHistFocosTable").innerHTML = diagHistFocos.length ? diagHistFocos.map((f,i)=>`<tr>
+    <td><input list="diagFocosOptions" data-dh-foco="${i}|foco" value="${incEsc(f.foco||"")}" placeholder="Ej: caídas al mismo nivel"></td>
+    <td><input type="number" min="0" data-dh-foco="${i}|accidentes" value="${num(f.accidentes)}"></td>
+    <td><input type="number" min="0" data-dh-foco="${i}|diasPerdidos" value="${num(f.diasPerdidos)}"></td>
+    <td><button class="subtle-btn" type="button" data-dh-foco-quitar="${i}">Quitar</button></td></tr>`).join("")
+    : `<tr><td class="empty" colspan="4">Sin focos agregados</td></tr>`;
+  const sel = document.getElementById("diagRubroDs110"); const cur = sel.value;
+  sel.innerHTML = diagRubroOptionsHtml(cur); sel.value = cur;
+  fillDatalist(document.getElementById("diagFocosOptions"), Array.from(new Set([].concat(getCatalog("focoCritico")||[], Object.values(ACC_TIPO_LABEL), ["Caídas al mismo nivel","Caídas de altura","Golpes o atrapamientos","Sobreesfuerzo","Accidentes de tránsito","Cortes","Contacto eléctrico"]))));
+}
+function diagLeerHistorial(){ return {anios: diagHistAnios, focos: diagHistFocos}; }
+function renderDiagAnalisis(){
+  const wrap = document.getElementById("diagAnalisisWrap"); if(!wrap) return;
+  const r = diagAnalisisCalcular({anios:diagHistAnios, focos:diagHistFocos, rubroId:document.getElementById("diagRubroDs110").value, n:diagNumTrabajadoresActivo(), checklist:diagChecklistEstado});
+  const aviso = document.getElementById("diagHistAviso");
+  if(aviso){
+    const sumaFocos = r.focos.totAcc, sumaAnios = r.hist.tot.acc;
+    aviso.innerHTML = (r.focos.nFocos && r.hist.filas.length && (sumaFocos!==sumaAnios || r.focos.totDias!==r.hist.tot.dias))
+      ? `<span style="color:#8a5a00;">Los focos suman ${sumaFocos} accidente(s) y ${r.focos.totDias} día(s); los años suman ${sumaAnios} accidente(s) y ${r.hist.tot.dias} día(s). Revise si es lo esperado.</span>` : "";
+  }
+  // Focos críticos
+  let focosHtml;
+  if(!r.focos.nFocos) focosHtml = `<div class="empty">Agregue focos o causas en el historial de arriba para ver los focos críticos.</div>`;
+  else {
+    const maxDias = Math.max(1, ...r.focos.top.map(f=>f.dias));
+    focosHtml = r.focos.top.map((f,i)=>`<div style="margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>${i+1}. ${incEsc(f.foco)}</strong><span class="kv">${f.dias} día(s) perdidos · ${f.acc} accidente(s) · ${diagFmtNum(f.pctDias,0)} % del total (acumulado ${diagFmtNum(f.acumDias,0)} %)</span></div>
+      <div style="background:#eef0f3;border-radius:6px;height:12px;"><div style="width:${Math.max(2,f.dias/maxDias*100)}%;height:12px;border-radius:6px;background:${i<3?"#c0392b":"#e8a33c"};"></div></div></div>`).join("")
+      + (r.focos.otros.n ? `<div class="kv">Otros ${r.focos.otros.n} foco(s): ${r.focos.otros.dias} día(s) perdidos y ${r.focos.otros.acc} accidente(s).</div>` : "")
+      + (r.focos.totDias ? `<div class="kv" style="margin-top:4px;"><strong>Los ${Math.min(3, r.focos.top.length)} primeros focos concentran el ${diagFmtNum(r.focos.top.slice(0,3).reduce((s,f)=>s+f.dias,0)/r.focos.totDias*100,0)} % de los días perdidos.</strong></div>` : `<div class="kv">Sin días perdidos informados: los focos se ordenan por número de accidentes.</div>`);
+  }
+  // Tasas por año
+  const tasasHtml = r.hist.filas.length ? `<div style="overflow-x:auto;"><table><thead><tr><th>Año</th><th>Trabajadores</th><th>Accidentes</th><th>Días perdidos</th><th>Fatales</th><th>Índice de accidentabilidad (%)</th><th>Tasa de siniestralidad (días x 100 trab.)</th><th>Tasa de frecuencia</th><th>Tasa de gravedad</th></tr></thead><tbody>${r.hist.filas.map(f=>`<tr><td>${f.anio||"—"}</td><td>${f.tr||"—"}</td><td>${f.acc}</td><td>${f.dias}</td><td>${f.fat}</td><td>${diagFmtNum(f.idx,2)}</td><td>${diagFmtNum(f.sin,1)}</td><td>${diagFmtNum(f.tf,1)}</td><td>${diagFmtNum(f.tg,1)}</td></tr>`).join("")}<tr style="font-weight:700;"><td>Promedio / total</td><td></td><td>${r.hist.tot.acc}</td><td>${r.hist.tot.dias}</td><td>${r.hist.tot.fat}</td><td>${diagFmtNum(r.hist.idxProm,2)}</td><td>${diagFmtNum(r.hist.sinProm,1)}</td><td>${diagFmtNum(r.hist.tf,1)}</td><td>${diagFmtNum(r.hist.tg,1)}</td></tr></tbody></table></div>` : `<div class="empty">Agregue al menos un año con trabajadores, accidentes y días perdidos para calcular las tasas.</div>`;
+  const niv = (n)=> n ? `<span class="pill ${DIAG_NIVEL_EMP_PILL[n]}">${DIAG_NIVEL_EMP_LABEL[n]}</span>` : '<span class="kv">Sin datos</span>';
+  const tilesHtml = [
+    tile("Riesgo por rubro (DS 110)", r.nivelRubro ? DIAG_NIVEL_EMP_LABEL[r.nivelRubro] : "—", r.act ? `${r.act.nombre.replace(/^División[es]* [0-9-]+ — /,"")}: ${r.pctRubro.toFixed(2).replace(".",",")} %` : "elija la actividad arriba"),
+    tile("Riesgo por siniestralidad histórica", r.nivelSin ? DIAG_NIVEL_EMP_LABEL[r.nivelSin] : "—", r.pctDs67!==null ? `tasa ${diagFmtNum(r.hist.sinProm,1)} → tabla DS 67: ${r.pctDs67.toFixed(2).replace(".",",")} %` : "faltan años con trabajadores"),
+    tile("Nivel de riesgo global", r.nivelGlobal ? DIAG_NIVEL_EMP_LABEL[r.nivelGlobal] : "—", "el más alto de los dos"),
+    tile("Tamaño de la empresa", r.n || "—", r.tramo),
+  ].join("");
+  const fatalAviso = r.hist.tot.fat>0 ? `<div class="kv" style="margin:8px 0;padding:8px 10px;background:#fbdada;border:1px solid #d03b3b;border-radius:6px;color:#8f1f1f;"><strong>Atención:</strong> el historial informa ${r.hist.tot.fat} accidente(s) fatal(es). Considérelo al evaluar el riesgo de la empresa, aunque el cálculo solo use días perdidos.</div>` : "";
+  const resumenHtml = `<div style="border:1px solid var(--grid);border-radius:10px;padding:10px 14px;margin-top:10px;"><strong>Resumen para dimensionar el servicio</strong>
+    <ul style="margin:6px 0 0;padding-left:18px;">
+      <li>Trabajadores: ${r.n || "sin dato"} — ${r.tramo}.</li>
+      <li>Nivel de riesgo: ${niv(r.nivelGlobal)} (rubro: ${r.nivelRubro?DIAG_NIVEL_EMP_LABEL[r.nivelRubro]:"sin dato"}; siniestralidad: ${r.nivelSin?DIAG_NIVEL_EMP_LABEL[r.nivelSin]:"sin dato"}).</li>
+      <li>Focos críticos: ${r.focos.top.length ? r.focos.top.map(f=>incEsc(f.foco)).join(", ") : "sin focos cargados"}.</li>
+      <li>Lista de chequeo: ${r.chequeo.evaluados ? `${r.chequeo.cumplen} de ${r.chequeo.evaluados} ítems evaluados cumplen` : "todavía sin evaluar"}; hallazgos anotados: ${diagHallazgos.length}.</li>
+    </ul></div>`;
+  wrap.innerHTML = `
+    <h3 style="margin:0 0 6px;font-size:15px;">Focos críticos (máximo 6)</h3>${focosHtml}
+    <h3 style="margin:16px 0 6px;font-size:15px;">Accidentabilidad histórica</h3>${tasasHtml}
+    <h3 style="margin:16px 0 6px;font-size:15px;">Nivel de riesgo de la empresa</h3>
+    <div class="grid-tiles">${tilesHtml}</div>${fatalAviso}${resumenHtml}
+    <div class="kv" style="margin-top:8px;">Cómo se calcula: el rubro usa la cotización adicional por actividad del DS 110 (0 – 0,85 – 1,70 – 2,55 – 3,40 %); la siniestralidad usa los días perdidos por 100 trabajadores (promedio de los años cargados, redondeado) ubicados en la tabla del DS 67 art. 5, llevados a esa misma escala (tope 3,40 %), sin considerar días de cargo por invalidez o muerte. El nivel global es el más alto de los dos. Fuentes: DS 110 de 1968 (copia en sigweb.cl) y DS 67 de 1999 con Dto 34/2001. Verifique que sigan vigentes antes de usarlo en una propuesta.</div>`;
+}
+on(document.getElementById("diagHistAnioAddBtn"), "click", ()=>{ diagHistAnios.push({anio:new Date().getFullYear()-1, trabajadores:"", hh:"", accidentes:"", diasPerdidos:"", fatales:""}); drawDiagHist(); renderDiagAnalisis(); });
+on(document.getElementById("diagHistFocoAddBtn"), "click", ()=>{ diagHistFocos.push({foco:"", accidentes:"", diasPerdidos:""}); drawDiagHist(); renderDiagAnalisis(); });
+on(document.getElementById("diagHistAniosTable"), "input", (e)=>{
+  const inp = e.target.closest("[data-dh-anio]"); if(!inp) return;
+  const [i, campo] = inp.dataset.dhAnio.split("|"); if(diagHistAnios[+i]) diagHistAnios[+i][campo] = inp.value; renderDiagAnalisis();
+});
+on(document.getElementById("diagHistFocosTable"), "input", (e)=>{
+  const inp = e.target.closest("[data-dh-foco]"); if(!inp) return;
+  const [i, campo] = inp.dataset.dhFoco.split("|"); if(diagHistFocos[+i]) diagHistFocos[+i][campo] = inp.value; renderDiagAnalisis();
+});
+on(document.getElementById("diagHistAniosTable"), "click", (e)=>{ const b = e.target.closest("[data-dh-anio-quitar]"); if(!b) return; diagHistAnios.splice(+b.dataset.dhAnioQuitar, 1); drawDiagHist(); renderDiagAnalisis(); });
+on(document.getElementById("diagHistFocosTable"), "click", (e)=>{ const b = e.target.closest("[data-dh-foco-quitar]"); if(!b) return; diagHistFocos.splice(+b.dataset.dhFocoQuitar, 1); drawDiagHist(); renderDiagAnalisis(); });
+on(document.getElementById("diagRubroDs110"), "change", renderDiagAnalisis);
 
 let diagEditingId = null;
 let diagHallazgos = [];
@@ -6632,9 +6832,12 @@ function resetDiagnosticoForm(){
   document.getElementById("diagRecomendaciones").value = "";
   document.getElementById("diagFormTitle").textContent = "Registrar diagnóstico inicial";
   document.getElementById("cancelEditDiagnosticoBtn").style.display = "none";
+  diagHistAnios = []; diagHistFocos = [];
+  document.getElementById("diagRubroDs110").value = "";
   renderDiagAreaOptions();
   drawDiagHallazgos();
   drawDiagChecklist();
+  drawDiagHist();
   renderDiagnosticoAsistente();
 }
 function startEditDiagnostico(id){
@@ -6653,9 +6856,13 @@ function startEditDiagnostico(id){
   document.getElementById("diagRecomendaciones").value = rec.recomendaciones || "";
   document.getElementById("diagFormTitle").textContent = "Editando diagnóstico del "+fmtDate(rec.fecha);
   document.getElementById("cancelEditDiagnosticoBtn").style.display = "";
+  diagHistAnios = (rec.historialAnios||[]).map(a=>({...a}));
+  diagHistFocos = (rec.historialFocos||[]).map(f=>({...f}));
   renderDiagAreaOptions();
   drawDiagHallazgos();
   drawDiagChecklist();
+  drawDiagHist();
+  document.getElementById("diagRubroDs110").value = rec.rubroDs110 || "";
   renderDiagnosticoAsistente();
   document.getElementById("hdrDiagnostico").scrollIntoView({behavior:"smooth", block:"start"});
 }
@@ -6679,6 +6886,9 @@ on(document.getElementById("saveDiagnosticoBtn"), "click", async ()=>{
     checklist,
     observaciones: document.getElementById("diagObservaciones").value.trim(),
     recomendaciones: document.getElementById("diagRecomendaciones").value.trim(),
+    rubroDs110: document.getElementById("diagRubroDs110").value,
+    historialAnios: diagHistAnios.filter(a=>a.anio || a.accidentes || a.diasPerdidos).map(a=>({anio:+a.anio||0, trabajadores:+a.trabajadores||0, hh:+a.hh||0, accidentes:+a.accidentes||0, diasPerdidos:+a.diasPerdidos||0, fatales:+a.fatales||0})),
+    historialFocos: diagHistFocos.filter(f=>String(f.foco||"").trim()).map(f=>({foco:String(f.foco).trim(), accidentes:+f.accidentes||0, diasPerdidos:+f.diasPerdidos||0})),
   };
   await put("diagnosticos", rec);
   await loadCache();
@@ -6701,6 +6911,8 @@ function renderDiagnosticoTable(){
       <td>${fmtDate(r.fecha)}</td>
       <td>${r.nombreEmpresa || `<span class="kv">Propia empresa</span>`}</td>
       <td>${r.responsable || "—"}</td>
+      <td>${(function(){ const n = r.nombreEmpresa ? r.numTrabajadoresEstimado : (CACHE.empresa && CACHE.empresa.numTrabajadores); return n ? n+'<div class="kv">'+diagTramoTamano(n).replace(/ \(.*\)$/,"")+'</div>' : "—"; })()}</td>
+      <td>${(function(){ const n = r.nombreEmpresa ? r.numTrabajadoresEstimado : (CACHE.empresa && CACHE.empresa.numTrabajadores); const c = diagAnalisisCalcular({anios:r.historialAnios, focos:r.historialFocos, rubroId:r.rubroDs110, n, checklist:{}}); return c.nivelGlobal ? '<span class="pill '+DIAG_NIVEL_EMP_PILL[c.nivelGlobal]+'">'+DIAG_NIVEL_EMP_LABEL[c.nivelGlobal]+'</span>' : '<span class="kv">Sin datos</span>'; })()}</td>
       <td>${(r.hallazgos||[]).length}</td>
       <td>${r.nombreEmpresa ? `<select data-diag-estado="${r.id}">
           <option value="pendiente" ${(!r.estadoProspecto||r.estadoProspecto==="pendiente")?"selected":""}>Pendiente</option>
@@ -6712,7 +6924,7 @@ function renderDiagnosticoTable(){
         <button class="subtle-btn" data-diag-editar="${r.id}">Editar</button>
         <button class="subtle-btn" data-diag-eliminar="${r.id}">Eliminar</button>
       </td>
-    </tr>`).join("") : `<tr><td class="empty" colspan="6">Sin diagnósticos registrados todavía</td></tr>`;
+    </tr>`).join("") : `<tr><td class="empty" colspan="8">Sin diagnósticos registrados todavía</td></tr>`;
 }
 document.getElementById("diagnosticoTable").addEventListener("change", async (e)=>{
   const sel = e.target.closest("select[data-diag-estado]");
@@ -6792,6 +7004,38 @@ function descargarDiagnosticoPdf(id){
   y = doc.lastAutoTable.finalY + 8;
 
   const n = rec.nombreEmpresa ? (rec.numTrabajadoresEstimado||0) : ((CACHE.empresa && CACHE.empresa.numTrabajadores) || 0);
+  // Historial de accidentes, focos críticos y nivel de riesgo (ASCII para las fuentes base del PDF)
+  const chk = {}; (rec.checklist||[]).forEach(c=>{ chk[c.numero] = c; });
+  const an = diagAnalisisCalcular({anios:rec.historialAnios, focos:rec.historialFocos, rubroId:rec.rubroDs110, n, checklist:chk});
+  if(an.hist.filas.length || an.focos.nFocos || an.act){
+    if(y > 200){ doc.addPage(); y = 16; }
+    doc.setFontSize(11); doc.text("Historial de accidentes (informacion general entregada por la empresa)", 14, y); y += 2;
+    doc.autoTable({ startY:y, head:[["Ano","Trabajadores","Accidentes","Dias perdidos","Fatales","Indice accid. (%)","Tasa siniestralidad","Tasa frecuencia","Tasa gravedad"]],
+      body: an.hist.filas.length ? an.hist.filas.map(f=>[f.anio||"-", f.tr||"-", f.acc, f.dias, f.fat, diagFmtNum(f.idx,2), diagFmtNum(f.sin,1), diagFmtNum(f.tf,1), diagFmtNum(f.tg,1)]).concat([["Prom./total","",an.hist.tot.acc,an.hist.tot.dias,an.hist.tot.fat,diagFmtNum(an.hist.idxProm,2),diagFmtNum(an.hist.sinProm,1),diagFmtNum(an.hist.tf,1),diagFmtNum(an.hist.tg,1)]]) : [["Sin historial cargado","","","","","","","",""]],
+      styles:{fontSize:8}, headStyles:{fillColor:[42,120,214]} });
+    y = doc.lastAutoTable.finalY + 6;
+    if(y > 230){ doc.addPage(); y = 16; }
+    doc.setFontSize(11); doc.text("Focos criticos (maximo 6, por dias perdidos)", 14, y); y += 2;
+    doc.autoTable({ startY:y, head:[["#","Foco o causa","Dias perdidos","Accidentes","% de dias","% acumulado"]],
+      body: an.focos.top.length ? an.focos.top.map((f,i)=>[i+1, f.foco, f.dias, f.acc, diagFmtNum(f.pctDias,0)+" %", diagFmtNum(f.acumDias,0)+" %"]).concat(an.focos.otros.n ? [["","Otros "+an.focos.otros.n+" foco(s)",an.focos.otros.dias,an.focos.otros.acc,"",""]] : []) : [["","Sin focos cargados","","","",""]],
+      styles:{fontSize:8.5}, headStyles:{fillColor:[192,57,43]}, columnStyles:{0:{cellWidth:10}} });
+    y = doc.lastAutoTable.finalY + 6;
+    if(y > 225){ doc.addPage(); y = 16; }
+    const nv = (k)=> k ? DIAG_NIVEL_EMP_LABEL[k].replace("Medio-bajo","Medio-bajo") : "Sin datos";
+    doc.setFontSize(11); doc.text("Nivel de riesgo de la empresa y tamano", 14, y); y += 2;
+    doc.autoTable({ startY:y, head:[["Concepto","Resultado"]], body:[
+      ["Rubro segun DS 110", an.act ? an.act.nombre.replace(/^Divisi[oó]n(es)? [0-9-]+ [—-] /,"")+" ("+an.pctRubro.toFixed(2)+" %)" : "Sin definir"],
+      ["Nivel por rubro (DS 110)", nv(an.nivelRubro)],
+      ["Nivel por siniestralidad historica", an.pctDs67!==null ? nv(an.nivelSin)+" (tasa "+diagFmtNum(an.hist.sinProm,1)+" -> tabla DS 67: "+an.pctDs67.toFixed(2)+" %)" : "Sin datos"],
+      ["NIVEL DE RIESGO GLOBAL (el mas alto de los dos)", nv(an.nivelGlobal)],
+      ["Trabajadores y tramo", (n||"sin dato")+" - "+an.tramo.replace(/[()]/g,"")],
+      ["Lista de chequeo", an.chequeo.evaluados ? an.chequeo.cumplen+" de "+an.chequeo.evaluados+" items evaluados cumplen" : "Sin evaluar"],
+    ], styles:{fontSize:8.5}, headStyles:{fillColor:[42,120,214]}, columnStyles:{0:{cellWidth:70}} });
+    y = doc.lastAutoTable.finalY + 3;
+    doc.setFontSize(7.5);
+    y = escribirTextoPaginado(doc, "Referencias: DS 110 de 1968 (cotizacion adicional diferenciada por actividad) y DS 67 de 1999, art. 5 (tabla de siniestralidad). La siniestralidad usa solo dias perdidos por accidentes informados, sin dias de cargo por invalidez o muerte. Verificar vigencia antes de usar en una propuesta.", 14, y, {maxWidth:180, lineHeight:3.6}) + 4;
+    doc.setFontSize(10);
+  }
   const cursos = (CACHE.cursosObligatorios||[]).filter(c=>tramoMinimoAplica(c.tramoMinimo, n));
   if(y > 240){ doc.addPage(); y = 16; }
   doc.setFontSize(11); doc.text("Cursos DS 44 aplicables (por tamaño de empresa)", 14, y); y += 2;
@@ -6835,7 +7079,7 @@ function descargarDiagnosticoPdf(id){
 function renderDiagnostico(){
   renderDiagIndicadores();
   renderDiagnosticoAsistente();
-  if(!diagEditingId){ renderDiagAreaOptions(); drawDiagHallazgos(); drawDiagChecklist(); }
+  if(!diagEditingId){ renderDiagAreaOptions(); drawDiagHallazgos(); drawDiagChecklist(); drawDiagHist(); renderDiagAnalisis(); }
   renderDiagnosticoTable();
 }
 
