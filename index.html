@@ -1149,8 +1149,28 @@
       <div class="card-header-row" id="hdrTraspasosPendientes"><h2>Traspasos pendientes desde la Matriz</h2><button class="collapse-toggle" id="toggleTraspasosPendientes" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyTraspasosPendientes">
       <div class="desc">Medidas de control cuyo texto suena a una actividad de seguimiento real (capacitar, inspeccionar, observar, verificar...) y todavía no se traspasaron a Programa de seguridad ni a Plan de capacitación, ni se descartaron. Incluye tanto líneas nuevas como las ya cargadas antes de tener esta función.</div>
+      <div class="toolbar">
+        <div class="field"><label>Buscar</label><input id="trasBuscar" placeholder="Medida de control, peligro o riesgo"></div>
+        <div class="field"><label>Área</label><select id="trasArea"></select></div>
+        <div><button class="btn small secondary" id="trasMarcarBtn" type="button" style="margin-top:20px;">Marcar las visibles</button></div>
+        <div><button class="btn small secondary" id="trasLimpiarBtn" type="button" style="margin-top:20px;">Desmarcar todas</button></div>
+      </div>
+      <div id="trasGrupoPanel" style="display:none;border:1px solid var(--grid);border-radius:8px;padding:10px 12px;margin:8px 0;">
+        <div class="kv" id="trasGrupoResumen" style="margin-bottom:6px;"></div>
+        <div class="form-grid">
+          <div style="grid-column:1/-1;"><label>Nombre de la actividad (una sola para todas las marcadas)</label><input id="trasGrupoNombre" placeholder="Ej: Inspección de equipos"></div>
+          <div><label>Destino</label><select id="trasGrupoDestino"><option value="programa">Programa de seguridad</option><option value="capacitacion">Plan de capacitación</option></select></div>
+          <div><label>Responsable</label><input id="trasGrupoResp" placeholder="Nombre / cargo"></div>
+          <div><label>Fecha programada</label><input id="trasGrupoFecha" type="date"></div>
+        </div>
+        <div class="kv" style="margin-top:4px;">En Programa de seguridad se crea una actividad por cada área de las marcadas; en Plan de capacitación, una sola.</div>
+        <div class="toolbar" style="margin-top:8px;">
+          <button class="btn" id="trasGrupoTraspasarBtn" type="button">Traspasar las marcadas como una actividad</button>
+          <button class="btn secondary" id="trasGrupoDescartarBtn" type="button">Descartar las marcadas</button>
+        </div>
+      </div>
       <table>
-        <thead><tr><th>Área</th><th>Línea</th><th>Medida de control</th><th>Destino</th><th>Responsable</th><th>Fecha programada</th><th></th></tr></thead>
+        <thead><tr><th></th><th>Área</th><th>Línea</th><th>Medida de control</th><th>Destino</th><th>Responsable</th><th>Fecha programada</th><th></th></tr></thead>
         <tbody id="traspasosPendientesTable"></tbody>
       </table>
       </div>
@@ -1203,9 +1223,15 @@
       </div>
 
       <h2 style="margin-top:22px;font-size:15px;">Pendientes de plan de acción</h2>
-      <div class="desc">Líneas de la matriz calificadas Alto o Muy alto que todavía no tienen ninguna acción definida.</div>
+      <div class="desc">Líneas de la matriz calificadas Medio, Alto o Muy alto que todavía no tienen ninguna acción definida. Usa el buscador y el filtro de área para encontrar líneas parecidas, márcalas y define una sola acción para todas.</div>
+      <div class="toolbar">
+        <div class="field"><label>Buscar</label><input id="paPendBuscar" placeholder="Peligro, riesgo, actividad o proceso"></div>
+        <div class="field"><label>Área</label><select id="paPendArea"></select></div>
+        <div><button class="btn small secondary" id="paPendMarcarBtn" type="button" style="margin-top:20px;">Marcar las visibles</button></div>
+        <div><button class="btn small" id="paPendDefinirBtn" type="button" style="margin-top:20px;">Definir acción para las marcadas</button></div>
+      </div>
       <table>
-        <thead><tr><th>Área</th><th>Peligro / Riesgo</th><th>Nivel</th><th></th></tr></thead>
+        <thead><tr><th></th><th>Área</th><th>Peligro / Riesgo</th><th>Nivel</th><th></th></tr></thead>
         <tbody id="paPendientesTable"></tbody>
       </table>
 
@@ -1214,6 +1240,21 @@
         <div><label>Línea de la matriz (Medio, Alto o Muy alto)</label><select id="paMatrizId"></select></div>
       </div>
       <div id="paLineaContexto" class="desc" style="margin-top:6px;">Selecciona una línea de la matriz.</div>
+      <div id="paOtrasWrap" style="margin-top:10px;">
+        <label>Aplicar la misma acción a otras líneas (opcional)</label>
+        <div class="desc" style="margin:0 0 4px;">Busca y marca las líneas a las que aplica esta misma acción, para no repetirla una por una. Se crea una acción por cada línea (así cada una conserva su seguimiento de eficacia), todas con los mismos datos.</div>
+        <div class="toolbar">
+          <div class="field"><label>Buscar</label><input id="paOtrasBuscar" placeholder="Peligro, riesgo, actividad o proceso"></div>
+          <div class="field"><label>Área</label><select id="paOtrasArea"></select></div>
+          <div><button class="btn small secondary" id="paOtrasMarcarBtn" type="button" style="margin-top:20px;">Marcar las visibles</button></div>
+          <div><button class="btn small secondary" id="paOtrasLimpiarBtn" type="button" style="margin-top:20px;">Desmarcar todas</button></div>
+        </div>
+        <div id="paOtrasLista" style="max-height:240px;overflow:auto;border:1px solid var(--grid);border-radius:8px;padding:6px 10px;"></div>
+        <div class="kv" id="paOtrasResumen" style="margin-top:4px;"></div>
+      </div>
+      <div id="paGrupoWrap" style="display:none;margin-top:10px;">
+        <label style="display:flex;align-items:center;gap:8px;font-weight:400;"><input type="checkbox" id="paAplicarGrupo" checked style="width:auto;min-height:auto;"> Aplicar los cambios a las otras <span id="paGrupoN">0</span> acciones del mismo grupo (tipo, actividad, responsable, plazo, presupuesto, recursos y revisión; no cambia su estado ni su eficacia)</label>
+      </div>
       <div class="form-grid" style="margin-top:10px;">
         <div>
           <label style="display:flex;align-items:center;gap:8px;font-weight:400;"><input type="checkbox" id="paControlesValidados" style="width:auto;min-height:auto;"> ¿Los controles actuales son reales y funcionan?</label>
@@ -1248,10 +1289,16 @@
         <div class="field"><label>Filtrar por tipo de acción</label>
           <select id="paFilterTipo"><option value="">Todos</option><option value="mitigar">Mitigar</option><option value="evitar">Evitar</option><option value="transferir">Transferir</option><option value="aceptar">Aceptar</option></select>
         </div>
+        <div class="field"><label>Buscar</label><input id="paSegBuscar" placeholder="Actividad, peligro, área o responsable"></div>
         <div><button class="btn secondary small" id="printPlanAccionBtn" style="margin-top:20px;">Imprimir Plan de Acción</button></div>
       </div>
+      <div class="toolbar">
+        <div><button class="btn small secondary" id="paSegMarcarBtn" type="button">Marcar las visibles</button></div>
+        <div class="field"><label>Cambiar el estado de las marcadas a</label><select id="paBulkEstado"><option value="pendiente">Pendiente</option><option value="proceso">En proceso</option><option value="cumplida">Cumplida</option></select></div>
+        <div><button class="btn small" id="paBulkEstadoBtn" type="button" style="margin-top:20px;">Aplicar a las marcadas</button></div>
+      </div>
       <table>
-        <thead><tr><th>Área</th><th>Peligro / Riesgo</th><th>Nivel</th><th>Tipo</th><th>Actividad</th><th>Responsable</th><th>Plazo</th><th>Próx. revisión</th><th>Estado</th><th></th></tr></thead>
+        <thead><tr><th></th><th>Área</th><th>Peligro / Riesgo</th><th>Nivel</th><th>Tipo</th><th>Actividad</th><th>Responsable</th><th>Plazo</th><th>Próx. revisión</th><th>Estado</th><th></th></tr></thead>
         <tbody id="paTable"></tbody>
       </table>
     </div></div>
@@ -4843,6 +4890,41 @@ async function ejecutarTraspaso(m, item, clave, destino, responsable, fecha){
   m.controlesTraspasos[clave] = { estado: "traspasado", destino, destinoId, fecha };
   await logHistorial(m.id, matrizLineLabel(m), "Control transferido", "", `${TRASPASO_DESTINO_LABEL[destino]}: "${item.texto}"`);
   return destinoId;
+}
+/* Traspaso en grupo: varias medidas de control (de varias líneas) se traspasan
+   como UNA sola actividad. En Programa de seguridad se crea una actividad por
+   cada área de las medidas marcadas (el programa guarda una sola área por
+   actividad); en Plan de capacitación, una sola capacitación. Cada control
+   queda marcado como traspasado en su línea, con rastro en el historial. */
+async function ejecutarTraspasoGrupo(items, destino, nombre, responsable, fecha){
+  const idPorArea = new Map();
+  let creadas = 0;
+  if(destino === "capacitacion"){
+    const id = uid();
+    await addCatalogValue("capTipo", "General");
+    await put("capacitaciones", { id, nombre, tipo: "General", fechaProgramada: fecha, fechaRealizada: null, horas: 0, relator: responsable, documentoId: "", participantes: [] });
+    idPorArea.set("*", id); creadas = 1;
+  } else {
+    for(const x of items){
+      const a = x.m.areaId || "";
+      if(!idPorArea.has(a)){
+        const id = uid();
+        await put("programa", { id, nombre, tipo: "inspeccion", areaId: a, responsable, fechaProgramada: fecha, fechaRealizada: null });
+        idPorArea.set(a, id); creadas++;
+      }
+    }
+  }
+  const lineas = new Map();
+  for(const x of items){
+    const m = x.m;
+    m.controlesTraspasos = m.controlesTraspasos || {};
+    const destinoId = destino === "capacitacion" ? idPorArea.get("*") : idPorArea.get(m.areaId || "");
+    m.controlesTraspasos[x.clave] = { estado: "traspasado", destino, destinoId, fecha };
+    await logHistorial(m.id, matrizLineLabel(m), "Control transferido", "", `${TRASPASO_DESTINO_LABEL[destino]}: "${nombre}" (traspaso agrupado)`);
+    lineas.set(m.id, m);
+  }
+  for(const m of lineas.values()) await put("matriz", m);
+  return creadas;
 }
 async function descartarTraspaso(m, clave){
   m.controlesTraspasos = m.controlesTraspasos || {};
@@ -13961,21 +14043,55 @@ function paClamp15(v, fallback){
   const n = Math.round(+v);
   return Number.isFinite(n) ? Math.min(5, Math.max(1, n)) : fallback;
 }
-function renderPaPendientes(){
+/* Búsqueda y selección múltiple (Plan de Acción): se busca por texto y área,
+   se marcan las líneas y se define una sola acción para todas. */
+var paPendSel = new Set(), paOtrasSel = new Set(), paSegSel = new Set();
+function paTextoBusqueda(m){ return matrizNorm([m.peligro, m.riesgo, m.actividad, m.proceso, m.categoria, areaName(m.areaId)].join(" ")); }
+function paFillAreaSelect(id){
+  const sel = document.getElementById(id); if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todas</option>' + (CACHE.areas||[]).map(a=>`<option value="${a.id}">${incEsc(a.nombre)}</option>`).join("");
+  if(cur && Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur;
+}
+function paPendientesFiltradas(){
   const cubiertas = new Set((CACHE.planAccionMatriz||[]).map(p=>p.matrizId));
-  const pendientes = paLineasRequierenAccion().filter(m=>!cubiertas.has(m.id));
+  const q = matrizNorm(document.getElementById("paPendBuscar").value), area = document.getElementById("paPendArea").value;
+  return paLineasRequierenAccion().filter(m=>!cubiertas.has(m.id) && (!area || m.areaId===area) && (!q || paTextoBusqueda(m).includes(q)));
+}
+function renderPaPendientes(){
+  paFillAreaSelect("paPendArea");
+  const cubiertas = new Set((CACHE.planAccionMatriz||[]).map(p=>p.matrizId));
+  const total = paLineasRequierenAccion().filter(m=>!cubiertas.has(m.id));
+  paPendSel = new Set(Array.from(paPendSel).filter(id=>total.some(m=>m.id===id)));
+  const pendientes = paPendientesFiltradas();
   document.getElementById("paPendientesTable").innerHTML = pendientes.length
     ? pendientes.map(m=>{
         const n = nivelRiesgoLinea(m);
         return `<tr>
+          <td><input type="checkbox" data-pa-pend-sel="${m.id}" style="width:auto;min-height:auto;"${paPendSel.has(m.id)?" checked":""}></td>
           <td>${areaName(m.areaId)}</td>
           <td><strong>${m.peligro}</strong><div class="kv">${m.riesgo}</div></td>
           <td><span class="pill ${n}">${nivelLabel(n)}</span></td>
           <td><button class="btn secondary small" data-pa-nueva="${m.id}">Definir acción</button></td>
         </tr>`;
       }).join("")
-    : `<tr><td colspan="4" class="empty">No hay líneas medio/alto/muy alto sin plan de acción</td></tr>`;
+    : `<tr><td colspan="5" class="empty">${total.length ? "Ninguna línea coincide con la búsqueda" : "No hay líneas medio/alto/muy alto sin plan de acción"}</td></tr>`;
 }
+["paPendBuscar","paPendArea"].forEach(id=>on(document.getElementById(id), id==="paPendBuscar"?"input":"change", renderPaPendientes));
+on(document.getElementById("paPendientesTable"), "change", (e)=>{
+  const cb = e.target.closest("[data-pa-pend-sel]"); if(!cb) return;
+  if(cb.checked) paPendSel.add(cb.dataset.paPendSel); else paPendSel.delete(cb.dataset.paPendSel);
+});
+on(document.getElementById("paPendMarcarBtn"), "click", ()=>{ paPendientesFiltradas().forEach(m=>paPendSel.add(m.id)); renderPaPendientes(); });
+on(document.getElementById("paPendDefinirBtn"), "click", ()=>{
+  const ids = Array.from(paPendSel);
+  if(!ids.length){ alert("Marca al menos una línea de la lista."); return; }
+  paResetForm();
+  document.getElementById("paMatrizId").value = ids[0];
+  paOtrasSel = new Set(ids.slice(1));
+  paActualizarContexto();
+  document.getElementById("paFormTitle").scrollIntoView({behavior:"smooth", block:"start"});
+});
 function paFillMatrizSelect(){
   const sel = document.getElementById("paMatrizId");
   const items = paLineasRequierenAccion().map(m=>{
@@ -13984,7 +14100,35 @@ function paFillMatrizSelect(){
   });
   fillSelect(sel, items, true);
 }
+/* Lista con búsqueda de "otras líneas" a las que se aplica la misma acción. */
+function paOtrasFiltradas(){
+  const principal = document.getElementById("paMatrizId").value;
+  const q = matrizNorm(document.getElementById("paOtrasBuscar").value), area = document.getElementById("paOtrasArea").value;
+  return paLineasRequierenAccion().filter(m=>m.id!==principal && (!area || m.areaId===area) && (!q || paTextoBusqueda(m).includes(q)));
+}
+function paRenderOtras(){
+  const wrap = document.getElementById("paOtrasLista"); if(!wrap) return;
+  paFillAreaSelect("paOtrasArea");
+  const principal = document.getElementById("paMatrizId").value;
+  paOtrasSel.delete(principal);
+  const lista = paOtrasFiltradas();
+  wrap.innerHTML = lista.length ? lista.map(m=>{
+    const n = nivelRiesgoLinea(m);
+    return `<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px 0;"><input type="checkbox" data-pa-otra="${m.id}" style="width:auto;min-height:auto;margin-top:3px;"${paOtrasSel.has(m.id)?" checked":""}><span><strong>${incEsc(areaName(m.areaId))}</strong> — ${incEsc(m.peligro)} <span class="pill ${n}">${nivelLabel(n)}</span><div class="kv">${incEsc([m.proceso, m.actividad].filter(Boolean).join(" / "))}</div></span></label>`;
+  }).join("") : '<div class="empty">Ninguna línea coincide con la búsqueda.</div>';
+  document.getElementById("paOtrasResumen").textContent = paOtrasSel.size ? `${paOtrasSel.size} línea(s) marcada(s) además de la principal: se creará una acción por cada una.` : "";
+}
+on(document.getElementById("paOtrasBuscar"), "input", paRenderOtras);
+on(document.getElementById("paOtrasArea"), "change", paRenderOtras);
+on(document.getElementById("paOtrasLista"), "change", (e)=>{
+  const cb = e.target.closest("[data-pa-otra]"); if(!cb) return;
+  if(cb.checked) paOtrasSel.add(cb.dataset.paOtra); else paOtrasSel.delete(cb.dataset.paOtra);
+  document.getElementById("paOtrasResumen").textContent = paOtrasSel.size ? `${paOtrasSel.size} línea(s) marcada(s) además de la principal: se creará una acción por cada una.` : "";
+});
+on(document.getElementById("paOtrasMarcarBtn"), "click", ()=>{ paOtrasFiltradas().forEach(m=>paOtrasSel.add(m.id)); paRenderOtras(); });
+on(document.getElementById("paOtrasLimpiarBtn"), "click", ()=>{ paOtrasSel = new Set(); paRenderOtras(); });
 function paActualizarContexto(){
+  paRenderOtras();
   const m = paMatrizLinea(document.getElementById("paMatrizId").value);
   const wrap = document.getElementById("paLineaContexto");
   if(!m){ wrap.textContent = "Selecciona una línea de la matriz."; return; }
@@ -14002,6 +14146,10 @@ function paResetForm(){
   document.getElementById("paControlesValidados").checked = false;
   document.getElementById("paTipoAccion").value = "mitigar";
   document.getElementById("paMatrizId").disabled = false;
+  paOtrasSel = new Set();
+  document.getElementById("paOtrasBuscar").value = "";
+  document.getElementById("paOtrasWrap").style.display = "";
+  document.getElementById("paGrupoWrap").style.display = "none";
   paFillMatrizSelect();
   document.getElementById("paMatrizId").value = "";
   paActualizarContexto();
@@ -14029,9 +14177,7 @@ on(document.getElementById("paGuardarBtn"), "click", async ()=>{
   if(!actividad || !responsable || !plazo){ alert("Completa actividad, responsable y plazo de ejecución."); return; }
   const anterior = paEditingId ? (CACHE.planAccionMatriz||[]).find(p=>p.id===paEditingId) : null;
   const presupuestoVal = document.getElementById("paPresupuesto").value;
-  const rec = {
-    id: paEditingId || uid(),
-    matrizId,
+  const datosComunes = {
     controlesValidados: document.getElementById("paControlesValidados").checked,
     observacionValidacion: document.getElementById("paObservacionValidacion").value.trim(),
     tipoAccion: document.getElementById("paTipoAccion").value,
@@ -14039,6 +14185,28 @@ on(document.getElementById("paGuardarBtn"), "click", async ()=>{
     presupuesto: presupuestoVal ? +presupuestoVal : null,
     recursos: document.getElementById("paRecursos").value.trim(),
     proximaRevision: document.getElementById("paProximaRevision").value,
+  };
+  const esNueva = !paEditingId;
+  if(esNueva){
+    // Una acción por línea (principal + las marcadas con el buscador), con un
+    // grupoId compartido: cada línea conserva su propio seguimiento y eficacia.
+    const ids = [matrizId].concat(Array.from(paOtrasSel).filter(id=>id!==matrizId && paMatrizLinea(id)));
+    const grupoId = ids.length > 1 ? uid() : null;
+    for(const id of ids){
+      const ml = paMatrizLinea(id);
+      const rec = { id: uid(), matrizId: id, ...datosComunes, estado: "pendiente", probAntes: ml.probabilidad, consAntes: ml.consecuencia, probDespues: null, consDespues: null, eficaciaObservacion: "", fechaCreacion: new Date().toISOString() };
+      if(grupoId) rec.grupoId = grupoId;
+      await put("planAccionMatriz", rec);
+      await logHistorial(id, matrizLineLabel(ml), "Plan de acción", "", `Creada: ${PA_TIPO_LABEL[rec.tipoAccion]} — ${actividad}${grupoId?` (aplicada a ${ids.length} líneas)`:""}`);
+    }
+    await loadCache();
+    paResetForm();
+    renderPlanAccion();
+    alert(ids.length > 1 ? `Acción agregada al plan para ${ids.length} líneas.` : "Acción agregada al plan.");
+    return;
+  }
+  const rec = {
+    id: paEditingId, matrizId, ...datosComunes,
     estado: (anterior && anterior.estado) || "pendiente",
     probAntes: anterior ? anterior.probAntes : m.probabilidad,
     consAntes: anterior ? anterior.consAntes : m.consecuencia,
@@ -14047,35 +14215,53 @@ on(document.getElementById("paGuardarBtn"), "click", async ()=>{
     eficaciaObservacion: (anterior && anterior.eficaciaObservacion) || "",
     fechaCreacion: (anterior && anterior.fechaCreacion) || new Date().toISOString(),
   };
-  const esNueva = !paEditingId;
+  if(anterior && anterior.grupoId) rec.grupoId = anterior.grupoId;
   await put("planAccionMatriz", rec);
-  await logHistorial(matrizId, matrizLineLabel(m), "Plan de acción", "", `${esNueva?"Creada":"Editada"}: ${PA_TIPO_LABEL[rec.tipoAccion]} — ${actividad}`);
+  await logHistorial(matrizId, matrizLineLabel(m), "Plan de acción", "", `Editada: ${PA_TIPO_LABEL[rec.tipoAccion]} — ${actividad}`);
+  let otras = 0;
+  if(anterior && anterior.grupoId && document.getElementById("paAplicarGrupo").checked){
+    for(const o of (CACHE.planAccionMatriz||[]).filter(x=>x.grupoId===anterior.grupoId && x.id!==paEditingId)){
+      await put("planAccionMatriz", { ...o, ...datosComunes });
+      const ml = paMatrizLinea(o.matrizId);
+      await logHistorial(o.matrizId, ml?matrizLineLabel(ml):o.matrizId, "Plan de acción", "", `Editada con su grupo: ${PA_TIPO_LABEL[datosComunes.tipoAccion]} — ${actividad}`);
+      otras++;
+    }
+  }
   await loadCache();
   paResetForm();
   renderPlanAccion();
-  alert(esNueva ? "Acción agregada al plan." : "Acción actualizada.");
+  alert(otras ? `Acción actualizada, junto con otras ${otras} del mismo grupo.` : "Acción actualizada.");
 });
 
-function renderPaTable(){
+function paSeguimientoFiltrado(){
   const fArea = document.getElementById("paFilterArea").value;
   const fEstado = document.getElementById("paFilterEstado").value;
   const fTipo = document.getElementById("paFilterTipo").value;
-  const rows = (CACHE.planAccionMatriz||[]).map(p=>({ p, m: paMatrizLinea(p.matrizId), estadoMostrado: paEstadoMostrado(p) }))
+  const q = matrizNorm(document.getElementById("paSegBuscar").value);
+  return (CACHE.planAccionMatriz||[]).map(p=>({ p, m: paMatrizLinea(p.matrizId), estadoMostrado: paEstadoMostrado(p) }))
     .filter(({p,m,estadoMostrado})=>{
       if(fArea && (!m || m.areaId!==fArea)) return false;
       if(fEstado && estadoMostrado!==fEstado) return false;
       if(fTipo && p.tipoAccion!==fTipo) return false;
+      if(q && !matrizNorm([p.actividad, p.responsable, m ? paTextoBusqueda(m) : ""].join(" ")).includes(q)) return false;
       return true;
     })
     .sort((a,b)=> (a.p.plazo||"").localeCompare(b.p.plazo||""));
+}
+function renderPaTable(){
+  const todas = CACHE.planAccionMatriz||[];
+  paSegSel = new Set(Array.from(paSegSel).filter(id=>todas.some(p=>p.id===id)));
+  const tamanoGrupo = {}; todas.forEach(p=>{ if(p.grupoId) tamanoGrupo[p.grupoId] = (tamanoGrupo[p.grupoId]||0)+1; });
+  const rows = paSeguimientoFiltrado();
   document.getElementById("paTable").innerHTML = rows.length ? rows.map(({p,m,estadoMostrado})=>{
     const n = m ? nivelRiesgoLinea(m) : null;
     return `<tr>
+      <td><input type="checkbox" data-pa-seg-sel="${p.id}" style="width:auto;min-height:auto;"${paSegSel.has(p.id)?" checked":""}></td>
       <td>${m ? areaName(m.areaId) : "—"}</td>
       <td>${m ? `<strong>${m.peligro}</strong><div class="kv">${m.riesgo}</div>` : "(línea eliminada)"}</td>
       <td>${n ? `<span class="pill ${n}">${nivelLabel(n)}</span>` : "—"}</td>
       <td>${PA_TIPO_LABEL[p.tipoAccion]||"—"}</td>
-      <td>${p.actividad||"—"}</td>
+      <td>${p.actividad||"—"}${p.grupoId && tamanoGrupo[p.grupoId]>1 ? `<div style="margin-top:4px;"><span class="pill bajo" title="Acción aplicada a varias líneas de la matriz">Grupo de ${tamanoGrupo[p.grupoId]}</span></div>` : ""}</td>
       <td>${p.responsable||"—"}</td>
       <td>${p.plazo?fmtDate(p.plazo):"—"}</td>
       <td>${p.proximaRevision?fmtDate(p.proximaRevision):"—"}</td>
@@ -14089,8 +14275,50 @@ function renderPaTable(){
       </td>
       <td><button class="btn secondary small" data-pa-editar="${p.id}">Editar</button> <button class="subtle-btn" data-pa-eliminar="${p.id}">Eliminar</button></td>
     </tr>`;
-  }).join("") : `<tr><td colspan="10" class="empty">Sin acciones registradas para el filtro seleccionado</td></tr>`;
+  }).join("") : `<tr><td colspan="11" class="empty">Sin acciones registradas para el filtro seleccionado</td></tr>`;
 }
+on(document.getElementById("paSegBuscar"), "input", renderPaTable);
+on(document.getElementById("paTable"), "change", (e)=>{
+  const cb = e.target.closest("[data-pa-seg-sel]"); if(!cb) return;
+  if(cb.checked) paSegSel.add(cb.dataset.paSegSel); else paSegSel.delete(cb.dataset.paSegSel);
+});
+on(document.getElementById("paSegMarcarBtn"), "click", ()=>{ paSeguimientoFiltrado().forEach(({p})=>paSegSel.add(p.id)); renderPaTable(); });
+/* Cambio de estado masivo sobre las acciones marcadas. Para "cumplida" se pide
+   UNA sola vez el riesgo residual alcanzado y se aplica a todas las marcadas. */
+on(document.getElementById("paBulkEstadoBtn"), "click", async ()=>{
+  const marcadas = (CACHE.planAccionMatriz||[]).filter(p=>paSegSel.has(p.id));
+  if(!marcadas.length){ alert("Marca al menos una acción de la lista."); return; }
+  const nuevo = document.getElementById("paBulkEstado").value;
+  let probStr = null, consStr = null, obs = "";
+  if(nuevo === "cumplida" && marcadas.some(p=>p.estado!=="cumplida")){
+    probStr = prompt("Probabilidad DESPUÉS de implementar la acción (1-5), para todas las marcadas:", "3");
+    if(probStr===null) return;
+    consStr = prompt("Consecuencia DESPUÉS de implementar la acción (1-5), para todas las marcadas:", "3");
+    if(consStr===null) return;
+    obs = prompt("Observación sobre la eficacia de las acciones implementadas (opcional):", "") || "";
+  }
+  if(!confirm(`Se cambiará a "${PA_ESTADO_MOSTRADO_LABEL[nuevo]}" el estado de ${marcadas.length} acción(es). ¿Continuar?`)) return;
+  for(const p of marcadas){
+    const anterior = p.estado;
+    if(nuevo === "cumplida" && anterior !== "cumplida"){
+      p.probDespues = paClamp15(probStr, p.probAntes||3);
+      p.consDespues = paClamp15(consStr, p.consAntes||3);
+      p.eficaciaObservacion = obs;
+      const m = paMatrizLinea(p.matrizId);
+      await logHistorial(p.matrizId, m?matrizLineLabel(m):p.matrizId, "Eficacia de la acción (Plan de Acción)", nivelLabel(nivelRiesgo(p.probAntes, p.consAntes)), `${nivelLabel(nivelRiesgo(p.probDespues, p.consDespues))}${obs?" — "+obs:""}`);
+    }
+    p.estado = nuevo;
+    await put("planAccionMatriz", p);
+    if(anterior !== nuevo){
+      const m = paMatrizLinea(p.matrizId);
+      await logHistorial(p.matrizId, m?matrizLineLabel(m):p.matrizId, "Estado del plan de acción", anterior, nuevo);
+    }
+  }
+  paSegSel = new Set();
+  await loadCache();
+  renderPlanAccion();
+  alert(`Estado actualizado en ${marcadas.length} acción(es).`);
+});
 on(document.getElementById("paFilterArea"), "change", renderPaTable);
 on(document.getElementById("paFilterEstado"), "change", renderPaTable);
 on(document.getElementById("paFilterTipo"), "change", renderPaTable);
@@ -14111,6 +14339,11 @@ on(document.getElementById("paTable"), "click", async (e) => {
     sel.value = p.matrizId;
     sel.disabled = true;
     paActualizarContexto();
+    document.getElementById("paOtrasWrap").style.display = "none";
+    const otrasDelGrupo = p.grupoId ? (CACHE.planAccionMatriz||[]).filter(x=>x.grupoId===p.grupoId && x.id!==p.id).length : 0;
+    document.getElementById("paGrupoWrap").style.display = otrasDelGrupo ? "" : "none";
+    document.getElementById("paGrupoN").textContent = otrasDelGrupo;
+    document.getElementById("paAplicarGrupo").checked = true;
     document.getElementById("paControlesValidados").checked = !!p.controlesValidados;
     document.getElementById("paObservacionValidacion").value = p.observacionValidacion||"";
     document.getElementById("paTipoAccion").value = p.tipoAccion||"mitigar";
@@ -14235,12 +14468,41 @@ function renderPlanAccion(){
    líneas (nuevas y ya existentes), los controles todavía sin traspasar ni
    descartar. Cada fila permite editar el destino sugerido, completar
    responsable/fecha y traspasar o descartar ahí mismo. */
+var trasSel = new Set(), trasNombreAuto = "";
+function trasClave(x){ return x.m.id + "|" + x.clave; }
+function trasFiltrados(pendientes){
+  const q = matrizNorm(document.getElementById("trasBuscar").value), area = document.getElementById("trasArea").value;
+  return pendientes.map((x,idx)=>({x,idx})).filter(({x})=> (!area || x.m.areaId===area) && (!q || matrizNorm([x.item.texto, x.m.peligro, x.m.riesgo, areaName(x.m.areaId)].join(" ")).includes(q)));
+}
+function trasActualizarPanel(pendientes){
+  const marcadas = pendientes.filter(x=>trasSel.has(trasClave(x)));
+  const panel = document.getElementById("trasGrupoPanel");
+  panel.style.display = marcadas.length ? "" : "none";
+  if(!marcadas.length) return;
+  const lineas = new Set(marcadas.map(x=>x.m.id)), areas = new Set(marcadas.map(x=>x.m.areaId||""));
+  document.getElementById("trasGrupoResumen").textContent = `${marcadas.length} medida(s) marcada(s) en ${lineas.size} línea(s) de ${areas.size} área(s).`;
+  const nom = document.getElementById("trasGrupoNombre");
+  if(!nom.value.trim() || nom.value===trasNombreAuto){ trasNombreAuto = marcadas[0].item.texto; nom.value = trasNombreAuto; }
+  const dest = document.getElementById("trasGrupoDestino");
+  if(!dest.dataset.tocado) dest.value = marcadas[0].destino;
+  const resp = document.getElementById("trasGrupoResp");
+  if(!resp.value.trim()) resp.value = marcadas[0].item.responsable || "";
+  const fec = document.getElementById("trasGrupoFecha");
+  if(!fec.value) fec.value = marcadas[0].item.plazo || "";
+}
 function renderTraspasosPendientes(){
   const tbody = document.getElementById("traspasosPendientesTable");
   if(!tbody) return;
   const pendientes = todosLosTraspasosPendientes();
-  tbody.innerHTML = pendientes.length ? pendientes.map((x,idx)=>`
+  window.__traspasosPendientesActuales = pendientes;
+  const selArea = document.getElementById("trasArea"), curArea = selArea.value;
+  selArea.innerHTML = '<option value="">Todas</option>' + (CACHE.areas||[]).map(a=>`<option value="${a.id}">${incEsc(a.nombre)}</option>`).join("");
+  if(curArea && Array.from(selArea.options).some(o=>o.value===curArea)) selArea.value = curArea;
+  trasSel = new Set(Array.from(trasSel).filter(k=>pendientes.some(x=>trasClave(x)===k)));
+  const visibles = trasFiltrados(pendientes);
+  tbody.innerHTML = visibles.length ? visibles.map(({x,idx})=>`
     <tr data-traspaso-idx="${idx}">
+      <td><input type="checkbox" data-traspasofila-sel="${idx}" style="width:auto;min-height:auto;"${trasSel.has(trasClave(x))?" checked":""}></td>
       <td>${areaName(x.m.areaId)}</td>
       <td>${x.m.peligro||"—"} → ${x.m.riesgo||"—"}</td>
       <td>"${x.item.texto}"</td>
@@ -14255,9 +14517,56 @@ function renderTraspasosPendientes(){
         <button class="subtle-btn" data-traspasofila-descartar="${idx}">Descartar</button>
       </td>
     </tr>
-  `).join("") : `<tr><td class="empty" colspan="7">Sin traspasos pendientes</td></tr>`;
-  window.__traspasosPendientesActuales = pendientes;
+  `).join("") : `<tr><td class="empty" colspan="8">${pendientes.length ? "Ninguna medida coincide con la búsqueda" : "Sin traspasos pendientes"}</td></tr>`;
+  trasActualizarPanel(pendientes);
 }
+["trasBuscar","trasArea"].forEach(id=>on(document.getElementById(id), id==="trasBuscar"?"input":"change", renderTraspasosPendientes));
+on(document.getElementById("trasGrupoDestino"), "change", ()=>{ document.getElementById("trasGrupoDestino").dataset.tocado = "1"; });
+on(document.getElementById("traspasosPendientesTable"), "change", (e)=>{
+  const cb = e.target.closest("[data-traspasofila-sel]"); if(!cb) return;
+  const x = (window.__traspasosPendientesActuales||[])[+cb.dataset.traspasofilaSel]; if(!x) return;
+  if(cb.checked) trasSel.add(trasClave(x)); else trasSel.delete(trasClave(x));
+  trasActualizarPanel(window.__traspasosPendientesActuales||[]);
+});
+on(document.getElementById("trasMarcarBtn"), "click", ()=>{
+  const pend = window.__traspasosPendientesActuales || [];
+  trasFiltrados(pend).forEach(({x})=>trasSel.add(trasClave(x)));
+  renderTraspasosPendientes();
+});
+on(document.getElementById("trasLimpiarBtn"), "click", ()=>{ trasSel = new Set(); document.getElementById("trasGrupoNombre").value = ""; trasNombreAuto = ""; renderTraspasosPendientes(); });
+on(document.getElementById("trasGrupoTraspasarBtn"), "click", async ()=>{
+  const pend = window.__traspasosPendientesActuales || [];
+  const marcadas = pend.filter(x=>trasSel.has(trasClave(x)));
+  if(!marcadas.length){ alert("Marca al menos una medida de la lista."); return; }
+  const nombre = document.getElementById("trasGrupoNombre").value.trim();
+  const destino = document.getElementById("trasGrupoDestino").value;
+  const responsable = document.getElementById("trasGrupoResp").value.trim();
+  const fecha = document.getElementById("trasGrupoFecha").value;
+  if(!nombre){ alert("Escribe el nombre de la actividad."); return; }
+  if(!fecha){ alert("Indica la fecha programada antes de traspasar."); return; }
+  const areas = new Set(marcadas.map(x=>x.m.areaId||""));
+  const creadas = destino==="programa" ? areas.size : 1;
+  if(!confirm(`Se creará ${creadas} actividad(es) "${nombre}" en ${TRASPASO_DESTINO_LABEL[destino]} y las ${marcadas.length} medida(s) marcadas quedarán como traspasadas. ¿Continuar?`)) return;
+  await ejecutarTraspasoGrupo(marcadas, destino, nombre, responsable, fecha);
+  trasSel = new Set(); trasNombreAuto = ""; ["trasGrupoNombre","trasGrupoResp","trasGrupoFecha"].forEach(id=>document.getElementById(id).value = "");
+  await loadCache();
+  renderProgramaTable(); renderPgFiltros();
+  renderCapacitacionesList(); renderCapFiltros(); renderCommonSelects();
+  renderTraspasosPendientes();
+  alert(`Se crearon ${creadas} actividad(es) y se traspasaron ${marcadas.length} medida(s).`);
+});
+on(document.getElementById("trasGrupoDescartarBtn"), "click", async ()=>{
+  const pend = window.__traspasosPendientesActuales || [];
+  const marcadas = pend.filter(x=>trasSel.has(trasClave(x)));
+  if(!marcadas.length){ alert("Marca al menos una medida de la lista."); return; }
+  if(!confirm(`¿Descartar ${marcadas.length} medida(s) como actividad de seguimiento? No se volverán a ofrecer y no se crea ninguna actividad.`)) return;
+  const lineas = new Map();
+  for(const x of marcadas){ await descartarTraspaso(x.m, x.clave); lineas.set(x.m.id, x.m); }
+  for(const m of lineas.values()) await put("matriz", m);
+  trasSel = new Set();
+  await loadCache();
+  renderTraspasosPendientes();
+});
 on(document.getElementById("traspasosPendientesTable"), "click", async (e) => {
   const pendientes = window.__traspasosPendientesActuales || [];
   const irBtn = e.target.closest("[data-traspasofila-ir]");
