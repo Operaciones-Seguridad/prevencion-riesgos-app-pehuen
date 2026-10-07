@@ -1152,7 +1152,7 @@
       <div class="toolbar">
         <div class="field"><label>Buscar</label><input id="trasBuscar" placeholder="Medida de control, peligro o riesgo"></div>
         <div class="field"><label>Área</label><select id="trasArea"></select></div>
-        <div><button class="btn small secondary" id="trasMarcarBtn" type="button" style="margin-top:20px;">Marcar las visibles</button></div>
+        <div><button class="btn small secondary" id="trasMarcarBtn" type="button" style="margin-top:20px;">Marcar o desmarcar las visibles</button></div>
         <div><button class="btn small secondary" id="trasLimpiarBtn" type="button" style="margin-top:20px;">Desmarcar todas</button></div>
       </div>
       <div id="trasGrupoPanel" style="display:none;border:1px solid var(--grid);border-radius:8px;padding:10px 12px;margin:8px 0;">
@@ -1160,7 +1160,7 @@
         <div class="form-grid">
           <div style="grid-column:1/-1;"><label>Nombre de la actividad (una sola para todas las marcadas)</label><input id="trasGrupoNombre" placeholder="Ej: Inspección de equipos"></div>
           <div><label>Destino</label><select id="trasGrupoDestino"><option value="programa">Programa de seguridad</option><option value="capacitacion">Plan de capacitación</option></select></div>
-          <div><label>Responsable</label><input id="trasGrupoResp" placeholder="Nombre / cargo"></div>
+          <div><label>Responsable</label><input id="trasGrupoResp" list="dlResponsables" placeholder="Elige o escribe el nombre"></div>
           <div><label>Fecha programada</label><input id="trasGrupoFecha" type="date"></div>
         </div>
         <div class="kv" style="margin-top:4px;">En Programa de seguridad se crea una actividad por cada área de las marcadas; en Plan de capacitación, una sola.</div>
@@ -1227,9 +1227,11 @@
       <div class="toolbar">
         <div class="field"><label>Buscar</label><input id="paPendBuscar" placeholder="Peligro, riesgo, actividad o proceso"></div>
         <div class="field"><label>Área</label><select id="paPendArea"></select></div>
-        <div><button class="btn small secondary" id="paPendMarcarBtn" type="button" style="margin-top:20px;">Marcar las visibles</button></div>
+        <div><button class="btn small secondary" id="paPendMarcarBtn" type="button" style="margin-top:20px;">Marcar o desmarcar las visibles</button></div>
+        <div><button class="btn small secondary" id="paPendLimpiarBtn" type="button" style="margin-top:20px;">Desmarcar todas</button></div>
         <div><button class="btn small" id="paPendDefinirBtn" type="button" style="margin-top:20px;">Definir acción para las marcadas</button></div>
       </div>
+      <div class="kv" id="paPendResumen" style="margin-bottom:4px;"></div>
       <table>
         <thead><tr><th></th><th>Área</th><th>Peligro / Riesgo</th><th>Nivel</th><th></th></tr></thead>
         <tbody id="paPendientesTable"></tbody>
@@ -1246,7 +1248,7 @@
         <div class="toolbar">
           <div class="field"><label>Buscar</label><input id="paOtrasBuscar" placeholder="Peligro, riesgo, actividad o proceso"></div>
           <div class="field"><label>Área</label><select id="paOtrasArea"></select></div>
-          <div><button class="btn small secondary" id="paOtrasMarcarBtn" type="button" style="margin-top:20px;">Marcar las visibles</button></div>
+          <div><button class="btn small secondary" id="paOtrasMarcarBtn" type="button" style="margin-top:20px;">Marcar o desmarcar las visibles</button></div>
           <div><button class="btn small secondary" id="paOtrasLimpiarBtn" type="button" style="margin-top:20px;">Desmarcar todas</button></div>
         </div>
         <div id="paOtrasLista" style="max-height:240px;overflow:auto;border:1px solid var(--grid);border-radius:8px;padding:6px 10px;"></div>
@@ -1293,7 +1295,9 @@
         <div><button class="btn secondary small" id="printPlanAccionBtn" style="margin-top:20px;">Imprimir Plan de Acción</button></div>
       </div>
       <div class="toolbar">
-        <div><button class="btn small secondary" id="paSegMarcarBtn" type="button">Marcar las visibles</button></div>
+        <div><button class="btn small secondary" id="paSegMarcarBtn" type="button">Marcar o desmarcar las visibles</button></div>
+        <div><button class="btn small secondary" id="paSegLimpiarBtn" type="button">Desmarcar todas</button></div>
+        <div class="kv" id="paSegResumen"></div>
         <div class="field"><label>Cambiar el estado de las marcadas a</label><select id="paBulkEstado"><option value="pendiente">Pendiente</option><option value="proceso">En proceso</option><option value="cumplida">Cumplida</option></select></div>
         <div><button class="btn small" id="paBulkEstadoBtn" type="button" style="margin-top:20px;">Aplicar a las marcadas</button></div>
       </div>
@@ -1625,7 +1629,7 @@
         </div>
         <div>
           <label>Responsable</label>
-          <input id="pgResponsable" placeholder="Nombre responsable">
+          <input id="pgResponsable" list="dlResponsables" placeholder="Nombre responsable">
         </div>
         <div>
           <label>Fecha programada</label>
@@ -1649,8 +1653,16 @@
         <div class="field"><label>Filtrar por mes</label><select id="filterPgMes"><option value="">Todos los meses</option></select></div>
         <div class="field"><label>Filtrar por responsable</label><select id="filterPgResponsable"><option value="">Todos los responsables</option></select></div>
       </div>
+      <datalist id="dlResponsables"></datalist>
+      <div class="toolbar">
+        <div><button class="btn small secondary" id="pgMarcarBtn" type="button">Marcar o desmarcar las visibles</button></div>
+        <div><button class="btn small secondary" id="pgLimpiarBtn" type="button">Desmarcar todas</button></div>
+        <div class="field"><label>Designar responsable de las marcadas</label><input id="pgBulkResp" list="dlResponsables" placeholder="Elige o escribe el nombre"></div>
+        <div><button class="btn small" id="pgBulkRespBtn" type="button" style="margin-top:20px;">Asignar a las marcadas</button></div>
+        <div class="kv" id="pgSelResumen"></div>
+      </div>
       <table>
-        <thead><tr><th>Actividad</th><th>Tipo</th><th>Área</th><th>Responsable</th><th>Fecha programada</th><th>Estado</th><th>Fecha de realización</th><th>Documento probatorio</th><th></th></tr></thead>
+        <thead><tr><th></th><th>Actividad</th><th>Tipo</th><th>Área</th><th>Responsable</th><th>Fecha programada</th><th>Estado</th><th>Fecha de realización</th><th>Documento probatorio</th><th></th></tr></thead>
         <tbody id="programaTable"></tbody>
       </table>
       <div style="margin-top:14px;"><button class="btn secondary" id="descargarProgramaPdfBtn">Descargar PDF (según filtros)</button></div>
@@ -9698,7 +9710,26 @@ async function logHistorial(registroId, descripcion, campo, anterior, nuevo){
   });
 }
 
+/* Nombres que se sugieren al designar un responsable (trabajadores, nómina de
+   responsables de cierre, usuarios, personas del programa y miembros del comité). */
+function responsablesSugeridos(){
+  const nombres = [].concat(
+    (CACHE.trabajadores||[]).map(t=>t.nombre),
+    (CACHE.correosResponsables||[]).map(c=>c.nombre),
+    (CACHE.accesoUsuarios||[]).map(u=>u.nombre),
+    (CACHE.programaPersonas||[]).map(p=>p.nombre),
+    (CACHE.cphysMiembros||[]).map(m=>m.nombre)
+  ).map(n=>String(n||"").trim()).filter(Boolean);
+  return Array.from(new Set(nombres)).sort((a,b)=>a.localeCompare(b));
+}
+/* Un responsable genérico ("Trabajador", "Operador"...) no sirve para dar seguimiento:
+   al traspasar no se precarga y se pide designar a una persona o cargo concreto. */
+function responsableEsGenerico(texto){
+  const t = String(texto||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim();
+  return !t || ["trabajador","trabajadores","el trabajador","los trabajadores","operador","operadores","personal","el personal","colaborador","colaboradores"].includes(t);
+}
 function renderCommonSelects(){
+  { const dl = document.getElementById("dlResponsables"); if(dl) fillDatalist(dl, responsablesSugeridos()); }
   fillDatalist(document.getElementById("dlDocumentosProcedimiento"), (CACHE.documentos||[]).filter(d=>d.tipo==="procedimiento").map(d=>d.nombre).filter(Boolean));
   const areaOpts = CACHE.areas.map(a=>({id:a.id,label:a.nombre}));
   fillSelect(document.getElementById("insArea"), areaOpts, true);
@@ -12332,7 +12363,7 @@ function ofrecerTraspasosDetectados(matrizId){
       </label>
       <div class="kv" style="margin:4px 0 8px;">"${x.item.texto}"</div>
       <div class="form-grid">
-        <div><label>Responsable</label><input data-traspasomodal-resp="${idx}" value="${x.item.responsable||""}" placeholder="Nombre / cargo"></div>
+        <div><label>Responsable</label><input data-traspasomodal-resp="${idx}" list="dlResponsables" value="${incEsc(responsableEsGenerico(x.item.responsable) ? "" : x.item.responsable)}" placeholder="Designa el responsable"></div>
         <div><label>Fecha programada</label><input type="date" data-traspasomodal-fecha="${idx}" value="${x.item.plazo||""}"></div>
       </div>
     </div>`;
@@ -12352,6 +12383,10 @@ function ofrecerTraspasosDetectados(matrizId){
       .filter(x => document.querySelector(`[data-traspasomodal-check="${x.idx}"]`).checked);
     if(marcados.some(x => !document.querySelector(`[data-traspasomodal-fecha="${x.idx}"]`).value)){
       alert("Indica la fecha programada de cada actividad marcada (o destíldala si quieres dejarla pendiente).");
+      return;
+    }
+    if(marcados.some(x => !document.querySelector(`[data-traspasomodal-resp="${x.idx}"]`).value.trim())){
+      alert("Designa el responsable de cada actividad marcada (elige un nombre de la lista o escríbelo).");
       return;
     }
     for(const x of marcados){
@@ -14076,13 +14111,28 @@ function renderPaPendientes(){
         </tr>`;
       }).join("")
     : `<tr><td colspan="5" class="empty">${total.length ? "Ninguna línea coincide con la búsqueda" : "No hay líneas medio/alto/muy alto sin plan de acción"}</td></tr>`;
+  paResumenSeleccion("paPendResumen", paPendSel, pendientes.map(m=>m.id));
 }
 ["paPendBuscar","paPendArea"].forEach(id=>on(document.getElementById(id), id==="paPendBuscar"?"input":"change", renderPaPendientes));
 on(document.getElementById("paPendientesTable"), "change", (e)=>{
   const cb = e.target.closest("[data-pa-pend-sel]"); if(!cb) return;
   if(cb.checked) paPendSel.add(cb.dataset.paPendSel); else paPendSel.delete(cb.dataset.paPendSel);
+  paResumenSeleccion("paPendResumen", paPendSel, paPendientesFiltradas().map(m=>m.id));
 });
-on(document.getElementById("paPendMarcarBtn"), "click", ()=>{ paPendientesFiltradas().forEach(m=>paPendSel.add(m.id)); renderPaPendientes(); });
+/* "Marcar o desmarcar las visibles": si todas las visibles ya estaban marcadas,
+   las desmarca; si no, las marca. "Desmarcar todas" limpia también las que
+   quedaron ocultas por la búsqueda o el filtro de área. */
+function paAlternarVisibles(sel, ids){
+  const todas = ids.length && ids.every(id=>sel.has(id));
+  ids.forEach(id=>{ if(todas) sel.delete(id); else sel.add(id); });
+}
+function paResumenSeleccion(id, sel, visiblesIds){
+  const el = document.getElementById(id); if(!el) return;
+  const ocultas = Array.from(sel).filter(x=>!visiblesIds.includes(x)).length;
+  el.textContent = sel.size ? `${sel.size} marcada(s)${ocultas ? ` (${ocultas} oculta(s) por la búsqueda o el filtro de área)` : ""}.` : "";
+}
+on(document.getElementById("paPendMarcarBtn"), "click", ()=>{ paAlternarVisibles(paPendSel, paPendientesFiltradas().map(m=>m.id)); renderPaPendientes(); });
+on(document.getElementById("paPendLimpiarBtn"), "click", ()=>{ paPendSel = new Set(); renderPaPendientes(); });
 on(document.getElementById("paPendDefinirBtn"), "click", ()=>{
   const ids = Array.from(paPendSel);
   if(!ids.length){ alert("Marca al menos una línea de la lista."); return; }
@@ -14125,7 +14175,7 @@ on(document.getElementById("paOtrasLista"), "change", (e)=>{
   if(cb.checked) paOtrasSel.add(cb.dataset.paOtra); else paOtrasSel.delete(cb.dataset.paOtra);
   document.getElementById("paOtrasResumen").textContent = paOtrasSel.size ? `${paOtrasSel.size} línea(s) marcada(s) además de la principal: se creará una acción por cada una.` : "";
 });
-on(document.getElementById("paOtrasMarcarBtn"), "click", ()=>{ paOtrasFiltradas().forEach(m=>paOtrasSel.add(m.id)); paRenderOtras(); });
+on(document.getElementById("paOtrasMarcarBtn"), "click", ()=>{ const ids = paOtrasFiltradas().map(m=>m.id); const todas = ids.length && ids.every(id=>paOtrasSel.has(id)); ids.forEach(id=>{ if(todas) paOtrasSel.delete(id); else paOtrasSel.add(id); }); paRenderOtras(); });
 on(document.getElementById("paOtrasLimpiarBtn"), "click", ()=>{ paOtrasSel = new Set(); paRenderOtras(); });
 function paActualizarContexto(){
   paRenderOtras();
@@ -14276,13 +14326,16 @@ function renderPaTable(){
       <td><button class="btn secondary small" data-pa-editar="${p.id}">Editar</button> <button class="subtle-btn" data-pa-eliminar="${p.id}">Eliminar</button></td>
     </tr>`;
   }).join("") : `<tr><td colspan="11" class="empty">Sin acciones registradas para el filtro seleccionado</td></tr>`;
+  paResumenSeleccion("paSegResumen", paSegSel, rows.map(r=>r.p.id));
 }
 on(document.getElementById("paSegBuscar"), "input", renderPaTable);
 on(document.getElementById("paTable"), "change", (e)=>{
   const cb = e.target.closest("[data-pa-seg-sel]"); if(!cb) return;
   if(cb.checked) paSegSel.add(cb.dataset.paSegSel); else paSegSel.delete(cb.dataset.paSegSel);
+  paResumenSeleccion("paSegResumen", paSegSel, paSeguimientoFiltrado().map(({p})=>p.id));
 });
-on(document.getElementById("paSegMarcarBtn"), "click", ()=>{ paSeguimientoFiltrado().forEach(({p})=>paSegSel.add(p.id)); renderPaTable(); });
+on(document.getElementById("paSegMarcarBtn"), "click", ()=>{ paAlternarVisibles(paSegSel, paSeguimientoFiltrado().map(({p})=>p.id)); renderPaTable(); });
+on(document.getElementById("paSegLimpiarBtn"), "click", ()=>{ paSegSel = new Set(); renderPaTable(); });
 /* Cambio de estado masivo sobre las acciones marcadas. Para "cumplida" se pide
    UNA sola vez el riesgo residual alcanzado y se aplica a todas las marcadas. */
 on(document.getElementById("paBulkEstadoBtn"), "click", async ()=>{
@@ -14486,7 +14539,7 @@ function trasActualizarPanel(pendientes){
   const dest = document.getElementById("trasGrupoDestino");
   if(!dest.dataset.tocado) dest.value = marcadas[0].destino;
   const resp = document.getElementById("trasGrupoResp");
-  if(!resp.value.trim()) resp.value = marcadas[0].item.responsable || "";
+  if(!resp.value.trim() && !responsableEsGenerico(marcadas[0].item.responsable)) resp.value = marcadas[0].item.responsable;
   const fec = document.getElementById("trasGrupoFecha");
   if(!fec.value) fec.value = marcadas[0].item.plazo || "";
 }
@@ -14510,7 +14563,7 @@ function renderTraspasosPendientes(){
         <option value="programa" ${x.destino==="programa"?"selected":""}>Programa de seguridad</option>
         <option value="capacitacion" ${x.destino==="capacitacion"?"selected":""}>Plan de capacitación</option>
       </select></td>
-      <td><input data-traspasofila-resp="${idx}" value="${x.item.responsable||""}" placeholder="Nombre / cargo"></td>
+      <td><input data-traspasofila-resp="${idx}" list="dlResponsables" value="${incEsc(responsableEsGenerico(x.item.responsable) ? "" : x.item.responsable)}" placeholder="Designa el responsable"></td>
       <td><input type="date" data-traspasofila-fecha="${idx}" value="${x.item.plazo||""}"></td>
       <td style="white-space:nowrap;">
         <button class="subtle-btn" data-traspasofila-ir="${idx}">Traspasar</button>
@@ -14530,7 +14583,9 @@ on(document.getElementById("traspasosPendientesTable"), "change", (e)=>{
 });
 on(document.getElementById("trasMarcarBtn"), "click", ()=>{
   const pend = window.__traspasosPendientesActuales || [];
-  trasFiltrados(pend).forEach(({x})=>trasSel.add(trasClave(x)));
+  const claves = trasFiltrados(pend).map(({x})=>trasClave(x));
+  const todas = claves.length && claves.every(k=>trasSel.has(k));
+  claves.forEach(k=>{ if(todas) trasSel.delete(k); else trasSel.add(k); });
   renderTraspasosPendientes();
 });
 on(document.getElementById("trasLimpiarBtn"), "click", ()=>{ trasSel = new Set(); document.getElementById("trasGrupoNombre").value = ""; trasNombreAuto = ""; renderTraspasosPendientes(); });
@@ -14543,6 +14598,7 @@ on(document.getElementById("trasGrupoTraspasarBtn"), "click", async ()=>{
   const responsable = document.getElementById("trasGrupoResp").value.trim();
   const fecha = document.getElementById("trasGrupoFecha").value;
   if(!nombre){ alert("Escribe el nombre de la actividad."); return; }
+  if(!responsable){ alert("Designa el responsable de la actividad (elige un nombre de la lista o escríbelo) antes de traspasar."); return; }
   if(!fecha){ alert("Indica la fecha programada antes de traspasar."); return; }
   const areas = new Set(marcadas.map(x=>x.m.areaId||""));
   const creadas = destino==="programa" ? areas.size : 1;
@@ -14577,6 +14633,7 @@ on(document.getElementById("traspasosPendientesTable"), "click", async (e) => {
     const destino = document.querySelector(`[data-traspasofila-destino="${idx}"]`).value;
     const responsable = document.querySelector(`[data-traspasofila-resp="${idx}"]`).value.trim();
     const fecha = document.querySelector(`[data-traspasofila-fecha="${idx}"]`).value;
+    if(!responsable){ alert("Designa el responsable de la actividad (elige un nombre de la lista o escríbelo) antes de traspasar."); return; }
     if(!fecha){ alert("Indica la fecha programada antes de traspasar."); return; }
     await ejecutarTraspaso(x.m, x.item, x.clave, destino, responsable, fecha);
     await put("matriz", x.m);
@@ -15671,18 +15728,30 @@ function renderPgFiltros(){
   fillTextFilter(document.getElementById("filterPgResponsable"), CACHE.programa.map(p=>p.responsable), "Todos los responsables");
 }
 
-function renderProgramaTable(){
+var pgSel = new Set();
+function pgFiltradas(){
   const fEstado = document.getElementById("filterPgEstado").value;
   const fMes = document.getElementById("filterPgMes").value;
   const fResp = document.getElementById("filterPgResponsable").value;
-  const rows = CACHE.programa
+  return CACHE.programa
     .map(p=>({...p, estado: estadoPrograma(p)}))
     .filter(p=> !fEstado || p.estado===fEstado)
     .filter(p=> !fMes || (p.fechaProgramada||"").slice(0,7)===fMes)
     .filter(p=> !fResp || (p.responsable||"").trim()===fResp)
     .sort((a,b)=> new Date(a.fechaProgramada) - new Date(b.fechaProgramada));
+}
+function pgActualizarResumenSel(visibles){
+  const el = document.getElementById("pgSelResumen"); if(!el) return;
+  const ocultas = Array.from(pgSel).filter(id=>!visibles.includes(id)).length;
+  el.textContent = pgSel.size ? `${pgSel.size} marcada(s)${ocultas ? ` (${ocultas} oculta(s) por los filtros)` : ""}.` : "";
+}
+function renderProgramaTable(){
+  pgSel = new Set(Array.from(pgSel).filter(id=>CACHE.programa.some(p=>p.id===id)));
+  const rows = pgFiltradas();
+  pgActualizarResumenSel(rows.map(p=>p.id));
   document.getElementById("programaTable").innerHTML = rows.map(p=>`
     <tr>
+      <td><input type="checkbox" data-pg-sel="${p.id}" style="width:auto;min-height:auto;"${pgSel.has(p.id)?" checked":""}></td>
       <td>${p.nombre}</td>
       <td>${PG_TIPO_LABEL[p.tipo]||p.tipo}</td>
       <td>${areaName(p.areaId)}</td>
@@ -15691,15 +15760,77 @@ function renderProgramaTable(){
       <td><span class="pill ${p.estado==='realizada'?'cerrada':p.estado==='atrasada'?'critico':'pendiente'}">${p.estado==='realizada'?'Realizada':p.estado==='atrasada'?'Atrasada':'Pendiente'}</span></td>
       <td>${p.fechaRealizada? fmtDate(p.fechaRealizada) : "—"}</td>
       <td>${p.documento? `<a href="${p.documento}" download="${p.documentoNombre||'documento'}" class="subtle-btn">${p.documentoNombre||"Descargar"}</a>` : '<span class="empty">Sin documento</span>'}</td>
-      <td><button class="btn small secondary" data-pg-registrar="${p.id}">${p.fechaRealizada? "Editar registro" : "Registrar realización"}</button></td>
+      <td style="white-space:nowrap;"><button class="btn small secondary" data-pg-registrar="${p.id}">${p.fechaRealizada? "Editar registro" : "Registrar realización"}</button> <button class="btn small secondary" data-pg-editar="${p.id}" title="Editar nombre, tipo, área, responsable o fecha programada">Editar actividad</button></td>
     </tr>
-  `).join("") || `<tr><td class="empty" colspan="9">Sin actividades registradas para el filtro seleccionado</td></tr>`;
+  `).join("") || `<tr><td class="empty" colspan="10">Sin actividades registradas para el filtro seleccionado</td></tr>`;
 }
 on(document.getElementById("programaTable"), "click", async (e) => {
+  const btnEd = e.target.closest("button[data-pg-editar]");
+  if(btnEd){ abrirEdicionActividadPrograma(btnEd.dataset.pgEditar); return; }
   const btn = e.target.closest("button[data-pg-registrar]");
   if(!btn) return;
   openProgramaModal(btn.dataset.pgRegistrar);
 });
+on(document.getElementById("programaTable"), "change", (e)=>{
+  const cb = e.target.closest("[data-pg-sel]"); if(!cb) return;
+  if(cb.checked) pgSel.add(cb.dataset.pgSel); else pgSel.delete(cb.dataset.pgSel);
+  pgActualizarResumenSel(pgFiltradas().map(p=>p.id));
+});
+on(document.getElementById("pgMarcarBtn"), "click", ()=>{
+  const ids = pgFiltradas().map(p=>p.id), todas = ids.length && ids.every(id=>pgSel.has(id));
+  ids.forEach(id=>{ if(todas) pgSel.delete(id); else pgSel.add(id); });
+  renderProgramaTable();
+});
+on(document.getElementById("pgLimpiarBtn"), "click", ()=>{ pgSel = new Set(); renderProgramaTable(); });
+/* Designar responsable a varias actividades a la vez (por ejemplo, tras traspasar
+   medidas de control desde la Matriz). */
+on(document.getElementById("pgBulkRespBtn"), "click", async ()=>{
+  const marcadas = CACHE.programa.filter(p=>pgSel.has(p.id));
+  const responsable = document.getElementById("pgBulkResp").value.trim();
+  if(!marcadas.length){ alert("Marca al menos una actividad de la lista."); return; }
+  if(!responsable){ alert("Escribe o elige el responsable que quieres designar."); return; }
+  if(!confirm(`Se designará a "${responsable}" como responsable de ${marcadas.length} actividad(es). ¿Continuar?`)) return;
+  for(const p of marcadas){ p.responsable = responsable; await put("programa", p); }
+  pgSel = new Set(); document.getElementById("pgBulkResp").value = "";
+  await loadCache();
+  renderPgFiltros(); renderProgramaTable(); renderProgramaCumplimientoPorResponsable();
+  if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
+  if(typeof renderMisPendientes === "function") renderMisPendientes();
+  alert(`Responsable designado en ${marcadas.length} actividad(es).`);
+});
+/* Edición de una actividad del programa (nombre, tipo, área, responsable y
+   fecha programada); la realización y su documento se siguen registrando
+   con "Registrar realización". */
+function abrirEdicionActividadPrograma(id){
+  const rec = CACHE.programa.find(p=>p.id===id); if(!rec) return;
+  openModal(`
+    <h3>Editar actividad del programa</h3>
+    <label>Nombre de la actividad</label>
+    <input id="pgEdNombre" value="${incEsc(rec.nombre||"")}">
+    <div class="form-grid" style="margin-top:6px;">
+      <div><label>Tipo</label><select id="pgEdTipo">${Object.entries(PG_TIPO_LABEL).map(([k,v])=>`<option value="${k}"${k===rec.tipo?" selected":""}>${v}</option>`).join("")}</select></div>
+      <div><label>Área</label><select id="pgEdArea">${(CACHE.areas||[]).map(a=>`<option value="${a.id}"${a.id===rec.areaId?" selected":""}>${incEsc(a.nombre)}</option>`).join("")}</select></div>
+      <div><label>Responsable</label><input id="pgEdResp" list="dlResponsables" value="${incEsc(rec.responsable||"")}" placeholder="Elige o escribe el nombre"></div>
+      <div><label>Fecha programada</label><input id="pgEdFecha" type="date" value="${rec.fechaProgramada||""}"></div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn" id="pgEdGuardarBtn" type="button">Guardar cambios</button>
+      <button class="btn secondary" id="pgEdCancelarBtn" type="button">Cancelar</button>
+    </div>`);
+  document.getElementById("pgEdCancelarBtn").addEventListener("click", closeModal);
+  document.getElementById("pgEdGuardarBtn").addEventListener("click", async ()=>{
+    const nombre = document.getElementById("pgEdNombre").value.trim(), fecha = document.getElementById("pgEdFecha").value;
+    if(!nombre || !fecha){ alert("Completa el nombre y la fecha programada."); return; }
+    rec.nombre = nombre; rec.tipo = document.getElementById("pgEdTipo").value; rec.areaId = document.getElementById("pgEdArea").value;
+    rec.responsable = document.getElementById("pgEdResp").value.trim(); rec.fechaProgramada = fecha;
+    await put("programa", rec);
+    await loadCache();
+    closeModal();
+    renderPgFiltros(); renderProgramaTable(); renderProgramaCumplimientoPorResponsable();
+    if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
+    if(typeof renderMisPendientes === "function") renderMisPendientes();
+  });
+}
 document.getElementById("filterPgEstado").addEventListener("change", renderProgramaTable);
 document.getElementById("filterPgMes").addEventListener("change", () => { renderProgramaTable(); renderProgramaCumplimientoPorResponsable(); });
 document.getElementById("filterPgResponsable").addEventListener("change", () => { renderProgramaTable(); renderProgramaCumplimientoPorResponsable(); });
