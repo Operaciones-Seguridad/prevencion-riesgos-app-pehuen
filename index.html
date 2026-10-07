@@ -12585,12 +12585,13 @@ function renderMatrizTable(){
       <td>${m.sensible && (m.gruposSensibles||[]).length ? `<span class="pill alto" title="${(m.gruposSensibles||[]).join(", ")}">Sí</span><div class="kv" style="margin-top:4px;">${(m.gruposSensibles||[]).join(", ")}</div>` : '<span class="pill bajo">No</span>'}</td>
       <td>${(() => {
         const items = jerarquiaDe(m);
-        if(!items.length) return "—";
+        const btnIa = storageMode==="api" ? `<div style="margin-top:6px;"><button class="btn secondary small" type="button" data-matriz-ia-revisar="${m.id}" title="La IA revisa estas medidas y sugiere mejoras; nunca modifica la línea sola">✨ Revisar medidas con IA</button></div>` : "";
+        if(!items.length) return "—" + btnIa;
         const warn = soloEpp(m) ? `<div style="margin-bottom:5px;"><span class="pill critico">Solo EPP</span></div>` : "";
         return warn + items.map(c=>{
           const detalle = [c.responsable?`Resp.: ${c.responsable}`:"", c.plazo?`Plazo: ${fmtDate(c.plazo)}`:""].filter(Boolean).join(" · ");
           return `<div style="margin-bottom:5px;">${jerarquiaChipHtml(c.jerarquia)} ${c.texto}${detalle?`<div class="kv">${detalle}</div>`:""}</div>`;
-        }).join("");
+        }).join("") + btnIa;
       })()}</td>
       <td>
         <div style="margin-bottom:4px;"><span class="pill ${m.estado||'pendiente'}">${({pendiente:"Pendiente",proceso:"En proceso",cerrada:"Cerrada"})[m.estado||'pendiente']}</span></div>
@@ -12628,7 +12629,69 @@ on(document.getElementById("matrizTable"), "change", async (e) => {
   renderPlanAccion();
   renderMatrizHistorialTable();
 });
+/* --- Revisión de las medidas de control de una línea con IA ---
+   Evalúa las medidas actuales frente al peligro y a la jerarquía de controles
+   del DS 44 y propone medidas faltantes. NUNCA modifica la línea sola: el
+   resultado se muestra en una ventana y el usuario elige qué agregar. */
+const IA_VEREDICTO = {adecuada:{t:"Adecuada", c:"vigente"}, mejorable:{t:"Mejorable", c:"medio"}, insuficiente:{t:"Insuficiente", c:"critico"}};
+let iaRevisionActual = null;
+async function matrizRevisarControlesIA(id, btn){
+  const rec = CACHE.matriz.find(m=>m.id===id); if(!rec) return;
+  const textoOriginal = btn.textContent;
+  btn.disabled = true; btn.textContent = "Consultando a la IA…";
+  try{
+    const r = await apiFetch("POST", "/api/ia/revisar-controles", {matrizId:id});
+    iaRevisionActual = {id, faltantes: r.faltantes||[]};
+    const medidas = jerarquiaDe(rec);
+    const evalPorIdx = new Map((r.evaluacion||[]).map(e=>[e.indice, e]));
+    const filas = medidas.map((c,i)=>{
+      const e = evalPorIdx.get(i);
+      const v = e ? IA_VEREDICTO[e.veredicto] : null;
+      return `<tr><td>${jerarquiaChipHtml(c.jerarquia)} ${incEsc(c.texto)}</td>
+        <td>${v ? `<span class="pill ${v.c}">${v.t}</span>` : "—"}${e && e.jerarquiaSugerida && e.jerarquiaSugerida!==c.jerarquia ? `<div class="kv">Jerarquía sugerida: ${jerarquiaChipHtml(e.jerarquiaSugerida)} ${JERARQUIA_LABEL[e.jerarquiaSugerida]}</div>` : ""}</td>
+        <td>${e ? incEsc(e.comentario) : "—"}</td></tr>`;
+    }).join("");
+    const faltantes = iaRevisionActual.faltantes.map((f,i)=>`<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:6px 0;"><input type="checkbox" data-ia-rc-sug="${i}" checked style="width:auto;min-height:auto;margin-top:3px;"><span>${jerarquiaChipHtml(f.jerarquia)} <strong>${incEsc(f.texto)}</strong>${f.motivo?`<div class="kv">${incEsc(f.motivo)}</div>`:""}</span></label>`).join("");
+    openModal(`
+      <h3>Revisión de medidas con IA</h3>
+      <div class="kv" style="margin-bottom:8px;">${incEsc(matrizLineLabel(rec))}</div>
+      ${r.resumen ? `<div class="desc" style="margin:0 0 10px;"><strong>Diagnóstico:</strong> ${incEsc(r.resumen)}</div>` : ""}
+      ${medidas.length ? `<table><thead><tr><th>Medida actual</th><th>Evaluación</th><th>Comentario</th></tr></thead><tbody>${filas}</tbody></table>` : '<div class="empty">La línea no tiene medidas de control todavía.</div>'}
+      <h4 style="margin:14px 0 4px;">Medidas que la IA sugiere agregar</h4>
+      ${faltantes || '<div class="empty">La IA no sugiere medidas adicionales.</div>'}
+      <div class="kv" style="margin-top:8px;">Esta revisión es una ayuda automática y puede equivocarse: revisa cada sugerencia con criterio de prevencionista y con la realidad de la faena antes de agregarla.</div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+        ${iaRevisionActual.faltantes.length ? '<button class="btn" id="iaRcAgregarBtn" type="button">Agregar las seleccionadas a la línea</button>' : ""}
+        <button class="btn secondary" id="iaRcCerrarBtn" type="button">Cerrar</button>
+      </div>`, {wide:true});
+    document.getElementById("iaRcCerrarBtn").addEventListener("click", closeModal);
+    const bAgregar = document.getElementById("iaRcAgregarBtn");
+    if(bAgregar) bAgregar.addEventListener("click", async ()=>{
+      const marcadas = [...document.querySelectorAll("#modalBody [data-ia-rc-sug]:checked")].map(c=>iaRevisionActual.faltantes[+c.dataset.iaRcSug]);
+      if(!marcadas.length){ alert("Marca al menos una medida para agregar."); return; }
+      const actual = CACHE.matriz.find(m=>m.id===iaRevisionActual.id); if(!actual) return;
+      const antes = jerarquiaDe(actual).map(c=>({...c}));
+      const despues = antes.concat(marcadas.map(f=>({jerarquia:f.jerarquia, texto:f.texto, responsable:"", plazo:""})));
+      actual.controlesJerarquizados = despues;
+      actual.controles = controlesTextoPlano(despues);
+      actual.responsable = responsableTextoPlano(despues);
+      actual.plazo = plazoResumenControles(despues);
+      await put("matriz", actual);
+      await logHistorial(actual.id, matrizLineLabel(actual), "Medidas de control", `${antes.length} medida(s)`, `${despues.length} medida(s) (se agregaron ${marcadas.length} sugeridas por la IA y aprobadas por el usuario)`);
+      closeModal();
+      await loadCache();
+      renderMatrizTable(); renderJerarquiaControles(); renderEppEstudioCobertura(); renderPlanAccion(); renderMatrizHistorialTable();
+      alert(`${marcadas.length} medida(s) agregada(s) a la línea.`);
+    });
+  }catch(err){
+    alert("No se pudo revisar con IA: " + err.message);
+  }finally{
+    btn.disabled = false; btn.textContent = textoOriginal;
+  }
+}
 on(document.getElementById("matrizTable"), "click", async (e) => {
+  const btnIaRev = e.target.closest("button[data-matriz-ia-revisar]");
+  if(btnIaRev){ await matrizRevisarControlesIA(btnIaRev.dataset.matrizIaRevisar, btnIaRev); return; }
   const btnEditar = e.target.closest("button[data-matriz-editar]");
   if(btnEditar){ startEditMatriz(btnEditar.dataset.matrizEditar); return; }
   const btnRevisado = e.target.closest("button[data-matriz-revisado]");
