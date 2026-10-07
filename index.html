@@ -627,6 +627,10 @@
             <option value="observacion">Solo Observación</option>
           </select>
         </div>
+        <div>
+          <label>Instructivo / procedimiento asociado (opcional)</label>
+          <select id="fmtDocumento"><option value="">Sin documento asociado</option></select>
+        </div>
       </div>
       <label>Ítems del checklist</label>
       <div class="desc">Para cada ítem, elige si se responde con el cuadro <strong>Cumple / No cumple / N/A</strong>, o si en su lugar se debe dejar un <strong>cuadro de texto para escribir en forma manual</strong> (por ejemplo, para anotar una observación, una medición o un dato libre).</div>
@@ -672,7 +676,7 @@
 
       <h2 style="margin-top:22px;">Formatos ya creados</h2>
       <table>
-        <thead><tr><th>Nombre</th><th>Se usa para</th><th>Ítems</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>Nombre</th><th>Se usa para</th><th>Ítems</th><th>Instructivo asociado</th><th>Acciones</th></tr></thead>
         <tbody id="formatosTable"></tbody>
       </table>
     </div></div>
@@ -842,6 +846,55 @@
         <thead><tr><th>Año</th><th>Inspecciones</th><th>Observaciones</th><th>Hallazgos totales</th><th>Hallazgos alto/muy alto</th></tr></thead>
         <tbody id="statsAnualTable"></tbody>
       </table>
+    </div></div>
+
+    <!-- ANÁLISIS CONDUCTUAL -->
+    <div class="card">
+      <div class="card-header-row" id="hdrConIndicadores"><h2>Indicadores de conducta</h2><button class="collapse-toggle" id="toggleConIndicadores" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyConIndicadores">
+      <div class="desc">Se calculan con las <strong>observaciones</strong> registradas: cada ítem Cumple / No cumple de un formato es una conducta (los N/A y los cuadros de texto no cuentan). Una conducta con menos de 5 evaluaciones se marca como "muestra pequeña" y no se clasifica como crítica. Asocia cada formato a su instructivo de trabajo en "Formatos e historial" para ver a qué instructivo corresponde cada conducta.</div>
+      <div class="toolbar">
+        <div class="field"><label>Período</label><select id="conPeriodo"></select></div>
+        <div class="field" id="conRangoWrap" style="display:none;"><label>Desde</label><input id="conDesde" type="date"></div>
+        <div class="field" id="conRangoWrap2" style="display:none;"><label>Hasta</label><input id="conHasta" type="date"></div>
+        <div class="field"><label>Formato</label><select id="conFormato"></select></div>
+        <div class="field"><label>Área</label><select id="conArea"></select></div>
+        <div class="field"><label>Observador</label><select id="conObservador"></select></div>
+        <div class="field"><label>Meta de conductas seguras (%)</label><input id="conMeta" type="number" min="1" max="100" value="90" style="max-width:100px;"></div>
+        <div><button class="btn small secondary" id="conPdfBtn" style="margin-top:20px;">Descargar informe PDF</button></div>
+      </div>
+      <div class="grid-tiles" id="conTiles"></div>
+      <h3 style="margin:14px 0 6px;font-size:14px;">Tendencia mensual del % de conductas seguras</h3>
+      <div id="conTendenciaWrap" style="overflow-x:auto;"></div>
+      <h3 style="margin:14px 0 6px;font-size:14px;">Ranking de conductas</h3>
+      <div id="conRankingWrap" style="overflow-x:auto;"></div>
+      <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));column-gap:24px;margin-top:14px;">
+        <div><div class="label" style="font-size:12.5px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;">Por área</div><div id="conAreaWrap"></div></div>
+        <div><div class="label" style="font-size:12.5px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;">Por observador (cobertura)</div><div id="conObsWrap"></div></div>
+      </div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrConMadurez"><h2>Madurez de la cultura de seguridad (Curva de Bradley)</h2><button class="collapse-toggle" id="toggleConMadurez" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyConMadurez">
+      <div class="desc">La Curva de Bradley (modelo DuPont) describe cuatro etapas de la cultura de seguridad: reactiva, dependiente, independiente e interdependiente. Esta es una <strong>estimación orientativa</strong> con reglas simples sobre los últimos 6 meses de observaciones; no es una medición certificada y conviene contrastarla con la realidad de los equipos.</div>
+      <div id="conMadurezWrap"></div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrConPrograma"><h2>Programa conductual del mes</h2><button class="collapse-toggle" id="toggleConPrograma" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyConPrograma">
+      <div class="desc">Propone las conductas críticas del mes (las de menor % de seguras en los últimos 3 meses, con muestra suficiente), el instructivo que corresponde y cómo reforzarlas. Para elegir el método se usa la <strong>pirámide de aprendizaje</strong> como guía: mientras más activo el método (práctica, enseñar a otros), mejor suele funcionar. Ojo: los porcentajes de retención que se le atribuyen a esa pirámide no tienen respaldo científico sólido, por eso aquí solo se usa para ordenar los métodos, no como cifra.</div>
+      <div class="toolbar">
+        <div class="field"><label>Año</label><select id="conPgAnio"></select></div>
+        <div class="field"><label>Mes</label><select id="conPgMes"></select></div>
+        <div><button class="btn small secondary" id="conPgRecalcBtn" type="button" style="margin-top:20px;">Recalcular propuesta</button></div>
+      </div>
+      <div id="conPgWrap"></div>
+      <label style="margin-top:12px;">Cargar como actividades en el Programa por cargo — personas</label>
+      <div class="desc" style="margin:0 0 4px;">Agrega a la hoja del mes de cada persona marcada una "Observación dirigida" (se cuenta sola al registrar observaciones con ese formato) y una actividad de refuerzo manual. Registra antes a las personas en "Programa de seguridad → Personas del programa".</div>
+      <div id="conPgPersonasWrap"></div>
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" id="conPgGuardarBtn" type="button">Guardar programa conductual</button>
+        <button class="btn secondary" id="conPgCargarBtn" type="button">Cargar al Programa por cargo</button>
+      </div>
     </div></div>
   </div>
 
@@ -3746,8 +3799,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 39;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas"];
+const DB_VERSION = 40;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -4249,6 +4302,9 @@ setupCollapsible("hdrIndicadoresDeSiniestralidadDS67YRegistroHistorico", "bodyIn
 setupCollapsible("hdrEvaluacionDeSiniestralidadDS67CotizacionAdicional", "bodyEvaluacionDeSiniestralidadDS67CotizacionAdicional", "toggleEvaluacionDeSiniestralidadDS67CotizacionAdicional", "collapsed_evaluacionDeSiniestralidadDS67CotizacionAdicional");
 setupCollapsible("hdrControlEstadisticoMensualYAnual", "bodyControlEstadisticoMensualYAnual", "toggleControlEstadisticoMensualYAnual", "collapsed_controlEstadisticoMensualYAnual");
 setupCollapsible("hdrClasificacionDeAccidentesEIncidentes", "bodyClasificacionDeAccidentesEIncidentes", "toggleClasificacionDeAccidentesEIncidentes", "collapsed_clasificacionDeAccidentesEIncidentes");
+setupCollapsible("hdrConIndicadores", "bodyConIndicadores", "toggleConIndicadores", "collapsed_conIndicadores");
+setupCollapsible("hdrConMadurez", "bodyConMadurez", "toggleConMadurez", "collapsed_conMadurez");
+setupCollapsible("hdrConPrograma", "bodyConPrograma", "toggleConPrograma", "collapsed_conPrograma");
 setupCollapsible("hdrCapMatriz", "bodyCapMatriz", "toggleCapMatriz", "collapsed_capMatriz");
 setupCollapsible("hdrMisCapacitaciones", "bodyMisCapacitaciones", "toggleMisCapacitaciones", "collapsed_misCapacitaciones");
 setupCollapsible("hdrPcResumen", "bodyPcResumen", "togglePcResumen", "collapsed_pcResumen");
@@ -4871,6 +4927,7 @@ function irAVista(nombreVista){
   if(nombreVista==="accidentabilidad") renderAccidentabilidad();
   if(nombreVista==="programa") renderProgramaCargo();
   if(nombreVista==="capacitacion") capRenderMatriz();
+  if(nombreVista==="inspecciones") renderAnalisisConductual();
   if(nombreVista==="mis-pendientes"){ renderMisActividadesMensuales(); renderMisHallazgos(); renderMisPendientes(); }
   if(nombreVista==="seguridad"){ renderInfractores(); renderVelocidad(); }
   if(nombreVista==="cphys") renderCphys();
@@ -9206,6 +9263,7 @@ subpestanasCrear("inspecciones", [
   {key:"ast", icono:"ast", label:"AST", desc:"Análisis de seguridad del trabajo", hdrs:["hdrConfeccionDeASTAnalisisDeSeguridadDelTrabajo","hdrASTRegistradas"]},
   {key:"izaje", icono:"caja", label:"Evaluación de carga (izaje)", desc:"Evaluación de carga en maniobras de izaje", hdrs:["hdrEvaluacionDeCargaIzaje","hdrEvaluacionesDeCargaRegistradas"]},
   {key:"estadisticas", icono:"grafico", label:"Estadísticas", desc:"Hallazgos repetitivos y estadística mensual", hdrs:["hdrTop10HallazgosRepetitivos","hdrEstadisticaMensualYAnualPorClasificacion"]},
+  {key:"conductual", icono:"personas", label:"Análisis conductual", desc:"Conductas observadas, madurez de la cultura y programa conductual", hdrs:["hdrConIndicadores","hdrConMadurez","hdrConPrograma"]},
 ], "tarjetas");
 subpestanasCrear("capacitacion", [
   {key:"matriz", icono:"grafico", label:"Plan anual", desc:"Matriz anual de capacitaciones y su cumplimiento", hdrs:["hdrCapMatriz"]},
@@ -10427,6 +10485,7 @@ function resetFormatoForm(){
   formatoEditingId = null;
   document.getElementById("fmtNombre").value = "";
   document.getElementById("fmtCategoria").value = "ambos";
+  document.getElementById("fmtDocumento").value = "";
   currentFmtItems = [];
   drawFmtItems();
   document.getElementById("fmtFormTitle").textContent = "Formatos de inspección / observación";
@@ -10439,6 +10498,8 @@ function startEditFormato(id){
   formatoEditingId = id;
   document.getElementById("fmtNombre").value = rec.nombre || "";
   document.getElementById("fmtCategoria").value = rec.categoria || "ambos";
+  fillFmtDocumentoSelect();
+  document.getElementById("fmtDocumento").value = rec.documentoId || "";
   currentFmtItems = (rec.items||[]).map(it=>({text: checklistItemTexto(it), tipo: checklistItemTipo(it)}));
   drawFmtItems();
   document.getElementById("fmtFormTitle").textContent = 'Editando formato "'+(rec.nombre||"")+'"';
@@ -10451,7 +10512,7 @@ on(document.getElementById("addFormatoBtn"), "click", async () => {
   const nombre = document.getElementById("fmtNombre").value.trim();
   const categoria = document.getElementById("fmtCategoria").value;
   if(!nombre || !currentFmtItems.length){ alert("Complete el nombre del formato y agregue al menos un ítem del checklist."); return; }
-  await put("checklists", {id: formatoEditingId || uid(), nombre, categoria, items: currentFmtItems.slice()});
+  await put("checklists", {id: formatoEditingId || uid(), nombre, categoria, documentoId: document.getElementById("fmtDocumento").value || "", items: currentFmtItems.slice()});
   await loadCache();
   const creando = !formatoEditingId;
   resetFormatoForm();
@@ -10459,7 +10520,16 @@ on(document.getElementById("addFormatoBtn"), "click", async () => {
   renderFormatosTable();
   alert(creando ? `Formato "${nombre}" creado.` : `Formato "${nombre}" actualizado.`);
 });
+function fillFmtDocumentoSelect(){
+  const sel = document.getElementById("fmtDocumento");
+  if(!sel) return;
+  const cur = sel.value;
+  const docs = (CACHE.documentos||[]).filter(d=>d.tipo==="procedimiento").slice().sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
+  sel.innerHTML = '<option value="">Sin documento asociado</option>' + docs.map(d=>`<option value="${d.id}">${incEsc(tipoDocumentoLabel(d))}: ${incEsc(d.nombre)}</option>`).join("");
+  if(cur && Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur;
+}
 function renderFormatosTable(){
+  fillFmtDocumentoSelect();
   const CAT_LABEL = {ambos:"Inspección y Observación", inspeccion:"Solo Inspección", observacion:"Solo Observación"};
   const rows = CACHE.checklists || [];
   document.getElementById("formatosTable").innerHTML = rows.length ? rows.map(c=>`
@@ -10467,12 +10537,13 @@ function renderFormatosTable(){
       <td>${c.nombre}</td>
       <td>${CAT_LABEL[c.categoria||"ambos"]||"—"}</td>
       <td>${(c.items||[]).length}</td>
+      <td>${c.documentoId ? (()=>{ const d = (CACHE.documentos||[]).find(x=>x.id===c.documentoId); return d ? incEsc(d.nombre) : '<span class="kv">Documento eliminado</span>'; })() : "—"}</td>
       <td>
         <button class="subtle-btn" data-formato-editar="${c.id}">Editar</button>
         <button class="subtle-btn" data-formato-eliminar="${c.id}">Eliminar</button>
       </td>
     </tr>
-  `).join("") : `<tr><td class="empty" colspan="4">Sin formatos creados todavía</td></tr>`;
+  `).join("") : `<tr><td class="empty" colspan="5">Sin formatos creados todavía</td></tr>`;
 }
 on(document.getElementById("formatosTable"), "click", async (e) => {
   const editBtn = e.target.closest("[data-formato-editar]");
@@ -16220,6 +16291,355 @@ function renderMisCapacitaciones(){
     return `<tr><td>${incEsc(c.nombre)}</td><td>${fmtDate(c.fechaProgramada)}</td><td>${incEsc(c.relator||"—")}</td><td><span class="pill ${c.fechaRealizada||est==="atrasada"?"alto":"medio"}">${txt}</span></td></tr>`;
   }).join("")}</tbody></table>` : '<div class="empty">No tienes capacitaciones pendientes por asistir.</div>';
 }
+
+/* =========================================================
+   ANÁLISIS CONDUCTUAL
+   Se calcula con las observaciones (inspecciones con tipoRegistro
+   "observacion"): cada ítem Cumple / No cumple de un formato es una
+   conducta; los N/A y los cuadros de texto no cuentan. Cada formato puede
+   asociarse a un instructivo o procedimiento (checklists.documentoId).
+   - Madurez: estimación orientativa en etapas de la Curva de Bradley
+     (modelo DuPont), no una medición certificada.
+   - Programa conductual: conductas críticas del mes con métodos de
+     refuerzo ordenados según la pirámide de aprendizaje. Los porcentajes de
+     retención que suelen atribuírsele no tienen respaldo científico sólido,
+     así que solo se usa para ordenar métodos de menos a más activos.
+   Store "programaConductual": {id, anio, mes, metaPct, focos:[{id, conducta,
+   formatoId, documentoId, pctSeguras, n, inseguras, metodos, notas}],
+   aplicadoAPersonasIds}.
+   ========================================================= */
+var CON_MIN_MUESTRA = 5;
+// De menos a más activo (como se dibuja la pirámide de aprendizaje).
+var CON_METODOS = [
+  {k:"charla", label:"Clase magistral / charla", desc:"Exposición del relator"},
+  {k:"lectura", label:"Lectura", desc:"Leer el instructivo"},
+  {k:"audiovisual", label:"Audiovisual", desc:"Video o presentación con imágenes"},
+  {k:"demostracion", label:"Demostración", desc:"Mostrar el procedimiento correcto en terreno"},
+  {k:"discusion", label:"Discusión en grupo", desc:"Analizar la conducta y sus causas con el equipo"},
+  {k:"practica", label:"Práctica", desc:"Ejercitar la tarea correcta con supervisión"},
+  {k:"ensenar", label:"Enseñar a otros", desc:"El trabajador instruye a sus compañeros"},
+];
+var CON_ETAPAS = {
+  sin:{t:"Sin datos suficientes", c:"#5b6577", d:"Hacen falta al menos 20 conductas evaluadas en los últimos 6 meses para estimar la etapa."},
+  reactiva:{t:"Reactiva", c:"#d03b3b", d:"La seguridad depende de reaccionar después de los incidentes; las personas ven la seguridad como algo que exige la empresa."},
+  dependiente:{t:"Dependiente", c:"#eb6834", d:"Las reglas se cumplen por supervisión y control; la seguridad se apoya en jefaturas y procedimientos."},
+  independiente:{t:"Independiente", c:"#e0a000", d:"Cada persona asume su propia seguridad y cumple por convicción, no solo porque la supervisan."},
+  interdependiente:{t:"Interdependiente", c:"#0ca30c", d:"Los equipos se cuidan entre sí y la seguridad es un valor compartido."},
+};
+var conPgDraft = null, conPgDraftKey = "";
+
+function conEl(id){ return document.getElementById(id); }
+function conNormTexto(t){ return String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim(); }
+function conMeta(){ const v = +conEl("conMeta").value; return v>0 && v<=100 ? v/100 : 0.9; }
+function conPctTxt(p){ return p===null||p===undefined ? "—" : Math.round(p*100)+"%"; }
+function conClaveObservador(i){ return i.inspectorId ? "id:"+i.inspectorId : "n:"+pcNorm(i.inspector); }
+function conNombreObservador(i){ return i.inspector || (i.inspectorId ? trabName(i.inspectorId) : "") || "—"; }
+function conFormatoNombre(id){ return ((CACHE.checklists||[]).find(c=>c.id===id)||{}).nombre || "—"; }
+function conDocumentoDeFormato(id){
+  const f = (CACHE.checklists||[]).find(c=>c.id===id);
+  return f && f.documentoId ? ((CACHE.documentos||[]).find(d=>d.id===f.documentoId) || null) : null;
+}
+function conRango(){
+  const p = conEl("conPeriodo").value || "12m", hoy = new Date();
+  if(p==="12m"){
+    const d = new Date(hoy.getFullYear()-1, hoy.getMonth(), hoy.getDate()+1);
+    return {desde:incFechaIso(d), hasta:incFechaIso(hoy), texto:"últimos 12 meses (del "+fmtDate(incFechaIso(d))+" al "+fmtDate(incFechaIso(hoy))+")"};
+  }
+  if(p==="todo") return {desde:"", hasta:"", texto:"todo el historial"};
+  if(p==="rango"){
+    const desde = conEl("conDesde").value, hasta = conEl("conHasta").value;
+    return {desde, hasta, texto: desde||hasta ? `${desde?"desde el "+fmtDate(desde):""}${desde&&hasta?" ":""}${hasta?"hasta el "+fmtDate(hasta):""}` : "rango sin definir (se muestra todo)"};
+  }
+  return {desde:p+"-01-01", hasta:p+"-12-31", texto:"año "+p};
+}
+function conFiltros(){
+  const r = conRango();
+  return {desde:r.desde, hasta:r.hasta, formato:conEl("conFormato").value, area:conEl("conArea").value, observador:conEl("conObservador").value, texto:r.texto};
+}
+function conObservaciones(o){
+  return (CACHE.inspecciones||[]).filter(i=>{
+    if((i.tipoRegistro||"inspeccion")!=="observacion") return false;
+    const f = i.fecha || "";
+    if(o.desde && f < o.desde) return false;
+    if(o.hasta && f > o.hasta) return false;
+    if(o.formato && i.tipoId!==o.formato) return false;
+    if(o.area && i.areaId!==o.area) return false;
+    if(o.observador && conClaveObservador(i)!==o.observador) return false;
+    return true;
+  });
+}
+function conEvaluar(obs){
+  const r = {conductas:new Map(), porMes:new Map(), porArea:new Map(), porObs:new Map(), totalEval:0, fail:0, nObs:obs.length};
+  obs.forEach(i=>{
+    const mes = (i.fecha||"").slice(0,7), ok = conClaveObservador(i);
+    if(!r.porObs.has(ok)) r.porObs.set(ok, {nombre:conNombreObservador(i), obs:0, ev:0, fail:0});
+    r.porObs.get(ok).obs++;
+    (i.checklist||[]).forEach(it=>{
+      if(it.tipo==="texto" || (it.estado!=="ok" && it.estado!=="fail")) return;
+      const bad = it.estado==="fail";
+      r.totalEval++; if(bad) r.fail++;
+      const key = (i.tipoId||"")+"|"+conNormTexto(it.text);
+      if(!r.conductas.has(key)) r.conductas.set(key, {texto:it.text, tipoId:i.tipoId||"", n:0, fail:0});
+      const c = r.conductas.get(key); c.n++; if(bad) c.fail++;
+      if(!r.porMes.has(mes)) r.porMes.set(mes, {n:0, fail:0});
+      const m = r.porMes.get(mes); m.n++; if(bad) m.fail++;
+      const ak = i.areaId || "";
+      if(!r.porArea.has(ak)) r.porArea.set(ak, {n:0, fail:0});
+      const a = r.porArea.get(ak); a.n++; if(bad) a.fail++;
+      const o = r.porObs.get(ok); o.ev++; if(bad) o.fail++;
+    });
+  });
+  return r;
+}
+
+function renderAnalisisConductual(){
+  if(!conEl("conTiles")) return;
+  renderConIndicadores();
+  renderConMadurez();
+  renderConPrograma();
+}
+
+/* ---- Indicadores ---- */
+function renderConIndicadores(){
+  const anios = Array.from(new Set((CACHE.inspecciones||[]).filter(i=>i.tipoRegistro==="observacion").map(i=>+(i.fecha||"").slice(0,4)).filter(Boolean).concat([new Date().getFullYear()]))).sort((a,b)=>b-a);
+  pcConservarSelect(conEl("conPeriodo"), '<option value="12m">Últimos 12 meses</option>' + anios.map(y=>`<option value="${y}">Año ${y}</option>`).join("") + '<option value="todo">Todo el historial</option><option value="rango">Rango de fechas</option>', "12m");
+  const esRango = conEl("conPeriodo").value==="rango";
+  conEl("conRangoWrap").style.display = esRango ? "" : "none";
+  conEl("conRangoWrap2").style.display = esRango ? "" : "none";
+  const formatos = (CACHE.checklists||[]).filter(c=>(c.categoria||"ambos")!=="inspeccion");
+  pcConservarSelect(conEl("conFormato"), '<option value="">Todos</option>' + formatos.map(c=>`<option value="${c.id}">${incEsc(c.nombre)}</option>`).join(""));
+  pcConservarSelect(conEl("conArea"), '<option value="">Todas</option>' + (CACHE.areas||[]).map(a=>`<option value="${a.id}">${incEsc(a.nombre)}</option>`).join(""));
+  const observadores = new Map();
+  (CACHE.inspecciones||[]).filter(i=>i.tipoRegistro==="observacion").forEach(i=>observadores.set(conClaveObservador(i), conNombreObservador(i)));
+  pcConservarSelect(conEl("conObservador"), '<option value="">Todos</option>' + Array.from(observadores.entries()).sort((a,b)=>a[1].localeCompare(b[1])).map(([k,n])=>`<option value="${incEsc(k)}">${incEsc(n)}</option>`).join(""));
+
+  const fil = conFiltros(), meta = conMeta();
+  const ev = conEvaluar(conObservaciones(fil));
+  const pct = ev.totalEval ? (ev.totalEval-ev.fail)/ev.totalEval : null;
+  conEl("conTiles").innerHTML = [
+    tile("Observaciones del período", ev.nObs, fil.texto),
+    tile("Conductas evaluadas", ev.totalEval, "ítems Cumple / No cumple"),
+    tile("Conductas seguras", conPctTxt(pct), `meta ${Math.round(meta*100)}%`),
+    tile("Conductas inseguras", pct===null ? "—" : conPctTxt(1-pct), `${ev.fail} de ${ev.totalEval}`),
+  ].join("");
+
+  const meses = Array.from(ev.porMes.keys()).filter(Boolean).sort().slice(-12);
+  renderLineChart(conEl("conTendenciaWrap"), meses.map(m=>({label:m.slice(5)+"/"+m.slice(2,4), value:Math.round((1-ev.porMes.get(m).fail/ev.porMes.get(m).n)*100)})), "#2a78d6");
+
+  const lista = Array.from(ev.conductas.values()).map(c=>({...c, pct:(c.n-c.fail)/c.n, suficiente:c.n>=CON_MIN_MUESTRA}))
+    .sort((a,b)=> (b.suficiente-a.suficiente) || (a.suficiente ? (a.pct-b.pct || b.fail-a.fail) : (b.n-a.n)));
+  conEl("conRankingWrap").innerHTML = lista.length ? `<table>
+    <thead><tr><th>Conducta</th><th>Formato</th><th>Instructivo asociado</th><th style="text-align:center;">Evaluadas</th><th style="text-align:center;">Inseguras</th><th style="text-align:center;">% seguras</th><th>Estado</th></tr></thead>
+    <tbody>${lista.slice(0,40).map(c=>{
+      const doc = conDocumentoDeFormato(c.tipoId);
+      const estado = !c.suficiente ? '<span class="pill pendiente">Muestra pequeña</span>' : c.pct>=meta ? '<span class="pill vigente">En meta</span>' : c.pct<0.7 ? '<span class="pill critico">Crítica</span>' : '<span class="pill medio">Bajo la meta</span>';
+      return `<tr><td>${incEsc(c.texto)}</td><td>${incEsc(conFormatoNombre(c.tipoId))}</td><td>${doc ? incEsc(doc.nombre) : "—"}</td><td style="text-align:center;">${c.n}</td><td style="text-align:center;">${c.fail}</td><td style="text-align:center;font-weight:600;">${conPctTxt(c.pct)}</td><td>${estado}</td></tr>`;
+    }).join("")}</tbody></table>${lista.length>40 ? `<div class="kv">Se muestran las 40 primeras de ${lista.length} conductas.</div>` : ""}`
+    : '<div class="empty">Sin observaciones con ítems Cumple / No cumple en el período y filtros elegidos.</div>';
+
+  const areas = Array.from(ev.porArea.entries()).map(([id,v])=>[areaName(id), Math.round((1-v.fail/v.n)*100)]).sort((a,b)=>a[1]-b[1]);
+  conEl("conAreaWrap").innerHTML = areas.length ? chartPercentBarsHtml(areas.map(([n,p])=>[incEsc(n),p]), (l,i)=>AREA_CHART_PALETTE[i%AREA_CHART_PALETTE.length]) : '<div class="empty">Sin datos</div>';
+  const obsRows = Array.from(ev.porObs.values()).sort((a,b)=>b.obs-a.obs);
+  conEl("conObsWrap").innerHTML = obsRows.length ? `<table><thead><tr><th>Observador</th><th style="text-align:center;">Observaciones</th><th style="text-align:center;">% seguras</th></tr></thead><tbody>${obsRows.map(o=>`<tr><td>${incEsc(o.nombre)}</td><td style="text-align:center;">${o.obs}</td><td style="text-align:center;">${o.ev ? conPctTxt(1-o.fail/o.ev) : "—"}</td></tr>`).join("")}</tbody></table>` : '<div class="empty">Sin datos</div>';
+}
+["conPeriodo","conDesde","conHasta","conFormato","conArea","conObservador","conMeta"].forEach(id=>on(conEl(id), "change", renderConIndicadores));
+
+/* ---- Madurez (Curva de Bradley) ---- */
+function conMadurezCalcular(){
+  const hoy = new Date(), hasta = incFechaIso(hoy), desde = incFechaIso(new Date(hoy.getFullYear(), hoy.getMonth()-5, 1));
+  const obs = conObservaciones({desde, hasta});
+  const ev = conEvaluar(obs);
+  const meses = new Set(obs.map(i=>(i.fecha||"").slice(0,7)).filter(Boolean)).size;
+  const pct = ev.totalEval ? (ev.totalEval-ev.fail)/ev.totalEval : null;
+  let venc = 0, cerr = 0;
+  obs.forEach(i=>(i.findings||[]).forEach(f=>{ if(f.plazo && f.plazo<=hasta){ venc++; if(f.estado==="cerrada") cerr++; } }));
+  const cierre = venc ? cerr/venc : null;
+  let etapa = "reactiva";
+  if(ev.totalEval<20) etapa = "sin";
+  else if(pct>=0.95 && meses>=5 && (cierre===null || cierre>=0.85)) etapa = "interdependiente";
+  else if(pct>=0.85 && meses>=4 && (cierre===null || cierre>=0.7)) etapa = "independiente";
+  else if(pct>=0.70 && meses>=2) etapa = "dependiente";
+  return {etapa, pct, meses, cierre, venc, cerr, evaluadas:ev.totalEval};
+}
+var CON_SIGUIENTE = {
+  sin:"Registra observaciones con formatos de conducta de forma regular para poder estimar la etapa.",
+  reactiva:"Para pasar a la etapa dependiente: llegar al 70% de conductas seguras y observar en al menos 2 de los últimos 6 meses.",
+  dependiente:"Para pasar a la etapa independiente: 85% de conductas seguras, observaciones en al menos 4 de los últimos 6 meses y cierre a tiempo de al menos 70% de los hallazgos.",
+  independiente:"Para pasar a la etapa interdependiente: 95% de conductas seguras, observaciones en al menos 5 de los últimos 6 meses y cierre a tiempo de al menos 85% de los hallazgos. Además, que los equipos se observen y cuiden entre sí: eso no lo miden estos datos, conviene confirmarlo con los equipos.",
+  interdependiente:"Mantener los resultados y confirmar con los equipos que el cuidado mutuo sea real (esto no lo miden estos datos).",
+};
+function renderConMadurez(){
+  const m = conMadurezCalcular(), e = CON_ETAPAS[m.etapa];
+  const orden = ["reactiva","dependiente","independiente","interdependiente"];
+  const curva = orden.map((k,i)=>`<div style="flex:1;min-width:130px;padding:10px;border-radius:8px;text-align:center;background:${k===m.etapa?CON_ETAPAS[k].c:"var(--grid)"};color:${k===m.etapa?(k==="independiente"?"#222":"#fff"):"var(--text-secondary)"};font-weight:${k===m.etapa?700:500};font-size:13px;">${i+1}. ${CON_ETAPAS[k].t}</div>`).join("");
+  const crit = (nombre, valor, umbral)=>`<tr><td>${nombre}</td><td style="text-align:center;font-weight:600;">${valor}</td><td>${umbral}</td></tr>`;
+  conEl("conMadurezWrap").innerHTML = `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">${curva}</div>
+    <div style="display:inline-block;background:${e.c};color:${m.etapa==="independiente"?"#222":"#fff"};border-radius:8px;padding:6px 14px;font-weight:700;margin-bottom:8px;">Etapa estimada: ${e.t}</div>
+    <div class="desc" style="margin:4px 0;">${e.d}</div>
+    <table style="max-width:680px;margin-top:8px;"><thead><tr><th>Criterio (últimos 6 meses)</th><th style="text-align:center;">Valor</th><th>Umbral de la etapa independiente / interdependiente</th></tr></thead><tbody>
+      ${crit("Conductas evaluadas", m.evaluadas, "mínimo 20 para estimar")}
+      ${crit("% de conductas seguras", conPctTxt(m.pct), "85% / 95%")}
+      ${crit("Meses con observaciones (de 6)", m.meses, "4 / 5")}
+      ${crit("Hallazgos de observaciones cerrados a tiempo", m.cierre===null ? "sin plazos vencidos" : `${m.cerr} de ${m.venc} (${conPctTxt(m.cierre)})`, "70% / 85%")}
+    </tbody></table>
+    <div class="desc" style="margin-top:8px;"><strong>${CON_SIGUIENTE[m.etapa]}</strong></div>
+    <div class="kv">Estimación orientativa basada en reglas simples; no es una medición certificada de cultura de seguridad.</div>`;
+}
+
+/* ---- Programa conductual del mes ---- */
+function conPgRegistro(anio, mes){ return (CACHE.programaConductual||[]).find(p=>p.anio===anio && p.mes===mes); }
+function conMetodosSugeridos(pct){ return pct<0.7 ? ["demostracion","practica","ensenar"] : ["demostracion","discusion"]; }
+function conPgPropuesta(anio, mes){
+  const desde = incFechaIso(new Date(anio, mes-3, 1)), hasta = incFechaIso(new Date(anio, mes, 0));
+  const ev = conEvaluar(conObservaciones({desde, hasta})), meta = conMeta();
+  return Array.from(ev.conductas.values()).filter(c=>c.n>=CON_MIN_MUESTRA && (c.n-c.fail)/c.n<meta)
+    .map(c=>({...c, pct:(c.n-c.fail)/c.n})).sort((a,b)=>a.pct-b.pct || b.fail-a.fail).slice(0,5)
+    .map(c=>{ const f = (CACHE.checklists||[]).find(x=>x.id===c.tipoId); return {id:uid(), conducta:c.texto, formatoId:c.tipoId, documentoId:(f&&f.documentoId)||"", pctSeguras:c.pct, n:c.n, inseguras:c.fail, metodos:conMetodosSugeridos(c.pct), notas:""}; });
+}
+function conPgCargarBorrador(forzarPropuesta){
+  const anio = +conEl("conPgAnio").value, mes = +conEl("conPgMes").value;
+  const clave = anio+"-"+mes;
+  if(!forzarPropuesta && conPgDraft && conPgDraftKey===clave) return;
+  const guardado = conPgRegistro(anio, mes);
+  conPgDraftKey = clave;
+  if(guardado && !forzarPropuesta) conPgDraft = {focos: JSON.parse(JSON.stringify(guardado.focos||[])), personas:(guardado.aplicadoAPersonasIds||[]).slice(), guardado:true};
+  else conPgDraft = {focos: conPgPropuesta(anio, mes), personas: conPgDraft && conPgDraftKey===clave ? conPgDraft.personas : [], guardado:false};
+}
+function renderConPrograma(){
+  const hoy = new Date();
+  const anios = Array.from(new Set((CACHE.programaConductual||[]).map(p=>p.anio).concat([hoy.getFullYear()-1, hoy.getFullYear(), hoy.getFullYear()+1]))).sort((a,b)=>b-a);
+  pcConservarSelect(conEl("conPgAnio"), anios.map(a=>`<option value="${a}">${a}</option>`).join(""), hoy.getFullYear());
+  pcConservarSelect(conEl("conPgMes"), MESES_NOMBRE.map((m,i)=>`<option value="${i+1}">${m}</option>`).join(""), hoy.getMonth()+1);
+  conPgCargarBorrador(false);
+  const focos = conPgDraft.focos;
+  const wrap = conEl("conPgWrap");
+  if(!focos.length){
+    wrap.innerHTML = `<div class="empty">No hay conductas bajo la meta con muestra suficiente (al menos ${CON_MIN_MUESTRA} evaluaciones en los últimos 3 meses). Sigue registrando observaciones o cambia la meta.</div>`;
+  } else {
+    wrap.innerHTML = (conPgDraft.guardado ? '<div class="kv" style="margin-bottom:6px;">Programa guardado para este mes. Usa "Recalcular propuesta" para generar uno nuevo con los datos actuales.</div>' : '<div class="kv" style="margin-bottom:6px;">Propuesta calculada con las observaciones de los últimos 3 meses. Ajusta los métodos y guarda.</div>')
+      + focos.map((f,i)=>{
+        const doc = f.documentoId ? (CACHE.documentos||[]).find(d=>d.id===f.documentoId) : null;
+        const acciones = CON_METODOS.filter(m=>(f.metodos||[]).includes(m.k)).reverse().map(m=>`${m.label}: ${doc?`"${doc.nombre}" — `:""}${f.conducta}`);
+        const piramide = CON_METODOS.map((m,k)=>`<div style="display:flex;justify-content:center;margin-bottom:3px;"><label style="width:${40+k*10}%;min-width:240px;display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:6px;font-weight:400;font-size:12.5px;margin:0;background:${(f.metodos||[]).includes(m.k)?"#cfe3fb":"var(--grid)"};"><input type="checkbox" data-con-metodo="${i}:${m.k}" style="width:auto;min-height:auto;"${(f.metodos||[]).includes(m.k)?" checked":""}><span><strong>${m.label}</strong> — ${m.desc}</span></label></div>`).join("");
+        return `<div class="finding" style="margin-bottom:12px;">
+          <div><strong>${i+1}. ${incEsc(f.conducta)}</strong> <span class="pill ${f.pctSeguras<0.7?"critico":"medio"}">${conPctTxt(f.pctSeguras)} seguras</span></div>
+          <div class="kv">${f.n} evaluaciones, ${f.inseguras} inseguras · Formato: ${incEsc(conFormatoNombre(f.formatoId))} · Instructivo: ${doc ? incEsc(doc.nombre) : "sin asociar"}</div>
+          <div class="kv" style="margin-top:6px;">Métodos de refuerzo (de menos a más activos; marca los que usarás):</div>
+          <div style="max-width:720px;margin:4px auto;">${piramide}</div>
+          ${acciones.length ? `<div class="desc" style="margin:6px 0 2px;"><strong>Acciones:</strong><ul style="margin:4px 0 0 18px;padding:0;">${acciones.map(a=>`<li>${incEsc(a)}</li>`).join("")}<li>Observaciones dirigidas a esta conducta durante el mes.</li></ul></div>` : ""}
+          <label style="margin-top:6px;">Notas</label>
+          <textarea data-con-notas="${i}" placeholder="Notas del programa para esta conducta...">${incEsc(f.notas||"")}</textarea>
+        </div>`;
+      }).join("");
+  }
+  const personas = (CACHE.programaPersonas||[]).slice().sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  conEl("conPgPersonasWrap").innerHTML = personas.length
+    ? personas.map(p=>`<label style="display:inline-flex;align-items:center;gap:6px;font-weight:400;margin-right:16px;"><input type="checkbox" data-con-persona="${p.id}" style="width:auto;min-height:auto;"${conPgDraft.personas.includes(p.id)?" checked":""}> ${incEsc(p.nombre)}${p.cargo?" — "+incEsc(p.cargo):""}</label>`).join("")
+    : '<div class="empty">Todavía no hay personas en el programa.</div>';
+}
+["conPgAnio","conPgMes"].forEach(id=>on(conEl(id), "change", renderConPrograma));
+on(conEl("conPgRecalcBtn"), "click", ()=>{ conPgCargarBorrador(true); renderConPrograma(); });
+on(conEl("conPgWrap"), "change", (e)=>{
+  const t = e.target;
+  if(t.dataset.conMetodo!==undefined){
+    const [i, k] = t.dataset.conMetodo.split(":"); const f = conPgDraft.focos[+i]; if(!f) return;
+    const set = new Set(f.metodos||[]); if(t.checked) set.add(k); else set.delete(k);
+    f.metodos = Array.from(set); renderConPrograma(); return;
+  }
+  if(t.dataset.conNotas!==undefined){ const f = conPgDraft.focos[+t.dataset.conNotas]; if(f) f.notas = t.value; }
+});
+on(conEl("conPgPersonasWrap"), "change", (e)=>{
+  const t = e.target; if(t.dataset.conPersona===undefined) return;
+  const set = new Set(conPgDraft.personas); if(t.checked) set.add(t.dataset.conPersona); else set.delete(t.dataset.conPersona);
+  conPgDraft.personas = Array.from(set);
+});
+async function conPgGuardar(){
+  const anio = +conEl("conPgAnio").value, mes = +conEl("conPgMes").value;
+  const existente = conPgRegistro(anio, mes);
+  await put("programaConductual", {id: existente?existente.id:uid(), anio, mes, metaPct: Math.round(conMeta()*100), focos: conPgDraft.focos, aplicadoAPersonasIds: conPgDraft.personas.slice()});
+  await loadCache();
+  conPgDraft.guardado = true;
+}
+on(conEl("conPgGuardarBtn"), "click", async ()=>{
+  if(!conPgDraft.focos.length){ alert("No hay conductas en el programa para guardar."); return; }
+  await conPgGuardar();
+  renderConPrograma();
+  alert("Programa conductual guardado.");
+});
+on(conEl("conPgCargarBtn"), "click", async ()=>{
+  if(!conPgDraft.focos.length){ alert("No hay conductas en el programa para cargar."); return; }
+  if(!conPgDraft.personas.length){ alert("Marca al menos una persona del programa para cargarle las actividades."); return; }
+  const anio = +conEl("conPgAnio").value, mes = +conEl("conPgMes").value;
+  await conPgGuardar();
+  let agregadas = 0, hojasCreadas = 0;
+  for(const pid of conPgDraft.personas){
+    const per = (CACHE.programaPersonas||[]).find(x=>x.id===pid); if(!per) continue;
+    let hoja = pcBuscarPrograma(anio, mes, per);
+    if(!hoja){ hoja = {id:uid(), anio, mes, cargo:per.cargo||"", nombre:per.nombre, personaId:per.id, trabajadorId:per.trabajadorId||"", focoCritico:"", actividades:[], observaciones:""}; hojasCreadas++; }
+    hoja.actividades = hoja.actividades || [];
+    const tiene = n=>hoja.actividades.some(a=>conNormTexto(a.nombre)===conNormTexto(n));
+    conPgDraft.focos.forEach(f=>{
+      const corto = String(f.conducta).slice(0,90);
+      const nomObs = `Observación dirigida: ${corto}`;
+      if(!tiene(nomObs)){ hoja.actividades.push({id:uid(), nombre:nomObs, proy:[1,1,1,1], real:[0,0,0,0], fuente:{tipo:"observacion", formatoId:f.formatoId||""}}); agregadas++; }
+      const metodos = CON_METODOS.filter(m=>(f.metodos||[]).includes(m.k)).reverse().map(m=>m.label);
+      if(metodos.length){
+        const nomRef = `Refuerzo (${metodos.join(", ")}): ${corto}`;
+        if(!tiene(nomRef)){ hoja.actividades.push({id:uid(), nombre:nomRef, proy:[0,1,0,0], real:[0,0,0,0], fuente:{tipo:"manual"}}); agregadas++; }
+      }
+    });
+    await put("programaCargo", hoja);
+  }
+  await loadCache();
+  renderProgramaCargo(); renderConPrograma();
+  alert(`Se agregaron ${agregadas} actividad(es) al Programa por cargo de ${MESES_NOMBRE[mes-1]} ${anio}${hojasCreadas?` (${hojasCreadas} programa(s) nuevo(s) creado(s))`:""}. Las observaciones dirigidas se cuentan solas al registrar observaciones con ese formato.`);
+});
+
+/* ---- Informe PDF ---- */
+on(conEl("conPdfBtn"), "click", ()=>{
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const fil = conFiltros(), meta = conMeta();
+  const ev = conEvaluar(conObservaciones(fil));
+  const pct = ev.totalEval ? (ev.totalEval-ev.fail)/ev.totalEval : null;
+  const doc = new JsPDFClass();
+  let y = grdPdfEncabezado(doc, "Analisis conductual");
+  doc.setFontSize(10);
+  y = escribirTextoPaginado(doc, `Periodo: ${fil.texto}. Meta de conductas seguras: ${Math.round(meta*100)}%.`, 14, y, {maxWidth:182}) + 2;
+  doc.autoTable({ startY:y, head:[["Indicador","Valor"]], body:[
+    ["Observaciones del periodo", ev.nObs], ["Conductas evaluadas (Cumple / No cumple)", ev.totalEval],
+    ["Conductas seguras", conPctTxt(pct)], ["Conductas inseguras", pct===null?"—":conPctTxt(1-pct)],
+  ], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 8;
+  const lista = Array.from(ev.conductas.values()).map(c=>({...c, pct:(c.n-c.fail)/c.n, suficiente:c.n>=CON_MIN_MUESTRA}))
+    .sort((a,b)=> (b.suficiente-a.suficiente) || (a.suficiente ? (a.pct-b.pct || b.fail-a.fail) : (b.n-a.n))).slice(0,20);
+  doc.setFontSize(12); doc.text("Ranking de conductas (primeras 20)", 14, y); y += 3;
+  doc.autoTable({ startY:y, head:[["Conducta","Formato","Instructivo","Eval.","Insegu.","% seguras","Estado"]],
+    body: lista.length ? lista.map(c=>{ const d = conDocumentoDeFormato(c.tipoId); return [c.texto, conFormatoNombre(c.tipoId), d?d.nombre:"-", c.n, c.fail, conPctTxt(c.pct), !c.suficiente?"Muestra pequena":c.pct>=meta?"En meta":c.pct<0.7?"Critica":"Bajo la meta"]; }) : [["Sin datos","","","","","",""]],
+    styles:{fontSize:8}, headStyles:{fillColor:[236,131,90]} });
+  y = doc.lastAutoTable.finalY + 8;
+  const m = conMadurezCalcular();
+  if(y > 235){ doc.addPage(); y = 16; }
+  doc.setFontSize(12); doc.text("Madurez de la cultura (Curva de Bradley) - estimacion orientativa", 14, y); y += 6;
+  doc.setFontSize(10);
+  y = escribirTextoPaginado(doc, `Etapa estimada: ${CON_ETAPAS[m.etapa].t}. ${CON_ETAPAS[m.etapa].d} Ultimos 6 meses: ${m.evaluadas} conductas evaluadas, ${conPctTxt(m.pct)} seguras, observaciones en ${m.meses} de 6 meses.`, 14, y, {maxWidth:182}) + 1;
+  y = escribirTextoPaginado(doc, CON_SIGUIENTE[m.etapa], 14, y, {maxWidth:182}) + 4;
+  conPgCargarBorrador(false);
+  const anio = +conEl("conPgAnio").value, mes = +conEl("conPgMes").value;
+  if(conPgDraft.focos.length){
+    if(y > 220){ doc.addPage(); y = 16; }
+    doc.setFontSize(12); doc.text(`Programa conductual - ${MESES_NOMBRE[mes-1]} ${anio}`, 14, y); y += 3;
+    doc.autoTable({ startY:y, head:[["Conducta critica","% seguras","Instructivo","Metodos de refuerzo"]],
+      body: conPgDraft.focos.map(f=>{ const d = f.documentoId ? (CACHE.documentos||[]).find(x=>x.id===f.documentoId) : null; return [f.conducta, conPctTxt(f.pctSeguras), d?d.nombre:"-", CON_METODOS.filter(x=>(f.metodos||[]).includes(x.k)).reverse().map(x=>x.label).join(", ")||"-"]; }),
+      styles:{fontSize:8}, headStyles:{fillColor:[42,120,214]} });
+    y = doc.lastAutoTable.finalY + 6;
+  }
+  doc.setFontSize(8);
+  escribirTextoPaginado(doc, "La piramide de aprendizaje se usa solo como guia para ordenar metodos de refuerzo (de menos a mas activos); los porcentajes de retencion que suelen atribuirsele no tienen respaldo cientifico solido. La Curva de Bradley es una estimacion orientativa, no una medicion certificada.", 14, y, {maxWidth:182, lineHeight:4});
+  agregarPiePaginasPdf(doc, "Analisis conductual");
+  doc.save(`Analisis_Conductual_${new Date().toISOString().slice(0,10)}.pdf`);
+});
 
 const CAP_TIPO_LABEL = {induccion:"Inducción", especifica:"Específica por riesgo del puesto", ds44:"Obligatoria DS 44", refuerzo:"Refuerzo / recapacitación"};
 
@@ -23222,6 +23642,7 @@ async function refreshAll(){
   renderCapCumplimientoPorResponsable();
   capRenderFormExtras();
   capRenderMatriz();
+  renderAnalisisConductual();
   renderIap();
   renderCursosObligatoriosTable();
   renderCursosSelects();
