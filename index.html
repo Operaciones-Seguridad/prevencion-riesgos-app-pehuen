@@ -550,7 +550,7 @@
         </div>
         <div>
           <label>Inspector</label>
-          <input id="insInspector" placeholder="Nombre del inspector">
+          <select id="insInspector"></select>
         </div>
         <div>
           <label>Fecha</label>
@@ -584,7 +584,8 @@
 
     <div class="card" id="cardMisActividadesMensuales">
       <div class="card-header-row" id="hdrMisActividadesMensuales"><h2>Mis actividades mensuales</h2><button class="collapse-toggle" id="toggleMisActividadesMensuales" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMisActividadesMensuales">
-      <div class="desc">Resumen mensual de las actividades del Programa de seguridad (incluida la Capacitación) asignadas como responsable al usuario que inició sesión, indicando el tipo de cada actividad a desarrollar y el nivel de cumplimiento según su realización.</div>
+      <div class="desc">Resumen mensual de las actividades del Programa de seguridad (incluida la Capacitación) asignadas como responsable al usuario que inició sesión, indicando el tipo de cada actividad a desarrollar y el nivel de cumplimiento según su realización. Si participas en el programa por cargo, tu programa del mes aparece primero y se actualiza solo con tus inspecciones, observaciones, reuniones del comité y capacitaciones registradas.</div>
+      <div id="misProgramaCargoWrap"></div>
       <table>
         <thead><tr><th>Mes</th><th>Actividades a desarrollar (tipo)</th><th>Programadas</th><th>Realizadas</th><th>% Cumplimiento</th></tr></thead>
         <tbody id="misActividadesMensualesTable"></tbody>
@@ -1541,7 +1542,7 @@
     <!-- PROGRAMA POR CARGO -->
     <div class="card">
       <div class="card-header-row" id="hdrPcResumen"><h2>Resumen anual por cargo y persona</h2><button class="collapse-toggle" id="togglePcResumen" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyPcResumen">
-      <div class="desc">Cumplimiento mensual del programa de cada persona (promedio de sus cumplimientos semanales, igual que la planilla). Verde: 80% o más; amarillo: 50% a 79%; rojo: menos de 50%; gris: sin actividades programadas. Haz clic en un mes para abrir o crear ese programa.</div>
+      <div class="desc">Cumplimiento mensual del programa de cada persona del programa (promedio de sus cumplimientos semanales, igual que la planilla). Verde: 80% o más; amarillo: 50% a 79%; rojo: menos de 50%; gris: sin actividades programadas. Haz clic en un mes para abrir o crear ese programa.</div>
       <div class="toolbar">
         <div class="field"><label>Año</label><select id="pcResAnio"></select></div>
         <div class="field"><label>Cargo</label><select id="pcResCargo"></select></div>
@@ -1551,45 +1552,67 @@
     </div></div>
 
     <div class="card">
-      <div class="card-header-row" id="hdrPcMensual"><h2>Programa mensual por cargo</h2><button class="collapse-toggle" id="togglePcMensual" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyPcMensual">
-      <div class="desc">Hoja de actividades del mes de una persona: lo proyectado y lo realizado en cada semana. Al crear el programa se copia la plantilla del cargo (o el mes anterior de esa persona) y después se ajusta libremente. Los cambios se guardan solos.</div>
+      <div class="card-header-row" id="hdrPcMensual"><h2>Programa mensual por persona</h2><button class="collapse-toggle" id="togglePcMensual" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyPcMensual">
+      <div class="desc">Hoja de actividades del mes de una persona del programa: lo proyectado y lo realizado en cada semana. Las actividades que se registran en la app (inspecciones, observaciones, reuniones del comité, capacitaciones) pueden contarse solas desde esos registros; las demás se marcan a mano. Los cambios se guardan solos.</div>
       <div class="toolbar">
         <div class="field"><label>Año</label><select id="pcAnio"></select></div>
         <div class="field"><label>Mes</label><select id="pcMes"></select></div>
-        <div class="field"><label>Persona</label><input id="pcPersona" list="pcPersonaList" placeholder="Nombre de la persona"><datalist id="pcPersonaList"></datalist></div>
-        <div class="field"><label>Cargo</label><input id="pcCargo" list="pcCargoList" placeholder="Ej: Jefe de Área"><datalist id="pcCargoList"></datalist></div>
+        <div class="field"><label>Persona</label><select id="pcPersona"></select></div>
         <div><button class="btn small" id="pcAbrirBtn" style="margin-top:20px;">Abrir programa</button></div>
       </div>
+      <datalist id="pcCargoList"></datalist>
       <datalist id="pcFocoList"></datalist>
       <div id="pcHojaWrap"></div>
     </div></div>
 
     <div class="card">
-      <div class="card-header-row" id="hdrPcPlantillas"><h2>Plantillas por cargo</h2><button class="collapse-toggle" id="togglePcPlantillas" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyPcPlantillas">
-      <div class="desc">La plantilla define qué actividades debe hacer cada cargo en un mes y cuántas por semana. Sirve de modelo para crear el programa mensual de cada persona. Puedes crearla aquí o importar tu planilla de Excel.</div>
+      <div class="card-header-row" id="hdrPcPlan"><h2>Planificar el mes por cargo</h2><button class="collapse-toggle" id="togglePcPlan" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyPcPlan">
+      <div class="desc">Define las actividades de un cargo para un mes (cada mes se arma por separado) y marca a qué personas del programa aplica. Al guardar, se crea la hoja de cada persona marcada o se actualiza la que ya existe sin perder lo realizado. Primero registra a las personas en "Personas del programa".</div>
       <div class="form-grid">
-        <div><label>Cargo</label><input id="pcPlCargo" list="pcCargoList" placeholder="Ej: Jefe de Área"></div>
+        <div><label>Año</label><select id="pcPlAnio"></select></div>
+        <div><label>Mes</label><select id="pcPlMes"></select></div>
+        <div><label>Cargo</label><select id="pcPlCargo"></select></div>
         <div><label>Foco crítico</label><input id="pcPlFoco" list="pcFocoList" placeholder="Ej: Eléctrico y Agresión Animal"></div>
+      </div>
+      <label style="margin-top:8px;">Personas a las que aplica</label>
+      <div id="pcPlPersonasWrap"></div>
+      <div class="toolbar" style="margin-top:8px;">
+        <div class="field"><label>Copiar las actividades de otra planificación (opcional)</label><select id="pcPlCopiarDe"></select></div>
+        <div><button class="btn small secondary" id="pcPlCopiarBtn" type="button" style="margin-top:20px;">Copiar actividades</button></div>
       </div>
       <div id="pcPlActsWrap" style="overflow-x:auto;margin-top:8px;"></div>
       <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn small secondary" id="pcPlAddActBtn" type="button">+ Agregar actividad</button>
-        <button class="btn" id="pcPlGuardarBtn" type="button">Guardar plantilla</button>
+        <button class="btn" id="pcPlGuardarBtn" type="button">Guardar y aplicar</button>
         <button class="btn secondary" id="pcPlCancelarBtn" type="button" style="display:none;">Cancelar edición</button>
       </div>
-      <h3 style="margin:18px 0 6px;font-size:14px;">Plantillas guardadas</h3>
+      <h3 style="margin:18px 0 6px;font-size:14px;">Planificaciones guardadas</h3>
       <table>
-        <thead><tr><th>Cargo</th><th>Foco crítico</th><th>Actividades</th><th>Cantidad mensual total</th><th></th></tr></thead>
+        <thead><tr><th>Período</th><th>Cargo</th><th>Foco crítico</th><th>Personas</th><th>Actividades</th><th></th></tr></thead>
         <tbody id="pcPlLista"></tbody>
       </table>
       <h3 style="margin:18px 0 6px;font-size:14px;">Importar tu planilla de Excel</h3>
-      <div class="desc">Sirve el formato "Programa personalizado de actividades" (cargo, foco crítico, mes y actividades con Proyectado y Realizado por semana). Con la primera hoja se crea o actualiza la plantilla del cargo. Si además indicas una persona, cada hoja con mes se carga como el programa de esa persona (con lo realizado que traiga).</div>
+      <div class="desc">Sirve el formato "Programa personalizado de actividades" (cargo, foco crítico, mes y actividades con Proyectado y Realizado por semana). Cada hoja con mes crea la planificación de ese mes para el cargo. Si además eliges una persona del programa, cada hoja se carga como su programa (con lo realizado que traiga).</div>
       <div class="toolbar">
         <div class="field"><label>Archivo Excel (.xlsx)</label><input type="file" id="pcImpFile" accept=".xlsx,.xls"></div>
-        <div class="field"><label>Persona (opcional)</label><input id="pcImpPersona" list="pcPersonaList" placeholder="Nombre de la persona"></div>
+        <div class="field"><label>Persona (opcional)</label><select id="pcImpPersona"></select></div>
         <div class="field"><label>Año a usar (opcional)</label><input id="pcImpAnio" type="number" min="2000" max="2100" placeholder="El de la planilla"></div>
         <div><button class="btn small secondary" id="pcImpBtn" style="margin-top:20px;">Importar planilla</button></div>
       </div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrPcPersonas"><h2>Personas del programa</h2><button class="collapse-toggle" id="togglePcPersonas" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyPcPersonas">
+      <div class="desc">Elige, de tu lista de trabajadores, solo a quienes tienen programa de actividades y el cargo que ocupan en él. Puede haber varias personas con el mismo cargo (por ejemplo, dos prevencionistas).</div>
+      <div class="toolbar">
+        <div class="field"><label>Trabajador</label><select id="pcPeTrab"></select></div>
+        <div class="field"><label>Cargo en el programa</label><input id="pcPeCargo" list="pcCargoList" placeholder="Ej: Prevencionista"></div>
+        <div><button class="btn small" id="pcPeAddBtn" type="button" style="margin-top:20px;">+ Agregar al programa</button></div>
+      </div>
+      <table>
+        <thead><tr><th>Persona</th><th>Cargo en el programa</th><th>Programas creados</th><th></th></tr></thead>
+        <tbody id="pcPeLista"></tbody>
+      </table>
     </div></div>
   </div>
 
@@ -3683,8 +3706,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 38;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo"];
+const DB_VERSION = 39;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -4188,7 +4211,8 @@ setupCollapsible("hdrControlEstadisticoMensualYAnual", "bodyControlEstadisticoMe
 setupCollapsible("hdrClasificacionDeAccidentesEIncidentes", "bodyClasificacionDeAccidentesEIncidentes", "toggleClasificacionDeAccidentesEIncidentes", "collapsed_clasificacionDeAccidentesEIncidentes");
 setupCollapsible("hdrPcResumen", "bodyPcResumen", "togglePcResumen", "collapsed_pcResumen");
 setupCollapsible("hdrPcMensual", "bodyPcMensual", "togglePcMensual", "collapsed_pcMensual");
-setupCollapsible("hdrPcPlantillas", "bodyPcPlantillas", "togglePcPlantillas", "collapsed_pcPlantillas");
+setupCollapsible("hdrPcPlan", "bodyPcPlan", "togglePcPlan", "collapsed_pcPlan");
+setupCollapsible("hdrPcPersonas", "bodyPcPersonas", "togglePcPersonas", "collapsed_pcPersonas");
 setupCollapsible("hdrIncRegistro", "bodyIncRegistro", "toggleIncRegistro", "collapsed_incRegistro");
 setupCollapsible("hdrBirdEvaluacion", "bodyBirdEvaluacion", "toggleBirdEvaluacion", "collapsed_birdEvaluacion");
 setupCollapsible("hdrIncControl", "bodyIncControl", "toggleIncControl", "collapsed_incControl");
@@ -9111,7 +9135,8 @@ subpestanasCrear("programa", [
   {key:"resumen", icono:"grafico", label:"Resumen anual", desc:"Cumplimiento mensual por cargo y persona", hdrs:["hdrPcResumen"],
     badge:()=>{ const b = pcBadgeInfo(); return b ? {texto:b, nivel:"y"} : null; }},
   {key:"mensual", icono:"registro", label:"Programa mensual", desc:"Hoja del mes de cada persona: proyectado y realizado por semana", hdrs:["hdrPcMensual"]},
-  {key:"plantillas", icono:"lista", label:"Plantillas por cargo", desc:"Actividades mensuales de cada cargo e importar tu planilla", hdrs:["hdrPcPlantillas"]},
+  {key:"planificar", icono:"lista", label:"Planificar el mes", desc:"Actividades de cada cargo para un mes y a qué personas aplican", hdrs:["hdrPcPlan"]},
+  {key:"personas", icono:"personas", label:"Personas del programa", desc:"Quiénes participan y su cargo en el programa", hdrs:["hdrPcPersonas"]},
   {key:"sueltas", icono:"documento", label:"Actividades sueltas", desc:"Simulacros, comité y otras actividades con fecha", hdrs:["hdrNuevaActividadDelProgramaDeSeguridad","hdrProgramaDeSeguridadCumplimiento","hdrEstadisticaDeCumplimientoPorResponsable"]},
 ], "tarjetas");
 
@@ -9473,6 +9498,7 @@ function renderCommonSelects(){
   fillSelect(document.getElementById("cphysPgArea"), areaOpts, true);
   fillSelect(document.getElementById("grdComiteArea"), areaOpts, true);
   fillSelect(document.getElementById("accArea"), areaOpts, true);
+  renderInsInspectorSelect();
   fillSelect(document.getElementById("accTrabajadorSel"), CACHE.trabajadores.map(t=>({id:t.id,label:t.nombre})), true);
   fillSelect(document.getElementById("accFocoCritico"), getCatalog("focoCritico").map(v=>({id:v,label:v})), false);
   document.getElementById("accFocoCritico").insertAdjacentHTML("afterbegin",'<option value="">Sin foco crítico asociado</option>');
@@ -10500,9 +10526,31 @@ on(document.getElementById("fmtIaSugerirBtn"), "click", async () => {
 
 /* Alta y edición de inspecciones/observaciones */
 let insEditingId = null;
+/* El inspector se elige de la lista de trabajadores (así el programa por
+   cargo puede contar sus inspecciones). Se guarda el nombre (inspector) y el
+   id del trabajador (inspectorId). Un registro antiguo con nombre escrito a
+   mano que no coincide con ningún trabajador se muestra como "texto libre". */
+function insInspectorPorDefecto(){
+  const sel = document.getElementById("insInspector");
+  if(!sel || sel.value) return;
+  const u = typeof usuarioDeSesion==="function" ? usuarioDeSesion() : null;
+  if(!u || !u.nombre) return;
+  const t = (CACHE.trabajadores||[]).find(x=>normalizarNombreTexto(x.nombre)===normalizarNombreTexto(u.nombre));
+  if(t) sel.value = t.id;
+}
+function renderInsInspectorSelect(){
+  const sel = document.getElementById("insInspector");
+  if(!sel) return;
+  const cur = sel.value;
+  const trabs = (CACHE.trabajadores||[]).slice().sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
+  sel.innerHTML = '<option value="">Seleccione...</option>' + trabs.map(t=>`<option value="${t.id}">${incEsc(t.nombre)}</option>`).join("");
+  if(cur.startsWith("txt:")) sel.insertAdjacentHTML("beforeend", `<option value="${incEsc(cur)}">${incEsc(cur.slice(4))} (texto libre)</option>`);
+  if(cur && Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur; else insInspectorPorDefecto();
+}
 function resetInsForm(){
   insEditingId = null;
   document.getElementById("insInspector").value = "";
+  insInspectorPorDefecto();
   document.getElementById("insFecha").value = "";
   document.getElementById("insDescripcion").value = "";
   currentFindings = []; currentChecklistItems = []; currentInspeccionados = [];
@@ -10521,7 +10569,17 @@ function startEditInspeccion(id){
   renderInsTipoOptions();
   document.getElementById("insTipo").value = rec.tipoId || "";
   document.getElementById("insArea").value = rec.areaId || "";
-  document.getElementById("insInspector").value = rec.inspector || "";
+  {
+    const selIns = document.getElementById("insInspector");
+    renderInsInspectorSelect();
+    let v = rec.inspectorId && Array.from(selIns.options).some(o=>o.value===rec.inspectorId) ? rec.inspectorId : "";
+    if(!v && rec.inspector){
+      const t = (CACHE.trabajadores||[]).find(x=>normalizarNombreTexto(x.nombre)===normalizarNombreTexto(rec.inspector));
+      if(t) v = t.id;
+      else { selIns.insertAdjacentHTML("beforeend", `<option value="${incEsc("txt:"+rec.inspector)}">${incEsc(rec.inspector)} (texto libre)</option>`); v = "txt:"+rec.inspector; }
+    }
+    selIns.value = v;
+  }
   document.getElementById("insFecha").value = rec.fecha || "";
   document.getElementById("insDescripcion").value = rec.descripcion || "";
   currentChecklistItems = (rec.checklist||[]).slice();
@@ -10539,7 +10597,10 @@ on(document.getElementById("saveInspeccionBtn"), "click", async () => {
   const tipoRegistro = document.getElementById("insTipoRegistro").value;
   const tipoId = document.getElementById("insTipo").value;
   const areaId = document.getElementById("insArea").value;
-  const inspector = document.getElementById("insInspector").value.trim();
+  const insVal = document.getElementById("insInspector").value;
+  let inspector = "", inspectorId = "";
+  if(insVal.startsWith("txt:")) inspector = insVal.slice(4);
+  else if(insVal){ inspectorId = insVal; inspector = (CACHE.trabajadores.find(t=>t.id===insVal)||{}).nombre || ""; }
   const fecha = document.getElementById("insFecha").value || new Date().toISOString().slice(0,10);
   const descripcion = document.getElementById("insDescripcion").value.trim();
   if(!areaId || !inspector){ alert("Complete área e inspector."); return; }
@@ -10548,7 +10609,7 @@ on(document.getElementById("saveInspeccionBtn"), "click", async () => {
     const anterior = CACHE.inspecciones.find(i=>i.id===insEditingId);
     if(!anterior){ alert("El registro que estabas editando ya no existe."); resetInsForm(); return; }
     const rec = {
-      ...anterior, tipoRegistro, tipoId, areaId, inspector, fecha, descripcion,
+      ...anterior, tipoRegistro, tipoId, areaId, inspector, inspectorId, fecha, descripcion,
       checklist: currentChecklistItems.slice(),
       findings: currentFindings.slice(),
       inspeccionados: currentInspeccionados.slice(),
@@ -10558,13 +10619,14 @@ on(document.getElementById("saveInspeccionBtn"), "click", async () => {
     resetInsForm();
     renderInspeccionesTable();
     renderInsStats();
+    renderProgramaCargo(); renderMisActividadesMensuales();
     if(hallazgosPendientesConCorreo(rec).length) mostrarCorreosPendientes(rec);
     else alert("Registro actualizado.");
     return;
   }
 
   const rec = {
-    id: uid(), tipoRegistro, tipoId, areaId, inspector, fecha, descripcion,
+    id: uid(), tipoRegistro, tipoId, areaId, inspector, inspectorId, fecha, descripcion,
     checklist: currentChecklistItems.slice(),
     findings: currentFindings.slice(),
     inspeccionados: currentInspeccionados.slice(),
@@ -10576,6 +10638,7 @@ on(document.getElementById("saveInspeccionBtn"), "click", async () => {
   resetInsForm();
   renderInspeccionesTable();
   renderInsStats();
+  renderProgramaCargo(); renderMisActividadesMensuales();
   if(hallazgosPendientesConCorreo(rec).length) mostrarCorreosPendientes(rec);
   else alert(`${TIPO_REGISTRO_LABEL[tipoRegistro]} guardada.`);
 });
@@ -10640,6 +10703,7 @@ function estadoCapacitacion(c){
 function renderMisActividadesMensuales(){
   const tbody = document.getElementById("misActividadesMensualesTable");
   if(!tbody) return;
+  renderMisProgramaCargo();
   const usuario = usuarioDeSesion();
   if(!usuario || !usuario.nombre){
     tbody.innerHTML = '<tr><td class="empty" colspan="5">Inicie sesión para ver sus actividades asignadas.</td></tr>';
@@ -15081,37 +15145,83 @@ function renderProgramaCumplimientoPorResponsable(){
 
 /* =========================================================
    PROGRAMA POR CARGO
-   Control mensual de las actividades que debe desarrollar cada cargo y
-   persona (formato de la planilla "Programa personalizado de actividades"):
+   Control mensual de las actividades que debe desarrollar cada persona del
+   programa (formato de la planilla "Programa personalizado de actividades"):
    cada actividad tiene lo proyectado y lo realizado en las semanas 1 a 4.
-   Almacenes: programaPlantillas (modelo por cargo) y programaCargo (un
-   programa por persona y mes).
+   Almacenes:
+   - programaPersonas: quiénes participan y su cargo en el programa.
+   - programaPlantillas: planificación del mes por cargo (año, mes, cargo,
+     actividades, personas). Sin mes = plantilla base.
+   - programaCargo: la hoja de cada persona y mes.
    Cálculo (igual que la planilla): % de avance de la actividad = realizado /
    proyectado del mes; % semanal = realizado / proyectado de todas las
    actividades de esa semana; cumplimiento mensual = promedio de los % de las
-   semanas con actividades. Para que sobrecumplir una actividad no tape el
-   incumplimiento de otra, el realizado se topa en lo proyectado de cada
-   actividad y semana (y en el % de avance de la actividad, en el total del mes).
+   semanas con actividades. El realizado se topa en lo proyectado de cada
+   actividad y semana, para que sobrecumplir una no tape a otra.
+   Realizado automático: si una actividad tiene fuente (inspección,
+   observación, reunión del comité, capacitación) el realizado sale de los
+   registros de la persona en la semana de su fecha (semana 1 = días 1-7,
+   2 = 8-14, 3 = 15-21, 4 = 22-fin); nada se guarda duplicado.
    ========================================================= */
-var pcPlEditId = null, pcPlActs = [], pcHojaId = null, pcPendiente = null;
+var pcPlEditId = null, pcPlActs = [], pcHojaId = null, pcPendiente = null, pcMigrado = false;
+var PC_FUENTE_LABEL = {manual:"Manual", inspeccion:"Inspección (automático)", observacion:"Observación (automático)", comite:"Reunión del Comité Paritario (automático)", capacitacion:"Capacitación como relator (automático)"};
 
 function pcEl(id){ return document.getElementById(id); }
 function pcNorm(s){ return normalizarNombreTexto(s||""); }
 function pcNum(v){ const n = parseInt(v, 10); return isNaN(n) || n < 0 ? 0 : n; }
 function pcSem4(a){ const r = [0,0,0,0]; if(Array.isArray(a)) for(let i=0;i<4;i++) r[i] = pcNum(a[i]); return r; }
 function pcProgramas(){ return CACHE.programaCargo || []; }
-function pcPlantillas(){ return CACHE.programaPlantillas || []; }
+function pcPlanes(){ return CACHE.programaPlantillas || []; }
+function pcPersonas(){ return CACHE.programaPersonas || []; }
 function pcPct(p){ return p===null||p===undefined ? "—" : Math.round(p*100)+"%"; }
 function pcColorPct(p){ return p===null||p===undefined ? "#e5e7eb" : p>=0.8 ? "#bfe8c9" : p>=0.5 ? "#fde9a8" : "#f6c1bc"; }
+function pcFuente(a){ const f = a && a.fuente; return f && f.tipo && PC_FUENTE_LABEL[f.tipo] ? f : {tipo:"manual"}; }
 function pcSemanaVencida(anio, mes, sem){
   const fin = sem < 3 ? 7*(sem+1) : new Date(anio, mes, 0).getDate();
   return new Date() > new Date(anio, mes-1, fin, 23, 59, 59);
 }
+function pcSemanaDe(fechaIso, anio, mes){
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(fechaIso||"");
+  if(!m || +m[1]!==anio || +m[2]!==mes) return -1;
+  const d = +m[3];
+  return d<=7 ? 0 : d<=14 ? 1 : d<=21 ? 2 : 3;
+}
+function pcPersonaDeProg(p){
+  return pcPersonas().find(x=>x.id===p.personaId) || pcPersonas().find(x=>pcNorm(x.nombre)===pcNorm(p.nombre)) || null;
+}
+/* Realizado automático por semana (arreglo de 4) o null si la actividad es manual. */
+function pcRealAuto(prog, a){
+  const f = pcFuente(a);
+  if(f.tipo==="manual") return null;
+  const per = pcPersonaDeProg(prog);
+  const trabId = (per && per.trabajadorId) || prog.trabajadorId || "";
+  const n = pcNorm(prog.nombre);
+  const r = [0,0,0,0];
+  const suma = fecha=>{ const s = pcSemanaDe(fecha, prog.anio, prog.mes); if(s>=0) r[s]++; };
+  if(f.tipo==="inspeccion" || f.tipo==="observacion"){
+    (CACHE.inspecciones||[]).forEach(i=>{
+      if((i.tipoRegistro||"inspeccion")!==f.tipo) return;
+      if(f.formatoId && i.tipoId!==f.formatoId) return;
+      if((i.inspectorId && trabId && i.inspectorId===trabId) || pcNorm(i.inspector)===n) suma(i.fecha);
+    });
+  } else if(f.tipo==="comite"){
+    (CACHE.cphysReuniones||[]).forEach(re=>{
+      const asist = (re.asistentesIds||[]).map(id=>(CACHE.cphysMiembros||[]).find(m=>m.id===id)).filter(Boolean);
+      if(asist.some(m=>pcNorm(m.nombre)===n)) suma(re.fecha);
+    });
+  } else if(f.tipo==="capacitacion"){
+    (CACHE.capacitaciones||[]).forEach(c=>{
+      if(c.fechaRealizada && c.relator && pcNorm(c.relator).includes(n)) suma(c.fechaRealizada);
+    });
+  }
+  return r;
+}
+function pcRealEfectivo(prog, a){ return pcRealAuto(prog, a) || pcSem4(a.real); }
 function pcCalcular(p){
   const filas = (p.actividades||[]).map(a=>{
-    const proy = pcSem4(a.proy), real = pcSem4(a.real);
+    const proy = pcSem4(a.proy), auto = pcRealAuto(p, a), real = auto || pcSem4(a.real);
     const cant = proy.reduce((s,x)=>s+x,0), realTot = real.reduce((s,x)=>s+x,0);
-    return {nombre:a.nombre, proy, real, cant, realTot, pct: cant>0 ? Math.min(realTot,cant)/cant : null};
+    return {nombre:a.nombre, proy, real, auto: !!auto, fuente: pcFuente(a), cant, realTot, pct: cant>0 ? Math.min(realTot,cant)/cant : null};
   });
   const totProy = [0,0,0,0], totReal = [0,0,0,0], totCap = [0,0,0,0];
   filas.forEach(f=>{ for(let i=0;i<4;i++){ totProy[i]+=f.proy[i]; totReal[i]+=f.real[i]; totCap[i]+=Math.min(f.real[i], f.proy[i]); } });
@@ -15119,85 +15229,127 @@ function pcCalcular(p){
   const def = pctSem.filter(x=>x!==null);
   return {filas, totProy, totReal, pctSem, mensual: def.length ? def.reduce((s,x)=>s+x,0)/def.length : null, cantTotal: totProy.reduce((s,x)=>s+x,0)};
 }
-function pcBuscarPrograma(anio, mes, nombre){
-  return pcProgramas().find(p=>p.anio===anio && p.mes===mes && pcNorm(p.nombre)===pcNorm(nombre));
+function pcBuscarPrograma(anio, mes, persona){
+  const n = pcNorm(persona.nombre);
+  return pcProgramas().find(p=>p.anio===anio && p.mes===mes && (p.personaId===persona.id || pcNorm(p.nombre)===n));
 }
-function pcPlantillaDeCargo(cargo){
-  return cargo ? pcPlantillas().find(pl=>pcNorm(pl.cargo)===pcNorm(cargo)) : null;
+function pcBuscarPlan(anio, mes, cargo){
+  const m = mes || 0;
+  return pcPlanes().find(p=>(p.mes||0)===m && (m===0 || p.anio===anio) && pcNorm(p.cargo)===pcNorm(cargo));
 }
 function pcAnteriorDe(pe){
   const clave = pe.anio*12 + pe.mes;
-  return pcProgramas().filter(p=>pcNorm(p.nombre)===pcNorm(pe.nombre) && (p.anio*12+p.mes) < clave)
+  return pcProgramas().filter(p=>(p.personaId===pe.personaId || pcNorm(p.nombre)===pcNorm(pe.nombre)) && (p.anio*12+p.mes) < clave)
     .sort((a,b)=>(b.anio*12+b.mes)-(a.anio*12+a.mes))[0] || null;
 }
 function pcCargosConocidos(){
   const set = new Set();
-  pcPlantillas().forEach(p=>p.cargo && set.add(p.cargo));
-  pcProgramas().forEach(p=>p.cargo && set.add(p.cargo));
-  (CACHE.trabajadores||[]).forEach(t=>t.cargo && set.add(t.cargo));
+  pcPersonas().forEach(p=>p.cargo && set.add(p.cargo));
   return Array.from(set).sort((a,b)=>a.localeCompare(b));
 }
 function pcFocosConocidos(){
   const set = new Set(getCatalog("focoCritico"));
-  pcPlantillas().forEach(p=>p.focoCritico && set.add(p.focoCritico));
+  pcPlanes().forEach(p=>p.focoCritico && set.add(p.focoCritico));
   pcProgramas().forEach(p=>p.focoCritico && set.add(p.focoCritico));
   return Array.from(set);
+}
+function pcFuenteSelectHtml(attr, valor){
+  return `<select ${attr} style="min-width:150px;min-height:auto;padding:4px;">${Object.keys(PC_FUENTE_LABEL).map(k=>`<option value="${k}"${k===valor?" selected":""}>${PC_FUENTE_LABEL[k]}</option>`).join("")}</select>`;
+}
+function pcFormatoSelectHtml(attr, f){
+  if(f.tipo!=="inspeccion" && f.tipo!=="observacion") return "";
+  const formatos = (CACHE.checklists||[]).filter(c=>(c.categoria||"ambos")==="ambos" || c.categoria===f.tipo);
+  return `<select ${attr} style="min-width:150px;min-height:auto;padding:4px;margin-top:4px;"><option value="">Cualquier formato</option>${formatos.map(c=>`<option value="${c.id}"${c.id===f.formatoId?" selected":""}>${incEsc(c.nombre)}</option>`).join("")}</select>`;
+}
+
+/* Las hojas creadas antes de existir "Personas del programa" pasan a ser personas del programa (una sola vez). */
+async function pcMigrarPersonas(){
+  const sinId = pcProgramas().filter(p=>!p.personaId);
+  if(!sinId.length) return;
+  const nuevas = [];
+  for(const p of sinId){
+    let per = pcPersonas().concat(nuevas).find(x=>pcNorm(x.nombre)===pcNorm(p.nombre));
+    if(!per){
+      const trab = (CACHE.trabajadores||[]).find(t=>pcNorm(t.nombre)===pcNorm(p.nombre));
+      per = {id:uid(), trabajadorId: trab?trab.id:"", nombre:p.nombre, cargo:p.cargo||(trab&&trab.cargo)||""};
+      await put("programaPersonas", per);
+      nuevas.push(per);
+    }
+    await put("programaCargo", Object.assign({}, p, {personaId: per.id}));
+  }
+  await loadCache();
 }
 
 function renderProgramaCargo(){
   if(!pcEl("pcResumenWrap")) return;
+  if(!pcMigrado && pcProgramas().some(p=>!p.personaId)){
+    pcMigrado = true;
+    pcMigrarPersonas().then(()=>renderProgramaCargo()).catch(()=>{});
+  }
   pcRenderSelects();
   pcRenderResumen();
   pcRenderHoja();
-  pcRenderPlantillas();
+  pcRenderPlan();
+  pcRenderPersonas();
+  if(typeof renderMisProgramaCargo==="function") renderMisProgramaCargo();
 }
 
+function pcConservarSelect(sel, html, defecto){
+  const cur = sel.value; sel.innerHTML = html;
+  if(cur && Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur; else if(defecto!==undefined) sel.value = String(defecto);
+}
 function pcRenderSelects(){
   const hoy = new Date();
-  const anios = Array.from(new Set(pcProgramas().map(p=>p.anio).concat([hoy.getFullYear()-1, hoy.getFullYear(), hoy.getFullYear()+1]))).sort((a,b)=>b-a);
-  const conservar = (sel, html, defecto)=>{
-    const cur = sel.value; sel.innerHTML = html;
-    if(cur && Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur; else if(defecto!==undefined) sel.value = String(defecto);
-  };
+  const anios = Array.from(new Set(pcProgramas().concat(pcPlanes()).map(p=>p.anio).filter(Boolean).concat([hoy.getFullYear()-1, hoy.getFullYear(), hoy.getFullYear()+1]))).sort((a,b)=>b-a);
   const optAnios = anios.map(a=>`<option value="${a}">${a}</option>`).join("");
-  conservar(pcEl("pcAnio"), optAnios, hoy.getFullYear());
-  conservar(pcEl("pcResAnio"), optAnios, hoy.getFullYear());
-  conservar(pcEl("pcMes"), MESES_NOMBRE.map((m,i)=>`<option value="${i+1}">${m}</option>`).join(""), hoy.getMonth()+1);
+  const optMeses = MESES_NOMBRE.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+  pcConservarSelect(pcEl("pcAnio"), optAnios, hoy.getFullYear());
+  pcConservarSelect(pcEl("pcResAnio"), optAnios, hoy.getFullYear());
+  pcConservarSelect(pcEl("pcPlAnio"), optAnios, hoy.getFullYear());
+  pcConservarSelect(pcEl("pcMes"), optMeses, hoy.getMonth()+1);
+  pcConservarSelect(pcEl("pcPlMes"), '<option value="0">Sin mes (plantilla base)</option>' + optMeses, hoy.getMonth()+1);
   const cargos = pcCargosConocidos();
-  conservar(pcEl("pcResCargo"), '<option value="">Todos</option>' + cargos.map(c=>`<option value="${incEsc(c)}">${incEsc(c)}</option>`).join(""));
-  conservar(pcEl("pcResFoco"), '<option value="">Todos</option>' + pcFocosConocidos().map(c=>`<option value="${incEsc(c)}">${incEsc(c)}</option>`).join(""));
-  pcEl("pcCargoList").innerHTML = cargos.map(c=>`<option value="${incEsc(c)}"></option>`).join("");
+  pcConservarSelect(pcEl("pcResCargo"), '<option value="">Todos</option>' + cargos.map(c=>`<option value="${incEsc(c)}">${incEsc(c)}</option>`).join(""));
+  pcConservarSelect(pcEl("pcResFoco"), '<option value="">Todos</option>' + pcFocosConocidos().map(c=>`<option value="${incEsc(c)}">${incEsc(c)}</option>`).join(""));
+  let optCargosPl = cargos.map(c=>`<option value="${incEsc(c)}">${incEsc(c)}</option>`).join("");
+  const planEd = pcPlEditId && pcPlanes().find(p=>p.id===pcPlEditId);
+  if(planEd && planEd.cargo && !cargos.includes(planEd.cargo)) optCargosPl += `<option value="${incEsc(planEd.cargo)}">${incEsc(planEd.cargo)}</option>`;
+  pcConservarSelect(pcEl("pcPlCargo"), optCargosPl || '<option value="">Primero agrega personas al programa</option>');
+  pcEl("pcCargoList").innerHTML = cargos.concat((CACHE.trabajadores||[]).map(t=>t.cargo).filter(Boolean)).filter((c,i,a)=>a.indexOf(c)===i).map(c=>`<option value="${incEsc(c)}"></option>`).join("");
   pcEl("pcFocoList").innerHTML = pcFocosConocidos().map(c=>`<option value="${incEsc(c)}"></option>`).join("");
-  const personas = Array.from(new Set((CACHE.trabajadores||[]).map(t=>t.nombre).concat(pcProgramas().map(p=>p.nombre)).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
-  pcEl("pcPersonaList").innerHTML = personas.map(n=>`<option value="${incEsc(n)}"></option>`).join("");
+  const personas = pcPersonas().slice().sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const optPersonas = personas.map(p=>`<option value="${p.id}">${incEsc(p.nombre)}${p.cargo?" — "+incEsc(p.cargo):""}</option>`).join("");
+  pcConservarSelect(pcEl("pcPersona"), optPersonas || '<option value="">Primero agrega personas al programa</option>');
+  pcConservarSelect(pcEl("pcImpPersona"), '<option value="">No cargar programas de una persona</option>' + optPersonas);
 }
 
 /* ---- Resumen anual ---- */
 var pcResFilas = [];
 function pcRenderResumen(){
   const anio = +pcEl("pcResAnio").value, fCargo = pcEl("pcResCargo").value, fFoco = pcEl("pcResFoco").value;
-  const progs = pcProgramas().filter(p=>p.anio===anio && (!fCargo || pcNorm(p.cargo)===pcNorm(fCargo)) && (!fFoco || pcNorm(p.focoCritico)===pcNorm(fFoco)));
-  const porPersona = new Map();
-  progs.forEach(p=>{
-    const k = pcNorm(p.nombre);
-    if(!porPersona.has(k)) porPersona.set(k, {nombre:p.nombre, cargo:p.cargo, meses:{}, ultimo:0});
-    const f = porPersona.get(k);
-    f.meses[p.mes] = pcCalcular(p).mensual;
-    if(p.mes >= f.ultimo){ f.ultimo = p.mes; f.cargo = p.cargo; }
+  const filas = new Map();
+  pcPersonas().forEach(per=>{
+    if(fCargo && pcNorm(per.cargo)!==pcNorm(fCargo)) return;
+    filas.set(per.id, {persona:per, nombre:per.nombre, cargo:per.cargo, meses:{}});
   });
-  pcResFilas = Array.from(porPersona.values()).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  pcProgramas().filter(p=>p.anio===anio && (!fFoco || pcNorm(p.focoCritico)===pcNorm(fFoco))).forEach(p=>{
+    const per = pcPersonaDeProg(p);
+    const key = per ? per.id : "n:"+pcNorm(p.nombre);
+    if(!filas.has(key)){ if(fCargo) return; filas.set(key, {persona:per, nombre:p.nombre, cargo:p.cargo, meses:{}}); }
+    filas.get(key).meses[p.mes] = pcCalcular(p).mensual;
+  });
+  pcResFilas = Array.from(filas.values()).filter(f=>!fFoco || Object.keys(f.meses).length).sort((a,b)=>a.nombre.localeCompare(b.nombre));
   const wrap = pcEl("pcResumenWrap");
   if(!pcResFilas.length){
-    wrap.innerHTML = `<div class="empty">Sin programas cargados en ${anio}. Crea el primero en "Programa mensual" o importa tu planilla en "Plantillas por cargo".</div>`;
+    wrap.innerHTML = `<div class="empty">Todavía no hay personas en el programa. Agrégalas en "Personas del programa", planifica el mes en "Planificar el mes" o importa tu planilla.</div>`;
     return;
   }
   const media = arr=>{ const d = arr.filter(x=>x!==null && x!==undefined); return d.length ? d.reduce((s,x)=>s+x,0)/d.length : null; };
   const celda = (f, i, m)=>{
-    const v = f.meses[m];
-    const existe = Object.prototype.hasOwnProperty.call(f.meses, m);
+    const existe = Object.prototype.hasOwnProperty.call(f.meses, m), v = f.meses[m];
     return `<td data-pc-abrir="${i}:${m}" style="text-align:center;cursor:pointer;background:${existe?pcColorPct(v):"transparent"};color:${existe?"#222":"var(--text-secondary)"};font-weight:${existe?600:400};" title="${existe?"Abrir programa":"Crear programa"}">${existe ? pcPct(v) : "·"}</td>`;
   };
-  const filas = pcResFilas.map((f,i)=>{
+  const cuerpo = pcResFilas.map((f,i)=>{
     const prom = media(Object.values(f.meses));
     return `<tr><td>${incEsc(f.nombre)}</td><td>${incEsc(f.cargo||"—")}</td>${MESES_NOMBRE.map((_,k)=>celda(f,i,k+1)).join("")}<td style="text-align:center;font-weight:700;background:${pcColorPct(prom)};">${pcPct(prom)}</td></tr>`;
   }).join("");
@@ -15206,7 +15358,7 @@ function pcRenderResumen(){
   pcResFilas.forEach(f=>{ const c = f.cargo||"Sin cargo"; if(!porCargo.has(c)) porCargo.set(c, []); porCargo.get(c).push(media(Object.values(f.meses))); });
   wrap.innerHTML = `<table>
     <thead><tr><th>Persona</th><th>Cargo</th>${MESES_NOMBRE.map(m=>`<th style="text-align:center;">${m.slice(0,3)}</th>`).join("")}<th style="text-align:center;">Promedio</th></tr></thead>
-    <tbody>${filas}
+    <tbody>${cuerpo}
       <tr><td colspan="2"><strong>Promedio del mes</strong></td>${promMes.map(v=>`<td style="text-align:center;font-weight:600;">${pcPct(v)}</td>`).join("")}<td style="text-align:center;font-weight:700;">${pcPct(media(promMes))}</td></tr>
     </tbody></table>
     <h3 style="margin:16px 0 6px;font-size:14px;">Promedio por cargo</h3>
@@ -15217,20 +15369,17 @@ function pcRenderResumen(){
 function pcBadgeInfo(){
   try{
     const hoy = new Date(), anio = hoy.getFullYear(), mes = hoy.getMonth()+1;
-    const personas = new Map();
-    pcProgramas().filter(p=>p.anio===anio).forEach(p=>{ const k = pcNorm(p.nombre); personas.set(k, personas.get(k) || p.mes===mes); if(p.mes===mes) personas.set(k, true); });
-    const n = Array.from(personas.values()).filter(t=>!t).length;
+    const n = pcPersonas().filter(per=>!pcBuscarPrograma(anio, mes, per)).length;
     return n ? `${n} sin programa del mes` : null;
   }catch(e){ return null; }
 }
 on(pcEl("pcResumenWrap"), "click", (e)=>{
   const td = e.target.closest("[data-pc-abrir]"); if(!td) return;
   const [i, m] = td.dataset.pcAbrir.split(":").map(Number);
-  const f = pcResFilas[i]; if(!f) return;
+  const f = pcResFilas[i]; if(!f || !f.persona){ alert("Esta persona ya no está en 'Personas del programa'. Vuelve a agregarla para abrir su programa."); return; }
   pcEl("pcAnio").value = pcEl("pcResAnio").value;
   pcEl("pcMes").value = String(m);
-  pcEl("pcPersona").value = f.nombre;
-  pcEl("pcCargo").value = f.cargo || "";
+  pcEl("pcPersona").value = f.persona.id;
   subpestanasMostrarDe("hdrPcMensual");
   pcAbrir();
   pcEl("hdrPcMensual").scrollIntoView({behavior:"smooth", block:"start"});
@@ -15238,29 +15387,37 @@ on(pcEl("pcResumenWrap"), "click", (e)=>{
 ["pcResAnio","pcResCargo","pcResFoco"].forEach(id=>on(pcEl(id), "change", pcRenderResumen));
 
 /* ---- Hoja mensual ---- */
-on(pcEl("pcPersona"), "change", ()=>{
-  const t = (CACHE.trabajadores||[]).find(x=>pcNorm(x.nombre)===pcNorm(pcEl("pcPersona").value));
-  if(t && t.cargo && !pcEl("pcCargo").value.trim()) pcEl("pcCargo").value = t.cargo;
-});
 function pcAbrir(){
   const anio = +pcEl("pcAnio").value, mes = +pcEl("pcMes").value;
-  const nombre = pcEl("pcPersona").value.trim(), cargo = pcEl("pcCargo").value.trim();
-  if(!nombre){ alert("Escribe o elige la persona."); return; }
-  const existente = pcBuscarPrograma(anio, mes, nombre);
+  const per = pcPersonas().find(p=>p.id===pcEl("pcPersona").value);
+  if(!per){ alert("Elige una persona del programa (si no hay, agrégala en 'Personas del programa')."); return; }
+  const existente = pcBuscarPrograma(anio, mes, per);
   if(existente){ pcHojaId = existente.id; pcPendiente = null; }
-  else { pcHojaId = null; pcPendiente = {anio, mes, nombre, cargo}; }
+  else { pcHojaId = null; pcPendiente = {anio, mes, personaId:per.id, nombre:per.nombre, cargo:per.cargo||"", trabajadorId:per.trabajadorId||""}; }
   pcRenderHoja();
 }
 on(pcEl("pcAbrirBtn"), "click", pcAbrir);
 
+function pcCopiarActs(lista){
+  return (lista||[]).map(a=>({id:uid(), nombre:a.nombre, proy:pcSem4(a.proy), real:[0,0,0,0], fuente:Object.assign({}, pcFuente(a))}));
+}
+function pcAplicarPlanAHoja(plan, hoja){
+  hoja.cargo = plan.cargo || hoja.cargo;
+  if(plan.focoCritico) hoja.focoCritico = plan.focoCritico;
+  const ids = new Set((plan.actividades||[]).map(a=>a.id));
+  (plan.actividades||[]).forEach(pa=>{
+    const ha = (hoja.actividades||[]).find(x=>x.planActId===pa.id);
+    if(ha){ ha.nombre = pa.nombre; ha.proy = pcSem4(pa.proy); ha.fuente = Object.assign({}, pcFuente(pa)); }
+    else (hoja.actividades = hoja.actividades||[]).push({id:uid(), planActId:pa.id, nombre:pa.nombre, proy:pcSem4(pa.proy), real:[0,0,0,0], fuente:Object.assign({}, pcFuente(pa))});
+  });
+  hoja.actividades = (hoja.actividades||[]).filter(x=>!x.planActId || ids.has(x.planActId) || pcSem4(x.real).some(v=>v>0));
+}
 async function pcCrear(origen){
   const pe = pcPendiente; if(!pe) return;
-  let acts = [], foco = "";
-  const copiar = lista=>lista.map(a=>({id:uid(), nombre:a.nombre, proy:pcSem4(a.proy), real:[0,0,0,0]}));
-  if(origen==="plantilla"){ const pl = pcPlantillaDeCargo(pe.cargo); if(pl){ acts = copiar(pl.actividades||[]); foco = pl.focoCritico||""; } }
-  else if(origen==="anterior"){ const ant = pcAnteriorDe(pe); if(ant){ acts = copiar(ant.actividades||[]); foco = ant.focoCritico||""; } }
-  const trab = (CACHE.trabajadores||[]).find(t=>pcNorm(t.nombre)===pcNorm(pe.nombre));
-  const rec = {id:uid(), anio:pe.anio, mes:pe.mes, cargo:pe.cargo, nombre:pe.nombre, trabajadorId: trab?trab.id:"", focoCritico:foco, actividades:acts, observaciones:""};
+  const rec = {id:uid(), anio:pe.anio, mes:pe.mes, cargo:pe.cargo, nombre:pe.nombre, personaId:pe.personaId, trabajadorId:pe.trabajadorId, focoCritico:"", actividades:[], observaciones:""};
+  if(origen==="plan"){ const pl = pcBuscarPlan(pe.anio, pe.mes, pe.cargo); if(pl) pcAplicarPlanAHoja(pl, rec); }
+  else if(origen==="base"){ const pl = pcBuscarPlan(0, 0, pe.cargo); if(pl){ rec.actividades = pcCopiarActs(pl.actividades); rec.focoCritico = pl.focoCritico||""; } }
+  else if(origen==="anterior"){ const ant = pcAnteriorDe(pe); if(ant){ rec.actividades = pcCopiarActs(ant.actividades); rec.focoCritico = ant.focoCritico||""; } }
   await put("programaCargo", rec);
   await loadCache();
   pcHojaId = rec.id; pcPendiente = null;
@@ -15273,28 +15430,33 @@ function pcRenderHoja(){
   if(prog){ wrap.innerHTML = pcHojaHtml(prog); pcActualizarCalculos(prog); return; }
   if(pcHojaId){ pcHojaId = null; }
   if(!pcPendiente){ wrap.innerHTML = '<div class="empty">Elige año, mes y persona, y presiona "Abrir programa".</div>'; return; }
-  const pe = pcPendiente, pl = pcPlantillaDeCargo(pe.cargo), ant = pcAnteriorDe(pe);
+  const pe = pcPendiente, plan = pcBuscarPlan(pe.anio, pe.mes, pe.cargo), base = pcBuscarPlan(0, 0, pe.cargo), ant = pcAnteriorDe(pe);
   wrap.innerHTML = `<div class="desc" style="padding:10px 12px;border:1px dashed var(--grid);border-radius:8px;">
-    <strong>${incEsc(pe.nombre)}</strong> todavía no tiene programa en ${MESES_NOMBRE[pe.mes-1]} ${pe.anio}. ¿Cómo lo creamos?
+    <strong>${incEsc(pe.nombre)}</strong> (${incEsc(pe.cargo||"sin cargo")}) todavía no tiene programa en ${MESES_NOMBRE[pe.mes-1]} ${pe.anio}. ¿Cómo lo creamos?
     <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
-      ${pl ? `<button class="btn small" data-pc-crear="plantilla">Copiar plantilla de "${incEsc(pl.cargo)}"</button>` : ""}
+      ${plan ? `<button class="btn small" data-pc-crear="plan">Aplicar la planificación de ${MESES_NOMBRE[pe.mes-1]} para "${incEsc(pe.cargo)}"</button>` : ""}
       ${ant ? `<button class="btn small" data-pc-crear="anterior">Copiar ${MESES_NOMBRE[ant.mes-1]} ${ant.anio} (sin lo realizado)</button>` : ""}
+      ${base ? `<button class="btn small secondary" data-pc-crear="base">Copiar la plantilla base de "${incEsc(pe.cargo)}"</button>` : ""}
       <button class="btn small secondary" data-pc-crear="vacio">Crear vacío</button>
     </div>
-    ${!pl && !ant ? `<div class="kv" style="margin-top:8px;">No hay plantilla para el cargo "${incEsc(pe.cargo||"—")}" ni un mes anterior de esta persona. Puedes crear la plantilla en "Plantillas por cargo" o importar tu planilla.</div>` : ""}
+    ${!plan ? `<div class="kv" style="margin-top:8px;">No hay una planificación de ${MESES_NOMBRE[pe.mes-1]} ${pe.anio} para el cargo "${incEsc(pe.cargo||"—")}". Puedes crearla en "Planificar el mes" y se aplicará a todas las personas del cargo.</div>` : ""}
   </div>`;
 }
 
 function pcHojaHtml(p){
   const semHdr = [1,2,3,4].map(s=>`<th style="text-align:center;">S${s} Proy.</th><th style="text-align:center;">S${s} Real.</th>`).join("");
-  const filas = (p.actividades||[]).map((a,i)=>`<tr>
+  const c = pcCalcular(p);
+  const filas = (p.actividades||[]).map((a,i)=>{
+    const f = c.filas[i];
+    return `<tr>
     <td>${i+1}</td>
-    <td><input data-pc-nombre="${i}" value="${incEsc(a.nombre)}" style="min-width:220px;"></td>
+    <td><input data-pc-nombre="${i}" value="${incEsc(a.nombre)}" style="min-width:230px;"></td>
+    <td>${pcFuenteSelectHtml(`data-pc-fuente="${i}"`, f.fuente.tipo)}${pcFormatoSelectHtml(`data-pc-formato="${i}"`, f.fuente)}</td>
     <td data-pc-cant="${i}" style="text-align:center;font-weight:600;"></td>
-    ${[0,1,2,3].map(s=>`<td><input type="number" min="0" data-pc-proy="${i}:${s}" value="${pcNum((a.proy||[])[s])}" class="pc-n"></td><td><input type="number" min="0" data-pc-real="${i}:${s}" value="${pcNum((a.real||[])[s])}" class="pc-n"></td>`).join("")}
+    ${[0,1,2,3].map(s=>`<td><input type="number" min="0" data-pc-proy="${i}:${s}" value="${f.proy[s]}" class="pc-n"></td><td><input type="number" min="0" data-pc-real="${i}:${s}" value="${f.real[s]}" class="pc-n"${f.auto?' disabled title="Se cuenta solo desde los registros de la app"':""}></td>`).join("")}
     <td data-pc-pct="${i}" style="text-align:center;font-weight:600;"></td>
     <td><button class="subtle-btn" data-pc-quitar="${i}" title="Quitar actividad">✕</button></td>
-  </tr>`).join("") || `<tr><td class="empty" colspan="13">Sin actividades. Agrega la primera abajo.</td></tr>`;
+  </tr>`; }).join("") || `<tr><td class="empty" colspan="14">Sin actividades. Agrega la primera abajo.</td></tr>`;
   return `<style>.pc-n{width:54px;min-height:auto;padding:4px;text-align:center;}</style>
     <div class="form-grid" style="margin-bottom:6px;">
       <div><label>Persona</label><div style="padding:8px 0;font-weight:600;">${incEsc(p.nombre)}</div></div>
@@ -15304,13 +15466,13 @@ function pcHojaHtml(p){
     </div>
     <div style="overflow-x:auto;"><table>
       <thead>
-        <tr><th rowspan="2">Item</th><th rowspan="2">Actividad mensual</th><th rowspan="2" style="text-align:center;">Cant. mes</th><th colspan="8" style="text-align:center;">Cronograma semanal</th><th rowspan="2" style="text-align:center;">% avance</th><th rowspan="2"></th></tr>
+        <tr><th rowspan="2">Item</th><th rowspan="2">Actividad mensual</th><th rowspan="2">Se cuenta desde</th><th rowspan="2" style="text-align:center;">Cant. mes</th><th colspan="8" style="text-align:center;">Cronograma semanal</th><th rowspan="2" style="text-align:center;">% avance</th><th rowspan="2"></th></tr>
         <tr>${semHdr}</tr>
       </thead>
       <tbody>${filas}
-        <tr style="background:var(--grid);font-weight:600;"><td></td><td>Total</td><td data-pc-cantTot style="text-align:center;"></td>
+        <tr style="background:var(--grid);font-weight:600;"><td></td><td>Total</td><td></td><td data-pc-cantTot style="text-align:center;"></td>
           ${[0,1,2,3].map(s=>`<td data-pc-totproy="${s}" style="text-align:center;"></td><td data-pc-totreal="${s}" style="text-align:center;"></td>`).join("")}<td></td><td></td></tr>
-        <tr style="font-weight:600;"><td></td><td>% de cumplimiento semanal</td><td></td>
+        <tr style="font-weight:600;"><td></td><td>% de cumplimiento semanal</td><td></td><td></td>
           ${[0,1,2,3].map(s=>`<td colspan="2" data-pc-pctsem="${s}" style="text-align:center;"></td>`).join("")}<td></td><td></td></tr>
       </tbody>
     </table></div>
@@ -15319,12 +15481,11 @@ function pcHojaHtml(p){
       <button class="btn small secondary" id="pcAddActBtn" type="button">+ Agregar actividad</button>
     </div>
     <div id="pcMensualBox" style="margin-top:14px;display:inline-block;padding:10px 18px;border-radius:10px;font-size:18px;font-weight:700;"></div>
-    <div class="kv" style="margin-top:4px;">Verde en "Real.": cumplido; rojo: semana vencida sin cumplir; azul: realizado sin estar proyectado. El realizado se topa en lo proyectado de cada semana para el cálculo.</div>
+    <div class="kv" style="margin-top:4px;">Verde en "Real.": cumplido; rojo: semana vencida sin cumplir; azul: realizado sin estar proyectado. Las casillas bloqueadas se cuentan solas desde los registros de la app. El realizado se topa en lo proyectado de cada semana para el cálculo.</div>
     <label style="margin-top:10px;">Observaciones</label>
     <textarea id="pcHObs" placeholder="Observaciones del mes...">${incEsc(p.observaciones||"")}</textarea>
     <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
       <button class="btn secondary" id="pcPdfBtn" type="button">Descargar PDF (con firma)</button>
-      <button class="btn secondary" id="pcGuardarPlantillaBtn" type="button">Guardar como plantilla del cargo</button>
       <button class="subtle-btn" id="pcEliminarBtn" type="button">Eliminar este programa</button>
     </div>`;
 }
@@ -15338,6 +15499,7 @@ function pcActualizarCalculos(p){
     for(let s=0;s<4;s++){
       const inp = q(`[data-pc-real="${i}:${s}"]`); if(!inp) continue;
       const proy = f.proy[s], real = f.real[s];
+      if(f.auto) inp.value = real;
       inp.style.background = proy>0 ? (real>=proy ? "#bfe8c9" : (pcSemanaVencida(p.anio,p.mes,s) ? "#f6c1bc" : "")) : (real>0 ? "#cfe3fb" : "");
     }
   });
@@ -15366,6 +15528,16 @@ on(pcEl("pcHojaWrap"), "change", async (e)=>{
     if(esProy) a.proy = arr; else a.real = arr;
     pcActualizarCalculos(p); await pcGuardarHoja(p); return;
   }
+  if(t.dataset.pcFuente!==undefined){
+    const a = p.actividades[+t.dataset.pcFuente]; if(!a) return;
+    a.fuente = {tipo:t.value};
+    await pcGuardarHoja(p); pcRenderHoja(); return;
+  }
+  if(t.dataset.pcFormato!==undefined){
+    const a = p.actividades[+t.dataset.pcFormato]; if(!a) return;
+    a.fuente = Object.assign({}, pcFuente(a), {formatoId:t.value});
+    await pcGuardarHoja(p); pcActualizarCalculos(p); return;
+  }
   if(t.dataset.pcNombre!==undefined){ const a = p.actividades[+t.dataset.pcNombre]; if(a){ a.nombre = t.value.trim(); await pcGuardarHoja(p); } return; }
   if(t.id==="pcHCargo"){ p.cargo = t.value.trim(); await pcGuardarHoja(p); return; }
   if(t.id==="pcHFoco"){ p.focoCritico = t.value.trim(); await pcGuardarHoja(p); return; }
@@ -15385,19 +15557,10 @@ on(pcEl("pcHojaWrap"), "click", async (e)=>{
   if(e.target.closest("#pcAddActBtn")){
     const nombre = pcEl("pcNuevaAct").value.trim();
     if(!nombre){ alert("Escribe el nombre de la actividad."); return; }
-    p.actividades.push({id:uid(), nombre, proy:[0,0,0,0], real:[0,0,0,0]});
+    p.actividades.push({id:uid(), nombre, proy:[0,0,0,0], real:[0,0,0,0], fuente:{tipo:"manual"}});
     await pcGuardarHoja(p); pcRenderHoja(); return;
   }
   if(e.target.closest("#pcPdfBtn")){ pcDescargarPdf(p); return; }
-  if(e.target.closest("#pcGuardarPlantillaBtn")){
-    if(!p.cargo){ alert("Indica el cargo del programa para guardarlo como plantilla."); return; }
-    const existente = pcPlantillaDeCargo(p.cargo);
-    if(existente && !confirm(`Ya existe una plantilla para "${p.cargo}". ¿Reemplazarla con las actividades de este programa?`)) return;
-    await put("programaPlantillas", {id: existente?existente.id:uid(), cargo:p.cargo, focoCritico:p.focoCritico||"", actividades:(p.actividades||[]).map(a=>({id:uid(), nombre:a.nombre, proy:pcSem4(a.proy)}))});
-    await loadCache(); pcRenderPlantillas(); pcRenderSelects();
-    alert("Plantilla del cargo guardada.");
-    return;
-  }
   if(e.target.closest("#pcEliminarBtn")){
     if(!confirm(`¿Eliminar el programa de ${p.nombre} de ${MESES_NOMBRE[p.mes-1]} ${p.anio}? Esta acción no se puede deshacer.`)) return;
     await deleteRecord("programaCargo", p.id);
@@ -15436,84 +15599,181 @@ function pcDescargarPdf(p){
   doc.save(`Programa_${p.nombre.replace(/[^a-zA-Z0-9]+/g,"_")}_${p.anio}_${String(p.mes).padStart(2,"0")}.pdf`);
 }
 
-/* ---- Plantillas por cargo ---- */
+/* ---- Personas del programa ---- */
+function pcRenderPersonas(){
+  const usados = new Set(pcPersonas().map(p=>p.trabajadorId).filter(Boolean));
+  const trabs = (CACHE.trabajadores||[]).filter(t=>!usados.has(t.id)).sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
+  pcConservarSelect(pcEl("pcPeTrab"), '<option value="">Seleccione...</option>' + trabs.map(t=>`<option value="${t.id}">${incEsc(t.nombre)}${t.cargo?" — "+incEsc(t.cargo):""}</option>`).join(""));
+  const lista = pcPersonas().slice().sort((a,b)=>String(a.cargo||"").localeCompare(String(b.cargo||"")) || String(a.nombre).localeCompare(String(b.nombre)));
+  pcEl("pcPeLista").innerHTML = lista.map(per=>{
+    const n = pcProgramas().filter(p=>p.personaId===per.id || pcNorm(p.nombre)===pcNorm(per.nombre)).length;
+    return `<tr><td>${incEsc(per.nombre)}</td>
+      <td><input data-pe-cargo="${per.id}" list="pcCargoList" value="${incEsc(per.cargo||"")}" style="min-height:auto;"></td>
+      <td>${n}</td>
+      <td><button class="subtle-btn" data-pe-quitar="${per.id}">Quitar del programa</button></td></tr>`;
+  }).join("") || `<tr><td class="empty" colspan="4">Todavía no hay personas en el programa.</td></tr>`;
+}
+on(pcEl("pcPeTrab"), "change", ()=>{
+  const t = (CACHE.trabajadores||[]).find(x=>x.id===pcEl("pcPeTrab").value);
+  if(t && t.cargo && !pcEl("pcPeCargo").value.trim()) pcEl("pcPeCargo").value = t.cargo;
+});
+on(pcEl("pcPeAddBtn"), "click", async ()=>{
+  const t = (CACHE.trabajadores||[]).find(x=>x.id===pcEl("pcPeTrab").value);
+  const cargo = pcEl("pcPeCargo").value.trim();
+  if(!t){ alert("Elige un trabajador de la lista."); return; }
+  if(!cargo){ alert("Indica el cargo que tiene en el programa."); return; }
+  await put("programaPersonas", {id:uid(), trabajadorId:t.id, nombre:t.nombre, cargo});
+  await loadCache();
+  pcEl("pcPeCargo").value = ""; pcEl("pcPeTrab").value = "";
+  renderProgramaCargo();
+});
+on(pcEl("pcPeLista"), "change", async (e)=>{
+  const inp = e.target.closest("[data-pe-cargo]"); if(!inp) return;
+  const per = pcPersonas().find(x=>x.id===inp.dataset.peCargo); if(!per) return;
+  per.cargo = inp.value.trim();
+  await put("programaPersonas", per);
+  renderProgramaCargo();
+});
+on(pcEl("pcPeLista"), "click", async (e)=>{
+  const b = e.target.closest("[data-pe-quitar]"); if(!b) return;
+  const per = pcPersonas().find(x=>x.id===b.dataset.peQuitar); if(!per) return;
+  if(!confirm(`¿Quitar a ${per.nombre} del programa? Los programas que ya tiene creados se conservan, pero dejará de aparecer en las listas.`)) return;
+  await deleteRecord("programaPersonas", per.id);
+  await loadCache();
+  renderProgramaCargo();
+});
+
+/* ---- Planificar el mes por cargo ---- */
+function pcPlLeerSelector(){
+  return {anio:+pcEl("pcPlAnio").value, mes:+pcEl("pcPlMes").value || 0, cargo:pcEl("pcPlCargo").value};
+}
+function pcPlPeriodoTexto(p){ return p.mes ? `${MESES_NOMBRE[p.mes-1]} ${p.anio}` : "Plantilla base (sin mes)"; }
+function pcDrawPlPersonas(sel){
+  const cargo = pcPlLeerSelector().cargo;
+  const personas = pcPersonas().filter(per=>cargo && pcNorm(per.cargo)===pcNorm(cargo)).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  pcEl("pcPlPersonasWrap").innerHTML = personas.length
+    ? personas.map(per=>`<label style="display:inline-flex;align-items:center;gap:6px;font-weight:400;margin-right:16px;"><input type="checkbox" data-pcpl-persona="${per.id}" style="width:auto;min-height:auto;"${!sel || sel.includes(per.id) ? " checked" : ""}> ${incEsc(per.nombre)}</label>`).join("")
+    : `<div class="empty">${cargo ? "No hay personas con este cargo en el programa." : "Elige un cargo."}</div>`;
+}
 function pcDrawPlEditor(){
-  const filas = pcPlActs.map((a,i)=>`<tr>
-    <td><input data-pcpl-nombre="${i}" value="${incEsc(a.nombre)}" style="min-width:240px;" placeholder="Nombre de la actividad"></td>
+  const filas = pcPlActs.map((a,i)=>{
+    const f = pcFuente(a);
+    return `<tr>
+    <td><input data-pcpl-nombre="${i}" value="${incEsc(a.nombre)}" style="min-width:230px;" placeholder="Nombre de la actividad"></td>
+    <td>${pcFuenteSelectHtml(`data-pcpl-fuente="${i}"`, f.tipo)}${pcFormatoSelectHtml(`data-pcpl-formato="${i}"`, f)}</td>
     ${[0,1,2,3].map(s=>`<td><input type="number" min="0" data-pcpl-s="${i}:${s}" value="${pcNum((a.proy||[])[s])}" class="pc-n"></td>`).join("")}
     <td style="text-align:center;font-weight:600;">${pcSem4(a.proy).reduce((x,y)=>x+y,0)}</td>
     <td><button class="subtle-btn" data-pcpl-quitar="${i}" title="Quitar">✕</button></td>
-  </tr>`).join("") || `<tr><td class="empty" colspan="7">Sin actividades. Agrega la primera.</td></tr>`;
+  </tr>`; }).join("") || `<tr><td class="empty" colspan="8">Sin actividades. Agrega la primera o copia otra planificación.</td></tr>`;
   pcEl("pcPlActsWrap").innerHTML = `<style>.pc-n{width:54px;min-height:auto;padding:4px;text-align:center;}</style><table>
-    <thead><tr><th>Actividad mensual</th><th style="text-align:center;">Semana 1</th><th style="text-align:center;">Semana 2</th><th style="text-align:center;">Semana 3</th><th style="text-align:center;">Semana 4</th><th style="text-align:center;">Cant. mes</th><th></th></tr></thead>
+    <thead><tr><th>Actividad mensual</th><th>Se cuenta desde</th><th style="text-align:center;">Semana 1</th><th style="text-align:center;">Semana 2</th><th style="text-align:center;">Semana 3</th><th style="text-align:center;">Semana 4</th><th style="text-align:center;">Cant. mes</th><th></th></tr></thead>
     <tbody>${filas}</tbody></table>`;
 }
-function pcRenderPlantillas(){
-  if(!pcPlActs.length && pcPlEditId===null) { /* editor vacío */ }
+function pcRenderPlan(){
+  const lista = pcPlanes().slice().sort((a,b)=>((b.mes?b.anio*12+b.mes:-1)-(a.mes?a.anio*12+a.mes:-1)) || String(a.cargo).localeCompare(String(b.cargo)));
+  pcConservarSelect(pcEl("pcPlCopiarDe"), '<option value="">Elige una planificación...</option>' + lista.map(p=>`<option value="${p.id}">${incEsc(p.cargo)} — ${pcPlPeriodoTexto(p)}</option>`).join(""));
   pcDrawPlEditor();
-  const lista = pcPlantillas().slice().sort((a,b)=>String(a.cargo).localeCompare(String(b.cargo)));
-  pcEl("pcPlLista").innerHTML = lista.map(pl=>`<tr>
-    <td>${incEsc(pl.cargo)}</td><td>${incEsc(pl.focoCritico||"—")}</td>
-    <td>${(pl.actividades||[]).length}</td>
-    <td>${(pl.actividades||[]).reduce((s,a)=>s+pcSem4(a.proy).reduce((x,y)=>x+y,0),0)}</td>
-    <td style="white-space:nowrap;"><button class="btn secondary small" data-pcpl-editar="${pl.id}">Editar</button> <button class="subtle-btn" data-pcpl-eliminar="${pl.id}">Eliminar</button></td>
-  </tr>`).join("") || `<tr><td class="empty" colspan="5">Sin plantillas. Crea la primera arriba o importa tu planilla.</td></tr>`;
+  if(!pcEl("pcPlPersonasWrap").querySelector("[data-pcpl-persona]") || !pcPlEditId) pcDrawPlPersonas(pcPlEditId ? ((pcPlanes().find(p=>p.id===pcPlEditId)||{}).personasIds) : null);
+  pcEl("pcPlLista").innerHTML = lista.map(p=>{
+    const nombres = (p.personasIds||[]).map(id=>(pcPersonas().find(x=>x.id===id)||{}).nombre).filter(Boolean);
+    return `<tr><td>${pcPlPeriodoTexto(p)}</td><td>${incEsc(p.cargo)}</td><td>${incEsc(p.focoCritico||"—")}</td>
+      <td>${nombres.length ? incEsc(nombres.join(", ")) : "—"}</td><td>${(p.actividades||[]).length}</td>
+      <td style="white-space:nowrap;"><button class="btn secondary small" data-pcpl-editar="${p.id}">Editar</button> <button class="subtle-btn" data-pcpl-eliminar="${p.id}">Eliminar</button></td></tr>`;
+  }).join("") || `<tr><td class="empty" colspan="6">Todavía no hay planificaciones. Crea la primera arriba o importa tu planilla.</td></tr>`;
 }
+/* Al cambiar año, mes o cargo se carga la planificación existente de ese período (si la hay). */
+function pcPlCargarSeleccion(){
+  const s = pcPlLeerSelector();
+  const plan = s.cargo ? pcBuscarPlan(s.anio, s.mes, s.cargo) : null;
+  if(plan){
+    pcPlEditId = plan.id;
+    pcPlActs = (plan.actividades||[]).map(a=>({id:a.id, nombre:a.nombre, proy:pcSem4(a.proy), fuente:Object.assign({}, pcFuente(a))}));
+    pcEl("pcPlFoco").value = plan.focoCritico || "";
+    pcEl("pcPlGuardarBtn").textContent = "Guardar y aplicar";
+    pcEl("pcPlCancelarBtn").style.display = "";
+  } else {
+    pcPlEditId = null; pcPlActs = [];
+    pcEl("pcPlCancelarBtn").style.display = "none";
+  }
+  pcDrawPlEditor();
+  pcDrawPlPersonas(plan ? plan.personasIds : null);
+}
+["pcPlAnio","pcPlMes","pcPlCargo"].forEach(id=>on(pcEl(id), "change", pcPlCargarSeleccion));
 function pcPlResetEditor(){
   pcPlEditId = null; pcPlActs = [];
-  pcEl("pcPlCargo").value = ""; pcEl("pcPlFoco").value = "";
-  pcEl("pcPlGuardarBtn").textContent = "Guardar plantilla";
+  pcEl("pcPlFoco").value = "";
   pcEl("pcPlCancelarBtn").style.display = "none";
   pcDrawPlEditor();
+  pcDrawPlPersonas(null);
 }
-on(pcEl("pcPlAddActBtn"), "click", ()=>{ pcPlActs.push({id:uid(), nombre:"", proy:[0,0,0,0]}); pcDrawPlEditor(); });
+on(pcEl("pcPlAddActBtn"), "click", ()=>{ pcPlActs.push({id:uid(), nombre:"", proy:[0,0,0,0], fuente:{tipo:"manual"}}); pcDrawPlEditor(); });
 on(pcEl("pcPlCancelarBtn"), "click", pcPlResetEditor);
+on(pcEl("pcPlCopiarBtn"), "click", ()=>{
+  const orig = pcPlanes().find(p=>p.id===pcEl("pcPlCopiarDe").value);
+  if(!orig){ alert("Elige la planificación de la que quieres copiar las actividades."); return; }
+  if(pcPlActs.length && !confirm("Las actividades de abajo se reemplazarán por las copiadas. ¿Continuar?")) return;
+  pcPlActs = (orig.actividades||[]).map(a=>({id:uid(), nombre:a.nombre, proy:pcSem4(a.proy), fuente:Object.assign({}, pcFuente(a))}));
+  if(!pcEl("pcPlFoco").value.trim()) pcEl("pcPlFoco").value = orig.focoCritico || "";
+  pcDrawPlEditor();
+});
 on(pcEl("pcPlActsWrap"), "change", (e)=>{
   const t = e.target;
   if(t.dataset.pcplNombre!==undefined){ const a = pcPlActs[+t.dataset.pcplNombre]; if(a) a.nombre = t.value; return; }
   if(t.dataset.pcplS!==undefined){
     const [i, s] = t.dataset.pcplS.split(":").map(Number); const a = pcPlActs[i]; if(!a) return;
-    const arr = pcSem4(a.proy); arr[s] = pcNum(t.value); a.proy = arr; pcDrawPlEditor();
+    const arr = pcSem4(a.proy); arr[s] = pcNum(t.value); a.proy = arr; pcDrawPlEditor(); return;
   }
+  if(t.dataset.pcplFuente!==undefined){ const a = pcPlActs[+t.dataset.pcplFuente]; if(a){ a.fuente = {tipo:t.value}; pcDrawPlEditor(); } return; }
+  if(t.dataset.pcplFormato!==undefined){ const a = pcPlActs[+t.dataset.pcplFormato]; if(a) a.fuente = Object.assign({}, pcFuente(a), {formatoId:t.value}); }
 });
 on(pcEl("pcPlActsWrap"), "click", (e)=>{
   const q = e.target.closest("[data-pcpl-quitar]"); if(!q) return;
   pcPlActs.splice(+q.dataset.pcplQuitar, 1); pcDrawPlEditor();
 });
 on(pcEl("pcPlGuardarBtn"), "click", async ()=>{
-  const cargo = pcEl("pcPlCargo").value.trim();
-  if(!cargo){ alert("Indica el cargo de la plantilla."); return; }
-  const acts = pcPlActs.filter(a=>String(a.nombre||"").trim()).map(a=>({id:a.id||uid(), nombre:String(a.nombre).trim(), proy:pcSem4(a.proy)}));
+  const s = pcPlLeerSelector();
+  if(!s.cargo){ alert("Elige el cargo (si no hay, agrega primero a las personas en 'Personas del programa')."); return; }
+  const acts = pcPlActs.filter(a=>String(a.nombre||"").trim()).map(a=>({id:a.id||uid(), nombre:String(a.nombre).trim(), proy:pcSem4(a.proy), fuente:Object.assign({}, pcFuente(a))}));
   if(!acts.length){ alert("Agrega al menos una actividad con nombre."); return; }
-  const otra = pcPlantillas().find(pl=>pcNorm(pl.cargo)===pcNorm(cargo) && pl.id!==pcPlEditId);
-  if(otra && !confirm(`Ya existe una plantilla para "${cargo}". ¿Reemplazarla?`)) return;
-  const id = otra ? otra.id : (pcPlEditId || uid());
-  await put("programaPlantillas", {id, cargo, focoCritico:pcEl("pcPlFoco").value.trim(), actividades:acts});
+  const personasIds = Array.from(pcEl("pcPlPersonasWrap").querySelectorAll("[data-pcpl-persona]:checked")).map(i=>i.dataset.pcplPersona);
+  if(s.mes && !personasIds.length && !confirm("No marcaste a ninguna persona: solo se guardará la planificación, sin crear hojas. ¿Continuar?")) return;
+  const existente = pcBuscarPlan(s.anio, s.mes, s.cargo);
+  const plan = {id: existente ? existente.id : uid(), anio: s.mes ? s.anio : 0, mes: s.mes, cargo: s.cargo, focoCritico: pcEl("pcPlFoco").value.trim(), personasIds, actividades: acts};
+  await put("programaPlantillas", plan);
+  let creadas = 0, actualizadas = 0;
+  if(s.mes){
+    for(const id of personasIds){
+      const per = pcPersonas().find(x=>x.id===id); if(!per) continue;
+      let hoja = pcBuscarPrograma(s.anio, s.mes, per);
+      if(hoja){ pcAplicarPlanAHoja(plan, hoja); actualizadas++; }
+      else { hoja = {id:uid(), anio:s.anio, mes:s.mes, cargo:s.cargo, nombre:per.nombre, personaId:per.id, trabajadorId:per.trabajadorId||"", focoCritico:plan.focoCritico, actividades:[], observaciones:""}; pcAplicarPlanAHoja(plan, hoja); creadas++; }
+      await put("programaCargo", hoja);
+    }
+  }
   await loadCache();
-  pcPlResetEditor();
+  pcPlEditId = plan.id;
   renderProgramaCargo();
-  alert("Plantilla guardada.");
+  alert(s.mes ? `Planificación de ${pcPlPeriodoTexto(plan)} para "${s.cargo}" guardada. Hojas creadas: ${creadas}. Hojas actualizadas: ${actualizadas}.` : `Plantilla base de "${s.cargo}" guardada.`);
 });
 on(pcEl("pcPlLista"), "click", async (e)=>{
   const ed = e.target.closest("[data-pcpl-editar]");
   if(ed){
-    const pl = pcPlantillas().find(x=>x.id===ed.dataset.pcplEditar); if(!pl) return;
-    pcPlEditId = pl.id;
-    pcPlActs = (pl.actividades||[]).map(a=>({id:a.id, nombre:a.nombre, proy:pcSem4(a.proy)}));
-    pcEl("pcPlCargo").value = pl.cargo; pcEl("pcPlFoco").value = pl.focoCritico||"";
-    pcEl("pcPlGuardarBtn").textContent = "Guardar cambios";
-    pcEl("pcPlCancelarBtn").style.display = "";
-    pcDrawPlEditor();
-    pcEl("hdrPcPlantillas").scrollIntoView({behavior:"smooth", block:"start"});
+    const plan = pcPlanes().find(x=>x.id===ed.dataset.pcplEditar); if(!plan) return;
+    pcEl("pcPlAnio").value = String(plan.anio || new Date().getFullYear());
+    pcEl("pcPlMes").value = String(plan.mes || 0);
+    pcConservarSelect(pcEl("pcPlCargo"), Array.from(new Set(pcCargosConocidos().concat([plan.cargo]))).map(c=>`<option value="${incEsc(c)}">${incEsc(c)}</option>`).join(""));
+    pcEl("pcPlCargo").value = plan.cargo;
+    pcPlCargarSeleccion();
+    pcEl("hdrPcPlan").scrollIntoView({behavior:"smooth", block:"start"});
     return;
   }
   const del = e.target.closest("[data-pcpl-eliminar]");
   if(del){
-    const pl = pcPlantillas().find(x=>x.id===del.dataset.pcplEliminar); if(!pl) return;
-    if(!confirm(`¿Eliminar la plantilla de "${pl.cargo}"? Los programas ya creados no se modifican.`)) return;
-    await deleteRecord("programaPlantillas", pl.id);
+    const plan = pcPlanes().find(x=>x.id===del.dataset.pcplEliminar); if(!plan) return;
+    if(!confirm(`¿Eliminar la planificación de "${plan.cargo}" (${pcPlPeriodoTexto(plan)})? Las hojas ya creadas no se modifican.`)) return;
+    await deleteRecord("programaPlantillas", plan.id);
     await loadCache();
-    if(pcPlEditId===pl.id) pcPlResetEditor();
+    if(pcPlEditId===plan.id) pcPlResetEditor();
     renderProgramaCargo();
   }
 });
@@ -15554,7 +15814,7 @@ function pcParseHoja(ws, nombreHoja){
   for(let ri=hdr+1; ri<rows.length; ri++){
     const r = rows[ri], nom = String(r[1]||"").trim();
     if(typeof r[0]!=="number" || !nom){ if(acts.length) break; else continue; }
-    acts.push({id:uid(), nombre:nom, proy:colP.map(c=>pcNum(r[c])), real:colR.map(c=>c<0?0:pcNum(r[c]))});
+    acts.push({id:uid(), nombre:nom, proy:colP.map(c=>pcNum(r[c])), real:colR.map(c=>c<0?0:pcNum(r[c])), fuente:{tipo:"manual"}});
   }
   let mes = fecha ? fecha.mes : 0;
   if(!mes && nombreHoja){ const i = MESES_NOMBRE.findIndex(m=>norm(m)===norm(nombreHoja)); if(i>=0) mes = i+1; }
@@ -15567,34 +15827,69 @@ on(pcEl("pcImpBtn"), "click", async ()=>{
   const wb = XLSX.read(await file.arrayBuffer(), {type:"array", cellDates:true});
   const hojas = wb.SheetNames.map(n=>({n, p:pcParseHoja(wb.Sheets[n], n)})).filter(x=>x.p && x.p.acts.length);
   if(!hojas.length){ alert('No encontré el formato esperado (columnas "ACTIVIDAD MENSUAL" y "SEM. 1 Proyec."/"SEM. 1 Reali."). Revisa que sea la planilla "Programa personalizado de actividades".'); return; }
-  const persona = pcEl("pcImpPersona").value.trim();
+  const per = pcPersonas().find(x=>x.id===pcEl("pcImpPersona").value) || null;
   const anioForzado = +pcEl("pcImpAnio").value || 0;
-  const base = hojas[0].p;
-  const trabPersona = persona ? (CACHE.trabajadores||[]).find(t=>pcNorm(t.nombre)===pcNorm(persona)) : null;
-  const cargoBase = base.cargo || (trabPersona && trabPersona.cargo) || "";
-  if(!cargoBase){ alert("La planilla no trae el cargo. Elige una persona que tenga cargo registrado o completa el cargo en la planilla."); return; }
-  const existentePl = pcPlantillaDeCargo(cargoBase);
-  await put("programaPlantillas", {id: existentePl?existentePl.id:uid(), cargo:cargoBase, focoCritico:base.foco||"", actividades:base.acts.map(a=>({id:uid(), nombre:a.nombre, proy:a.proy}))});
-  let creados = 0, reemplazados = 0, sinMes = 0;
-  if(persona){
-    const hoyAnio = new Date().getFullYear();
-    const destinos = hojas.map(h=>({h, anio: anioForzado || h.p.anio || hoyAnio, mes:h.p.mes})).filter(d=>{ if(!d.mes){ sinMes++; return false; } return true; });
-    const yaExisten = destinos.filter(d=>pcBuscarPrograma(d.anio, d.mes, persona)).length;
-    if(yaExisten && !confirm(`${yaExisten} de los meses ya tienen programa para ${persona}. ¿Reemplazarlos con lo de la planilla?`)){
-      await loadCache(); renderProgramaCargo();
-      alert(`Plantilla de "${cargoBase}" ${existentePl?"actualizada":"creada"}. Los programas de ${persona} no se cargaron.`);
-      return;
-    }
-    for(const d of destinos){
-      const ex = pcBuscarPrograma(d.anio, d.mes, persona);
-      await put("programaCargo", {id: ex?ex.id:uid(), anio:d.anio, mes:d.mes, cargo:d.h.p.cargo||cargoBase, nombre:persona, trabajadorId:trabPersona?trabPersona.id:"", focoCritico:d.h.p.foco||base.foco||"", actividades:d.h.p.acts, observaciones: ex?(ex.observaciones||""):""});
-      if(ex) reemplazados++; else creados++;
+  const hoyAnio = new Date().getFullYear();
+  const cargoDe = h=>h.p.cargo || (per && per.cargo) || "";
+  if(hojas.some(h=>!cargoDe(h))){ alert("La planilla no trae el cargo. Elige una persona del programa (con su cargo) o completa el cargo en la planilla."); return; }
+  const destinos = hojas.map(h=>({h, anio: anioForzado || h.p.anio || hoyAnio, mes:h.p.mes, cargo:cargoDe(h)}));
+  const conMes = destinos.filter(d=>d.mes), sinMes = destinos.length - conMes.length;
+  const yaExisten = per ? conMes.filter(d=>pcBuscarPrograma(d.anio, d.mes, per)).length : 0;
+  if(yaExisten && !confirm(`${yaExisten} de los meses ya tienen programa para ${per.nombre}. ¿Reemplazar lo realizado de esos meses con lo de la planilla?`)) return;
+  let planes = 0, hojasCreadas = 0, hojasReemp = 0;
+  for(const d of conMes){
+    const existente = pcBuscarPlan(d.anio, d.mes, d.cargo);
+    const planActs = d.h.p.acts.map(a=>({id:uid(), nombre:a.nombre, proy:a.proy, fuente:{tipo:"manual"}}));
+    const plan = {id: existente?existente.id:uid(), anio:d.anio, mes:d.mes, cargo:d.cargo, focoCritico:d.h.p.foco||"", personasIds: per ? Array.from(new Set((existente&&existente.personasIds||[]).concat([per.id]))) : (existente&&existente.personasIds||[]), actividades:planActs};
+    await put("programaPlantillas", plan); planes++;
+    if(per){
+      const ex = pcBuscarPrograma(d.anio, d.mes, per);
+      const acts = d.h.p.acts.map((a,i)=>({id:uid(), planActId:planActs[i].id, nombre:a.nombre, proy:a.proy, real:a.real, fuente:{tipo:"manual"}}));
+      await put("programaCargo", {id: ex?ex.id:uid(), anio:d.anio, mes:d.mes, cargo:d.cargo, nombre:per.nombre, personaId:per.id, trabajadorId:per.trabajadorId||"", focoCritico:plan.focoCritico, actividades:acts, observaciones: ex?(ex.observaciones||""):""});
+      if(ex) hojasReemp++; else hojasCreadas++;
     }
   }
   await loadCache();
   pcEl("pcImpFile").value = "";
   renderProgramaCargo();
-  alert(`Plantilla de "${cargoBase}" ${existentePl?"actualizada":"creada"} con ${base.acts.length} actividades${persona?`. Programas de ${persona}: ${creados} creado(s), ${reemplazados} reemplazado(s)${sinMes?`, ${sinMes} hoja(s) sin mes reconocido`:""}`:""}.`);
+  alert(`Importación lista: ${planes} planificación(es) mensual(es)${per?`; programas de ${per.nombre}: ${hojasCreadas} creado(s), ${hojasReemp} reemplazado(s)`:""}${sinMes?`; ${sinMes} hoja(s) omitida(s) por no tener mes reconocido`:""}.`);
+});
+
+/* ---- "Mis actividades mensuales": programa por cargo del usuario en sesión ---- */
+function renderMisProgramaCargo(){
+  const wrap = pcEl("misProgramaCargoWrap");
+  if(!wrap) return;
+  const usuario = typeof usuarioDeSesion==="function" ? usuarioDeSesion() : null;
+  const per = usuario && usuario.nombre ? pcPersonas().find(x=>pcNorm(x.nombre)===pcNorm(usuario.nombre)) : null;
+  if(!per){ wrap.innerHTML = ""; return; }
+  const hojas = pcProgramas().filter(p=>p.personaId===per.id || pcNorm(p.nombre)===pcNorm(per.nombre))
+    .sort((a,b)=>(b.anio*12+b.mes)-(a.anio*12+a.mes)).slice(0, 4);
+  if(!hojas.length){
+    wrap.innerHTML = `<div class="desc" style="margin-bottom:12px;">Eres parte del programa por cargo (${incEsc(per.cargo||"sin cargo")}), pero todavía no tienes un programa creado.</div>`;
+    return;
+  }
+  wrap.innerHTML = `<h3 style="margin:0 0 6px;font-size:14px;">Mi programa por cargo — ${incEsc(per.cargo||"")}</h3>` + hojas.map(p=>{
+    const c = pcCalcular(p);
+    const items = c.filas.filter(f=>f.cant>0).map(f=>{
+      const ok = f.realTot>=f.cant;
+      return `<div style="margin-bottom:3px;">${incEsc(f.nombre)} <span class="pill ${ok?"bajo":"medio"}" style="margin-left:4px;">${f.realTot} de ${f.cant}</span>${f.auto?' <span class="kv" title="Se cuenta solo desde tus registros en la app">(automático)</span>':""}</div>`;
+    }).join("") || '<div class="kv">Sin actividades programadas.</div>';
+    return `<div style="border:1px solid var(--grid);border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">
+        <strong>${MESES_NOMBRE[p.mes-1]} ${p.anio}</strong>
+        <span><span class="pill" style="background:${pcColorPct(c.mensual)};color:#222;">Cumplimiento ${pcPct(c.mensual)}</span> <button class="btn small secondary" data-mis-pc="${p.id}">Abrir programa</button></span>
+      </div>${items}</div>`;
+  }).join("");
+}
+on(pcEl("misProgramaCargoWrap"), "click", (e)=>{
+  const b = e.target.closest("[data-mis-pc]"); if(!b) return;
+  const p = pcProgramas().find(x=>x.id===b.dataset.misPc); if(!p) return;
+  const per = pcPersonaDeProg(p);
+  irAVista("programa");
+  subpestanasMostrarDe("hdrPcMensual");
+  pcEl("pcAnio").value = String(p.anio); pcEl("pcMes").value = String(p.mes);
+  if(per) pcEl("pcPersona").value = per.id;
+  pcAbrir();
 });
 
 /* =========================================================
