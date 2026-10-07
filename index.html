@@ -13149,7 +13149,7 @@ on(document.getElementById("matrizFotoAnalizarBtn"), "click", async ()=>{
       cantidad: +document.getElementById("matrizFotoCantidad").value || 6,
     });
     matrizSugerenciasIA = resp.sugerencias || [];
-    estado.textContent = matrizSugerenciasIA.length ? `${matrizSugerenciasIA.length} línea(s) sugerida(s). Revíselas en la tabla de abajo antes de agregarlas.` : "La IA no encontró riesgos que proponer con estas fotos. Pruebe con otras fotos o describa la actividad.";
+    estado.textContent = matrizSugerenciasIA.length ? `${matrizSugerenciasIA.length} línea(s) sugerida(s). Revíselas en la tabla de abajo antes de agregarlas.${resp.parcial ? " La respuesta de la IA se cortó: se muestran solo las líneas completas; puede pedir menos líneas para obtener todas." : ""}` : "La IA no encontró riesgos que proponer con estas fotos. Pruebe con otras fotos o describa la actividad.";
     if(resp.observaciones){ obsBox.innerHTML = `<strong>Lo que la IA observa en las fotos:</strong> ${incEsc(resp.observaciones)}<br><span class="kv">Es un borrador de apoyo: verifíquelo en terreno antes de incorporarlo a la matriz.</span>`; obsBox.style.display = ""; }
     else obsBox.style.display = "none";
     renderMatrizIaPreview();
