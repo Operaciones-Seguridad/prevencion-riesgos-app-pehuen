@@ -1132,6 +1132,7 @@
     <div class="card">
       <div class="card-header-row" id="hdrMatrizVigente"><h2>Matriz de riesgos vigente</h2><button class="collapse-toggle" id="toggleMatrizVigente" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyMatrizVigente">
+      <div id="miperControl" style="border:1px solid var(--grid);border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;"></div>
       <div class="toolbar">
         <div class="field"><label>Buscar por Peligro / Riesgo</label><input type="text" id="filterMatrizPeligro" placeholder="Ej: ruido, caída, manejo manual..."></div>
         <div class="field"><label>Filtrar por área</label><select id="filterMatrizArea"><option value="">Todas</option></select></div>
@@ -1381,9 +1382,16 @@
     <div class="card">
       <div class="card-header-row" id="hdrMatrizHistorial"><h2>Histórico de modificaciones</h2><button class="collapse-toggle" id="toggleMatrizHistorial" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyMatrizHistorial">
-      <div class="desc">Registro de creación, edición y cambios de estado sobre líneas de la matriz de riesgos (más recientes primero).</div>
+      <h3 style="margin:6px 0;font-size:15px;">Versiones emitidas de la MIPER</h3>
+      <div class="desc" style="margin-top:0;">Cada cambio queda registrado abajo, pero la <strong>versión</strong> solo sube cuando se emite una nueva versión desde la tarjeta «Matriz de riesgos vigente».</div>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Versión</th><th>Fecha de revisión</th><th>Responsable de revisión</th><th>Cambios</th><th>Resumen</th><th></th></tr></thead>
+        <tbody id="miperVersionesTable"></tbody>
+      </table></div>
+      <h3 style="margin:18px 0 6px;font-size:15px;">Cambios registrados</h3>
+      <div class="desc" style="margin-top:0;">Registro de creación, edición y cambios de estado sobre líneas de la matriz de riesgos (más recientes primero).</div>
       <table>
-        <thead><tr><th>Fecha</th><th>Línea</th><th>Campo</th><th>Valor anterior</th><th>Valor nuevo</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Línea</th><th>Campo</th><th>Valor anterior</th><th>Valor nuevo</th><th>Versión</th></tr></thead>
         <tbody id="matrizHistorialTable"></tbody>
       </table>
       </div>
@@ -2966,10 +2974,10 @@
         <div><button class="btn secondary small" id="exportFufBtn">Descargar Excel</button></div>
         <div><button class="btn small" id="fufInformePdfBtn">Descargar informe PDF (cumplido y pendiente)</button></div>
       </div>
-      <table>
-        <thead><tr><th style="width:40px;">N°</th><th>Ítem del FUF</th><th style="width:150px;">Nivel de cumplimiento</th><th style="width:130px;">Fecha evaluación</th><th style="width:220px;">Observaciones</th><th style="width:210px;">Regularizar (responsable y plazo)</th><th style="width:210px;">Evidencia</th></tr></thead>
+      <div style="overflow-x:auto;"><table style="min-width:1160px;table-layout:fixed;width:100%;">
+        <thead><tr><th style="width:36px;">N°</th><th style="min-width:400px;">Ítem del FUF</th><th style="width:130px;">Nivel de cumplimiento</th><th style="width:118px;">Fecha evaluación</th><th style="width:170px;">Observaciones</th><th style="width:165px;">Regularizar (responsable y plazo)</th><th style="width:150px;">Evidencia</th></tr></thead>
         <tbody id="fufTable"></tbody>
-      </table>
+      </table></div>
       </div>
     </div>
 
@@ -4113,8 +4121,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 43;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos"];
+const DB_VERSION = 44;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos","matrizVersiones"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -5444,7 +5452,7 @@ function renderFufTable(){
     const nivelCls = nivel==="cumple" ? "vigente" : nivel==="no_cumple" ? "vencido" : nivel==="cumple_parcial" ? "proximo" : "";
     html.push(`<tr>
       <td>${it.numero}</td>
-      <td><div>${it.texto}</div>${it.articulo?`<div class="kv" style="margin-top:4px;">Art. ${it.articulo}</div>`:""}</td>
+      <td><div>${it.texto}</div>${it.articulo?`<div class="kv" style="margin-top:4px;">Art. ${it.articulo}</div>`:""}${it.numero==="6" ? `<div class="kv" style="margin-top:4px;color:#1c4e91;">${incEsc(miperLineaTexto())}${miperRevisionVencida() ? ' <span class="pill vencido">Última revisión hace más de un año</span>' : ""}</div>` : ""}</td>
       <td>
         <select data-fuf-field="nivel" data-fuf-id="${it.numero}">
           <option value="sin_evaluar" ${nivel==="sin_evaluar"?"selected":""}>Sin evaluar</option>
@@ -5792,7 +5800,8 @@ on(document.getElementById("descargarResumenRiesgosPdfBtn"), "click", () => {
   doc.text(`Empresa: ${(CACHE.empresa&&CACHE.empresa.razonSocial)||"—"}`, 14, y); y += 6;
   const lineaDatos = datosEmpresaLineaPdf();
   if(lineaDatos){ doc.text(lineaDatos, 14, y); y += 6; }
-  doc.text(`Generado: ${fmtDate(new Date().toISOString())} — según Matriz de riesgos vigente (${total} línea(s))`, 14, y); y += 8;
+  doc.text(`Generado: ${fmtDate(new Date().toISOString())} — según Matriz de riesgos vigente (${total} línea(s))`, 14, y); y += 6;
+  doc.text(miperLineaTexto(), 14, y); y += 8;
   doc.autoTable({ startY:y, head:[["Nivel de riesgo","N° de líneas"]], body:[
     ["Bajo", counts.bajo], ["Medio", counts.medio], ["Alto", counts.alto], ["Muy alto", counts.critico],
   ], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]} });
@@ -9804,7 +9813,8 @@ function subpestanasCrear(viewId, grupos, estilo){
   subpestanasAplicar(viewId);
 }
 subpestanasCrear("matriz", [
-  {key:"matriz", icono:"registro", label:"Matriz de riesgos", desc:"Líneas de riesgo, matriz vigente e histórico", hdrs:["hdrNuevaLineaDeMatrizDeRiesgosIPER","hdrMatrizIaWrap","hdrMatrizRevision","hdrMatrizDobleEntrada","hdrMatrizVigente","hdrMatrizHistorial"]},
+  {key:"matriz", icono:"registro", label:"Matriz de riesgos", desc:"Líneas de riesgo, matriz vigente e histórico", hdrs:["hdrNuevaLineaDeMatrizDeRiesgosIPER","hdrMatrizIaWrap","hdrMatrizRevision","hdrMatrizDobleEntrada","hdrMatrizVigente","hdrMatrizHistorial"],
+    badge:()=>{ const p = miperPendientes(), v = miperVigente(); return !v ? ((CACHE.matriz||[]).length ? {texto:"sin versión emitida", nivel:"y"} : null) : (p.total ? {texto:`${p.total} sin versionar`, nivel:"y"} : null); }},
   {key:"levantamiento", icono:"lista", label:"Levantamiento por área", desc:"Levantamiento IPER por área de trabajo", hdrs:["hdrLevantamiento"]},
   {key:"mapas", icono:"mapa", label:"Mapas y análisis", desc:"Mapas de riesgo, niveles y equidad de género", hdrs:["hdrMapaDeRiesgosPorAreaProceso","hdrMapaDeRiesgosPlanoDePlantaYSimbologia","hdrMatrizDeRiesgosPorNivelYPorArea","hdrEquidadGenero"]},
   {key:"accion", icono:"grafico", label:"Plan de acción y controles", desc:"Plan de acción, controles DS 44 y EPP", hdrs:["hdrPlanDeAccionMatrizDeRiesgos","hdrJerarquiaDeControlesDS44","hdrTraspasosPendientes","hdrEstudioEpp"],
@@ -15114,7 +15124,121 @@ on(document.getElementById("traspasosPendientesTable"), "click", async (e) => {
 });
 
 
+/* =========================================================
+   CONTROL DE VERSIÓN DE LA MIPER (matriz de riesgos).
+   Cada cambio sigue registrándose en matrizHistorial, pero la versión
+   del documento solo sube cuando se EMITE una nueva versión (store
+   "matrizVersiones": version, fecha de revisión, responsable,
+   fechaCreacion, emitidoEn, nCambios, nLineas, resumen). Los cambios
+   hechos desde la última emisión se cuentan solos como "sin versionar".
+   ========================================================= */
+function miperVersiones(){ return (CACHE.matrizVersiones||[]).slice().sort((a,b)=>b.version-a.version); }
+function miperVigente(){ return miperVersiones()[0] || null; }
+function miperFechaCreacion(){
+  const vs = miperVersiones();
+  if(vs.length){ const v1 = vs[vs.length-1]; return v1.fechaCreacion || v1.fecha || ""; }
+  const fechas = (CACHE.matrizHistorial||[]).map(h=>h.fecha).filter(Boolean).sort();
+  return fechas.length ? fechas[0].slice(0,10) : "";
+}
+function miperPendientes(){
+  const v = miperVigente(), corte = v ? (v.emitidoEn||"") : "";
+  const cambios = (CACHE.matrizHistorial||[]).filter(h=>!corte || String(h.fecha) > corte);
+  const grupos = new Map();
+  cambios.forEach(h=>{ const k = h.campo||"Otros"; if(!grupos.has(k)) grupos.set(k, {n:0, lineas:new Set()}); const g = grupos.get(k); g.n++; g.lineas.add(h.registroId); });
+  const orden = Array.from(grupos.entries()).sort((a,b)=>b[1].n-a[1].n);
+  const resumen = orden.slice(0,8).map(([k,g])=>`${k}: ${g.n} cambio(s) en ${g.lineas.size} línea(s)`).join("; ") + (orden.length>8 ? `; otros tipos de cambio: ${orden.slice(8).reduce((s,[,g])=>s+g.n,0)}` : "");
+  return {total:cambios.length, lineas:new Set(cambios.map(h=>h.registroId)).size, resumen};
+}
+function miperVersionDeCambio(h, ascendentes){
+  const v = ascendentes.find(x=>x.emitidoEn && String(x.emitidoEn) >= String(h.fecha));
+  return v ? "V"+v.version : "Sin versionar";
+}
+/* El FUF (ítem 6) pide revisar la MIPER al menos una vez al año: aviso informativo, no cambia el cumplimiento registrado. */
+function miperRevisionVencida(){
+  const v = miperVigente(); if(!v || !v.fecha) return false;
+  const d = parseFechaLocal(v.fecha); d.setFullYear(d.getFullYear()+1);
+  return daysUntil(vsIso(d)) < 0;
+}
+function miperLineaTexto(){
+  const v = miperVigente();
+  if(!v) return "MIPER sin versión emitida";
+  return `MIPER versión ${v.version} - creada el ${fmtDate(miperFechaCreacion())} - revisada el ${fmtDate(v.fecha)} por ${v.responsable||"-"}`;
+}
+function renderMiperControl(){
+  const box = document.getElementById("miperControl"); if(!box) return;
+  const v = miperVigente(), p = miperPendientes();
+  const estado = !v ? '<span class="pill vencido">Sin versión emitida</span>'
+    : (p.total ? `<span class="pill proximo">${p.total} cambio(s) sin versionar en ${p.lineas} línea(s)</span>` : '<span class="pill vigente">Al día</span>');
+  const datos = v
+    ? `<strong>MIPER — Versión ${v.version}</strong> · Creada el ${fmtDate(miperFechaCreacion())} · Última revisión el ${fmtDate(v.fecha)} · Responsable de revisión: ${incEsc(v.responsable||"—")}`
+    : `<strong>MIPER</strong> · Aún no tiene versión emitida. Cuando termine de armar o revisar la matriz, emita la versión 1.`;
+  box.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">${datos} ${estado}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn small" id="miperEmitirBtn" type="button">${v ? "Emitir nueva versión" : "Emitir versión 1"}</button>${v ? '<button class="btn secondary small" id="miperVerBtn" type="button">Ver versiones</button>' : ""}</div>`;
+  on(document.getElementById("miperEmitirBtn"), "click", miperAbrirEmision);
+  const ver = document.getElementById("miperVerBtn");
+  if(ver) on(ver, "click", ()=>{ const h = document.getElementById("hdrMatrizHistorial"); if(h){ subpestanasMostrarDe("hdrMatrizHistorial"); h.scrollIntoView({behavior:"smooth", block:"start"}); } });
+}
+function miperAbrirEmision(){
+  const v = miperVigente(), p = miperPendientes(), primera = !v;
+  if(primera && !(CACHE.matriz||[]).length){ alert("La matriz aún no tiene líneas: agregue o importe los riesgos antes de emitir la versión 1."); return; }
+  if(!primera && !p.total){ alert("No hay cambios nuevos en la matriz desde la última versión emitida."); return; }
+  const sig = primera ? 1 : v.version+1, hoy = new Date().toISOString().slice(0,10);
+  openModal(`
+    <h3>Emitir versión ${sig} de la MIPER</h3>
+    <div class="kv" style="margin-bottom:8px;">${primera ? "Se registrará la versión inicial de la matriz de riesgos." : `Se cerrarán los ${p.total} cambio(s) hechos desde la versión ${v.version}: la versión subirá solo una vez, sin importar cuántos cambios se hayan hecho.`}</div>
+    ${p.total ? `<div class="kv" style="margin-bottom:8px;"><strong>Resumen automático:</strong> ${incEsc(p.resumen)}</div>` : ""}
+    <div class="form-grid">
+      <div><label>Responsable de revisión</label><input id="miResp" list="dlResponsables" placeholder="Nombre de quien revisó la matriz"></div>
+      <div><label>Fecha de revisión</label><input type="date" id="miFecha" value="${hoy}"></div>
+      ${primera ? `<div><label>Fecha de creación de la MIPER</label><input type="date" id="miCreacion" value="${incEsc(miperFechaCreacion()||hoy)}"></div>` : ""}
+    </div>
+    <label>Observaciones de la revisión (opcional)</label>
+    <textarea id="miObs" placeholder="Qué se revisó o por qué se actualizó la matriz"></textarea>
+    <div class="toolbar" style="margin-top:10px;"><button class="btn" id="miGuardarBtn" type="button">Emitir versión ${sig}</button><button class="btn secondary" id="miCancelarBtn" type="button">Cancelar</button></div>
+  `, {wide:true});
+  on(document.getElementById("miCancelarBtn"), "click", closeModal);
+  on(document.getElementById("miGuardarBtn"), "click", async ()=>{
+    const responsable = document.getElementById("miResp").value.trim(), fecha = document.getElementById("miFecha").value;
+    const creacion = primera ? document.getElementById("miCreacion").value : miperFechaCreacion();
+    if(responsableEsGenerico(responsable)){ alert("Indique el nombre de la persona (o cargo concreto) que realizó la revisión."); return; }
+    if(!fecha){ alert("Indique la fecha de revisión."); return; }
+    if(!creacion){ alert("Indique la fecha de creación de la MIPER."); return; }
+    if(creacion > fecha){ alert("La fecha de creación no puede ser posterior a la fecha de revisión."); return; }
+    const obs = document.getElementById("miObs").value.trim();
+    const pe = miperPendientes();
+    await put("matrizVersiones", {
+      id: uid(), version: sig, fecha, responsable, fechaCreacion: creacion, emitidoEn: new Date().toISOString(),
+      nCambios: pe.total, nLineas: pe.lineas, obs,
+      resumen: (pe.total ? pe.resumen : "Versión inicial de la matriz") + (obs ? ". Observaciones: "+obs : ""),
+    });
+    await loadCache();
+    closeModal();
+    renderMiperControl(); renderMatrizHistorialTable(); renderFufTable();
+    subpestanasAplicar("matriz");
+  });
+}
+function renderMiperVersiones(){
+  const t = document.getElementById("miperVersionesTable"); if(!t) return;
+  const vs = miperVersiones();
+  t.innerHTML = vs.map((v, i)=>`<tr>
+    <td><strong>Versión ${v.version}</strong>${v.version===vs[vs.length-1].version ? `<div class="kv">Creada el ${fmtDate(v.fechaCreacion||v.fecha)}</div>` : ""}</td>
+    <td>${fmtDate(v.fecha)}</td><td>${incEsc(v.responsable||"—")}</td>
+    <td>${v.nCambios||0} en ${v.nLineas||0} línea(s)</td><td>${incEsc(v.resumen||"—")}</td>
+    <td>${i===0 ? `<button class="subtle-btn" data-miper-del="${v.id}">Eliminar</button>` : ""}</td>
+  </tr>`).join("") || `<tr><td class="empty" colspan="6">Todavía no se ha emitido ninguna versión de la MIPER</td></tr>`;
+}
+on(document.getElementById("miperVersionesTable"), "click", async (e)=>{
+  const b = e.target.closest("[data-miper-del]"); if(!b) return;
+  const v = (CACHE.matrizVersiones||[]).find(x=>x.id===b.dataset.miperDel); if(!v) return;
+  if(!confirm(`¿Eliminar la versión ${v.version} de la MIPER? Los cambios de esa versión volverán a quedar «sin versionar». Úsela solo para corregir una emisión hecha por error.`)) return;
+  await deleteRecord("matrizVersiones", v.id);
+  await loadCache();
+  renderMiperControl(); renderMatrizHistorialTable(); renderFufTable();
+  subpestanasAplicar("matriz");
+});
+
 function renderMatrizHistorialTable(){
+  const asc = (CACHE.matrizVersiones||[]).slice().sort((a,b)=>a.version-b.version);
   const rows = (CACHE.matrizHistorial||[]).slice().sort((a,b)=> new Date(b.fecha)-new Date(a.fecha)).slice(0,100);
   document.getElementById("matrizHistorialTable").innerHTML = rows.map(h=>`
     <tr>
@@ -15123,8 +15247,12 @@ function renderMatrizHistorialTable(){
       <td>${h.campo}</td>
       <td>${h.anterior}</td>
       <td>${h.nuevo}</td>
+      <td>${miperVersionDeCambio(h, asc)}</td>
     </tr>
-  `).join("") || `<tr><td class="empty" colspan="5">Sin modificaciones registradas todavía</td></tr>`;
+  `).join("") || `<tr><td class="empty" colspan="6">Sin modificaciones registradas todavía</td></tr>`;
+  renderMiperVersiones();
+  renderMiperControl();
+  if(typeof SUBPESTANAS!=="undefined" && SUBPESTANAS.matriz) subpestanasAplicar("matriz");
 }
 
 on(document.getElementById("exportMatrizBtn"), "click", async () => {
@@ -15179,6 +15307,26 @@ on(document.getElementById("exportMatrizBtn"), "click", async () => {
   ws["!cols"] = [{wch:14},{wch:20},{wch:28},{wch:14},{wch:26},{wch:26},{wch:32},{wch:12},{wch:12},{wch:10},{wch:12},{wch:12},{wch:12},{wch:14},{wch:32},{wch:16},{wch:14},{wch:18},{wch:12},{wch:12},{wch:10},{wch:14},{wch:10},{wch:10},{wch:10},{wch:16},{wch:32}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Matriz de riesgos");
+
+  // Control de versión del documento (MIPER): versión vigente, fecha de creación y responsable de revisión.
+  {
+    const vig = miperVigente(), pend = miperPendientes();
+    const ctl = [
+      ["Documento", "Matriz de riesgos (MIPER)"],
+      ["Versión vigente", vig ? vig.version : "Sin versión emitida"],
+      ["Fecha de creación", miperFechaCreacion() ? fmtDate(miperFechaCreacion()) : ""],
+      ["Fecha de la última revisión", vig ? fmtDate(vig.fecha) : ""],
+      ["Responsable de revisión", vig ? (vig.responsable||"") : ""],
+      ["Cambios sin versionar", pend.total],
+      ["Descargado el", fmtDate(new Date().toISOString().slice(0,10))],
+      [],
+      ["Versión","Fecha de revisión","Responsable de revisión","Cambios","Resumen"],
+      ...miperVersiones().slice().reverse().map(v=>["V"+v.version, fmtDate(v.fecha), v.responsable||"", v.nCambios||0, v.resumen||""]),
+    ];
+    const wsCtl = XLSX.utils.aoa_to_sheet(ctl);
+    wsCtl["!cols"] = [{wch:28},{wch:34},{wch:26},{wch:10},{wch:80}];
+    XLSX.utils.book_append_sheet(wb, wsCtl, "Control de versión");
+  }
 
   // Segunda hoja: una fila por cada medida de control individual, con su jerarquía DS 44.
   const jerData = [];
