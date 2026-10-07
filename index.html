@@ -314,6 +314,7 @@
       <button data-view="riohys">Inducción y cumplimiento</button>
       <button data-view="cphys">CPHyS</button>
       <button data-view="programa">Programa de seguridad</button>
+      <button data-view="objetivos">Objetivos e indicadores</button>
       <button data-view="capacitacion">Capacitación</button>
       <button data-view="vigilancia">Vigilancia de salud</button>
       <button data-view="epp">Entrega EPP</button>
@@ -559,6 +560,20 @@
       <div class="form-grid"><div style="grid-column:1/-1;"><label>Actividad (elija la principal o la de mayor cotización)</label><select id="diagRubroDs110"></select></div></div>
       <div id="diagAnalisisWrap" style="margin-top:14px;"></div>
 
+      <h3 style="margin:22px 0 6px;font-size:15px;">Cotización del seguro de accidentes (Ley 16.744) y ahorro posible</h3>
+      <div class="desc" style="margin-top:0;">Muestra cuánto paga hoy la empresa por el seguro y cuánto podría ahorrar si logra bajar su cotización adicional diferenciada (CAD), por ejemplo a 0 %. Ingrese el % que figura en el certificado o la boleta de su mutualidad; si no lo tiene, puede partir con la referencia del rubro o la estimada por siniestralidad.</div>
+      <div class="form-grid">
+        <div><label>Remuneraciones imponibles mensuales de toda la empresa ($)</label><input type="number" id="diagCotImponible" min="0" step="1000" placeholder="Ej: 45000000"></div>
+        <div><label>…o sueldo imponible promedio por trabajador ($)</label><input type="number" id="diagCotSueldoProm" min="0" step="1000" placeholder="Se multiplica por el N° de trabajadores"></div>
+        <div><label>Cotización adicional diferenciada (CAD) actual (%)</label><input type="number" id="diagCotCadActual" min="0" max="6.8" step="0.01" placeholder="Ej: 1,70"></div>
+        <div><label>CAD a la que quiere llegar (%)</label><input type="number" id="diagCotCadMeta" min="0" max="6.8" step="0.01" value="0"></div>
+      </div>
+      <div class="toolbar" style="margin-top:6px;">
+        <button class="btn small secondary" id="diagCotUsarRubroBtn" type="button">Usar la CAD del rubro (DS 110)</button>
+        <button class="btn small secondary" id="diagCotUsarDs67Btn" type="button">Usar la CAD estimada por siniestralidad (DS 67)</button>
+      </div>
+      <div id="diagCotizacionWrap" style="margin-top:12px;"></div>
+
       <div class="form-grid" style="margin-top:10px;">
         <div style="grid-column:1/-1;"><label>Observaciones generales</label><textarea id="diagObservaciones" rows="3"></textarea></div>
         <div style="grid-column:1/-1;"><label>Recomendaciones / próximos pasos</label><textarea id="diagRecomendaciones" rows="3"></textarea></div>
@@ -576,7 +591,7 @@
       <div class="desc">Consolidado de todas las empresas diagnosticadas, sean prospectos o tu propia empresa, con el estado de si contrataron el servicio.</div>
       <div class="grid-tiles" id="diagResumenTiles"></div>
       <table>
-        <thead><tr><th>Fecha</th><th>Empresa/cliente</th><th>Responsable</th><th>Trabajadores</th><th>Nivel de riesgo</th><th>Hallazgos</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Empresa/cliente</th><th>Responsable</th><th>Trabajadores</th><th>Nivel de riesgo</th><th>Ahorro anual posible</th><th>Hallazgos</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody id="diagnosticoTable"></tbody>
       </table>
       </div>
@@ -1897,6 +1912,66 @@
       </table>
       </div>
     </div>
+  </div>
+
+  <!-- OBJETIVOS E INDICADORES DE GESTIÓN -->
+  <div class="view" id="view-objetivos">
+    <div class="card">
+      <div class="card-header-row" id="hdrObjTablero"><h2>Tablero de indicadores de gestión</h2><button class="collapse-toggle" id="toggleObjTablero" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyObjTablero">
+      <div class="desc">Seguimiento mensual de los indicadores que miden el cumplimiento de los objetivos de la política y la mejora continua. Cada mes se calcula <strong>KPI = realizado (R) ÷ programado o denominador (P) × factor</strong> y se compara con la meta: <span class="pill bajo">en meta</span> <span class="pill medio">cerca de la meta</span> <span class="pill critico">fuera de meta</span>. Los indicadores marcados «automático» se calculan solos con lo que ya registra la app; para los manuales haga clic en el mes para ingresar P y R.</div>
+      <div class="toolbar">
+        <div class="field"><label>Año</label><select id="objAnio"></select></div>
+        <div><button class="btn small secondary" id="objExcelBtn" type="button" style="margin-top:20px;">Descargar Excel</button></div>
+        <div><button class="btn small secondary" id="objPdfBtn" type="button" style="margin-top:20px;">Descargar informe PDF</button></div>
+        <div class="field"><div class="kv" id="objResumenAnio" style="margin-top:22px;"></div></div>
+      </div>
+      <div style="overflow-x:auto;"><table id="objTablero">
+        <thead id="objTableroHead"></thead>
+        <tbody id="objTableroBody"></tbody>
+      </table></div>
+      <h3 style="margin:18px 0 6px;font-size:15px;">Tendencia del indicador</h3>
+      <div class="toolbar"><div class="field"><label>Indicador</label><select id="objIndGraf"></select></div></div>
+      <div id="objGraficoWrap" style="overflow-x:auto;"></div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrObjObjetivos"><h2>Política y objetivos</h2><button class="collapse-toggle" id="toggleObjObjetivos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyObjObjetivos">
+      <div class="desc">Los objetivos son los compromisos de la política que la empresa se propone cumplir; cada indicador de gestión mide uno de ellos.</div>
+      <div id="objPoliticaVigente" class="kv" style="margin-bottom:10px;"></div>
+      <div class="form-grid">
+        <div><label>Objetivo</label><input id="objNombre" placeholder="Ej: Disminuir la tasa de accidentabilidad"></div>
+        <div><label>Compromiso de la política que cumple (opcional)</label><input id="objCompromiso" placeholder="Ej: Prevenir lesiones y enfermedades laborales"></div>
+      </div>
+      <div class="toolbar" style="margin-top:10px;"><button class="btn" id="objGuardarBtn" type="button">Agregar objetivo</button><button class="btn secondary" id="objCancelarBtn" type="button" style="display:none;">Cancelar edición</button></div>
+      <div style="overflow-x:auto;"><table><thead><tr><th>Objetivo</th><th>Compromiso de la política</th><th>Indicadores</th><th></th></tr></thead><tbody id="objObjetivosTable"></tbody></table></div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrObjIndicadores"><h2>Indicadores de gestión</h2><button class="collapse-toggle" id="toggleObjIndicadores" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyObjIndicadores">
+      <div class="desc">Defina cada indicador con su fórmula, meta y de dónde sale el dato. Si elige una <strong>fuente automática</strong>, el KPI de cada mes se calcula solo desde los registros de la app (si un mes no tiene datos en la app, se usa el valor ingresado a mano). También puede <strong>importar su planilla de Excel</strong> (formato Indicador · Objetivo · Meta · Frecuencia · Fórmula, y P/R/KPI por mes).</div>
+      <div class="form-grid">
+        <div><label>Objetivo</label><select id="indObjetivo"></select></div>
+        <div><label>Nombre del indicador</label><input id="indNombre" placeholder="Ej: Cumplimiento del programa de capacitación"></div>
+        <div style="grid-column:1/-1;"><label>Fórmula</label><input id="indFormula" placeholder="Ej: (N° de capacitaciones realizadas / N° proyectadas) x 100"></div>
+        <div><label>Meta</label><input type="number" step="any" id="indMeta" placeholder="Ej: 100 (en %) o 2,1 (tasa)"></div>
+        <div><label>Sentido de la meta</label><select id="indSentido"><option value="mayor_mejor">Mayor es mejor (cumplimiento)</option><option value="menor_mejor">Menor es mejor (tasas)</option></select></div>
+        <div><label>Frecuencia</label><select id="indFrecuencia"><option value="mensual">Mensual</option><option value="semestral">Semestral</option><option value="anual">Anual</option></select></div>
+        <div><label>Fuente del dato</label><select id="indFuente"></select></div>
+        <div><label>Factor del KPI</label><select id="indFactor"><option value="100">× 100 (porcentaje)</option><option value="1000000">× 1.000.000 (tasa por HH)</option></select></div>
+        <div><label>P en el consolidado</label><select id="indAgregacion"><option value="suma">Suma de los meses</option><option value="promedio">Promedio de los meses (ej. trabajadores)</option></select></div>
+        <div><label>Responsable</label><input id="indResponsable" list="dlResponsables" placeholder="Nombre del responsable"></div>
+        <div><label style="display:flex;gap:6px;align-items:center;font-weight:400;margin-top:26px;"><input type="checkbox" id="indActivo" checked style="width:auto;min-height:auto;"> Indicador activo</label></div>
+      </div>
+      <div class="toolbar" style="margin-top:10px;"><button class="btn" id="indGuardarBtn" type="button">Agregar indicador</button><button class="btn secondary" id="indCancelarBtn" type="button" style="display:none;">Cancelar edición</button></div>
+      <div style="overflow-x:auto;"><table><thead><tr><th>Indicador</th><th>Objetivo</th><th>Meta</th><th>Fuente</th><th>Frecuencia</th><th>Responsable</th><th></th></tr></thead><tbody id="indTable"></tbody></table></div>
+      <h3 style="margin:18px 0 6px;font-size:15px;">Importar desde Excel</h3>
+      <div class="toolbar">
+        <div class="field"><label>Archivo Excel (.xlsx)</label><input type="file" id="indImpFile" accept=".xlsx,.xls"></div>
+        <div class="field"><label>Año de las mediciones</label><input type="number" id="indImpAnio" min="2000" max="2100" style="max-width:110px;"></div>
+        <div><button class="btn small" id="indImpBtn" type="button" style="margin-top:20px;">Importar</button></div>
+      </div>
+      <div class="kv">Se crean los objetivos e indicadores que no existan (por nombre) y se cargan los P y R de cada mes. Revise después la meta y el sentido de cada indicador: la importación los deduce y pueden necesitar ajuste.</div>
+    </div></div>
   </div>
 
   <!-- PROGRAMA DE SEGURIDAD -->
@@ -4187,8 +4262,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 45;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos","matrizVersiones","vsExamenesOcup"];
+const DB_VERSION = 46;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos","matrizVersiones","vsExamenesOcup","objetivosGestion","indicadoresGestion"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -5033,7 +5108,7 @@ Referencias: Decreto Supremo N°594 (condiciones sanitarias y ambientales básic
 async function seedAccesosPorDefecto(){
   const existentes = await getAll("accesoUsuarios");
   if(existentes.length) return;
-  const TODAS_LAS_VISTAS = ["dashboard","realizar-inspecciones","inspecciones","matriz","vigilancia","programa","capacitacion","accidentabilidad","seguridad","epp","cumplimiento","riohys","documentos","cphys","emergencia","compromisos","config"];
+  const TODAS_LAS_VISTAS = ["dashboard","diagnostico","objetivos","realizar-inspecciones","inspecciones","matriz","vigilancia","programa","capacitacion","accidentabilidad","seguridad","epp","cumplimiento","riohys","documentos","cphys","emergencia","compromisos","config"];
   const perfilAdminId = uid();
   const perfilPrevId = uid();
   const perfilSupervisorId = uid();
@@ -5366,6 +5441,7 @@ function irAVista(nombreVista){
   if(nombreVista==="accidentabilidad") renderAccidentabilidad();
   if(nombreVista==="programa") renderProgramaCargo();
   if(nombreVista==="vigilancia") renderVigilancia();
+  if(nombreVista==="objetivos") renderObjetivos();
   if(nombreVista==="capacitacion") capRenderMatriz();
   if(nombreVista==="inspecciones") renderAnalisisConductual();
   if(nombreVista==="mis-pendientes"){ renderMisActividadesMensuales(); renderMisHallazgos(); renderMisPendientes(); }
@@ -6772,6 +6848,7 @@ function renderDiagAnalisis(){
     <h3 style="margin:16px 0 6px;font-size:15px;">Nivel de riesgo de la empresa</h3>
     <div class="grid-tiles">${tilesHtml}</div>${fatalAviso}${resumenHtml}
     <div class="kv" style="margin-top:8px;">Cómo se calcula: el rubro usa la cotización adicional por actividad del DS 110 (0 – 0,85 – 1,70 – 2,55 – 3,40 %); la siniestralidad usa los días perdidos por 100 trabajadores (promedio de los años cargados, redondeado) ubicados en la tabla del DS 67 art. 5, llevados a esa misma escala (tope 3,40 %), sin considerar días de cargo por invalidez o muerte. El nivel global es el más alto de los dos. Fuentes: DS 110 de 1968 (copia en sigweb.cl) y DS 67 de 1999 con Dto 34/2001. Verifique que sigan vigentes antes de usarlo en una propuesta.</div>`;
+  renderDiagCotizacion();
 }
 on(document.getElementById("diagHistAnioAddBtn"), "click", ()=>{ diagHistAnios.push({anio:new Date().getFullYear()-1, trabajadores:"", hh:"", accidentes:"", diasPerdidos:"", fatales:""}); drawDiagHist(); renderDiagAnalisis(); });
 on(document.getElementById("diagHistFocoAddBtn"), "click", ()=>{ diagHistFocos.push({foco:"", accidentes:"", diasPerdidos:""}); drawDiagHist(); renderDiagAnalisis(); });
@@ -6786,6 +6863,68 @@ on(document.getElementById("diagHistFocosTable"), "input", (e)=>{
 on(document.getElementById("diagHistAniosTable"), "click", (e)=>{ const b = e.target.closest("[data-dh-anio-quitar]"); if(!b) return; diagHistAnios.splice(+b.dataset.dhAnioQuitar, 1); drawDiagHist(); renderDiagAnalisis(); });
 on(document.getElementById("diagHistFocosTable"), "click", (e)=>{ const b = e.target.closest("[data-dh-foco-quitar]"); if(!b) return; diagHistFocos.splice(+b.dataset.dhFocoQuitar, 1); drawDiagHist(); renderDiagAnalisis(); });
 on(document.getElementById("diagRubroDs110"), "change", renderDiagAnalisis);
+
+/* --- Cotización al seguro de accidentes (Ley 16.744) y ahorro si baja la CAD ---
+   Cotización básica 0,90 % de las remuneraciones imponibles (art. 15 letra a) más la
+   cotización adicional diferenciada (CAD, art. 15 letra b): por actividad según el DS 110
+   para quien no es evaluado por siniestralidad, o según el DS 67 (tabla del art. 5) para
+   quien lleva al menos 24 meses afiliado. El ingreso de la CAD actual es manual: se toma
+   del certificado o la boleta de la mutualidad. Solo calcula; no es una propuesta ni precio. */
+const COT_BASICA_PCT = 0.90;
+const diagClp = (v) => "$" + Math.round(v).toLocaleString("es-CL");
+const diagPctTxt = (v) => (Math.round(v*100)/100).toFixed(2).replace(".", ",") + " %";
+function diagCotizacionCalcular({imponible, sueldoProm, n, cadActual, cadMeta}){
+  const num = (v) => (v===null || v===undefined || v==="" || isNaN(+v)) ? null : +v;
+  const impDirecto = num(imponible), prom = num(sueldoProm), trab = +n || 0;
+  const imp = impDirecto>0 ? impDirecto : (prom>0 && trab>0 ? prom*trab : 0);
+  const cad = num(cadActual);
+  if(cad===null || cad<0) return {ok:false, imp};
+  const meta = num(cadMeta)===null ? 0 : Math.max(0, num(cadMeta));
+  const mes = (pct) => imp*pct/100;
+  const ahorroPct = Math.max(0, cad-meta);
+  return {ok:true, imp, impDerivado: !(impDirecto>0) && imp>0, cad, meta, totalActualPct: COT_BASICA_PCT+cad, totalMetaPct: COT_BASICA_PCT+meta,
+    basicaMes: mes(COT_BASICA_PCT), cadMes: mes(cad), totalMes: mes(COT_BASICA_PCT+cad), totalMetaMes: mes(COT_BASICA_PCT+meta),
+    ahorroPct, ahorroMes: mes(ahorroPct), ahorroAnio: mes(ahorroPct)*12};
+}
+function diagCotLeer(){
+  const g = (id) => document.getElementById(id).value;
+  return {imponible:g("diagCotImponible"), sueldoProm:g("diagCotSueldoProm"), cadActual:g("diagCotCadActual"), cadMeta:g("diagCotCadMeta")};
+}
+function renderDiagCotizacion(){
+  const wrap = document.getElementById("diagCotizacionWrap"); if(!wrap) return;
+  const n = diagNumTrabajadoresActivo(), l = diagCotLeer();
+  const c = diagCotizacionCalcular({...l, n});
+  const an = diagAnalisisCalcular({anios:diagHistAnios, focos:diagHistFocos, rubroId:document.getElementById("diagRubroDs110").value, n, checklist:{}});
+  const refs = `<div class="kv">Referencias: ${an.pctRubro!==null ? `CAD del rubro (DS 110) <strong>${diagPctTxt(an.pctRubro)}</strong>` : "elija el rubro arriba para ver la CAD del DS 110"}; ${an.pctDs67!==null ? `CAD estimada por la siniestralidad cargada (tasa ${diagFmtNum(an.hist.sinProm,1)} en la tabla DS 67) <strong>${diagPctTxt(an.pctDs67)}</strong>` : "cargue el historial por año para estimar la CAD por siniestralidad (DS 67)"}.</div>`;
+  if(!c.ok){ wrap.innerHTML = `<div class="empty">Ingrese la CAD actual (%) para calcular lo que paga hoy y el ahorro posible.</div>${refs}`; return; }
+  const fila = (nombre, pct, mes) => `<tr><td>${nombre}</td><td>${diagPctTxt(pct)}</td><td>${c.imp>0 ? diagClp(mes) : "—"}</td><td>${c.imp>0 ? diagClp(mes*12) : "—"}</td></tr>`;
+  const tabla = `<div style="overflow-x:auto;"><table><thead><tr><th>Concepto</th><th>% de la remuneración imponible</th><th>Por mes</th><th>Por año</th></tr></thead><tbody>
+    ${fila("Cotización básica (Ley 16.744, art. 15 a)", COT_BASICA_PCT, c.basicaMes)}
+    ${fila("Cotización adicional diferenciada (CAD) actual", c.cad, c.cadMes)}
+    <tr style="font-weight:700;">${fila("Total que paga hoy", c.totalActualPct, c.totalMes).replace(/^<tr>/,"").replace(/<\/tr>$/,"")}</tr>
+    <tr>${fila("Total con CAD de "+diagPctTxt(c.meta), c.totalMetaPct, c.totalMetaMes).replace(/^<tr>/,"").replace(/<\/tr>$/,"")}</tr>
+    <tr style="font-weight:700;background:#e6f7e6;">${fila("Ahorro posible", c.ahorroPct, c.ahorroMes).replace(/^<tr>/,"").replace(/<\/tr>$/,"")}</tr></tbody></table></div>`;
+  const tiles = c.imp>0 ? `<div class="grid-tiles" style="margin-bottom:10px;">${[
+    tile("Paga hoy por año", diagClp(c.totalMes*12), diagPctTxt(c.totalActualPct)+" de las remuneraciones imponibles"),
+    tile("Ahorro posible por año", diagClp(c.ahorroAnio), c.ahorroPct>0 ? `bajando la CAD de ${diagPctTxt(c.cad)} a ${diagPctTxt(c.meta)}` : "la meta no es menor que la CAD actual"),
+    tile("Ahorro posible por mes", diagClp(c.ahorroMes), c.impDerivado ? "con sueldo promedio × N° de trabajadores" : "sobre las remuneraciones ingresadas"),
+  ].join("")}</div>` : `<div class="empty" style="margin-bottom:8px;">Ingrese las remuneraciones imponibles mensuales (o el sueldo imponible promedio y el N° de trabajadores) para ver los montos en pesos.</div>`;
+  const tramo = DS67_TABLA_SINIESTRALIDAD.find(([, p]) => Math.abs(p-c.meta) < 1e-9);
+  const reqHtml = tramo ? `<div class="kv" style="margin-top:8px;">Para quedar en una CAD de ${diagPctTxt(c.meta)} según la tabla del DS 67, la tasa de siniestralidad total debe ser <strong>${tramo[0]===Infinity?"mayor a 980":"de hasta "+tramo[0]}</strong> (días perdidos por cada 100 trabajadores${n>0 && tramo[0]!==Infinity ? `; con ${n} trabajadores, unos <strong>${diagFmtNum(tramo[0]*n/100,1)} día(s) perdidos por año</strong> en promedio` : ""}, sin contar días de cargo por invalidez o muerte).${an.hist.sinProm!==null ? ` Hoy su tasa estimada con el historial es <strong>${diagFmtNum(an.hist.sinProm,1)}</strong>.` : ""}</div>` : "";
+  wrap.innerHTML = tiles + tabla + reqHtml + refs +
+    `<div class="kv" style="margin-top:8px;">Base legal: la cotización básica es de 0,90 % de las remuneraciones imponibles y la CAD depende de la actividad (DS 110) o, si la empresa lleva al menos 24 meses afiliada a su mutualidad, de su siniestralidad efectiva (DS 67). La CAD vigente y su evaluación las determina la mutualidad: confírmelas con su certificado. Ingrese las remuneraciones ya con el tope imponible vigente. Es un cálculo referencial del ahorro, no una promesa ni un precio de servicio. Verifique la vigencia de las normas antes de usarlo en una propuesta.</div>`;
+}
+["diagCotImponible","diagCotSueldoProm","diagCotCadActual","diagCotCadMeta"].forEach(id=>on(document.getElementById(id), "input", renderDiagCotizacion));
+on(document.getElementById("diagCotUsarRubroBtn"), "click", ()=>{
+  const act = DS110_ACTIVIDADES.find(a=>a.id===document.getElementById("diagRubroDs110").value);
+  if(!act){ alert("Elija primero el rubro (actividad) según el DS 110."); return; }
+  document.getElementById("diagCotCadActual").value = act.pct.toFixed(2); renderDiagCotizacion();
+});
+on(document.getElementById("diagCotUsarDs67Btn"), "click", ()=>{
+  const an = diagAnalisisCalcular({anios:diagHistAnios, focos:diagHistFocos, rubroId:"", n:diagNumTrabajadoresActivo(), checklist:{}});
+  if(an.pctDs67===null){ alert("Cargue el historial por año (trabajadores y días perdidos) para estimar la CAD por siniestralidad."); return; }
+  document.getElementById("diagCotCadActual").value = an.pctDs67.toFixed(2); renderDiagCotizacion();
+});
 
 let diagEditingId = null;
 let diagHallazgos = [];
@@ -6834,6 +6973,8 @@ function resetDiagnosticoForm(){
   document.getElementById("cancelEditDiagnosticoBtn").style.display = "none";
   diagHistAnios = []; diagHistFocos = [];
   document.getElementById("diagRubroDs110").value = "";
+  ["diagCotImponible","diagCotSueldoProm","diagCotCadActual"].forEach(id=>{ document.getElementById(id).value = ""; });
+  document.getElementById("diagCotCadMeta").value = "0";
   renderDiagAreaOptions();
   drawDiagHallazgos();
   drawDiagChecklist();
@@ -6863,6 +7004,11 @@ function startEditDiagnostico(id){
   drawDiagChecklist();
   drawDiagHist();
   document.getElementById("diagRubroDs110").value = rec.rubroDs110 || "";
+  const cot = rec.cotizacion || {};
+  document.getElementById("diagCotImponible").value = cot.imponibleMensual || "";
+  document.getElementById("diagCotSueldoProm").value = cot.sueldoPromedio || "";
+  document.getElementById("diagCotCadActual").value = cot.cadActual!=null ? cot.cadActual : "";
+  document.getElementById("diagCotCadMeta").value = cot.cadMeta!=null ? cot.cadMeta : "0";
   renderDiagnosticoAsistente();
   document.getElementById("hdrDiagnostico").scrollIntoView({behavior:"smooth", block:"start"});
 }
@@ -6887,6 +7033,10 @@ on(document.getElementById("saveDiagnosticoBtn"), "click", async ()=>{
     observaciones: document.getElementById("diagObservaciones").value.trim(),
     recomendaciones: document.getElementById("diagRecomendaciones").value.trim(),
     rubroDs110: document.getElementById("diagRubroDs110").value,
+    cotizacion: (function(){
+      const l = diagCotLeer(), nn = (v)=> (v==="" || isNaN(+v)) ? null : +v;
+      return {imponibleMensual: nn(l.imponible), sueldoPromedio: nn(l.sueldoProm), cadActual: nn(l.cadActual), cadMeta: nn(l.cadMeta)===null ? 0 : nn(l.cadMeta)};
+    })(),
     historialAnios: diagHistAnios.filter(a=>a.anio || a.accidentes || a.diasPerdidos).map(a=>({anio:+a.anio||0, trabajadores:+a.trabajadores||0, hh:+a.hh||0, accidentes:+a.accidentes||0, diasPerdidos:+a.diasPerdidos||0, fatales:+a.fatales||0})),
     historialFocos: diagHistFocos.filter(f=>String(f.foco||"").trim()).map(f=>({foco:String(f.foco).trim(), accidentes:+f.accidentes||0, diasPerdidos:+f.diasPerdidos||0})),
   };
@@ -6913,6 +7063,7 @@ function renderDiagnosticoTable(){
       <td>${r.responsable || "—"}</td>
       <td>${(function(){ const n = r.nombreEmpresa ? r.numTrabajadoresEstimado : (CACHE.empresa && CACHE.empresa.numTrabajadores); return n ? n+'<div class="kv">'+diagTramoTamano(n).replace(/ \(.*\)$/,"")+'</div>' : "—"; })()}</td>
       <td>${(function(){ const n = r.nombreEmpresa ? r.numTrabajadoresEstimado : (CACHE.empresa && CACHE.empresa.numTrabajadores); const c = diagAnalisisCalcular({anios:r.historialAnios, focos:r.historialFocos, rubroId:r.rubroDs110, n, checklist:{}}); return c.nivelGlobal ? '<span class="pill '+DIAG_NIVEL_EMP_PILL[c.nivelGlobal]+'">'+DIAG_NIVEL_EMP_LABEL[c.nivelGlobal]+'</span>' : '<span class="kv">Sin datos</span>'; })()}</td>
+      <td>${(function(){ if(!r.cotizacion) return "—"; const n = r.nombreEmpresa ? r.numTrabajadoresEstimado : (CACHE.empresa && CACHE.empresa.numTrabajadores); const c = diagCotizacionCalcular({imponible:r.cotizacion.imponibleMensual, sueldoProm:r.cotizacion.sueldoPromedio, n, cadActual:r.cotizacion.cadActual, cadMeta:r.cotizacion.cadMeta}); return c.ok && c.imp>0 ? "<strong>"+diagClp(c.ahorroAnio)+"</strong><div class=\"kv\">CAD "+diagPctTxt(c.cad)+" → "+diagPctTxt(c.meta)+"</div>" : "—"; })()}</td>
       <td>${(r.hallazgos||[]).length}</td>
       <td>${r.nombreEmpresa ? `<select data-diag-estado="${r.id}">
           <option value="pendiente" ${(!r.estadoProspecto||r.estadoProspecto==="pendiente")?"selected":""}>Pendiente</option>
@@ -6924,7 +7075,7 @@ function renderDiagnosticoTable(){
         <button class="subtle-btn" data-diag-editar="${r.id}">Editar</button>
         <button class="subtle-btn" data-diag-eliminar="${r.id}">Eliminar</button>
       </td>
-    </tr>`).join("") : `<tr><td class="empty" colspan="8">Sin diagnósticos registrados todavía</td></tr>`;
+    </tr>`).join("") : `<tr><td class="empty" colspan="9">Sin diagnósticos registrados todavía</td></tr>`;
 }
 document.getElementById("diagnosticoTable").addEventListener("change", async (e)=>{
   const sel = e.target.closest("select[data-diag-estado]");
@@ -7034,6 +7185,24 @@ function descargarDiagnosticoPdf(id){
     y = doc.lastAutoTable.finalY + 3;
     doc.setFontSize(7.5);
     y = escribirTextoPaginado(doc, "Referencias: DS 110 de 1968 (cotizacion adicional diferenciada por actividad) y DS 67 de 1999, art. 5 (tabla de siniestralidad). La siniestralidad usa solo dias perdidos por accidentes informados, sin dias de cargo por invalidez o muerte. Verificar vigencia antes de usar en una propuesta.", 14, y, {maxWidth:180, lineHeight:3.6}) + 4;
+    doc.setFontSize(10);
+  }
+  const cotz = rec.cotizacion ? diagCotizacionCalcular({imponible:rec.cotizacion.imponibleMensual, sueldoProm:rec.cotizacion.sueldoPromedio, n, cadActual:rec.cotizacion.cadActual, cadMeta:rec.cotizacion.cadMeta}) : null;
+  if(cotz && cotz.ok){
+    if(y > 200){ doc.addPage(); y = 16; }
+    const pct = (v)=> diagPctTxt(v).replace("%","%");
+    const monto = (v)=> cotz.imp>0 ? diagClp(v) : "-";
+    doc.setFontSize(11); doc.text("Cotizacion al seguro de accidentes (Ley 16.744) y ahorro posible", 14, y); y += 2;
+    doc.autoTable({ startY:y, head:[["Concepto","% remuneracion imponible","Por mes","Por ano"]], body:[
+      ["Cotizacion basica (art. 15 a)", pct(COT_BASICA_PCT), monto(cotz.basicaMes), monto(cotz.basicaMes*12)],
+      ["CAD actual (cotizacion adicional diferenciada)", pct(cotz.cad), monto(cotz.cadMes), monto(cotz.cadMes*12)],
+      ["TOTAL que paga hoy", pct(cotz.totalActualPct), monto(cotz.totalMes), monto(cotz.totalMes*12)],
+      ["Total con CAD de "+pct(cotz.meta), pct(cotz.totalMetaPct), monto(cotz.totalMetaMes), monto(cotz.totalMetaMes*12)],
+      ["AHORRO POSIBLE", pct(cotz.ahorroPct), monto(cotz.ahorroMes), monto(cotz.ahorroAnio)],
+    ], styles:{fontSize:8.5}, headStyles:{fillColor:[26,140,74]}, columnStyles:{0:{cellWidth:70}} });
+    y = doc.lastAutoTable.finalY + 3;
+    doc.setFontSize(7.5);
+    y = escribirTextoPaginado(doc, "Base: cotizacion basica 0,90 % de las remuneraciones imponibles (Ley 16.744, art. 15 a) y CAD segun actividad (DS 110) o siniestralidad efectiva (DS 67, empresas con al menos 24 meses de afiliacion). La CAD vigente la determina la mutualidad. Calculo referencial del ahorro, no una promesa ni un precio de servicio."+(cotz.impDerivado?" Remuneraciones estimadas como sueldo imponible promedio por numero de trabajadores.":""), 14, y, {maxWidth:180, lineHeight:3.6}) + 4;
     doc.setFontSize(10);
   }
   const cursos = (CACHE.cursosObligatorios||[]).filter(c=>tramoMinimoAplica(c.tramoMinimo, n));
@@ -10042,6 +10211,7 @@ const NAV_ICONOS = {
   "riohys":'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M9 8h6"/>',
   "cphys":'<circle cx="9" cy="8" r="3"/><path d="M3 20v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1"/><circle cx="17" cy="9" r="2.5"/><path d="M21 19v-1a3.500 3.500 0 0 0-3-3.400"/>',
   "programa":'<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/>',
+  "objetivos":'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 12l6-6"/>',
   "capacitacion":'<circle cx="12" cy="9" r="5"/><path d="M8.500 14L7 21l5-3 5 3-1.500-7"/>',
   "vigilancia":'<path d="M12 20s-7-4.500-7-10a4 4 0 0 1 7-2.500A4 4 0 0 1 19 10c0 5.500-7 10-7 10z"/>',
   "epp":'<path d="M4 16a8 8 0 0 1 16 0z"/><path d="M3 16h18M12 8V6"/>',
@@ -10966,6 +11136,7 @@ function renderDashboard(){
     ]) +
     tileSection("Programa, capacitación e inspecciones", "var(--s1)", [
       tile("Cumplimiento programa de seguridad", pgPct+"%", pgRealizadas+" de "+pgTotal+" actividades", null, "calendar", "var(--s1)"),
+      ...(function(){ const r = objResumenAnio(new Date().getFullYear()); return r.total ? [tile("Indicadores de gestión en meta", r.conDatos ? r.enMeta+" de "+r.conDatos : "—", r.conDatos ? r.fuera+" fuera de meta · año "+new Date().getFullYear() : "sin datos del año en curso", null, "calendar", "var(--s1)")] : []; })(),
       tile("Cumplimiento plan de capacitación", capPct+"%", capAsistieron+" de "+capConvocados+" asistencias", null, "calendar", "var(--s1)"),
       tile("Inspecciones registradas", CACHE.inspecciones.length, "histórico", null, "calendar", "var(--s1)"),
     ]) +
@@ -16226,7 +16397,7 @@ function vsProtocolosOrdenados(){
   });
 }
 function vsIso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
-function vsPuedeVer(){ const per = perfilDeSesion(); return !per || (per.vistas||[]).includes("vigilancia"); }
+function vsPuedeVer(){ const per = perfilDeSesion(); return !per || per.esAdmin === true || (per.vistas||[]).includes("vigilancia"); }
 function vsDiasAlerta(p){ const n = +p.diasAlerta; return n>0 ? n : 60; }
 function vsNormRut(r){ const s = String(r||"").replace(/[^0-9kK]/g,"").toUpperCase(); return /^\d{6,9}[0-9K]$/.test(s) ? s : ""; }
 
@@ -26403,6 +26574,7 @@ const APP_VISTAS = [
   {id:"riohys", label:"Inducción y cumplimiento"},
   {id:"cphys", label:"CPHyS"},
   {id:"programa", label:"Programa de seguridad"},
+  {id:"objetivos", label:"Objetivos e indicadores"},
   {id:"capacitacion", label:"Capacitación"},
   {id:"vigilancia", label:"Vigilancia de salud"},
   {id:"epp", label:"Entrega EPP"},
@@ -26442,7 +26614,9 @@ function aplicarPermisosSesion(){
   }
   const usuario = usuarioDeSesion();
   const perfil = perfilDeSesion();
-  const permitidas = perfil ? (perfil.vistas||[]) : APP_VISTAS.map(v=>v.id);
+  // Un perfil Administrador ve siempre todas las pestañas (también las que se agreguen después, como
+  // Diagnóstico, que los perfiles guardados antes no traen marcadas).
+  const permitidas = perfil ? (perfil.esAdmin ? APP_VISTAS.map(v=>v.id) : (perfil.vistas||[])) : APP_VISTAS.map(v=>v.id);
   document.querySelectorAll("#mainNav button[data-view]").forEach(btn=>{
     // "Mis pendientes" es personal de cada usuario: se muestra a todos los perfiles.
     btn.style.display = (permitidas.includes(btn.dataset.view) || btn.dataset.view==="mis-pendientes") ? "" : "none";
@@ -27246,6 +27420,401 @@ on(document.getElementById("compromisosMesesTable"), "change", async (e) => {
 });
 on(document.getElementById("compAnioSel"), "change", () => { renderCompromisosMesesTable(); renderCompromisosTiles(); });
 
+/* =========================================================
+   OBJETIVOS E INDICADORES DE GESTIÓN
+   Stores: "objetivosGestion" {id, nombre, compromiso, orden} y
+   "indicadoresGestion" {id, objetivoId, nombre, formula, meta, sentido
+   (mayor_mejor|menor_mejor), frecuencia, fuente ("manual" o clave automática),
+   factor (100|1000000), agregacion (suma|promedio), responsable, activo,
+   mediciones:{"AAAA-MM":{p,r}}}. KPI = factor x R / P. El consolidado del año
+   usa la suma de R y la suma o el promedio de P (como la planilla de Carlos).
+   Estado: mayor_mejor -> verde si KPI >= meta, amarillo si >= 90 % de la meta;
+   menor_mejor -> verde si KPI <= meta, amarillo si <= 110 % de la meta.
+   ========================================================= */
+const OBJ_MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+const OBJ_TIPOS_ACC_INVESTIGABLES = ["ctp","stp","trayecto","enfermedad"];
+const OBJ_AUTO = {
+  tasa_accidentabilidad:{label:"Automático: tasa de accidentabilidad", nombre:"Tasa de accidentabilidad", formula:"(N° de accidentes con tiempo perdido / N° de trabajadores) x 100", factor:100, agregacion:"promedio", sentido:"menor_mejor"},
+  tasa_frecuencia:{label:"Automático: tasa de frecuencia", nombre:"Tasa de frecuencia", formula:"(N° de accidentes con tiempo perdido / N° de HH trabajadas) x 1,000,000", factor:1000000, agregacion:"suma", sentido:"menor_mejor"},
+  tasa_gravedad:{label:"Automático: tasa de gravedad", nombre:"Tasa de gravedad", formula:"(N° de días perdidos / N° de HH trabajadas) x 1,000,000", factor:1000000, agregacion:"suma", sentido:"menor_mejor"},
+  tasa_siniestralidad:{label:"Automático: tasa de siniestralidad", nombre:"Tasa de siniestralidad", formula:"(N° de días perdidos / N° de trabajadores) x 100", factor:100, agregacion:"promedio", sentido:"menor_mejor"},
+  incidentes:{label:"Automático: incidentes por trabajador", nombre:"Número de incidentes", formula:"(N° de incidentes / N° de trabajadores) x 100", factor:100, agregacion:"promedio", sentido:"menor_mejor"},
+  programa:{label:"Automático: cumplimiento del programa de seguridad", nombre:"Cumplimiento del programa de seguridad", formula:"(N° de actividades realizadas / N° de actividades proyectadas) x 100", factor:100, agregacion:"suma", sentido:"mayor_mejor"},
+  capacitacion:{label:"Automático: cumplimiento del plan de capacitación", nombre:"Cumplimiento del plan de capacitación", formula:"(N° de capacitaciones realizadas / N° de capacitaciones proyectadas) x 100", factor:100, agregacion:"suma", sentido:"mayor_mejor"},
+  hh_capacitadas:{label:"Automático: HH capacitadas (asistencia)", nombre:"HH capacitadas", formula:"(HH de asistentes / HH de convocados en las capacitaciones del mes) x 100", factor:100, agregacion:"suma", sentido:"mayor_mejor"},
+  investigacion:{label:"Automático: investigación de accidentes", nombre:"Investigación de accidentes", formula:"(N° de accidentes investigados / N° de accidentes) x 100", factor:100, agregacion:"suma", sentido:"mayor_mejor"},
+  cierre_hallazgos:{label:"Automático: cierre de hallazgos de inspecciones", nombre:"Seguimiento y cierre de medidas de control", formula:"(N° de hallazgos cerrados / N° de hallazgos) x 100", factor:100, agregacion:"suma", sentido:"mayor_mejor"},
+};
+const OBJ_ESTADO_LABEL = {en_meta:"En meta", cerca:"Cerca de la meta", fuera:"Fuera de meta", sin_datos:"Sin datos", sin_meta:"Sin meta"};
+const OBJ_ESTADO_PILL = {en_meta:"bajo", cerca:"medio", fuera:"critico", sin_datos:"pendiente", sin_meta:"pendiente"};
+const OBJ_ESTADO_BG = {en_meta:"#d7f0d7", cerca:"#fff0c9", fuera:"#fbd5d5", sin_datos:"", sin_meta:""};
+function objYm(anio, mes){ return anio + "-" + String(mes).padStart(2,"0"); }
+function objNum(v){ return (v===null || v===undefined || v==="" || isNaN(+v)) ? null : +v; }
+function objAutoMedicion(key, ym){
+  const f = accFiltrarPorPeriodo("mensual", ym), ind = calcIndicadores(f.accs, f.hh), conHH = f.hh.length > 0;
+  switch(key){
+    case "tasa_accidentabilidad": return conHH ? {p:ind.promTrabajadores, r:ind.totalCTP} : null;
+    case "tasa_frecuencia": return ind.totalHH ? {p:ind.totalHH, r:ind.totalCTP} : null;
+    case "tasa_gravedad": return ind.totalHH ? {p:ind.totalHH, r:ind.totalDiasPerdidosGravedad} : null;
+    case "tasa_siniestralidad": return conHH ? {p:ind.promTrabajadores, r:ind.totalDiasPerdidosGravedad} : null;
+    case "incidentes": return conHH ? {p:ind.promTrabajadores, r:ind.totalIncidentes} : null;
+    case "programa": { const l = (CACHE.programa||[]).filter(x=>String(x.fechaProgramada||"").slice(0,7)===ym); return l.length ? {p:l.length, r:l.filter(x=>x.fechaRealizada).length} : null; }
+    case "capacitacion": { const l = (CACHE.capacitaciones||[]).filter(x=>String(x.fechaProgramada||"").slice(0,7)===ym); return l.length ? {p:l.length, r:l.filter(x=>x.fechaRealizada).length} : null; }
+    case "hh_capacitadas": {
+      const l = (CACHE.capacitaciones||[]).filter(x=>String(x.fechaProgramada||"").slice(0,7)===ym);
+      const p = l.reduce((s,c)=>s+(+c.horas||0)*((c.participantes||[]).length),0), r = l.reduce((s,c)=>s+(+c.horas||0)*((c.participantes||[]).filter(x=>x.asistio).length),0);
+      return p>0 ? {p, r} : null;
+    }
+    case "investigacion": { const l = (CACHE.accidentes||[]).filter(a=>OBJ_TIPOS_ACC_INVESTIGABLES.includes(a.tipo) && String(a.fecha||"").slice(0,7)===ym); return l.length ? {p:l.length, r:l.filter(a=>a.investigado).length} : null; }
+    case "cierre_hallazgos": {
+      const fs = (CACHE.inspecciones||[]).filter(i=>String(i.fecha||"").slice(0,7)===ym).flatMap(i=>i.findings||[]);
+      return fs.length ? {p:fs.length, r:fs.filter(x=>x.estado==="cerrada").length} : null;
+    }
+  }
+  return null;
+}
+/* Medición de un mes: automática si hay datos en la app; si no, la ingresada a mano (o la importada). */
+function objMedicion(ind, ym){
+  if(ind.fuente && ind.fuente!=="manual" && OBJ_AUTO[ind.fuente]){ const a = objAutoMedicion(ind.fuente, ym); if(a) return {p:a.p, r:a.r, auto:true}; }
+  const m = (ind.mediciones||{})[ym];
+  if(!m) return null;
+  const p = objNum(m.p), r = objNum(m.r);
+  return (p===null && r===null) ? null : {p, r, auto:false};
+}
+function objKpi(ind, m){ return m && m.p>0 && m.r!==null ? (+ind.factor||100)*m.r/m.p : null; }
+function objConsolidado(ind, anio){
+  // Igual que la planilla de Carlos: R suma todos los meses que lo traen y P usa los meses que lo traen
+  // (suma o promedio), aunque algún mes tenga solo uno de los dos datos.
+  const filas = []; for(let mes=1; mes<=12; mes++){ const m = objMedicion(ind, objYm(anio, mes)); if(m) filas.push(m); }
+  const conR = filas.filter(m=>m.r!==null), conP = filas.filter(m=>m.p!==null);
+  if(!conR.length || !conP.length) return {kpi:null, meses:filas.length};
+  const sumR = conR.reduce((s,m)=>s+m.r,0), sumP = conP.reduce((s,m)=>s+m.p,0);
+  const P = ind.agregacion==="promedio" ? sumP/conP.length : sumP;
+  return {kpi: P>0 ? (+ind.factor||100)*sumR/P : null, meses:filas.length, sumR, P};
+}
+function objEstado(ind, kpi){
+  const meta = objNum(ind.meta);
+  if(kpi===null || kpi===undefined) return "sin_datos";
+  if(meta===null) return "sin_meta";
+  if(ind.sentido==="menor_mejor") return kpi <= meta + 1e-9 ? "en_meta" : (kpi <= meta*1.10 + 1e-9 ? "cerca" : "fuera");
+  return kpi >= meta - 1e-9 ? "en_meta" : (kpi >= meta*0.90 - 1e-9 ? "cerca" : "fuera");
+}
+const objFmt = (v) => (v===null || v===undefined) ? "—" : Number((Math.round(v*100)/100).toFixed(2)).toLocaleString("es-CL");
+function objIndicadores(){ return (CACHE.indicadoresGestion||[]).slice().sort((a,b)=>{ const oa = (CACHE.objetivosGestion||[]).findIndex(o=>o.id===a.objetivoId), ob = (CACHE.objetivosGestion||[]).findIndex(o=>o.id===b.objetivoId); return (oa-ob) || String(a.nombre).localeCompare(String(b.nombre)); }); }
+function objObjetivosOrdenados(){ return (CACHE.objetivosGestion||[]).slice().sort((a,b)=>(+a.orden||0)-(+b.orden||0) || String(a.nombre).localeCompare(String(b.nombre))); }
+/* Resumen del año para el Dashboard: indicadores activos con datos y cuántos están en meta. */
+function objResumenAnio(anio){
+  const activos = (CACHE.indicadoresGestion||[]).filter(i=>i.activo!==false);
+  let conDatos = 0, enMeta = 0, fuera = 0;
+  activos.forEach(i=>{ const c = objConsolidado(i, anio); if(c.kpi===null) return; const e = objEstado(i, c.kpi); if(e==="sin_meta") return; conDatos++; if(e==="en_meta") enMeta++; else if(e==="fuera") fuera++; });
+  return {total:activos.length, conDatos, enMeta, fuera};
+}
+let objObjEditandoId = null, objIndEditandoId = null, objAnioPreferido = null;
+function objAniosDisponibles(){
+  const s = new Set([new Date().getFullYear()]);
+  (CACHE.indicadoresGestion||[]).forEach(i=>Object.keys(i.mediciones||{}).forEach(k=>s.add(+k.slice(0,4))));
+  (CACHE.horasHombre||[]).forEach(h=>{ if(h.periodo) s.add(+h.periodo.slice(0,4)); });
+  return Array.from(s).filter(Boolean).sort((a,b)=>b-a);
+}
+function renderObjetivos(){
+  if(!document.getElementById("objAnio")) return;
+  const selA = document.getElementById("objAnio"), curA = objAnioPreferido ? String(objAnioPreferido) : selA.value;
+  objAnioPreferido = null;
+  const anios = objAniosDisponibles();
+  selA.innerHTML = anios.map(a=>`<option value="${a}">${a}</option>`).join("");
+  selA.value = anios.map(String).includes(curA) ? curA : String(new Date().getFullYear());
+  renderObjTablero(); renderObjObjetivos(); renderObjIndicadoresForm(); renderObjIndicadoresTable();
+}
+function renderObjTablero(){
+  const anio = +document.getElementById("objAnio").value || new Date().getFullYear();
+  const inds = objIndicadores().filter(i=>i.activo!==false);
+  document.getElementById("objTableroHead").innerHTML = `<tr><th style="min-width:200px;">Indicador</th><th>Meta</th>${OBJ_MESES.map(m=>`<th style="text-align:center;">${m}</th>`).join("")}<th>Consolidado</th><th>Estado</th></tr>`;
+  const objetivos = objObjetivosOrdenados();
+  const grupos = objetivos.map(o=>({o, inds:inds.filter(i=>i.objetivoId===o.id)})).concat([{o:{id:"", nombre:"Sin objetivo asignado", compromiso:""}, inds:inds.filter(i=>!objetivos.some(o=>o.id===i.objetivoId))}]).filter(g=>g.inds.length);
+  document.getElementById("objTableroBody").innerHTML = grupos.map(g=>`<tr><td colspan="16" style="background:#f2f4f7;font-weight:700;">${incEsc(g.o.nombre)}${g.o.compromiso?` <span class="kv" style="font-weight:400;">— ${incEsc(g.o.compromiso)}</span>`:""}</td></tr>` + g.inds.map(i=>{
+    const celdas = OBJ_MESES.map((_, k)=>{
+      const ym = objYm(anio, k+1), m = objMedicion(i, ym), kpi = objKpi(i, m), est = objEstado(i, kpi);
+      const tip = m ? `P: ${objFmt(m.p)} · R: ${objFmt(m.r)}${m.auto?" · calculado desde la app":""}` : "Sin dato";
+      const editable = !(m && m.auto);
+      return `<td data-obj-cell="${i.id}|${ym}" title="${incEsc(tip)}" style="text-align:center;white-space:nowrap;${OBJ_ESTADO_BG[est]?`background:${OBJ_ESTADO_BG[est]};`:""}${editable?"cursor:pointer;":""}">${kpi===null?'<span class="kv">·</span>':objFmt(kpi)}${m&&m.auto?'<sup style="color:#1c4e91;"> A</sup>':""}</td>`;
+    }).join("");
+    const c = objConsolidado(i, anio), e = objEstado(i, c.kpi);
+    return `<tr><td><strong>${incEsc(i.nombre)}</strong><div class="kv">${incEsc(i.formula||"")}</div></td><td>${objNum(i.meta)===null?"—":objFmt(+i.meta)}<div class="kv">${i.sentido==="menor_mejor"?"menor es mejor":"mayor es mejor"}</div></td>${celdas}<td style="text-align:center;font-weight:700;">${objFmt(c.kpi)}<div class="kv">${c.meses} mes(es)</div></td><td><span class="pill ${OBJ_ESTADO_PILL[e]}">${OBJ_ESTADO_LABEL[e]}</span></td></tr>`;
+  }).join("")).join("") || `<tr><td class="empty" colspan="16">Todavía no hay indicadores: créelos abajo o impórtelos desde su Excel.</td></tr>`;
+  const res = objResumenAnio(anio);
+  document.getElementById("objResumenAnio").textContent = res.total ? `${res.enMeta} de ${res.conDatos} indicador(es) con datos y meta están en meta · ${res.fuera} fuera de meta · ${res.total} indicador(es) activo(s)` : "";
+  const selI = document.getElementById("objIndGraf"), curI = selI.value;
+  selI.innerHTML = inds.map(i=>`<option value="${i.id}">${incEsc(i.nombre)}</option>`).join("");
+  selI.value = inds.some(i=>i.id===curI) ? curI : ((inds[0]||{}).id || "");
+  renderObjGrafico();
+}
+function renderObjGrafico(){
+  const wrap = document.getElementById("objGraficoWrap"), anio = +document.getElementById("objAnio").value;
+  const ind = (CACHE.indicadoresGestion||[]).find(i=>i.id===document.getElementById("objIndGraf").value);
+  if(!ind){ wrap.innerHTML = '<div class="empty">Elija un indicador.</div>'; return; }
+  const puntos = OBJ_MESES.map((m,k)=>({m, kpi:objKpi(ind, objMedicion(ind, objYm(anio, k+1)))}));
+  if(puntos.every(p=>p.kpi===null)){ wrap.innerHTML = '<div class="empty">Sin datos en este año para este indicador.</div>'; return; }
+  const meta = objNum(ind.meta), vals = puntos.map(p=>p.kpi).filter(v=>v!==null).concat(meta!==null?[meta]:[]);
+  const max = Math.max(...vals)*1.15 || 1, w = 720, h = 200, pl = 44, pr = 16, pt = 16, pb = 28, dx = (w-pl-pr)/11;
+  const X = (k)=> pl + k*dx, Y = (v)=> pt + (h-pt-pb)*(1 - v/max);
+  const linea = puntos.map((p,k)=>p.kpi===null?null:[X(k),Y(p.kpi)]).filter(Boolean);
+  const path = linea.map((c,i)=>(i?"L":"M")+c[0].toFixed(1)+","+c[1].toFixed(1)).join(" ");
+  const est = (v)=> objEstado(ind, v);
+  wrap.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="min-width:${w}px;">
+    <line x1="${pl}" y1="${pt}" x2="${pl}" y2="${h-pb}" stroke="var(--grid)"></line><line x1="${pl}" y1="${h-pb}" x2="${w-pr}" y2="${h-pb}" stroke="var(--grid)"></line>
+    ${meta!==null?`<line x1="${pl}" y1="${Y(meta).toFixed(1)}" x2="${w-pr}" y2="${Y(meta).toFixed(1)}" stroke="#c0392b" stroke-dasharray="6 4"></line><text x="${w-pr}" y="${(Y(meta)-4).toFixed(1)}" font-size="10" text-anchor="end" fill="#c0392b">Meta ${objFmt(meta)}</text>`:""}
+    <path d="${path}" fill="none" stroke="#2a78d6" stroke-width="2"></path>
+    ${puntos.map((p,k)=>p.kpi===null?"":`<circle cx="${X(k).toFixed(1)}" cy="${Y(p.kpi).toFixed(1)}" r="4" fill="${est(p.kpi)==="en_meta"?"#0ca30c":est(p.kpi)==="cerca"?"#e8a33c":"#d03b3b"}"></circle><text x="${X(k).toFixed(1)}" y="${(Y(p.kpi)-8).toFixed(1)}" font-size="9" text-anchor="middle" fill="var(--text)">${objFmt(p.kpi)}</text>`).join("")}
+    ${puntos.map((p,k)=>`<text x="${X(k).toFixed(1)}" y="${h-8}" font-size="10" text-anchor="middle" fill="var(--muted)">${p.m}</text>`).join("")}
+  </svg>`;
+}
+on(document.getElementById("objAnio"), "change", renderObjTablero);
+on(document.getElementById("objIndGraf"), "change", renderObjGrafico);
+/* Edición de una celda manual (P y R del mes) */
+on(document.getElementById("objTableroBody"), "click", (e)=>{
+  const td = e.target.closest("[data-obj-cell]"); if(!td) return;
+  const [indId, ym] = td.dataset.objCell.split("|");
+  const ind = (CACHE.indicadoresGestion||[]).find(i=>i.id===indId); if(!ind) return;
+  const med = objMedicion(ind, ym);
+  if(med && med.auto){ alert("Este mes se calcula solo desde los registros de la app."); return; }
+  const m = (ind.mediciones||{})[ym] || {};
+  const [anio, mes] = ym.split("-");
+  openModal(`
+    <h3>${incEsc(ind.nombre)} — ${OBJ_MESES[+mes-1]} ${anio}</h3>
+    <div class="kv" style="margin-bottom:8px;">${incEsc(ind.formula||"")}</div>
+    <div class="form-grid">
+      <div><label>P (programado o denominador)</label><input type="number" step="any" id="omP" value="${m.p!==undefined&&m.p!==null?m.p:""}"></div>
+      <div><label>R (realizado o numerador)</label><input type="number" step="any" id="omR" value="${m.r!==undefined&&m.r!==null?m.r:""}"></div>
+    </div>
+    <div class="kv" id="omKpi" style="margin-top:8px;"></div>
+    <div class="toolbar" style="margin-top:10px;"><button class="btn" id="omGuardarBtn" type="button">Guardar</button><button class="btn secondary" id="omQuitarBtn" type="button">Borrar el dato</button><button class="btn secondary" id="omCancelarBtn" type="button">Cancelar</button></div>`);
+  const calc = ()=>{ const p = objNum(document.getElementById("omP").value), r = objNum(document.getElementById("omR").value); const k = objKpi(ind, {p, r}); document.getElementById("omKpi").textContent = k===null ? "" : `KPI = ${objFmt(k)} (${OBJ_ESTADO_LABEL[objEstado(ind,k)].toLowerCase()})`; };
+  on(document.getElementById("omP"), "input", calc); on(document.getElementById("omR"), "input", calc); calc();
+  on(document.getElementById("omCancelarBtn"), "click", closeModal);
+  const guardar = async (quitar)=>{
+    const p = objNum(document.getElementById("omP").value), r = objNum(document.getElementById("omR").value);
+    if(!quitar && (p===null || r===null)){ alert("Ingrese P y R."); return; }
+    if(!quitar && p<0 || !quitar && r<0){ alert("P y R no pueden ser negativos."); return; }
+    const rec = {...ind, mediciones:{...(ind.mediciones||{})}};
+    if(quitar) delete rec.mediciones[ym]; else rec.mediciones[ym] = {p, r};
+    await put("indicadoresGestion", rec); await loadCache(); closeModal(); renderObjetivos();
+  };
+  on(document.getElementById("omGuardarBtn"), "click", ()=>guardar(false)); on(document.getElementById("omQuitarBtn"), "click", ()=>guardar(true));
+});
+
+/* --- Objetivos --- */
+function renderObjObjetivos(){
+  const pol = Array.from(documentosVigentesMap().values()).filter(d=>d.tipo==="politica").sort((a,b)=>new Date(b.fechaActualizacion||b.fechaConfeccion||0)-new Date(a.fechaActualizacion||a.fechaConfeccion||0))[0];
+  document.getElementById("objPoliticaVigente").innerHTML = pol ? `<strong>Política vigente:</strong> ${incEsc(pol.nombre||"Política de SST")} · versión ${incEsc(pol.version||"—")}${pol.fechaActualizacion?" · actualizada el "+fmtDate(pol.fechaActualizacion):""}` : `<span class="pill proximo">Sin política registrada</span> Regístrela en Control Documental para dejar a la vista el documento que respaldan estos objetivos.`;
+  document.getElementById("objObjetivosTable").innerHTML = objObjetivosOrdenados().map(o=>{
+    const n = (CACHE.indicadoresGestion||[]).filter(i=>i.objetivoId===o.id).length;
+    return `<tr><td><strong>${incEsc(o.nombre)}</strong></td><td>${incEsc(o.compromiso||"—")}</td><td>${n}</td><td style="white-space:nowrap;"><button class="btn secondary small" data-obj-edit="${o.id}">Editar</button> <button class="subtle-btn" data-obj-del="${o.id}">Eliminar</button></td></tr>`;
+  }).join("") || `<tr><td class="empty" colspan="4">Todavía no hay objetivos</td></tr>`;
+}
+function objResetObjetivoForm(){ objObjEditandoId = null; document.getElementById("objNombre").value = ""; document.getElementById("objCompromiso").value = ""; document.getElementById("objGuardarBtn").textContent = "Agregar objetivo"; document.getElementById("objCancelarBtn").style.display = "none"; }
+on(document.getElementById("objCancelarBtn"), "click", objResetObjetivoForm);
+on(document.getElementById("objGuardarBtn"), "click", async ()=>{
+  const nombre = document.getElementById("objNombre").value.trim(); if(!nombre){ alert("Escriba el objetivo."); return; }
+  if((CACHE.objetivosGestion||[]).some(o=>o.id!==objObjEditandoId && matrizNorm(o.nombre)===matrizNorm(nombre))){ alert("Ya existe un objetivo con ese nombre."); return; }
+  const previo = objObjEditandoId ? (CACHE.objetivosGestion||[]).find(o=>o.id===objObjEditandoId) : null;
+  await put("objetivosGestion", {id: previo?previo.id:uid(), nombre, compromiso: document.getElementById("objCompromiso").value.trim(), orden: previo?previo.orden:((CACHE.objetivosGestion||[]).length+1)});
+  await loadCache(); objResetObjetivoForm(); renderObjetivos();
+});
+on(document.getElementById("objObjetivosTable"), "click", async (e)=>{
+  const ed = e.target.closest("[data-obj-edit]");
+  if(ed){ const o = (CACHE.objetivosGestion||[]).find(x=>x.id===ed.dataset.objEdit); if(!o) return; objObjEditandoId = o.id; document.getElementById("objNombre").value = o.nombre; document.getElementById("objCompromiso").value = o.compromiso||""; document.getElementById("objGuardarBtn").textContent = "Guardar cambios"; document.getElementById("objCancelarBtn").style.display = ""; document.getElementById("objNombre").scrollIntoView({behavior:"smooth", block:"center"}); return; }
+  const del = e.target.closest("[data-obj-del]"); if(!del) return;
+  const o = (CACHE.objetivosGestion||[]).find(x=>x.id===del.dataset.objDel); if(!o) return;
+  const n = (CACHE.indicadoresGestion||[]).filter(i=>i.objetivoId===o.id).length;
+  if(n){ alert(`El objetivo tiene ${n} indicador(es). Muévalos a otro objetivo o elimínelos antes de borrarlo.`); return; }
+  if(!confirm(`¿Eliminar el objetivo «${o.nombre}»?`)) return;
+  await deleteRecord("objetivosGestion", o.id); await loadCache(); if(objObjEditandoId===o.id) objResetObjetivoForm(); renderObjetivos();
+});
+
+/* --- Indicadores --- */
+function renderObjIndicadoresForm(){
+  const so = document.getElementById("indObjetivo"), cur = so.value;
+  so.innerHTML = '<option value="">Seleccione...</option>' + objObjetivosOrdenados().map(o=>`<option value="${o.id}">${incEsc(o.nombre)}</option>`).join("");
+  so.value = (CACHE.objetivosGestion||[]).some(o=>o.id===cur) ? cur : "";
+  const sf = document.getElementById("indFuente"), curF = sf.value;
+  sf.innerHTML = '<option value="manual">Manual (se ingresa mes a mes)</option>' + Object.entries(OBJ_AUTO).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join("");
+  sf.value = [...sf.options].some(o=>o.value===curF) ? curF : "manual";
+  const imp = document.getElementById("indImpAnio"); if(!imp.value) imp.value = new Date().getFullYear();
+}
+function renderObjIndicadoresTable(){
+  document.getElementById("indTable").innerHTML = objIndicadores().map(i=>{
+    const o = (CACHE.objetivosGestion||[]).find(x=>x.id===i.objetivoId);
+    return `<tr><td><strong>${incEsc(i.nombre)}</strong>${i.activo===false?' <span class="pill pendiente">Inactivo</span>':""}<div class="kv">${incEsc(i.formula||"")}</div></td><td>${o?incEsc(o.nombre):"—"}</td><td>${objNum(i.meta)===null?"—":objFmt(+i.meta)}<div class="kv">${i.sentido==="menor_mejor"?"menor es mejor":"mayor es mejor"}</div></td><td>${OBJ_AUTO[i.fuente]?"Automático":"Manual"}</td><td>${incEsc(i.frecuencia||"")}</td><td>${incEsc(i.responsable||"—")}</td><td style="white-space:nowrap;"><button class="btn secondary small" data-ind-edit="${i.id}">Editar</button> <button class="subtle-btn" data-ind-del="${i.id}">Eliminar</button></td></tr>`;
+  }).join("") || `<tr><td class="empty" colspan="7">Todavía no hay indicadores</td></tr>`;
+}
+function objResetIndicadorForm(){
+  objIndEditandoId = null;
+  ["indNombre","indFormula","indMeta","indResponsable"].forEach(id=>{ document.getElementById(id).value = ""; });
+  document.getElementById("indObjetivo").value = ""; document.getElementById("indSentido").value = "mayor_mejor"; document.getElementById("indFrecuencia").value = "mensual";
+  document.getElementById("indFuente").value = "manual"; document.getElementById("indFactor").value = "100"; document.getElementById("indAgregacion").value = "suma"; document.getElementById("indActivo").checked = true;
+  document.getElementById("indGuardarBtn").textContent = "Agregar indicador"; document.getElementById("indCancelarBtn").style.display = "none";
+}
+on(document.getElementById("indCancelarBtn"), "click", objResetIndicadorForm);
+on(document.getElementById("indFuente"), "change", ()=>{
+  const a = OBJ_AUTO[document.getElementById("indFuente").value]; if(!a) return;
+  if(!document.getElementById("indNombre").value.trim()) document.getElementById("indNombre").value = a.nombre;
+  document.getElementById("indFormula").value = a.formula; document.getElementById("indFactor").value = String(a.factor);
+  document.getElementById("indAgregacion").value = a.agregacion; document.getElementById("indSentido").value = a.sentido;
+});
+on(document.getElementById("indGuardarBtn"), "click", async ()=>{
+  const nombre = document.getElementById("indNombre").value.trim(), objetivoId = document.getElementById("indObjetivo").value;
+  if(!objetivoId){ alert("Elija el objetivo al que pertenece el indicador (créelo antes en «Política y objetivos»)."); return; }
+  if(!nombre){ alert("Escriba el nombre del indicador."); return; }
+  if((CACHE.indicadoresGestion||[]).some(i=>i.id!==objIndEditandoId && matrizNorm(i.nombre)===matrizNorm(nombre))){ alert("Ya existe un indicador con ese nombre."); return; }
+  const metaTxt = document.getElementById("indMeta").value, previo = objIndEditandoId ? (CACHE.indicadoresGestion||[]).find(i=>i.id===objIndEditandoId) : null;
+  await put("indicadoresGestion", {
+    id: previo?previo.id:uid(), objetivoId, nombre, formula: document.getElementById("indFormula").value.trim(), meta: metaTxt===""?null:+metaTxt,
+    sentido: document.getElementById("indSentido").value, frecuencia: document.getElementById("indFrecuencia").value, fuente: document.getElementById("indFuente").value,
+    factor: +document.getElementById("indFactor").value || 100, agregacion: document.getElementById("indAgregacion").value, responsable: document.getElementById("indResponsable").value.trim(),
+    activo: document.getElementById("indActivo").checked, mediciones: previo?(previo.mediciones||{}):{},
+  });
+  await loadCache(); objResetIndicadorForm(); renderObjetivos();
+});
+on(document.getElementById("indTable"), "click", async (e)=>{
+  const ed = e.target.closest("[data-ind-edit]");
+  if(ed){
+    const i = (CACHE.indicadoresGestion||[]).find(x=>x.id===ed.dataset.indEdit); if(!i) return; objIndEditandoId = i.id;
+    document.getElementById("indObjetivo").value = i.objetivoId||""; document.getElementById("indNombre").value = i.nombre; document.getElementById("indFormula").value = i.formula||"";
+    document.getElementById("indMeta").value = i.meta===null||i.meta===undefined?"":i.meta; document.getElementById("indSentido").value = i.sentido||"mayor_mejor"; document.getElementById("indFrecuencia").value = i.frecuencia||"mensual";
+    document.getElementById("indFuente").value = i.fuente||"manual"; document.getElementById("indFactor").value = String(i.factor||100); document.getElementById("indAgregacion").value = i.agregacion||"suma";
+    document.getElementById("indResponsable").value = i.responsable||""; document.getElementById("indActivo").checked = i.activo!==false;
+    document.getElementById("indGuardarBtn").textContent = "Guardar cambios"; document.getElementById("indCancelarBtn").style.display = ""; document.getElementById("indNombre").scrollIntoView({behavior:"smooth", block:"center"}); return;
+  }
+  const del = e.target.closest("[data-ind-del]"); if(!del) return;
+  const i = (CACHE.indicadoresGestion||[]).find(x=>x.id===del.dataset.indDel); if(!i) return;
+  const n = Object.keys(i.mediciones||{}).length;
+  if(!confirm(`¿Eliminar el indicador «${i.nombre}»${n?` y sus ${n} medición(es) ingresadas`:""}? Esta acción no se puede deshacer.`)) return;
+  await deleteRecord("indicadoresGestion", i.id); await loadCache(); if(objIndEditandoId===i.id) objResetIndicadorForm(); renderObjetivos();
+});
+
+/* --- Importar la planilla de indicadores (Indicador · Objetivo · Meta · Frecuencia · Fórmula + P/R/KPI por mes) ---
+   Reglas de normalización (revisables después): indicadores de cumplimiento (realizadas, cerradas, capacitadas,
+   proyectadas, visitas, investigación, evaluación, cumplimiento) -> mayor es mejor y meta <= 1 se lleva a porcentaje;
+   tasas -> menor es mejor y una meta menor a 0,1 se multiplica por 100 (ej. 0,0059 = 0,59 %). */
+function objEsCumplimiento(texto){ return /realizad|cerrad|capacitad|proyectad|visita|investig|evaluaci|cumplimiento/i.test(texto||""); }
+async function objImportarExcel(file, anio){
+  const wb = XLSX.read(await file.arrayBuffer(), {type:"array"});
+  const res = {hojas:0, objetivos:0, indicadores:0, actualizados:0, omitidos:0, mediciones:0};
+  const objetivos = (CACHE.objetivosGestion||[]).map(o=>({...o})), indicadores = (CACHE.indicadoresGestion||[]).map(i=>({...i, mediciones:{...(i.mediciones||{})}}));
+  for(const hoja of wb.SheetNames){
+    const aoa = XLSX.utils.sheet_to_json(wb.Sheets[hoja], {header:1, raw:true, defval:null});
+    let hr = -1; for(let i=0; i<Math.min(aoa.length,12); i++){ if((aoa[i]||[]).some(c=>matrizNorm(c)==="indicador")){ hr = i; break; } }
+    if(hr<0) continue;
+    res.hojas++;
+    const H = (aoa[hr]||[]).map(c=>matrizNorm(c));
+    const cInd = H.indexOf("indicador"), cObj = H.indexOf("objetivo"), cMeta = H.findIndex(h=>h.startsWith("meta")), cFrec = H.indexOf("frecuencia"), cForm = H.findIndex(h=>h.startsWith("formula"));
+    const cP = H.map((h,i)=>h==="p"?i:-1).filter(i=>i>=0).slice(0,12);
+    for(let r=hr+1; r<aoa.length; r++){
+      const fila = aoa[r]||[], nombre = typeof fila[cInd]==="string" ? fila[cInd].trim() : "";
+      if(!nombre) { if(fila.some(c=>c!==null && c!=="")) res.omitidos++; continue; }
+      const objNombre = (cObj>=0 && typeof fila[cObj]==="string" && fila[cObj].trim()) || "Sin objetivo";
+      let obj = objetivos.find(o=>matrizNorm(o.nombre)===matrizNorm(objNombre));
+      if(!obj){ obj = {id:uid(), nombre:objNombre, compromiso:"", orden:objetivos.length+1}; objetivos.push(obj); res.objetivos++; }
+      const formula = cForm>=0 && typeof fila[cForm]==="string" ? fila[cForm].trim() : "";
+      const factor = /1[,.]?000[,.]?000/.test(formula) ? 1000000 : 100;
+      const cump = objEsCumplimiento(nombre+" "+formula);
+      let meta = cMeta>=0 ? objNum(fila[cMeta]) : null;
+      if(meta!==null){ if(cump && meta<=1) meta = meta*100; else if(!cump && meta>0 && meta<0.1) meta = meta*100; meta = Math.round(meta*10000)/10000; }
+      const frecTxt = matrizNorm(cFrec>=0 ? fila[cFrec] : "");
+      const frecuencia = frecTxt.startsWith("anual") ? "anual" : frecTxt.startsWith("semest") ? "semestral" : "mensual";
+      let ind = indicadores.find(i=>matrizNorm(i.nombre)===matrizNorm(nombre));
+      if(!ind){
+        ind = {id:uid(), objetivoId:obj.id, nombre, formula, meta, sentido: cump?"mayor_mejor":"menor_mejor", frecuencia, fuente:"manual", factor,
+          agregacion: /trabajadores/i.test(formula) ? "promedio" : "suma", responsable:"", activo:true, mediciones:{}};
+        indicadores.push(ind); res.indicadores++;
+      } else res.actualizados++;
+      cP.forEach((col, k)=>{
+        const p = objNum(fila[col]), rr = objNum(fila[col+1]);
+        if(p!==null || rr!==null){ ind.mediciones[objYm(anio, k+1)] = {p, r:rr}; res.mediciones++; }
+      });
+    }
+  }
+  if(!res.hojas) return res;
+  for(const o of objetivos) await put("objetivosGestion", o);
+  for(const i of indicadores) await put("indicadoresGestion", i);
+  await loadCache();
+  return res;
+}
+on(document.getElementById("indImpBtn"), "click", async ()=>{
+  const file = document.getElementById("indImpFile").files[0], anio = +document.getElementById("indImpAnio").value;
+  if(!file){ alert("Seleccione el archivo Excel (.xlsx)."); return; }
+  if(!(anio>=2000 && anio<=2100)){ alert("Indique el año de las mediciones."); return; }
+  if(typeof XLSX==="undefined"){ alert("No se pudo cargar el lector de Excel (revise su conexión a internet e intente de nuevo)."); return; }
+  const res = await objImportarExcel(file, anio);
+  if(!res.hojas){ alert("No se encontró una hoja con la columna «Indicador». Revise el formato del archivo."); return; }
+  document.getElementById("indImpFile").value = "";
+  objAnioPreferido = anio;
+  renderObjetivos();
+  alert(`Importación lista (año ${anio}): ${res.objetivos} objetivo(s) y ${res.indicadores} indicador(es) nuevo(s); ${res.actualizados} indicador(es) que ya existían actualizaron sus mediciones; ${res.mediciones} medición(es) cargada(s).\nRevise la meta y el sentido de cada indicador en la tabla de arriba: se dedujeron del Excel.`);
+});
+
+/* --- Salidas: Excel con el formato de la planilla y PDF --- */
+function objFilasInforme(anio){
+  return objObjetivosOrdenados().concat([{id:"", nombre:"Sin objetivo asignado"}]).map(o=>({o, inds:objIndicadores().filter(i=>i.activo!==false && (o.id ? i.objetivoId===o.id : !(CACHE.objetivosGestion||[]).some(x=>x.id===i.objetivoId)))})).filter(g=>g.inds.length);
+}
+on(document.getElementById("objExcelBtn"), "click", ()=>{
+  if(typeof XLSX==="undefined"){ alert("No se pudo cargar el generador de Excel (revise su conexión a internet e intente de nuevo)."); return; }
+  const anio = +document.getElementById("objAnio").value;
+  const grupos = objFilasInforme(anio);
+  if(!grupos.length){ alert("No hay indicadores para descargar."); return; }
+  const MES_LARGO = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  const fila1 = ["","","","",""]; MES_LARGO.forEach(m=>fila1.push(m,"","")); fila1.push("Consolidado","","","");
+  const fila2 = ["Indicador","Objetivo","Meta","Frecuencia","Fórmula"]; for(let k=0;k<12;k++) fila2.push("P","R","KPI"); fila2.push("P","R","KPI","Estado");
+  const filas = [];
+  grupos.forEach(g=>g.inds.forEach(i=>{
+    const f = [i.nombre, g.o.nombre, objNum(i.meta)===null?"":+i.meta, i.frecuencia||"", i.formula||""];
+    for(let k=1;k<=12;k++){ const m = objMedicion(i, objYm(anio,k)); f.push(m&&m.p!==null?m.p:"", m&&m.r!==null?m.r:"", objKpi(i,m)===null?"":Math.round(objKpi(i,m)*100)/100); }
+    const c = objConsolidado(i, anio); f.push(c.kpi===null?"":Math.round((c.P||0)*100)/100, c.kpi===null?"":Math.round((c.sumR||0)*100)/100, c.kpi===null?"":Math.round(c.kpi*100)/100, OBJ_ESTADO_LABEL[objEstado(i,c.kpi)]);
+    filas.push(f);
+  }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([fila1, fila2, ...filas]), "Indicadores "+anio);
+  const emp = (CACHE.empresa && CACHE.empresa.razonSocial) ? CACHE.empresa.razonSocial.replace(/[^a-zA-Z0-9]+/g,"_") : "Empresa";
+  XLSX.writeFile(wb, `Indicadores_de_Gestion_${anio}_${emp}.xlsx`);
+});
+on(document.getElementById("objPdfBtn"), "click", ()=>{
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const anio = +document.getElementById("objAnio").value, grupos = objFilasInforme(anio);
+  if(!grupos.length){ alert("No hay indicadores para el informe."); return; }
+  const doc = new JsPDFClass();
+  let y = grdPdfEncabezado(doc, "Objetivos e indicadores de gestion - "+anio);
+  const pol = Array.from(documentosVigentesMap().values()).filter(d=>d.tipo==="politica").sort((a,b)=>new Date(b.fechaActualizacion||b.fechaConfeccion||0)-new Date(a.fechaActualizacion||a.fechaConfeccion||0))[0];
+  doc.setFontSize(9); doc.text(pol ? `Politica vigente: ${pol.nombre||"Politica de SST"} - version ${pol.version||"-"}` : "Politica de SST: sin documento registrado en Control Documental", 14, y-2); y += 4;
+  const res = objResumenAnio(anio);
+  doc.autoTable({ startY:y, head:[["Resumen "+anio,"Valor"]], body:[["Indicadores activos", res.total], ["Con datos y meta", res.conDatos], ["En meta", res.enMeta], ["Fuera de meta", res.fuera]], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]}, columnStyles:{1:{halign:"center"}} });
+  y = doc.lastAutoTable.finalY + 8;
+  const colores = {en_meta:[26,140,74], cerca:[160,100,0], fuera:[192,57,43]};
+  grupos.forEach(g=>{
+    if(y > 240){ doc.addPage(); y = 16; }
+    doc.setFontSize(11); doc.text(g.o.nombre.slice(0,90), 14, y); y += 2;
+    if(g.o.compromiso){ doc.setFontSize(8); doc.text("Compromiso de la politica: "+g.o.compromiso.slice(0,110), 14, y+3); y += 4; }
+    doc.autoTable({ startY:y+1, head:[["Indicador","Meta","Meses con datos","Consolidado","Estado"]],
+      body: g.inds.map(i=>{ const c = objConsolidado(i, anio), e = objEstado(i, c.kpi); return [i.nombre+(i.formula?"\n"+i.formula:""), objNum(i.meta)===null?"-":objFmt(+i.meta)+(i.sentido==="menor_mejor"?" (menor es mejor)":""), c.meses, c.kpi===null?"-":objFmt(c.kpi), OBJ_ESTADO_LABEL[e]]; }),
+      styles:{fontSize:8, cellPadding:1.8}, headStyles:{fillColor:[42,120,214]}, columnStyles:{0:{cellWidth:78}, 2:{halign:"center"}, 3:{halign:"center"}},
+      didParseCell:(d)=>{ if(d.section==="body" && d.column.index===4){ const k = Object.keys(OBJ_ESTADO_LABEL).find(x=>OBJ_ESTADO_LABEL[x]===String(d.cell.raw)); if(colores[k]) d.cell.styles.textColor = colores[k]; } } });
+    y = doc.lastAutoTable.finalY + 8;
+  });
+  doc.setFontSize(8);
+  escribirTextoPaginado(doc, "KPI = realizado (R) / programado o denominador (P) x factor. El consolidado usa la suma de R y la suma o el promedio de P de los meses con datos. Estado: en meta, cerca (dentro de 10 % de la meta) o fuera de meta.", 14, y > 270 ? 16 : y, {maxWidth:182, lineHeight:4});
+  agregarPiePaginasPdf(doc, "Objetivos e indicadores de gestion");
+  doc.save(`Indicadores_de_Gestion_${anio}.pdf`);
+});
+
+subpestanasCrear("objetivos", [
+  {key:"tablero", icono:"grafico", label:"Tablero de indicadores", desc:"KPI mensual de cada indicador frente a su meta y consolidado del año", hdrs:["hdrObjTablero"]},
+  {key:"objetivos", icono:"lista", label:"Política y objetivos", desc:"Objetivos que dan cumplimiento a la política de la empresa", hdrs:["hdrObjObjetivos"]},
+  {key:"indicadores", icono:"registro", label:"Indicadores", desc:"Definir indicadores, fuentes y metas; importar su planilla de Excel", hdrs:["hdrObjIndicadores"]},
+], "tarjetas");
+setupCollapsible("hdrObjTablero", "bodyObjTablero", "toggleObjTablero", "collapsed_objTablero");
+setupCollapsible("hdrObjObjetivos", "bodyObjObjetivos", "toggleObjObjetivos", "collapsed_objObjetivos");
+setupCollapsible("hdrObjIndicadores", "bodyObjIndicadores", "toggleObjIndicadores", "collapsed_objIndicadores");
+
 async function refreshAll(){
   await loadCache();
   renderCommonSelects();
@@ -27278,6 +27847,7 @@ async function refreshAll(){
   renderGanttChart();
   renderGanttResumen();
   renderVigilancia();
+  renderObjetivos();
   renderFufFiltros();
   renderFufTable();
   renderDs44ObligacionesTable();
