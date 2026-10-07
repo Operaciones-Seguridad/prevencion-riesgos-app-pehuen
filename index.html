@@ -16211,6 +16211,17 @@ function capStartEdit(id){
   document.getElementById("hdrNuevaCapacitacion").scrollIntoView({behavior:"smooth", block:"start"});
 }
 
+async function capEliminar(id){
+  const c = CACHE.capacitaciones.find(x=>x.id===id); if(!c) return;
+  const conAsistencia = (c.participantes||[]).filter(p=>p.asistio).length;
+  if(!confirm(`¿Eliminar la capacitación "${c.nombre}"?${conAsistencia?` Tiene ${conAsistencia} asistente(s) registrado(s) que también se perderán.`:""} Esta acción no se puede deshacer.`)) return;
+  await deleteRecord("capacitaciones", id);
+  await loadCache();
+  if(capEditingId===id) capResetForm();
+  renderCapFiltros(); renderCapacitacionesList(); renderCapStats(); renderCapCumplimientoPorResponsable(); capRenderMatriz();
+  if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
+}
+
 /* ---- Plan anual: matriz de capacitaciones por mes ---- */
 function capRenderMatriz(){
   const selA = document.getElementById("capMatAnio");
@@ -16248,17 +16259,22 @@ function capRenderMatriz(){
     }).join("");
     return `<tr data-cap-abrir="${c.id}" style="cursor:pointer;">
       <td>${incEsc(c.nombre)}</td><td>${incEsc(CAP_TIPO_LABEL[c.tipo]||c.tipo||"—")}</td><td>${incEsc(c.relator||"—")}</td>
-      <td style="text-align:center;">${c.horas||0}</td><td style="text-align:center;">${st.convocados}</td><td style="text-align:center;">${st.convocados ? st.pct+"%" : "—"}</td>${celdas}</tr>`;
+      <td style="text-align:center;">${c.horas||0}</td><td style="text-align:center;">${st.convocados}</td><td style="text-align:center;">${st.convocados ? st.pct+"%" : "—"}</td>${celdas}
+      <td style="white-space:nowrap;"><button class="btn small secondary" data-cap-mat-editar="${c.id}" type="button">Editar</button> <button class="subtle-btn" data-cap-mat-eliminar="${c.id}" type="button">Eliminar</button></td></tr>`;
   }).join("");
   wrap.innerHTML = `<table>
-    <thead><tr><th>Capacitación</th><th>Tipo</th><th>Relator</th><th style="text-align:center;">Horas</th><th style="text-align:center;">Convocados</th><th style="text-align:center;">Asistencia</th>${MESES_NOMBRE.map(m=>`<th style="text-align:center;">${m.slice(0,3)}</th>`).join("")}</tr></thead>
+    <thead><tr><th>Capacitación</th><th>Tipo</th><th>Relator</th><th style="text-align:center;">Horas</th><th style="text-align:center;">Convocados</th><th style="text-align:center;">Asistencia</th>${MESES_NOMBRE.map(m=>`<th style="text-align:center;">${m.slice(0,3)}</th>`).join("")}<th></th></tr></thead>
     <tbody>${filas}
-      <tr style="background:var(--grid);font-weight:600;"><td colspan="6">Programadas / realizadas por mes</td>${porMes.map(m=>`<td style="text-align:center;">${m.prog ? m.real+"/"+m.prog : "·"}</td>`).join("")}</tr>
+      <tr style="background:var(--grid);font-weight:600;"><td colspan="6">Programadas / realizadas por mes</td>${porMes.map(m=>`<td style="text-align:center;">${m.prog ? m.real+"/"+m.prog : "·"}</td>`).join("")}<td></td></tr>
     </tbody></table>`;
 }
 var CAP_ESTADO_TXT = {realizada:"Realizada", atrasada:"Atrasada", pendiente:"Pendiente"};
 on(document.getElementById("capMatAnio"), "change", capRenderMatriz);
-on(document.getElementById("capMatrizWrap"), "click", (e)=>{
+on(document.getElementById("capMatrizWrap"), "click", async (e)=>{
+  const bEdit = e.target.closest("[data-cap-mat-editar]");
+  if(bEdit){ capStartEdit(bEdit.dataset.capMatEditar); return; }
+  const bDel = e.target.closest("[data-cap-mat-eliminar]");
+  if(bDel){ await capEliminar(bDel.dataset.capMatEliminar); return; }
   const tr = e.target.closest("[data-cap-abrir]"); if(!tr) return;
   const id = tr.dataset.capAbrir;
   ["filterCapTipo","filterCapMes","filterCapResponsable","filterCapDocumento"].forEach(f=>{ const el = document.getElementById(f); if(el) el.value = ""; });
@@ -17029,7 +17045,8 @@ function renderCapacitacionesList(){
         <div>
           <strong>${c.nombre}</strong>
           <div class="kv">${CAP_TIPO_LABEL[c.tipo]||c.tipo} · Programada: ${fmtDate(c.fechaProgramada)} · ${c.horas||0} hrs · ${c.relator||"—"}</div>
-          <div class="kv">Dirigida a: ${incEsc(capDirigidaTexto(c))} <button class="subtle-btn" data-cap-editar="${c.id}" type="button">Editar</button></div>
+          <div class="kv">Dirigida a: ${incEsc(capDirigidaTexto(c))}</div>
+          <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn small secondary" data-cap-editar="${c.id}" type="button">Editar capacitación</button><button class="subtle-btn" data-cap-eliminar="${c.id}" type="button">Eliminar</button></div>
           ${c.documentoId ? (()=>{ const doc = CACHE.documentos.find(d=>d.id===c.documentoId); return doc ? `<div class="kv">Documento: <span class="pill bajo">${tipoDocumentoLabel(doc)}: ${doc.nombre}</span></div>` : `<div class="kv">Documento: <span class="pill" style="opacity:.6;">Documento eliminado</span></div>`; })() : ""}
         </div>
         <div style="display:flex;align-items:flex-start;gap:10px;">
@@ -17141,6 +17158,8 @@ on(document.getElementById("capacitacionesList"), "change", async (e) => {
 on(document.getElementById("capacitacionesList"), "click", async (e) => {
   const editBtn = e.target.closest("button[data-cap-editar]");
   if(editBtn){ capStartEdit(editBtn.dataset.capEditar); return; }
+  const elimBtn = e.target.closest("button[data-cap-eliminar]");
+  if(elimBtn){ await capEliminar(elimBtn.dataset.capEliminar); return; }
   const doneBtn = e.target.closest("button[data-cap-done]");
   const quitarBtn = e.target.closest("button[data-cap-quitar]");
   const agregarBtn = e.target.closest("button[data-cap-agregar]");
