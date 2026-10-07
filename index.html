@@ -1571,6 +1571,29 @@
     </div></div>
 
     <div class="card">
+      <div class="card-header-row" id="hdrVsOcup"><h2>Exámenes ocupacionales y preocupacionales</h2><button class="collapse-toggle" id="toggleVsOcup" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyVsOcup">
+      <div class="desc">Control de los exámenes <strong>preocupacionales y ocupacionales</strong> de cada trabajador: factor de riesgo evaluado, fecha del examen, vencimiento, aptitud y examen de drogas. Los exámenes los realizan la mutualidad o los centros de salud; aquí solo se registran fechas y aptitud. <strong>No ingrese diagnósticos. Del examen de drogas se guarda únicamente la categoría del resultado (negativo, positivo o pendiente), nunca sustancias ni valores.</strong> El acceso se limita desde los perfiles de acceso.</div>
+      <div class="grid-tiles" id="vsOcupTiles" style="margin-bottom:12px;"></div>
+      <div class="toolbar">
+        <div class="field" style="flex:2;min-width:200px;"><label>Buscar</label><input type="text" id="ocBuscar" placeholder="Nombre, RUT, cargo o factor de riesgo"></div>
+        <div class="field"><label>Área</label><select id="ocArea"></select></div>
+        <div class="field"><label>Tipo de examen</label><select id="ocTipo"><option value="">Todos</option><option value="pre">Preocupacional</option><option value="ocupacional">Ocupacional</option><option value="otro">Otro</option></select></div>
+        <div class="field"><label>Vigencia</label><select id="ocVig"><option value="">Todas</option><option value="vencido">Vencido</option><option value="por_vencer">Por vencer</option><option value="vigente">Vigente</option><option value="sin_vencimiento">Sin vencimiento</option><option value="sin_examen">Sin examen</option></select></div>
+        <div class="field"><label>Aptitud</label><select id="ocApt"><option value="">Todas</option><option value="apto">Apto</option><option value="restricciones">Con restricciones</option><option value="no_apto">No apto</option></select></div>
+        <div class="field"><label>Examen de drogas</label><select id="ocDrogas"><option value="">Todos</option><option value="atencion">Pendiente, positivo o vencido</option><option value="negativo">Negativo vigente</option><option value="no">No realizado</option></select></div>
+      </div>
+      <div class="toolbar" style="margin-top:4px;">
+        <button class="btn small" id="ocNuevoBtn" type="button">Registrar examen</button>
+        <button class="btn small secondary" id="ocExportBtn" type="button">Descargar Excel</button>
+        <div class="field"><div class="kv" id="ocConteo"></div></div>
+      </div>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Trabajador</th><th>Cargo / Área</th><th>Último examen</th><th>Factores de riesgo evaluados</th><th>Vencimiento</th><th>Aptitud</th><th>Examen de drogas</th><th></th></tr></thead>
+        <tbody id="vsOcupTable"></tbody>
+      </table></div>
+    </div></div>
+
+    <div class="card">
       <div class="card-header-row" id="hdrVsCda"><h2>Comité de Aplicación (CDA) por protocolo</h2><button class="collapse-toggle" id="toggleVsCda" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyVsCda">
       <div class="desc">Registre el Comité de Aplicación (CDA) de cada protocolo —su constitución, sesiones y actualizaciones— con el acta o documento de respaldo, para tenerlo a mano en caso de fiscalización.</div>
       <div style="overflow-x:auto;"><table>
@@ -4121,8 +4144,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 44;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos","matrizVersiones"];
+const DB_VERSION = 45;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos","matrizVersiones","vsExamenesOcup"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -15695,6 +15718,9 @@ function vsGlobal(){
     g.sinExamen += r.sinExamen; g.conIrl += r.conIrl; g.faltaPlan += r.faltaPlan; if(!r.cda.length) g.sinCda++;
   });
   g.pct = g.activos ? Math.round(g.vigentes/g.activos*100) : 0;
+  const oc = vsOcupResumen();
+  g.ocupConExamen = oc.conExamen; g.ocupVencidos = oc.vencidos; g.ocupPorVencer = oc.porVencer; g.ocupNoAptos = oc.noAptos+oc.restricciones;
+  g.ocupDrogas = oc.drogasAtencion; g.ocupSinExamen = oc.sinExamen;
   return g;
 }
 function vsTieneNomina(protoId){ return (CACHE.vsExpuestos||[]).some(e=>e.protocoloId===protoId && (e.estado||"activo")==="activo"); }
@@ -15732,7 +15758,7 @@ function vsMotivos(f){
   return m;
 }
 /* Alertas rojas del módulo: exámenes vencidos o faltantes, evaluaciones de puesto vencidas, casos rojos abiertos, medidas atrasadas y cambios de puesto por revisar. */
-function vsAlertasTotal(g){ return g.vencidos + g.sinExamen + g.evalVencidas + g.casosRojos + g.medidasAtrasadas + g.cambios; }
+function vsAlertasTotal(g){ return g.vencidos + g.sinExamen + g.evalVencidas + g.casosRojos + g.medidasAtrasadas + g.cambios + (g.ocupVencidos||0); }
 function vsActualizarInsignias(){
   const btn = document.querySelector('#mainNav button[data-view="vigilancia"]');
   if(!btn) return;
@@ -15757,6 +15783,7 @@ function vsFillSelects(){
   vsEl("filterCdaProtocolo").value = fcda || "";
   paFillAreaSelect("vsNomArea");
   paFillAreaSelect("vsAddArea");
+  paFillAreaSelect("ocArea");
   const fisc = val("fiscProtocolo");
   fillSelect(vsEl("fiscProtocolo"), items, false);
   vsEl("fiscProtocolo").insertAdjacentHTML("afterbegin", '<option value="">Todos los protocolos (solo Excel)</option>');
@@ -15778,6 +15805,7 @@ function renderVsTablero(){
     tile("Medidas correctoras atrasadas", g.medidasAtrasadas, "de "+g.medidasTotal+" registradas", null, "alert", "var(--s1)"),
     tile("Cambios de puesto por revisar", g.cambios, "expuestos que cambiaron de cargo o área", null, "people", "var(--s1)"),
     tile("Posibles incorporaciones", g.posibles, "trabajadores de áreas con el riesgo, fuera de la nómina", null, "people", "var(--s1)"),
+    tile("Exámenes ocupacionales vencidos", g.ocupVencidos, g.ocupPorVencer+" por vencer · "+g.ocupNoAptos+" no apto(s) o con restricciones · "+g.ocupSinExamen+" sin examen", null, "health", "var(--s1)"),
   ].join("");
   const protos = vsProtocolosOrdenados().filter(p=>protocoloAplica(p) || (CACHE.vsExpuestos||[]).some(e=>e.protocoloId===p.id) || (CACHE.vsEvaluaciones||[]).some(e=>e.protocoloId===p.id));
   const pill = (n, clase) => n ? `<span class="pill ${clase}">${n}</span>` : "0";
@@ -16669,6 +16697,8 @@ on(vsEl("fiscExcelBtn"), "click", ()=>{
       (CACHE.medidasControlVS||[]).filter(x=>ok(x.protocoloId)).map(x=>[protoName(x.protocoloId), x.puesto||"", x.descripcion||"", x.jerarquia?(x.jerarquia+") "+(JERARQUIA_LABEL[x.jerarquia]||"")):"", x.responsable||"", x.plazo?fmtDate(x.plazo):"", vsMedidaAtrasada(x)?"Atrasada":(VS_MEDIDA_ESTADO_LABEL[x.estado]||""), x.fechaAplicacion?fmtDate(x.fechaAplicacion):"", x.evidenciaData?"Sí":"No", vsConservarHasta(x.fechaAplicacion||x.plazo, x.protocoloId)])],
     ["CDA", ["Protocolo","Fecha","Tipo","Integrantes","Acuerdos y observaciones","Próxima revisión","Documento","Conservar hasta"],
       (CACHE.vsCda||[]).filter(x=>ok(x.protocoloId)).map(x=>[protoName(x.protocoloId), x.fecha?fmtDate(x.fecha):"", CDA_TIPO_LABEL[x.tipo]||"", x.integrantes||"", x.obs||"", x.proximaRevision?fmtDate(x.proximaRevision):"", x.archivoNombre||"", vsConservarHasta(x.fecha, x.protocoloId)])],
+    ["Exámenes ocupacionales", ["RUT","Nombre","Tipo de examen","Fecha del examen","Factores evaluados","Vencimiento","Aptitud","Restricciones","Centro","Examen de drogas","Fecha drogas","Resultado drogas","Vencimiento drogas","Observaciones"],
+      (CACHE.vsExamenesOcup||[]).slice().sort((a,b)=>String(b.fechaExamen||"").localeCompare(String(a.fechaExamen||""))).map(x=>{ const e = vsOcupEstado(x); return [rut(x.trabajadorId), nom(x.trabajadorId), VS_OCUP_TIPO_LABEL[x.tipo]||"", x.fechaExamen?fmtDate(x.fechaExamen):"", vsOcupFactoresTxt(x), e.vence?fmtDate(e.vence):"", VS_APTITUD_LABEL[x.aptitud]||"", x.restricciones||"", x.centro||"", VS_OCUP_DROGAS_LABEL[x.drogasEstado]||"No realizado", x.drogasFecha?fmtDate(x.drogasFecha):"", VS_OCUP_DROGAS_RES_LABEL[x.drogasResultado]||"", x.drogasVencimiento?fmtDate(x.drogasVencimiento):"", x.obs||""]; })],
     ["Cambios de puesto", ["Fecha","Protocolo","RUT","Nombre","Cargo anterior","Área anterior","Cargo nuevo","Área nueva","Decisión","Observaciones","Registrado por","Conservar hasta"],
       (CACHE.vsMovimientos||[]).filter(x=>ok(x.protocoloId)).map(x=>[x.fecha?fmtDate(x.fecha):"", protoName(x.protocoloId), rut(x.trabajadorId), nom(x.trabajadorId), x.cargoAnterior||"", x.areaAnteriorId?areaName(x.areaAnteriorId):"", x.cargoNuevo||"", x.areaNuevaId?areaName(x.areaNuevaId):"", VS_DECISION_LABEL[x.decision]||"", x.obs||"", x.usuario||"", vsConservarHasta(x.fecha, x.protocoloId)])],
   ];
@@ -16762,6 +16792,245 @@ function vsInformeFiscalizacionPdf(){
 }
 on(vsEl("fiscPdfBtn"), "click", vsInformeFiscalizacionPdf);
 
+/* --- Exámenes ocupacionales y preocupacionales (control por trabajador) ---
+   Store "vsExamenesOcup": trabajadorId, tipo, factores[], factorOtro, fechaExamen, vigenciaMeses (solo ayuda),
+   fechaVencimiento, aptitud, restricciones, centro, drogasEstado/drogasFecha/drogasResultado/drogasVencimiento,
+   archivo del informe y obs. Solo fechas y aptitud; del examen de drogas solo la categoría del resultado. */
+const VS_OCUP_TIPO_LABEL = {pre:"Preocupacional", ocupacional:"Ocupacional", otro:"Otro"};
+const VS_OCUP_DROGAS_LABEL = {si:"Realizado", no:"No realizado", pendiente:"Pendiente"};
+const VS_OCUP_DROGAS_RES_LABEL = {negativo:"Negativo", positivo:"Positivo", pendiente:"Pendiente"};
+const VS_OCUP_DROGAS_RES_PILL = {negativo:"bajo", positivo:"critico", pendiente:"pendiente"};
+const VS_OCUP_DIAS_ALERTA = 60;
+const VS_OCUP_FACTORES_BASE = ["Ruido","Sílice","Altura física","Altura geográfica","Conducción de vehículos o maquinaria","Espacios confinados","Manejo manual de carga","Radiación UV","Plaguicidas","Factores psicosociales","Trabajos eléctricos","Trabajo en turnos"];
+const VS_OCUP_SEM_ORDEN = {vencido:0, por_vencer:1, sin_examen:2, sin_vencimiento:3, vigente:4};
+function vsOcupFactoresSugeridos(){
+  const vistos = new Set(), out = [];
+  VS_OCUP_FACTORES_BASE.concat((CACHE.protocolos||[]).map(p=>String(p.agente||"").split("(")[0].trim()).filter(a=>a && a.length<=40)).forEach(f=>{ const k = matrizNorm(f); if(!vistos.has(k)){ vistos.add(k); out.push(f); } });
+  return out;
+}
+function vsOcupVence(x){ return x.fechaVencimiento || (+x.vigenciaMeses>0 && x.fechaExamen ? vsIso(addMonths(x.fechaExamen, +x.vigenciaMeses)) : null); }
+function vsOcupSemDe(vence){
+  if(!vence) return {vence:null, dias:null, sem:"sin_vencimiento"};
+  const dias = daysUntil(vence);
+  return {vence, dias, sem: dias<0 ? "vencido" : dias<=VS_OCUP_DIAS_ALERTA ? "por_vencer" : "vigente"};
+}
+function vsOcupEstado(x){ return vsOcupSemDe(vsOcupVence(x)); }
+/* Drogas "por atender": pendiente, positivo o con vencimiento vencido. */
+function vsOcupDrogasAtencion(x){
+  if(x.drogasEstado==="pendiente" || x.drogasResultado==="positivo" || x.drogasResultado==="pendiente") return true;
+  return !!(x.drogasEstado==="si" && x.drogasVencimiento && daysUntil(x.drogasVencimiento)<0);
+}
+/* Examen vigente por trabajador = el más reciente por fecha de examen; los demás son historial. */
+function vsOcupVigentes(){
+  const m = new Map();
+  (CACHE.vsExamenesOcup||[]).slice().sort((a,b)=>String(a.fechaExamen||"").localeCompare(String(b.fechaExamen||"")) || String(a.id).localeCompare(String(b.id))).forEach(x=>m.set(x.trabajadorId, x));
+  return m;
+}
+function vsOcupResumen(){
+  const vig = vsOcupVigentes();
+  const r = {total:0, conExamen:0, vigentes:0, porVencer:0, vencidos:0, sinVenc:0, noAptos:0, restricciones:0, drogasAtencion:0, sinExamen:0};
+  (CACHE.trabajadores||[]).forEach(t=>{
+    r.total++;
+    const x = vig.get(t.id);
+    if(!x){ r.sinExamen++; return; }
+    r.conExamen++;
+    const e = vsOcupEstado(x);
+    if(e.sem==="vencido") r.vencidos++; else if(e.sem==="por_vencer") r.porVencer++; else if(e.sem==="vigente") r.vigentes++; else r.sinVenc++;
+    if(x.aptitud==="no_apto") r.noAptos++; else if(x.aptitud==="restricciones") r.restricciones++;
+    if(vsOcupDrogasAtencion(x)) r.drogasAtencion++;
+  });
+  return r;
+}
+function vsOcupFilas(){
+  const vig = vsOcupVigentes();
+  const q = matrizNorm(vsEl("ocBuscar").value), area = vsEl("ocArea").value, tipo = vsEl("ocTipo").value, fv = vsEl("ocVig").value, fa = vsEl("ocApt").value, fd = vsEl("ocDrogas").value;
+  return (CACHE.trabajadores||[]).map(t=>{
+    const x = vig.get(t.id) || null;
+    return {t, x, est: x ? vsOcupEstado(x) : null, sem: x ? vsOcupEstado(x).sem : "sin_examen"};
+  }).filter(f=>
+    (!area || f.t.areaId===area) &&
+    (!q || matrizNorm([f.t.nombre, f.t.rut, f.t.cargo, f.x ? (f.x.factores||[]).concat(f.x.factorOtro||"").join(" ") : ""].join(" ")).includes(q)) &&
+    (!tipo || (f.x && f.x.tipo===tipo)) &&
+    (!fv || f.sem===fv) &&
+    (!fa || (f.x && f.x.aptitud===fa)) &&
+    (!fd || (fd==="atencion" ? (f.x && vsOcupDrogasAtencion(f.x)) : fd==="negativo" ? (f.x && f.x.drogasEstado==="si" && f.x.drogasResultado==="negativo" && !vsOcupDrogasAtencion(f.x)) : (!f.x || f.x.drogasEstado==="no" || !f.x.drogasEstado)))
+  ).sort((a,b)=> (VS_OCUP_SEM_ORDEN[a.sem]-VS_OCUP_SEM_ORDEN[b.sem]) || String(a.t.nombre).localeCompare(String(b.t.nombre)));
+}
+function vsOcupFactoresTxt(x){ return (x.factores||[]).concat(x.factorOtro ? [x.factorOtro] : []).join(", ") || "—"; }
+function renderVsOcup(){
+  const r = vsOcupResumen();
+  vsEl("vsOcupTiles").innerHTML = [
+    tile("Con examen vigente", r.vigentes, r.conExamen+" trabajador(es) con examen registrado", null, "health", "var(--s1)"),
+    tile("Por vencer", r.porVencer, "dentro de "+VS_OCUP_DIAS_ALERTA+" días", null, "calendar", "var(--s1)"),
+    tile("Vencidos", r.vencidos, "examen ocupacional vencido", null, "alert", "var(--s1)"),
+    tile("No aptos o con restricciones", r.noAptos+r.restricciones, r.noAptos+" no apto(s) · "+r.restricciones+" con restricciones", null, "alert", "var(--s1)"),
+    tile("Drogas por atender", r.drogasAtencion, "pendientes, positivos o vencidos", null, "document", "var(--s1)"),
+    tile("Sin examen registrado", r.sinExamen, "de "+r.total+" trabajadores", null, "people", "var(--s1)"),
+  ].join("");
+  const filas = vsOcupFilas(), tope = 400;
+  vsEl("ocConteo").textContent = r.total ? `${filas.length} de ${r.total} trabajador(es)${filas.length>tope?` (se muestran los primeros ${tope})`:""}` : "";
+  vsEl("vsOcupTable").innerHTML = filas.slice(0, tope).map(({t, x, est, sem})=>{
+    const cargoArea = `${incEsc(t.cargo||"—")}<div class="kv">${incEsc(areaName(t.areaId))}</div>`;
+    const nombre = `<strong>${incEsc(t.nombre)}</strong><div class="kv">${incEsc(t.rut||"sin RUT")}</div>`;
+    if(!x) return `<tr><td>${nombre}</td><td>${cargoArea}</td><td colspan="5"><span class="pill vencido">Sin examen registrado</span></td><td style="white-space:nowrap;"><button class="btn secondary small" data-oc-nuevo="${t.id}">Registrar</button></td></tr>`;
+    const nHist = (CACHE.vsExamenesOcup||[]).filter(e=>e.trabajadorId===t.id).length;
+    const venc = est.vence ? `${fmtDate(est.vence)}<div class="kv">${est.dias<0?`vencido hace ${-est.dias} día(s)`:`en ${est.dias} día(s)`}</div>` : '<span class="kv">Sin fecha</span>';
+    const apt = `<span class="pill ${VS_APTITUD_PILL[x.aptitud]||"pendiente"}">${VS_APTITUD_LABEL[x.aptitud]||"—"}</span>${x.restricciones?`<div class="kv">${incEsc(x.restricciones)}</div>`:""}`;
+    const dg = x.drogasEstado==="si"
+      ? `<span class="pill ${VS_OCUP_DROGAS_RES_PILL[x.drogasResultado]||"pendiente"}">${VS_OCUP_DROGAS_RES_LABEL[x.drogasResultado]||"—"}</span><div class="kv">${x.drogasFecha?fmtDate(x.drogasFecha):""}${x.drogasVencimiento?` · vence ${fmtDate(x.drogasVencimiento)}${daysUntil(x.drogasVencimiento)<0?" (vencido)":""}`:""}</div>`
+      : x.drogasEstado==="pendiente" ? '<span class="pill proximo">Pendiente</span>' : '<span class="kv">No realizado</span>';
+    return `<tr>
+      <td>${nombre}</td><td>${cargoArea}</td>
+      <td>${VS_OCUP_TIPO_LABEL[x.tipo]||"—"}<div class="kv">${fmtDate(x.fechaExamen)}${x.centro?" · "+incEsc(x.centro):""}</div></td>
+      <td>${incEsc(vsOcupFactoresTxt(x))}</td>
+      <td><span class="vs-sem ${sem==="sin_vencimiento"?"sin_dato":sem}"></span><span class="pill ${VS_EVAL_VIG_PILL[sem==="vencido"?"vencida":sem]||"pendiente"}">${VS_EVAL_VIG_LABEL[sem==="vencido"?"vencida":sem]||""}</span><div>${venc}</div></td>
+      <td>${apt}</td><td>${dg}</td>
+      <td style="white-space:nowrap;"><button class="btn secondary small" data-oc-nuevo="${t.id}">Registrar</button> <button class="btn secondary small" data-oc-hist="${t.id}">Historial (${nHist})</button></td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="8">${r.total ? "Ningún trabajador coincide con los filtros" : "No hay trabajadores cargados (Configuración → Trabajadores)"}</td></tr>`;
+}
+["ocBuscar"].forEach(id=>on(vsEl(id), "input", renderVsOcup));
+["ocArea","ocTipo","ocVig","ocApt","ocDrogas"].forEach(id=>on(vsEl(id), "change", renderVsOcup));
+on(vsEl("ocNuevoBtn"), "click", ()=>vsOcupModal(""));
+on(vsEl("vsOcupTable"), "click", (e)=>{
+  const n = e.target.closest("[data-oc-nuevo]"); if(n){ vsOcupModal(n.dataset.ocNuevo); return; }
+  const h = e.target.closest("[data-oc-hist]"); if(h) vsOcupHistorial(h.dataset.ocHist);
+});
+function vsOcupModal(trabajadorId, examenId){
+  const ed = examenId ? (CACHE.vsExamenesOcup||[]).find(x=>x.id===examenId) : null;
+  const tid = ed ? ed.trabajadorId : trabajadorId;
+  const trabs = (CACHE.trabajadores||[]).slice().sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
+  if(!trabs.length){ alert("Primero cargue trabajadores en Configuración → Trabajadores."); return; }
+  const factores = vsOcupFactoresSugeridos(), marcados = new Set(ed ? (ed.factores||[]) : []);
+  const extra = (ed ? (ed.factores||[]) : []).filter(f=>!factores.includes(f));
+  const opt = (obj, v) => Object.keys(obj).map(k=>`<option value="${k}"${v===k?" selected":""}>${obj[k]}</option>`).join("");
+  openModal(`
+    <h3>${ed ? "Editar examen" : "Registrar examen ocupacional o preocupacional"}</h3>
+    <div class="kv">Registre solo fechas y aptitud; no ingrese diagnósticos. Del examen de drogas solo la categoría del resultado.</div>
+    <div class="form-grid" style="margin-top:8px;">
+      <div style="grid-column:1/-1;"><label>Trabajador</label>
+        <input id="ocmFiltro" placeholder="Escriba para buscar por nombre o RUT" style="margin-bottom:4px;">
+        <select id="ocmTrab"><option value="">Seleccione...</option>${trabs.map(t=>`<option value="${t.id}"${t.id===tid?" selected":""}>${incEsc(t.nombre)}${t.rut?" — "+incEsc(t.rut):""}${t.cargo?" — "+incEsc(t.cargo):""}</option>`).join("")}</select></div>
+      <div><label>Tipo de examen</label><select id="ocmTipo">${opt(VS_OCUP_TIPO_LABEL, ed?ed.tipo:"pre")}</select></div>
+      <div><label>Fecha del examen</label><input type="date" id="ocmFecha" value="${incEsc(ed?ed.fechaExamen||"":"")}"></div>
+      <div><label>Vigencia (meses, ayuda opcional)</label><input type="number" min="1" max="120" id="ocmMeses" value="${ed&&+ed.vigenciaMeses>0?ed.vigenciaMeses:""}" placeholder="Calcula el vencimiento"></div>
+      <div><label>Fecha de vencimiento</label><input type="date" id="ocmVence" value="${incEsc(ed?ed.fechaVencimiento||"":"")}"></div>
+      <div><label>Aptitud</label><select id="ocmApt"><option value="">Seleccione...</option>${opt(VS_APTITUD_LABEL, ed?ed.aptitud:"")}</select></div>
+      <div><label>Centro u organismo que lo realizó (opcional)</label><input id="ocmCentro" value="${incEsc(ed?ed.centro||"":"")}" placeholder="Mutualidad, clínica..."></div>
+    </div>
+    <label style="margin-top:8px;">Factores de riesgo evaluados</label>
+    <div style="display:flex;flex-wrap:wrap;gap:6px 16px;border:1px solid var(--grid);border-radius:6px;padding:8px 10px;">
+      ${factores.concat(extra).map((f,i)=>`<label style="display:flex;gap:6px;align-items:center;font-weight:400;"><input type="checkbox" data-ocm-factor="${incEsc(f)}" style="width:auto;min-height:auto;"${marcados.has(f)?" checked":""}> ${incEsc(f)}</label>`).join("")}
+    </div>
+    <input id="ocmFactorOtro" value="${incEsc(ed?ed.factorOtro||"":"")}" placeholder="Otro factor de riesgo (opcional)" style="margin-top:6px;">
+    <label style="margin-top:8px;">Restricciones o indicaciones (obligatorio si la aptitud es «Con restricciones»)</label>
+    <textarea id="ocmRestr" placeholder="Restricciones laborales indicadas">${incEsc(ed?ed.restricciones||"":"")}</textarea>
+    <h4 style="margin:12px 0 4px;">Examen de drogas</h4>
+    <div class="form-grid">
+      <div><label>Estado</label><select id="ocmDrEstado">${opt(VS_OCUP_DROGAS_LABEL, ed?(ed.drogasEstado||"no"):"no")}</select></div>
+      <div><label>Fecha</label><input type="date" id="ocmDrFecha" value="${incEsc(ed?ed.drogasFecha||"":"")}"></div>
+      <div><label>Resultado</label><select id="ocmDrRes"><option value="">Seleccione...</option>${opt(VS_OCUP_DROGAS_RES_LABEL, ed?ed.drogasResultado:"")}</select></div>
+      <div><label>Vencimiento (opcional)</label><input type="date" id="ocmDrVence" value="${incEsc(ed?ed.drogasVencimiento||"":"")}"></div>
+    </div>
+    <div class="form-grid" style="margin-top:8px;">
+      <div><label>Informe adjunto (opcional)</label><input type="file" id="ocmArchivo" accept="image/*,.pdf,.doc,.docx"></div>
+      <div><label>Observaciones (opcional)</label><input id="ocmObs" value="${incEsc(ed?ed.obs||"":"")}"></div>
+    </div>
+    ${ed&&ed.archivoNombre?`<div class="kv">Se conserva el informe actual (${incEsc(ed.archivoNombre)}) si no sube otro.</div>`:""}
+    <div class="toolbar" style="margin-top:12px;"><button class="btn" id="ocmGuardarBtn" type="button">${ed?"Guardar cambios":"Guardar examen"}</button><button class="btn secondary" id="ocmCancelarBtn" type="button">Cancelar</button></div>
+  `, {wide:true});
+  on(vsEl("ocmCancelarBtn"), "click", closeModal);
+  on(vsEl("ocmFiltro"), "input", ()=>{
+    const q = matrizNorm(vsEl("ocmFiltro").value);
+    Array.from(vsEl("ocmTrab").options).forEach(o=>{ o.hidden = !!(q && o.value && !matrizNorm(o.textContent).includes(q)); });
+    const vis = Array.from(vsEl("ocmTrab").options).filter(o=>o.value && !o.hidden);
+    if(q && vis.length===1) vsEl("ocmTrab").value = vis[0].value;
+  });
+  const recalc = ()=>{ const m = parseInt(vsEl("ocmMeses").value, 10), f = vsEl("ocmFecha").value; if(m>0 && f) vsEl("ocmVence").value = vsIso(addMonths(f, m)); };
+  on(vsEl("ocmMeses"), "input", recalc); on(vsEl("ocmFecha"), "change", recalc);
+  on(vsEl("ocmGuardarBtn"), "click", async ()=>{
+    const trab = vsEl("ocmTrab").value, fecha = vsEl("ocmFecha").value, apt = vsEl("ocmApt").value;
+    const fs = Array.from(document.querySelectorAll("#modalBody [data-ocm-factor]:checked")).map(c=>c.dataset.ocmFactor);
+    const otro = vsEl("ocmFactorOtro").value.trim(), restr = vsEl("ocmRestr").value.trim();
+    const vence = vsEl("ocmVence").value, meses = parseInt(vsEl("ocmMeses").value, 10) || 0;
+    const drE = vsEl("ocmDrEstado").value; let drF = vsEl("ocmDrFecha").value, drR = vsEl("ocmDrRes").value, drV = vsEl("ocmDrVence").value;
+    if(!trab || !fecha || !apt){ alert("Complete el trabajador, la fecha del examen y la aptitud."); return; }
+    if(!fs.length && !otro){ alert("Indique al menos un factor de riesgo evaluado."); return; }
+    if(apt==="restricciones" && !restr){ alert("Con restricciones: indique las restricciones o indicaciones."); return; }
+    if(vence && vence <= fecha){ alert("El vencimiento debe ser posterior a la fecha del examen."); return; }
+    if(drE==="si"){
+      if(!drF || (drR!=="negativo" && drR!=="positivo")){ alert("Examen de drogas realizado: indique la fecha y el resultado (negativo o positivo). Si aún no hay resultado, marque el estado «Pendiente»."); return; }
+    } else if(drE==="pendiente"){ drR = "pendiente"; }
+    else { drF = ""; drR = ""; drV = ""; }
+    if(drV && drF && drV <= drF){ alert("El vencimiento del examen de drogas debe ser posterior a su fecha."); return; }
+    const file = vsEl("ocmArchivo").files[0];
+    if(file && file.size > 6*1024*1024){ alert("El informe supera los 6 MB. Suba una versión más liviana."); return; }
+    const rec = Object.assign({}, ed || {}, {
+      id: ed ? ed.id : uid(), trabajadorId: trab, tipo: vsEl("ocmTipo").value, factores: fs, factorOtro: otro,
+      fechaExamen: fecha, vigenciaMeses: meses||"", fechaVencimiento: vence, aptitud: apt, restricciones: restr,
+      centro: vsEl("ocmCentro").value.trim(), drogasEstado: drE, drogasFecha: drF, drogasResultado: drR, drogasVencimiento: drV,
+      obs: vsEl("ocmObs").value.trim(),
+      archivoNombre: file ? file.name : (ed ? ed.archivoNombre||null : null),
+      archivoData: file ? await readFileAsDataUrl(file) : (ed ? ed.archivoData||null : null),
+    });
+    await put("vsExamenesOcup", rec);
+    await loadCache();
+    closeModal(); vsRefrescarTodo();
+  });
+}
+function vsOcupHistorial(trabajadorId){
+  const t = (CACHE.trabajadores||[]).find(x=>x.id===trabajadorId); if(!t) return;
+  const lista = (CACHE.vsExamenesOcup||[]).filter(x=>x.trabajadorId===trabajadorId).sort((a,b)=>String(b.fechaExamen||"").localeCompare(String(a.fechaExamen||"")));
+  openModal(`
+    <h3>Historial de exámenes — ${incEsc(t.nombre)}</h3>
+    <div class="kv" style="margin-bottom:8px;">${incEsc(t.rut||"sin RUT")} · ${incEsc(t.cargo||"sin cargo")} · ${incEsc(areaName(t.areaId))}</div>
+    <div style="overflow-x:auto;"><table>
+      <thead><tr><th>Fecha</th><th>Tipo</th><th>Factores evaluados</th><th>Vencimiento</th><th>Aptitud</th><th>Drogas</th><th>Informe</th><th></th></tr></thead>
+      <tbody id="ochBody">${lista.map(x=>{
+        const e = vsOcupEstado(x);
+        return `<tr><td>${fmtDate(x.fechaExamen)}</td><td>${VS_OCUP_TIPO_LABEL[x.tipo]||"—"}</td><td>${incEsc(vsOcupFactoresTxt(x))}</td>
+        <td>${e.vence?fmtDate(e.vence):"—"}</td><td><span class="pill ${VS_APTITUD_PILL[x.aptitud]||"pendiente"}">${VS_APTITUD_LABEL[x.aptitud]||"—"}</span></td>
+        <td>${x.drogasEstado==="si"?(VS_OCUP_DROGAS_RES_LABEL[x.drogasResultado]||"—")+(x.drogasFecha?" · "+fmtDate(x.drogasFecha):""):(VS_OCUP_DROGAS_LABEL[x.drogasEstado]||"No realizado")}</td>
+        <td>${x.archivoData?`<a href="${x.archivoData}" download="${incEsc(x.archivoNombre||"Informe")}" class="subtle-btn">Descargar</a>`:'<span class="empty">Sin archivo</span>'}</td>
+        <td style="white-space:nowrap;"><button class="btn secondary small" data-och-edit="${x.id}">Editar</button> <button class="subtle-btn" data-och-del="${x.id}">Eliminar</button></td></tr>`;
+      }).join("") || `<tr><td class="empty" colspan="8">Sin exámenes registrados</td></tr>`}</tbody>
+    </table></div>
+    <div class="toolbar" style="margin-top:12px;"><button class="btn" id="ochNuevoBtn" type="button">Registrar nuevo examen</button><button class="btn secondary" id="ochCerrarBtn" type="button">Cerrar</button></div>
+  `, {wide:true});
+  on(vsEl("ochCerrarBtn"), "click", closeModal);
+  on(vsEl("ochNuevoBtn"), "click", ()=>vsOcupModal(trabajadorId));
+  on(vsEl("ochBody"), "click", async (e)=>{
+    const ed = e.target.closest("[data-och-edit]"); if(ed){ vsOcupModal(trabajadorId, ed.dataset.ochEdit); return; }
+    const del = e.target.closest("[data-och-del]"); if(!del) return;
+    if(!confirm("¿Eliminar este examen del historial? Esta acción no se puede deshacer.")) return;
+    await deleteRecord("vsExamenesOcup", del.dataset.ochDel);
+    await loadCache();
+    vsRefrescarTodo();
+    vsOcupHistorial(trabajadorId);
+  });
+}
+on(vsEl("ocExportBtn"), "click", ()=>{
+  if(typeof XLSX==="undefined"){ alert("No se pudo cargar el generador de Excel (revise su conexión a internet e intente de nuevo)."); return; }
+  const filas = vsOcupFilas();
+  if(!filas.length){ alert("No hay trabajadores para descargar con los filtros elegidos."); return; }
+  const cab = ["RUT","Nombre","Cargo","Área","Tipo de examen","Fecha del examen","Factores evaluados","Vencimiento","Vigencia","Aptitud","Restricciones","Centro","Examen de drogas","Fecha drogas","Resultado drogas","Vencimiento drogas"];
+  const hoja1 = filas.map(({t, x, est, sem})=>[t.rut||"", t.nombre||"", t.cargo||"", areaName(t.areaId),
+    x?(VS_OCUP_TIPO_LABEL[x.tipo]||""):"", x?fmtDate(x.fechaExamen):"", x?vsOcupFactoresTxt(x):"", est&&est.vence?fmtDate(est.vence):"",
+    x?(VS_EVAL_VIG_LABEL[sem==="vencido"?"vencida":sem]||""):"Sin examen", x?(VS_APTITUD_LABEL[x.aptitud]||""):"", x?(x.restricciones||""):"", x?(x.centro||""):"",
+    x?(VS_OCUP_DROGAS_LABEL[x.drogasEstado]||"No realizado"):"", x&&x.drogasFecha?fmtDate(x.drogasFecha):"", x?(VS_OCUP_DROGAS_RES_LABEL[x.drogasResultado]||""):"", x&&x.drogasVencimiento?fmtDate(x.drogasVencimiento):""]);
+  const tr = new Map((CACHE.trabajadores||[]).map(t=>[t.id,t]));
+  const hoja2 = (CACHE.vsExamenesOcup||[]).slice().sort((a,b)=>String(b.fechaExamen||"").localeCompare(String(a.fechaExamen||""))).map(x=>{
+    const t = tr.get(x.trabajadorId)||{}, e = vsOcupEstado(x);
+    return [t.rut||"", t.nombre||"(trabajador eliminado)", VS_OCUP_TIPO_LABEL[x.tipo]||"", fmtDate(x.fechaExamen), vsOcupFactoresTxt(x), e.vence?fmtDate(e.vence):"", VS_APTITUD_LABEL[x.aptitud]||"", x.restricciones||"", x.centro||"",
+      VS_OCUP_DROGAS_LABEL[x.drogasEstado]||"No realizado", x.drogasFecha?fmtDate(x.drogasFecha):"", VS_OCUP_DROGAS_RES_LABEL[x.drogasResultado]||"", x.drogasVencimiento?fmtDate(x.drogasVencimiento):"", x.obs||""];
+  });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([cab, ...hoja1]), "Último examen por trabajador");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["RUT","Nombre","Tipo de examen","Fecha del examen","Factores evaluados","Vencimiento","Aptitud","Restricciones","Centro","Examen de drogas","Fecha drogas","Resultado drogas","Vencimiento drogas","Observaciones"], ...hoja2]), "Historial completo");
+  const emp = (CACHE.empresa && CACHE.empresa.razonSocial) ? CACHE.empresa.razonSocial.replace(/[^a-zA-Z0-9]+/g,"_") : "Empresa";
+  XLSX.writeFile(wb, `Examenes_ocupacionales_${emp}_${new Date().toISOString().slice(0,10)}.xlsx`);
+});
+
 /* --- Comité de Aplicación (CDA) por protocolo --- */
 let cdaEditingId = null;
 function resetCdaForm(){
@@ -16850,6 +17119,7 @@ function renderVigilancia(){
   renderVsMedidas();
   renderVsCambios();
   renderVsCons();
+  renderVsOcup();
   renderVsCda();
   vsActualizarInsignias();
   subpestanasAplicar("vigilancia");
@@ -16862,6 +17132,8 @@ subpestanasCrear("vigilancia", [
     badge:()=>{ const g = vsGlobal(); return g.cambios ? {texto:`${g.cambios} cambio${g.cambios===1?"":"s"} de puesto`, nivel:"y"} : null; }},
   {key:"evaluacion", icono:"buscar", label:"Evaluación y medidas", desc:"Evaluación ambiental por puesto, medidas correctoras y cierre de casos", hdrs:["hdrVsEval","hdrVsMedidas"],
     badge:()=>{ const g = vsGlobal(), n = g.evalVencidas+g.casosRojos+g.medidasAtrasadas; return n ? {texto:`${n} por atender`, nivel:"r"} : null; }},
+  {key:"ocupacionales", icono:"registro", label:"Exámenes ocupacionales", desc:"Pre-ocupacionales y ocupacionales: factor de riesgo, vencimiento, aptitud y examen de drogas", hdrs:["hdrVsOcup"],
+    badge:()=>{ const g = vsGlobal(); return g.ocupVencidos ? {texto:`${g.ocupVencidos} vencido${g.ocupVencidos===1?"":"s"}`, nivel:"r"} : (g.ocupPorVencer ? {texto:`${g.ocupPorVencer} por vencer`, nivel:"y"} : null); }},
   {key:"cda", icono:"documento", label:"CDA por protocolo", desc:"Comité de Aplicación de cada protocolo y sus actas", hdrs:["hdrVsCda"],
     badge:()=>{ const g = vsGlobal(); return g.sinCda ? {texto:`${g.sinCda} sin CDA`, nivel:"y"} : null; }},
   {key:"fiscal", icono:"datos", label:"Conservación y fiscalización", desc:"Años de conservación, informe PDF por protocolo y respaldo en Excel", hdrs:["hdrVsCons","hdrVsFiscal"]},
@@ -16869,6 +17141,7 @@ subpestanasCrear("vigilancia", [
 ], "tarjetas");
 setupCollapsible("hdrVsTablero", "bodyVsTablero", "toggleVsTablero", "collapsed_vsTablero");
 setupCollapsible("hdrVsNomina", "bodyVsNomina", "toggleVsNomina", "collapsed_vsNomina");
+setupCollapsible("hdrVsOcup", "bodyVsOcup", "toggleVsOcup", "collapsed_vsOcup");
 setupCollapsible("hdrVsCambios", "bodyVsCambios", "toggleVsCambios", "collapsed_vsCambios");
 setupCollapsible("hdrVsCons", "bodyVsCons", "toggleVsCons", "collapsed_vsCons");
 setupCollapsible("hdrVsFiscal", "bodyVsFiscal", "toggleVsFiscal", "collapsed_vsFiscal");
