@@ -1083,6 +1083,23 @@
         <button class="btn secondary" id="matrizIaSugerirBtn" type="button">Sugerir líneas con IA</button>
         <span id="matrizIaEstado" class="kv"></span>
       </div>
+      <div style="border-top:1px solid var(--grid);margin-top:16px;padding-top:12px;">
+        <h3 style="margin:0 0 6px;font-size:15px;">Desde fotos de la actividad</h3>
+        <div class="desc" style="margin-top:0;">Suba hasta 6 fotos de una actividad o puesto de trabajo y la IA propone líneas de peligro/riesgo/controles según lo que se ve en ellas. Aparecen en la misma tabla de abajo para que usted las revise y elija cuáles agregar: <strong>nunca se agregan solas</strong>. Las fotos se reducen en su equipo antes de enviarse y no se guardan en Pehuén.</div>
+        <div class="form-grid">
+          <div><label>Área de la actividad</label><select id="matrizFotoArea"></select></div>
+          <div><label>Cantidad de líneas a sugerir</label><input type="number" id="matrizFotoCantidad" value="6" min="1" max="12"></div>
+          <div style="grid-column:1/-1;"><label>Descripción de la actividad (opcional, ayuda a la IA)</label><input id="matrizFotoActividad" placeholder="Ej: cambio de luminarias en bodega usando escalera tipo tijera"></div>
+          <div style="grid-column:1/-1;"><label>Fotos (máximo 6)</label><input type="file" id="matrizFotoFiles" accept="image/*" multiple></div>
+        </div>
+        <div id="matrizFotoMiniaturas" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;"></div>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;"><input type="checkbox" id="matrizFotoAviso" style="width:auto;min-height:auto;margin-top:3px;"> Entiendo que las fotos se envían al servicio de IA solo para este análisis y no se guardan en Pehuén. Evitaré fotografiar rostros o datos personales.</label>
+        <div class="toolbar" style="margin-top:8px;">
+          <button class="btn secondary" id="matrizFotoAnalizarBtn" type="button">Analizar fotos con IA</button>
+          <span id="matrizFotoEstado" class="kv"></span>
+        </div>
+        <div id="matrizFotoObs" class="kv" style="display:none;background:#eef4fb;border:1px solid #b9d0ee;border-radius:8px;padding:8px 10px;margin-top:8px;"></div>
+      </div>
       <div id="matrizIaPreviewWrap" style="display:none;margin-top:14px;">
         <table>
           <thead><tr><th></th><th>Área</th><th>Proceso / Actividad</th><th>Categoría</th><th>Peligro / Riesgo</th><th>Nivel</th><th>Medidas de control (DS 44)</th></tr></thead>
@@ -10219,6 +10236,7 @@ function renderCommonSelects(){
   filterInsAreaSel.insertAdjacentHTML("afterbegin",'<option value="">Todas</option>');
   filterInsAreaSel.value = "";
   fillSelect(document.getElementById("mArea"), areaOpts, true);
+  { const s = document.getElementById("matrizFotoArea"); if(s){ const cur = s.value; s.innerHTML = '<option value="">Sin área definida (la IA elige)</option>' + areaOpts.map(a=>`<option value="${a.id}">${incEsc(a.label)}</option>`).join(""); s.value = areaOpts.some(a=>a.id===cur) ? cur : ""; } }
   fillSelect(document.getElementById("lvArea"), areaOpts, true);
   const filterMatrizAreaSel = document.getElementById("filterMatrizArea");
   fillSelect(filterMatrizAreaSel, areaOpts, false);
@@ -13045,7 +13063,7 @@ function renderMatrizIaPreview(){
       <td>${areaName(m.areaId)}</td>
       <td>${m.proceso?`<div class="kv">${m.proceso}</div>`:""}${m.actividad||"—"}</td>
       <td>${m.categoria||"—"}</td>
-      <td><strong>${m.peligro||"—"}</strong><div class="kv">${m.riesgo||"—"}</div></td>
+      <td><strong>${m.peligro||"—"}</strong><div class="kv">${m.riesgo||"—"}</div>${m.evidencia ? `<div class="kv" style="margin-top:4px;color:#1c4e91;">Qué se observa: ${incEsc(m.evidencia)}</div>` : ""}</td>
       <td><span class="pill ${nivel}">${nivelLabel(nivel)}</span></td>
       <td>${controlesHtml}</td>
     </tr>`;
@@ -13071,7 +13089,75 @@ on(document.getElementById("matrizIaSugerirBtn"), "click", async () => {
 on(document.getElementById("matrizIaDescartarBtn"), "click", () => {
   matrizSugerenciasIA = [];
   document.getElementById("matrizIaEstado").textContent = "";
+  document.getElementById("matrizFotoObs").style.display = "none";
+  document.getElementById("matrizFotoEstado").textContent = "";
   renderMatrizIaPreview();
+});
+
+/* --- Evaluación de riesgos desde FOTOS de la actividad (IA) ---
+   Las fotos se reducen en el navegador (lado mayor 1280 px, JPEG 0,8) y se envían
+   al backend solo para este análisis (no se guardan). El resultado entra a la misma
+   previsualización de arriba: el usuario revisa y elige qué agregar. */
+const MATRIZ_FOTOS_MAX = 6;
+let matrizFotos = [];
+async function matrizFotoReducir(file){
+  let bmp;
+  try{ bmp = await createImageBitmap(file, {imageOrientation:"from-image"}); }
+  catch(e){ bmp = await createImageBitmap(file); }
+  const esc = Math.min(1, 1280/Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width*esc)), h = Math.max(1, Math.round(bmp.height*esc));
+  const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+  const ctx = cv.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h); ctx.drawImage(bmp, 0, 0, w, h);
+  if(bmp.close) bmp.close();
+  const url = cv.toDataURL("image/jpeg", 0.8);
+  return {nombre:file.name, tipo:"image/jpeg", data:url.split(",")[1], url};
+}
+function renderMatrizFotos(){
+  document.getElementById("matrizFotoMiniaturas").innerHTML = matrizFotos.map((f,i)=>
+    `<div style="position:relative;"><img src="${f.url}" alt="Foto ${i+1}" style="width:96px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--grid);"><button type="button" data-matriz-foto-quitar="${i}" aria-label="Quitar foto ${i+1}" style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:none;background:#c0392b;color:#fff;cursor:pointer;line-height:20px;padding:0;">×</button><div class="kv" style="text-align:center;">Foto ${i+1}</div></div>`).join("");
+}
+on(document.getElementById("matrizFotoFiles"), "change", async (e)=>{
+  const input = e.target, archivos = Array.from(input.files||[]);
+  const estado = document.getElementById("matrizFotoEstado");
+  let omitidas = 0, fallidas = [];
+  for(const f of archivos){
+    if(matrizFotos.length >= MATRIZ_FOTOS_MAX){ omitidas++; continue; }
+    try{ matrizFotos.push(await matrizFotoReducir(f)); }
+    catch(err){ fallidas.push(f.name); }
+  }
+  input.value = "";
+  renderMatrizFotos();
+  estado.textContent = [omitidas ? `Solo se admiten ${MATRIZ_FOTOS_MAX} fotos: se omitieron ${omitidas}.` : "", fallidas.length ? `No se pudo leer: ${fallidas.join(", ")} (use fotos JPG o PNG).` : ""].filter(Boolean).join(" ");
+});
+on(document.getElementById("matrizFotoMiniaturas"), "click", (e)=>{
+  const b = e.target.closest("[data-matriz-foto-quitar]"); if(!b) return;
+  matrizFotos.splice(+b.dataset.matrizFotoQuitar, 1);
+  renderMatrizFotos();
+});
+on(document.getElementById("matrizFotoAnalizarBtn"), "click", async ()=>{
+  const estado = document.getElementById("matrizFotoEstado"), obsBox = document.getElementById("matrizFotoObs");
+  if(storageMode !== "api"){ alert("Evaluar con fotos usa IA y solo está disponible cuando la app está conectada al servidor."); return; }
+  if(!matrizFotos.length){ alert("Suba al menos una foto de la actividad."); return; }
+  if(!document.getElementById("matrizFotoAviso").checked){ alert("Marque la casilla de aviso: las fotos se envían al servicio de IA para este análisis."); return; }
+  const btn = document.getElementById("matrizFotoAnalizarBtn"); btn.disabled = true;
+  estado.textContent = `Analizando ${matrizFotos.length} foto(s) con la IA… puede tardar hasta un minuto.`;
+  try{
+    const resp = await apiFetch("POST", "/api/ia/evaluar-fotos", {
+      imagenes: matrizFotos.map(f=>({tipo:f.tipo, data:f.data})),
+      areaId: document.getElementById("matrizFotoArea").value,
+      actividad: document.getElementById("matrizFotoActividad").value.trim(),
+      cantidad: +document.getElementById("matrizFotoCantidad").value || 6,
+    });
+    matrizSugerenciasIA = resp.sugerencias || [];
+    estado.textContent = matrizSugerenciasIA.length ? `${matrizSugerenciasIA.length} línea(s) sugerida(s). Revíselas en la tabla de abajo antes de agregarlas.` : "La IA no encontró riesgos que proponer con estas fotos. Pruebe con otras fotos o describa la actividad.";
+    if(resp.observaciones){ obsBox.innerHTML = `<strong>Lo que la IA observa en las fotos:</strong> ${incEsc(resp.observaciones)}<br><span class="kv">Es un borrador de apoyo: verifíquelo en terreno antes de incorporarlo a la matriz.</span>`; obsBox.style.display = ""; }
+    else obsBox.style.display = "none";
+    renderMatrizIaPreview();
+    if(matrizSugerenciasIA.length) document.getElementById("matrizIaPreviewWrap").scrollIntoView({behavior:"smooth", block:"start"});
+  }catch(err){
+    estado.textContent = "";
+    alert("No se pudo evaluar con IA: " + err.message);
+  }finally{ btn.disabled = false; }
 });
 on(document.getElementById("matrizIaAgregarBtn"), "click", async () => {
   const checks = [...document.querySelectorAll("#matrizIaPreviewTable [data-matriz-ia-check]:checked")];
@@ -13100,10 +13186,12 @@ on(document.getElementById("matrizIaAgregarBtn"), "click", async () => {
     if(rec.peligro) await addCatalogValue("peligro", rec.peligro);
     await put("matriz", rec);
     await loadCache();
-    await logHistorial(rec.id, matrizLineLabel(rec), "Línea creada", "", "Sugerida por IA y agregada por el usuario");
+    await logHistorial(rec.id, matrizLineLabel(rec), "Línea creada", "", m.origen==="fotos" ? "Sugerida por IA a partir de fotos y agregada por el usuario" : "Sugerida por IA y agregada por el usuario");
   }
   matrizSugerenciasIA = [];
   document.getElementById("matrizIaEstado").textContent = "";
+  document.getElementById("matrizFotoObs").style.display = "none";
+  document.getElementById("matrizFotoEstado").textContent = "";
   renderMatrizIaPreview();
   renderMatrizTable();
   renderEquidadGenero();
