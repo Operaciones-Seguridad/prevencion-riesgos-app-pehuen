@@ -1212,6 +1212,9 @@
       <div class="toolbar">
         <div class="field"><label>Plano</label><select id="planoSelect"></select></div>
         <div><button class="btn small" id="planoNuevoBtn" style="margin-top:20px;">+ Subir plano nuevo</button></div>
+        <div><button class="btn small" id="planoDibujarBtn" type="button" style="margin-top:20px;">✏️ Dibujar plano nuevo</button></div>
+        <div><button class="btn secondary small" id="planoEditarDibujoBtn" type="button" style="margin-top:20px;display:none;">Editar dibujo</button></div>
+        <div><button class="btn secondary small" id="planoAsignarBtn" type="button" style="margin-top:20px;display:none;">Asignar áreas</button></div>
         <div><button class="btn secondary small" id="planoQuitarBtn" style="margin-top:20px;">Eliminar este plano</button></div>
         <div><button class="btn secondary small" id="printPlanoRiesgosBtn" style="margin-top:20px;">Imprimir mapa de riesgos</button></div>
       </div>
@@ -14371,7 +14374,7 @@ async function intentarDetectarNombresEnArchivo(file, trabajadoresCandidatos){
 let planoActualId;
 function planoConfigActual(){
   const rec = (CACHE.planoRiesgos||[]).find(p=>p.id===planoActualId);
-  return rec ? {...rec, marcas: rec.marcas||{}, iconos: rec.iconos||{}} : {id:null, nombre:"", imagen:null, marcas:{}, iconos:{}};
+  return rec ? {...rec, marcas: rec.marcas||{}, iconos: rec.iconos||{}, dibujo: rec.dibujo||null} : {id:null, nombre:"", imagen:null, marcas:{}, iconos:{}, dibujo:null};
 }
 async function savePlanoConfig(rec){
   await put("planoRiesgos", rec);
@@ -14473,6 +14476,9 @@ function renderPlanoRiesgos(){
   const bloques = planoBloques(planoActualId);
   const quitarBtn = document.getElementById("planoQuitarBtn");
   if(quitarBtn) quitarBtn.style.display = planoActualId ? "" : "none";
+  const editarDibujoBtn = document.getElementById("planoEditarDibujoBtn"), asignarBtn = document.getElementById("planoAsignarBtn");
+  if(editarDibujoBtn) editarDibujoBtn.style.display = (planoActualId && cfg.dibujo) ? "" : "none";
+  if(asignarBtn) asignarBtn.style.display = planoActualId ? "" : "none";
   if(cfg.imagen){
     const avisoSinAreas = !bloques.length
       ? `<div class="kv" style="margin-top:8px;padding:8px 10px;background:#fff4de;border:1px solid #eda100;border-radius:6px;color:#8a5a00;">Este plano todavía no tiene ninguna área asignada, por eso no aparece ningún ícono. Andá a <strong>Configuración → Áreas</strong> y elegí "${cfg.nombre}" en la columna "Plano" de al menos un área (y cargá al menos una línea de esa área en la Matriz de riesgos).</div>`
@@ -14585,6 +14591,323 @@ on(document.getElementById("planoQuitarBtn"), "click", async () => {
   renderPlanoRiesgos();
   renderAreasTable();
 });
+/* =========================================================
+   EDITOR DE PLANO DE PLANTA (dibujo)
+   Se dibuja en un lienzo (muros, recintos, puertas, ventanas, flechas y
+   textos) y al guardar se genera un PNG que pasa a ser la `imagen` del
+   plano -- así los íconos de riesgo, las marcas de área, la impresión y
+   la asignación de áreas funcionan igual que con un plano subido. El
+   dibujo vectorial se guarda también en `dibujo` para poder editarlo.
+   ========================================================= */
+const PE_GRID = 20;
+const PE_HERRAMIENTAS = [
+  {id:"seleccionar", label:"↖ Seleccionar / mover"}, {id:"muro", label:"▬ Muro"}, {id:"zona", label:"▭ Recinto"},
+  {id:"puerta", label:"🚪 Puerta"}, {id:"ventana", label:"▤ Ventana"}, {id:"flecha", label:"➜ Flecha"}, {id:"texto", label:"T Texto"},
+];
+const PE_COLOR_BASE = {muro:"#222222", zona:"#cfe3ff", puerta:"#8a5a00", ventana:"#2a78d6", flecha:"#c0392b", texto:"#111111"};
+const PE_ZONAS_COLORES = ["#cfe3ff","#d5f0d5","#fff1c2","#ffd6d6","#e6dcf5","#e3e3e3"];
+let pe = null;
+function peEl(id){ return document.getElementById(id); }
+function peSnap(v){ return pe && pe.snap ? Math.round(v/PE_GRID)*PE_GRID : Math.round(v); }
+function peForma(id){ return pe.formas.find(f=>f.id===id) || null; }
+function peDistSeg(px, py, x1, y1, x2, y2){
+  const dx = x2-x1, dy = y2-y1, l2 = dx*dx+dy*dy;
+  let t = l2 ? ((px-x1)*dx + (py-y1)*dy)/l2 : 0; t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px-(x1+t*dx), py-(y1+t*dy));
+}
+function peCajaTexto(ctx, f){ ctx.font = `bold ${f.tam||28}px Arial`; return {x:f.x1, y:f.y1, w:ctx.measureText(f.texto||"").width, h:(f.tam||28)}; }
+function peHit(ctx, f, x, y){
+  if(f.tipo==="zona"){ const x1=Math.min(f.x1,f.x2), x2=Math.max(f.x1,f.x2), y1=Math.min(f.y1,f.y2), y2=Math.max(f.y1,f.y2); return x>=x1 && x<=x2 && y>=y1 && y<=y2; }
+  if(f.tipo==="texto"){ const c = peCajaTexto(ctx, f); return x>=c.x-4 && x<=c.x+c.w+4 && y>=c.y-4 && y<=c.y+c.h+4; }
+  return peDistSeg(x, y, f.x1, f.y1, f.x2, f.y2) <= Math.max(12, (f.grosor||8)/2+6);
+}
+function peDibujarFormas(ctx, formas, selId){
+  const linea = (x1,y1,x2,y2)=>{ ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); };
+  formas.forEach(f=>{
+    ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.setLineDash([]);
+    if(f.tipo==="zona"){
+      const x=Math.min(f.x1,f.x2), y=Math.min(f.y1,f.y2), w=Math.abs(f.x2-f.x1), h=Math.abs(f.y2-f.y1);
+      ctx.globalAlpha = .45; ctx.fillStyle = f.color; ctx.fillRect(x, y, w, h);
+      ctx.globalAlpha = 1; ctx.strokeStyle = "#666"; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
+    } else if(f.tipo==="muro"){
+      ctx.strokeStyle = f.color; ctx.lineWidth = f.grosor||8; ctx.lineCap = "square"; linea(f.x1,f.y1,f.x2,f.y2);
+    } else if(f.tipo==="puerta"){
+      const dx=f.x2-f.x1, dy=f.y2-f.y1, len=Math.hypot(dx,dy), a=Math.atan2(dy,dx);
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = (f.grosor||8)+6; ctx.lineCap = "butt"; linea(f.x1,f.y1,f.x2,f.y2);
+      const hx = f.x1+Math.cos(a-Math.PI/2)*len, hy = f.y1+Math.sin(a-Math.PI/2)*len;
+      ctx.strokeStyle = f.color; ctx.lineWidth = 4; ctx.lineCap = "round"; linea(f.x1,f.y1,hx,hy);
+      ctx.lineWidth = 2; ctx.setLineDash([6,5]); ctx.beginPath(); ctx.arc(f.x1, f.y1, len, a-Math.PI/2, a, false); ctx.stroke();
+    } else if(f.tipo==="ventana"){
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = (f.grosor||8)+6; ctx.lineCap = "butt"; linea(f.x1,f.y1,f.x2,f.y2);
+      ctx.strokeStyle = "#bfe0ff"; ctx.lineWidth = f.grosor||8; linea(f.x1,f.y1,f.x2,f.y2);
+      ctx.strokeStyle = f.color; ctx.lineWidth = 2; linea(f.x1,f.y1,f.x2,f.y2);
+    } else if(f.tipo==="flecha"){
+      const a = Math.atan2(f.y2-f.y1, f.x2-f.x1), cab = 16+(f.grosor||5)*2;
+      ctx.strokeStyle = f.color; ctx.fillStyle = f.color; ctx.lineWidth = f.grosor||5; linea(f.x1,f.y1,f.x2-Math.cos(a)*cab*0.6,f.y2-Math.sin(a)*cab*0.6);
+      ctx.beginPath(); ctx.moveTo(f.x2, f.y2); ctx.lineTo(f.x2-Math.cos(a-0.45)*cab, f.y2-Math.sin(a-0.45)*cab); ctx.lineTo(f.x2-Math.cos(a+0.45)*cab, f.y2-Math.sin(a+0.45)*cab); ctx.closePath(); ctx.fill();
+    } else if(f.tipo==="texto"){
+      ctx.font = `bold ${f.tam||28}px Arial`; ctx.textBaseline = "top";
+      ctx.lineWidth = 6; ctx.strokeStyle = "#fff"; ctx.strokeText(f.texto||"", f.x1, f.y1);
+      ctx.fillStyle = f.color; ctx.fillText(f.texto||"", f.x1, f.y1);
+    }
+    ctx.restore();
+  });
+  const s = selId ? formas.find(f=>f.id===selId) : null;
+  if(s){
+    ctx.save(); ctx.strokeStyle = "#2a78d6"; ctx.fillStyle = "#fff"; ctx.lineWidth = 2; ctx.setLineDash([6,4]);
+    if(s.tipo==="texto"){ const c = peCajaTexto(ctx, s); ctx.strokeRect(c.x-4, c.y-4, c.w+8, c.h+8); }
+    else if(s.tipo==="zona"){ ctx.strokeRect(Math.min(s.x1,s.x2)-3, Math.min(s.y1,s.y2)-3, Math.abs(s.x2-s.x1)+6, Math.abs(s.y2-s.y1)+6); }
+    else linea(s.x1,s.y1,s.x2,s.y2);
+    ctx.setLineDash([]);
+    if(s.tipo!=="texto") [[s.x1,s.y1],[s.x2,s.y2]].forEach(([px,py])=>{ ctx.beginPath(); ctx.arc(px,py,9,0,Math.PI*2); ctx.fill(); ctx.stroke(); });
+    ctx.restore();
+  }
+}
+function peRender(){
+  if(!pe) return;
+  const cv = peEl("peCanvas"), ctx = cv.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, pe.w, pe.h);
+  if(pe.rejilla){
+    ctx.save(); ctx.lineWidth = 1;
+    for(let x=0; x<=pe.w; x+=PE_GRID){ ctx.strokeStyle = x%200===0 ? "#cfd6df" : "#eceff3"; ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,pe.h); ctx.stroke(); }
+    for(let y=0; y<=pe.h; y+=PE_GRID){ ctx.strokeStyle = y%200===0 ? "#cfd6df" : "#eceff3"; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(pe.w,y); ctx.stroke(); }
+    ctx.restore();
+  }
+  peDibujarFormas(ctx, pe.formas, pe.sel);
+  peEl("peDeshacerBtn").disabled = !pe.undo.length; peEl("peRehacerBtn").disabled = !pe.redo.length;
+  peEl("peEliminarBtn").disabled = !pe.sel;
+}
+function peSnapshot(){ pe.undo.push(JSON.stringify(pe.formas)); if(pe.undo.length>100) pe.undo.shift(); pe.redo = []; pe.dirty = true; }
+function peDeshacer(){ if(!pe.undo.length) return; pe.redo.push(JSON.stringify(pe.formas)); pe.formas = JSON.parse(pe.undo.pop()); if(pe.sel && !peForma(pe.sel)) pe.sel = null; pe.dirty = true; peSincronizarControles(); peRender(); }
+function peRehacer(){ if(!pe.redo.length) return; pe.undo.push(JSON.stringify(pe.formas)); pe.formas = JSON.parse(pe.redo.pop()); if(pe.sel && !peForma(pe.sel)) pe.sel = null; pe.dirty = true; peSincronizarControles(); peRender(); }
+function peCoord(e){
+  const cv = peEl("peCanvas"), r = cv.getBoundingClientRect();
+  return {x:(e.clientX-r.left)*cv.width/r.width, y:(e.clientY-r.top)*cv.height/r.height};
+}
+function peOrtogonal(f){
+  if(pe.orto && f.tipo!=="zona" && f.tipo!=="texto"){
+    if(Math.abs(f.x2-f.x1) >= Math.abs(f.y2-f.y1)) f.y2 = f.y1; else f.x2 = f.x1;
+  }
+}
+function peSincronizarControles(){
+  const f = pe.sel ? peForma(pe.sel) : null;
+  if(f){
+    peEl("peColor").value = f.color; if(f.grosor) peEl("peGrosor").value = String(f.grosor); if(f.tam) peEl("peTam").value = String(f.tam);
+    if(f.tipo==="texto") peEl("peTexto").value = f.texto||"";
+  }
+}
+function peActualizarHerramientas(){
+  document.querySelectorAll("#peOverlay [data-pe-herr]").forEach(b=>{
+    const act = b.dataset.peHerr===pe.herr;
+    b.style.background = act ? "var(--s1)" : ""; b.style.color = act ? "#fff" : "";
+  });
+  const ayudas = {seleccionar:"Haga clic en un elemento para seleccionarlo y arrástrelo; arrastre los puntos azules de los extremos para cambiar su largo.",
+    muro:"Arrastre en el plano para dibujar un muro (con «Ortogonal» queda recto).", zona:"Arrastre para marcar un recinto o zona; elija su color arriba.",
+    puerta:"Arrastre sobre un muro desde la bisagra hasta el otro lado del vano: se dibuja la puerta con su giro.", ventana:"Arrastre sobre un muro para marcar una ventana.",
+    flecha:"Arrastre para dibujar una flecha (rutas de evacuación, accesos).", texto:"Escriba el texto en la casilla de la barra y haga clic en el plano donde quiere ponerlo."};
+  peEl("peAyuda").textContent = ayudas[pe.herr] || "";
+}
+function peAplicarPropiedad(prop, valor){
+  const f = pe.sel ? peForma(pe.sel) : null;
+  if(f){ peSnapshot(); f[prop] = valor; peRender(); }
+}
+function peNuevaForma(tipo, x, y){
+  const color = pe.colorPorHerr[tipo] || PE_COLOR_BASE[tipo];
+  return {id:uid(), tipo, x1:x, y1:y, x2:x, y2:y, color, grosor:(tipo==="flecha"?5:(+peEl("peGrosor").value||8))};
+}
+function peOnDown(e){
+  e.preventDefault();
+  const cv = peEl("peCanvas"); try{ cv.setPointerCapture(e.pointerId); }catch(err){}
+  const p = peCoord(e), ctx = cv.getContext("2d");
+  if(pe.herr==="seleccionar"){
+    const s = pe.sel ? peForma(pe.sel) : null;
+    if(s && s.tipo!=="texto"){
+      if(Math.hypot(p.x-s.x1, p.y-s.y1) < 16) pe.drag = {modo:"p1", id:s.id};
+      else if(Math.hypot(p.x-s.x2, p.y-s.y2) < 16) pe.drag = {modo:"p2", id:s.id};
+    }
+    if(!pe.drag){
+      let hit = null;
+      for(let i=pe.formas.length-1; i>=0; i--){ if(peHit(ctx, pe.formas[i], p.x, p.y)){ hit = pe.formas[i]; break; } }
+      pe.sel = hit ? hit.id : null;
+      if(hit) pe.drag = {modo:"mover", id:hit.id, ox:p.x, oy:p.y, orig:{x1:hit.x1, y1:hit.y1, x2:hit.x2, y2:hit.y2}};
+      peSincronizarControles();
+    }
+    if(pe.drag) peSnapshot();
+  } else if(pe.herr==="texto"){
+    const t = peEl("peTexto").value.trim();
+    if(!t){ peEl("peAyuda").textContent = "Primero escriba el texto en la casilla «Texto» de la barra y luego haga clic en el plano."; peEl("peTexto").focus(); return; }
+    peSnapshot();
+    const f = {id:uid(), tipo:"texto", x1:peSnap(p.x), y1:peSnap(p.y), x2:peSnap(p.x), y2:peSnap(p.y), texto:t, tam:+peEl("peTam").value||28, color:pe.colorPorHerr.texto||PE_COLOR_BASE.texto};
+    pe.formas.push(f); pe.sel = null; peActualizarHerramientas();
+  } else {
+    peSnapshot();
+    const f = peNuevaForma(pe.herr, peSnap(p.x), peSnap(p.y));
+    pe.formas.push(f); pe.sel = f.id; pe.drag = {modo:"crear", id:f.id};
+  }
+  peRender();
+}
+function peOnMove(e){
+  if(!pe || !pe.drag) return;
+  const p = peCoord(e), f = peForma(pe.drag.id); if(!f) return;
+  if(pe.drag.modo==="crear" || pe.drag.modo==="p2"){ f.x2 = peSnap(p.x); f.y2 = peSnap(p.y); peOrtogonal(f); }
+  else if(pe.drag.modo==="p1"){ f.x1 = peSnap(p.x); f.y1 = peSnap(p.y); }
+  else if(pe.drag.modo==="mover"){
+    const o = pe.drag.orig, dx = peSnap(o.x1 + (p.x-pe.drag.ox)) - o.x1, dy = peSnap(o.y1 + (p.y-pe.drag.oy)) - o.y1;
+    f.x1 = o.x1+dx; f.y1 = o.y1+dy; f.x2 = o.x2+dx; f.y2 = o.y2+dy;
+  }
+  peRender();
+}
+function peOnUp(){
+  if(!pe || !pe.drag) return;
+  const d = pe.drag; pe.drag = null;
+  const f = peForma(d.id);
+  if(d.modo==="crear" && f && Math.hypot(f.x2-f.x1, f.y2-f.y1) < 8){ pe.formas = pe.formas.filter(x=>x.id!==f.id); pe.sel = null; pe.undo.pop(); }
+  else if(d.modo==="crear"){ pe.sel = null; } // al terminar de dibujar no queda seleccionado: cambiar el color o grosor afecta solo a lo próximo
+  else if(d.modo!=="crear" && pe.undo.length && pe.undo[pe.undo.length-1]===JSON.stringify(pe.formas)) pe.undo.pop();
+  peRender();
+}
+function peEliminarSeleccion(){
+  if(!pe.sel) return; peSnapshot(); pe.formas = pe.formas.filter(f=>f.id!==pe.sel); pe.sel = null; peRender();
+}
+function peOnKey(e){
+  if(!pe) return;
+  const enCampo = /^(INPUT|SELECT|TEXTAREA)$/.test((document.activeElement||{}).tagName||"");
+  if((e.ctrlKey||e.metaKey) && !enCampo){ if(e.key==="z"||e.key==="Z"){ e.preventDefault(); e.shiftKey ? peRehacer() : peDeshacer(); } else if(e.key==="y"||e.key==="Y"){ e.preventDefault(); peRehacer(); } return; }
+  if(enCampo) return;
+  if(e.key==="Delete" || e.key==="Backspace"){ e.preventDefault(); peEliminarSeleccion(); }
+  else if(e.key==="Escape"){ if(pe.sel){ pe.sel = null; peRender(); } else planoEditorCerrar(); }
+}
+function planoEditorAbrir(planoId, orientacion){
+  const rec = planoId ? (CACHE.planoRiesgos||[]).find(p=>p.id===planoId) : null;
+  if(planoId && (!rec || !rec.dibujo)){ alert("Este plano no tiene un dibujo editable (fue subido como imagen)."); return; }
+  const horizontal = rec ? rec.dibujo.ancho >= rec.dibujo.alto : orientacion!=="vertical";
+  pe = {
+    planoId: rec ? rec.id : null, w: rec ? rec.dibujo.ancho : (horizontal ? 1600 : 1000), h: rec ? rec.dibujo.alto : (horizontal ? 1000 : 1400),
+    formas: rec ? JSON.parse(JSON.stringify(rec.dibujo.formas||[])) : [], undo: [], redo: [], herr: "muro", sel: null, drag: null,
+    snap: true, orto: true, rejilla: true, dirty: false, colorPorHerr: {},
+  };
+  const ov = document.createElement("div"); ov.id = "peOverlay";
+  ov.style.cssText = "position:fixed;inset:0;z-index:99990;background:#f4f5f7;display:flex;flex-direction:column;";
+  ov.innerHTML = `
+    <div style="background:#fff;border-bottom:1px solid #ddd;padding:8px 10px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;">
+      <input id="peNombre" placeholder="Nombre del plano" value="${incEsc(rec?rec.nombre:"")}" style="max-width:200px;">
+      <span id="peHerramientas" style="display:inline-flex;flex-wrap:wrap;gap:4px;">${PE_HERRAMIENTAS.map(h=>`<button type="button" class="btn secondary small" data-pe-herr="${h.id}">${h.label}</button>`).join("")}</span>
+      <label style="display:inline-flex;align-items:center;gap:4px;font-weight:400;">Color <input type="color" id="peColor" value="#222222" style="width:38px;min-height:30px;padding:0;"></label>
+      <span id="peZonasColores" style="display:inline-flex;gap:3px;">${PE_ZONAS_COLORES.map(c=>`<button type="button" data-pe-zcolor="${c}" title="Color de recinto" style="width:20px;height:20px;border-radius:4px;border:1px solid #888;background:${c};padding:0;cursor:pointer;"></button>`).join("")}</span>
+      <label style="display:inline-flex;align-items:center;gap:4px;font-weight:400;">Grosor <select id="peGrosor" style="width:auto;"><option>4</option><option selected>8</option><option>12</option><option>16</option></select></label>
+      <input id="peTexto" placeholder="Texto" style="max-width:150px;">
+      <select id="peTam" style="width:auto;"><option>20</option><option selected>28</option><option>40</option><option>56</option></select>
+      <button type="button" class="btn secondary small" id="peAplicarTextoBtn">Actualizar texto</button>
+      <label style="display:inline-flex;align-items:center;gap:4px;font-weight:400;"><input type="checkbox" id="peSnap" checked style="width:auto;min-height:auto;"> Ajustar a cuadrícula</label>
+      <label style="display:inline-flex;align-items:center;gap:4px;font-weight:400;"><input type="checkbox" id="peOrto" checked style="width:auto;min-height:auto;"> Ortogonal</label>
+      <label style="display:inline-flex;align-items:center;gap:4px;font-weight:400;"><input type="checkbox" id="peRejilla" checked style="width:auto;min-height:auto;"> Ver cuadrícula</label>
+      <button type="button" class="btn secondary small" id="peDeshacerBtn">↶ Deshacer</button>
+      <button type="button" class="btn secondary small" id="peRehacerBtn">↷ Rehacer</button>
+      <button type="button" class="btn secondary small" id="peEliminarBtn">Eliminar selección</button>
+      <button type="button" class="btn secondary small" id="peLimpiarBtn">Limpiar todo</button>
+      <button type="button" class="btn small" id="peGuardarBtn">Guardar plano</button>
+      <button type="button" class="btn secondary small" id="peCerrarBtn">Cerrar</button>
+    </div>
+    <div style="flex:1;overflow:auto;padding:10px;"><canvas id="peCanvas" width="${pe.w}" height="${pe.h}" style="background:#fff;width:100%;max-width:${horizontal?1400:900}px;touch-action:none;border:1px solid #ccc;display:block;margin:0 auto;cursor:crosshair;"></canvas></div>
+    <div id="peAyuda" class="kv" style="padding:6px 12px;background:#fff;border-top:1px solid #ddd;"></div>`;
+  document.body.appendChild(ov);
+  const cv = peEl("peCanvas");
+  on(cv, "pointerdown", peOnDown); on(cv, "pointermove", peOnMove); on(cv, "pointerup", peOnUp); on(cv, "pointercancel", peOnUp);
+  document.querySelectorAll("#peOverlay [data-pe-herr]").forEach(b=>on(b, "click", ()=>{
+    pe.herr = b.dataset.peHerr; if(pe.herr!=="seleccionar"){ pe.sel = null; peEl("peColor").value = pe.colorPorHerr[pe.herr] || PE_COLOR_BASE[pe.herr]; }
+    cv.style.cursor = pe.herr==="seleccionar" ? "default" : "crosshair"; peActualizarHerramientas(); peRender();
+  }));
+  document.querySelectorAll("#peOverlay [data-pe-zcolor]").forEach(b=>on(b, "click", ()=>{ peEl("peColor").value = b.dataset.peZcolor; peColorCambiado(b.dataset.peZcolor); }));
+  on(peEl("peColor"), "input", ()=>peColorCambiado(peEl("peColor").value));
+  on(peEl("peGrosor"), "change", ()=>peAplicarPropiedad("grosor", +peEl("peGrosor").value));
+  on(peEl("peTam"), "change", ()=>{ const f = pe.sel ? peForma(pe.sel) : null; if(f && f.tipo==="texto") peAplicarPropiedad("tam", +peEl("peTam").value); });
+  on(peEl("peAplicarTextoBtn"), "click", ()=>{ const f = pe.sel ? peForma(pe.sel) : null; if(f && f.tipo==="texto" && peEl("peTexto").value.trim()) peAplicarPropiedad("texto", peEl("peTexto").value.trim()); else peEl("peAyuda").textContent = "Seleccione una etiqueta de texto (herramienta «Seleccionar») y escriba el nuevo texto."; });
+  on(peEl("peSnap"), "change", ()=>{ pe.snap = peEl("peSnap").checked; });
+  on(peEl("peOrto"), "change", ()=>{ pe.orto = peEl("peOrto").checked; });
+  on(peEl("peRejilla"), "change", ()=>{ pe.rejilla = peEl("peRejilla").checked; peRender(); });
+  on(peEl("peDeshacerBtn"), "click", peDeshacer); on(peEl("peRehacerBtn"), "click", peRehacer);
+  on(peEl("peEliminarBtn"), "click", peEliminarSeleccion);
+  on(peEl("peLimpiarBtn"), "click", ()=>{ if(!pe.formas.length) return; if(!confirm("¿Borrar todo el dibujo? Puede deshacerlo con «Deshacer».")) return; peSnapshot(); pe.formas = []; pe.sel = null; peRender(); });
+  on(peEl("peGuardarBtn"), "click", planoEditorGuardar);
+  on(peEl("peCerrarBtn"), "click", ()=>planoEditorCerrar());
+  document.addEventListener("keydown", peOnKey);
+  peEl("peColor").value = PE_COLOR_BASE.muro;
+  peActualizarHerramientas(); peRender();
+}
+function peColorCambiado(valor){
+  const f = pe.sel ? peForma(pe.sel) : null;
+  if(f){ peSnapshot(); f.color = valor; peRender(); }
+  if(!f || pe.herr!=="seleccionar") pe.colorPorHerr[pe.herr] = valor;
+}
+function planoEditorCerrar(forzar){
+  if(!pe) return;
+  if(pe.dirty && !forzar && !confirm("Hay cambios sin guardar en el dibujo. ¿Salir igualmente?")) return;
+  document.removeEventListener("keydown", peOnKey);
+  const ov = peEl("peOverlay"); if(ov) ov.remove();
+  pe = null;
+}
+async function planoEditorGuardar(){
+  if(!pe) return;
+  const nombre = peEl("peNombre").value.trim();
+  if(!nombre){ alert("Indique el nombre del plano."); peEl("peNombre").focus(); return; }
+  if(!pe.formas.length){ alert("El dibujo está vacío: agregue al menos un muro, recinto o texto."); return; }
+  const cv = document.createElement("canvas"); cv.width = pe.w; cv.height = pe.h;
+  const ctx = cv.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, pe.w, pe.h);
+  peDibujarFormas(ctx, pe.formas, null);
+  const imagen = cv.toDataURL("image/png");
+  const previo = pe.planoId ? (CACHE.planoRiesgos||[]).find(p=>p.id===pe.planoId) : null;
+  const rec = Object.assign({}, previo || {}, {
+    id: previo ? previo.id : uid(), nombre, imagen,
+    dibujo: {ancho: pe.w, alto: pe.h, formas: JSON.parse(JSON.stringify(pe.formas))},
+    marcas: previo ? (previo.marcas||{}) : {}, iconos: previo ? (previo.iconos||{}) : {},
+  });
+  await savePlanoConfig(rec);
+  const eraNuevo = !previo;
+  planoActualId = rec.id;
+  planoEditorCerrar(true);
+  renderPlanoRiesgos(); renderAreasTable();
+  if(eraNuevo) planoAsignarAreas(rec.id, true);
+  else alert("Plano guardado.");
+}
+/* Asignar áreas a un plano: actualiza area.planoId (misma asignación de Configuración → Áreas). */
+function planoAsignarAreas(planoId, recienCreado){
+  const plano = (CACHE.planoRiesgos||[]).find(p=>p.id===planoId); if(!plano) return;
+  const areas = (CACHE.areas||[]);
+  if(!areas.length){ alert(recienCreado ? "Plano guardado. Todavía no hay áreas: créelas en Configuración → Áreas y luego use «Asignar áreas»." : "Todavía no hay áreas: créelas en Configuración → Áreas."); return; }
+  openModal(`
+    <h3>${recienCreado ? "Plano guardado. " : ""}Áreas que pertenecen a «${incEsc(plano.nombre)}»</h3>
+    <div class="kv" style="margin-bottom:8px;">Marque las áreas que se ven en este plano: sus íconos de riesgo aparecerán sobre él y podrá arrastrarlos a su ubicación. Un área pertenece a un solo plano.</div>
+    <div style="max-height:300px;overflow:auto;border:1px solid var(--grid);border-radius:6px;padding:6px 10px;">
+      ${areas.map(a=>{ const otro = a.planoId && a.planoId!==planoId ? (CACHE.planoRiesgos||[]).find(p=>p.id===a.planoId) : null;
+        return `<label style="display:flex;gap:8px;align-items:center;font-weight:400;margin:5px 0;"><input type="checkbox" data-pl-area="${a.id}" style="width:auto;min-height:auto;"${a.planoId===planoId?" checked":""}> ${incEsc(a.nombre)}${otro?` <span class="kv">(hoy en «${incEsc(otro.nombre)}»; se moverá)</span>`:""}</label>`; }).join("")}
+    </div>
+    <div class="toolbar" style="margin-top:12px;"><button class="btn" id="plAsignarGuardarBtn" type="button">Guardar asignación</button><button class="btn secondary" id="plAsignarCancelarBtn" type="button">${recienCreado ? "Ahora no" : "Cancelar"}</button></div>`);
+  on(document.getElementById("plAsignarCancelarBtn"), "click", closeModal);
+  on(document.getElementById("plAsignarGuardarBtn"), "click", async ()=>{
+    const marcadas = new Set(Array.from(document.querySelectorAll("#modalBody [data-pl-area]:checked")).map(c=>c.dataset.plArea));
+    let cambios = 0;
+    for(const a of (CACHE.areas||[])){
+      if(marcadas.has(a.id) && a.planoId!==planoId){ a.planoId = planoId; await put("areas", a); cambios++; }
+      else if(!marcadas.has(a.id) && a.planoId===planoId){ a.planoId = null; await put("areas", a); cambios++; }
+    }
+    await loadCache();
+    closeModal();
+    planoActualId = planoId;
+    renderPlanoRiesgos(); renderAreasTable();
+    if(cambios) alert(`Asignación guardada: ${marcadas.size} área(s) en «${plano.nombre}».`);
+  });
+}
+on(document.getElementById("planoDibujarBtn"), "click", ()=>{
+  openModal(`
+    <h3>Dibujar plano nuevo</h3>
+    <div class="kv" style="margin-bottom:10px;">Elija la orientación de la hoja. Luego dibuje muros, recintos, puertas, ventanas, flechas y textos, y guarde el plano para ubicar sobre él los riesgos de cada área.</div>
+    <div class="toolbar"><button class="btn" id="plOriHBtn" type="button">Horizontal (recomendado)</button><button class="btn secondary" id="plOriVBtn" type="button">Vertical</button><button class="btn secondary" id="plOriCancelBtn" type="button">Cancelar</button></div>`);
+  on(document.getElementById("plOriHBtn"), "click", ()=>{ closeModal(); planoEditorAbrir(null, "horizontal"); });
+  on(document.getElementById("plOriVBtn"), "click", ()=>{ closeModal(); planoEditorAbrir(null, "vertical"); });
+  on(document.getElementById("plOriCancelBtn"), "click", closeModal);
+});
+on(document.getElementById("planoEditarDibujoBtn"), "click", ()=>planoEditorAbrir(planoActualId));
+on(document.getElementById("planoAsignarBtn"), "click", ()=>{ if(planoActualId) planoAsignarAreas(planoActualId); });
 function imprimirPlanoRiesgos(){
   const cfg = planoConfigActual();
   const bloques = planoBloques(planoActualId);
