@@ -1398,7 +1398,7 @@
       <div class="grid-tiles" id="vsTableroTiles" style="margin-bottom:14px;"></div>
       <h3 style="margin:14px 0 6px;font-size:15px;">Estado por protocolo</h3>
       <div style="overflow-x:auto;"><table>
-        <thead><tr><th>Protocolo</th><th>Expuestos activos</th><th>Con IRL</th><th>Examen vigente</th><th>Por vencer</th><th>Vencidos</th><th>Sin examen</th><th>Restricciones sin plan</th><th>CDA</th><th></th></tr></thead>
+        <thead><tr><th>Protocolo</th><th>Expuestos activos</th><th>Con IRL</th><th>Examen vigente</th><th>Por vencer</th><th>Vencidos</th><th>Sin examen</th><th>Restricciones sin plan</th><th>Evaluaciones vencidas</th><th>Casos rojos abiertos</th><th>Medidas atrasadas</th><th>CDA</th><th></th></tr></thead>
         <tbody id="vsTableroTable"></tbody>
       </table></div>
       <h3 style="margin:18px 0 6px;font-size:15px;">Alertas por trabajador</h3>
@@ -1467,8 +1467,77 @@
         <div class="field"><div class="kv" id="vsNomConteo" style="margin-top:22px;"></div></div>
       </div>
       <div style="overflow-x:auto;"><table>
-        <thead><tr><th>Trabajador</th><th>Cargo / Área</th><th>Puesto / GES</th><th>IRL</th><th>Último examen</th><th>Aptitud</th><th>Vence</th><th>Estado</th><th></th></tr></thead>
+        <thead><tr><th>Trabajador</th><th>Cargo / Área</th><th>Puesto / GES</th><th>Puesto evaluado</th><th>IRL</th><th>Último examen</th><th>Aptitud</th><th>Vence</th><th>Estado</th><th></th></tr></thead>
         <tbody id="vsNomTable"></tbody>
+      </table></div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrVsEval"><h2>Evaluación ambiental por puesto de trabajo</h2><button class="collapse-toggle" id="toggleVsEval" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyVsEval">
+      <div class="desc">Registre el informe de evaluación que entrega la mutualidad (u otro organismo) para cada puesto o GES de un protocolo: fecha, nivel (verde / amarillo / rojo), valor informado y vencimiento. Una evaluación nueva del mismo puesto es una <strong>reevaluación</strong>: queda como la vigente y la anterior se conserva en el historial. Pehuén controla el resultado; no calcula ni interpreta mediciones.</div>
+      <h3 style="margin:10px 0 6px;font-size:15px;" id="evFormTitulo">Registrar evaluación</h3>
+      <div class="form-grid">
+        <div><label>Protocolo</label><select id="evProtocolo"></select></div>
+        <div><label>Puesto de trabajo / GES</label><input id="evPuesto" list="dlVsPuestos" placeholder="Ej: Operador de maquinaria"><datalist id="dlVsPuestos"></datalist></div>
+        <div><label>Área (opcional)</label><select id="evArea"></select></div>
+        <div><label>Fecha del informe</label><input type="date" id="evFecha"></div>
+        <div><label>Organismo</label><select id="evOrganismo"><option value="Mutualidad">Mutualidad</option><option value="Organismo administrador">Organismo administrador</option><option value="Consultor externo">Consultor externo</option><option value="Empresa">Empresa</option><option value="Otro">Otro</option></select></div>
+        <div><label>Nivel informado</label><select id="evNivel"><option value="">Seleccione...</option><option value="verde">Verde</option><option value="amarillo">Amarillo</option><option value="rojo">Rojo</option></select></div>
+        <div><label>Valor informado (opcional)</label><input id="evValor" placeholder="Ej: 86 dB(A), 35 % LPP, condición crítica"></div>
+        <div><label>Próxima evaluación (opcional)</label><input type="date" id="evProxima"></div>
+        <div><label>Informe adjunto (opcional)</label><input type="file" id="evArchivo" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"></div>
+      </div>
+      <label>Observaciones</label>
+      <input id="evObs" placeholder="Observaciones (opcional)">
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <button class="btn" id="saveEvBtn" type="button">Guardar evaluación</button>
+        <button class="btn secondary" id="cancelEvBtn" type="button" style="display:none;">Cancelar edición</button>
+        <div class="field"><label>Vigencia de la evaluación de este protocolo (meses, opcional)</label><input type="number" min="1" max="120" id="evMeses" style="max-width:130px;"></div>
+        <div class="kv">Si la deja vacía, solo vence cuando usted indique la próxima evaluación. Confírmela con su mutualidad.</div>
+      </div>
+      <div class="toolbar" style="margin-top:16px;">
+        <div class="field"><label>Protocolo</label><select id="evFiltroProtocolo"></select></div>
+        <div class="field"><label>Nivel</label><select id="evFiltroNivel"><option value="">Todos</option><option value="verde">Verde</option><option value="amarillo">Amarillo</option><option value="rojo">Rojo</option></select></div>
+        <div class="field"><label>Vigencia</label><select id="evFiltroVig"><option value="">Todas</option><option value="vencida">Vencida</option><option value="por_vencer">Por vencer</option><option value="vigente">Vigente</option><option value="sin_vencimiento">Sin vencimiento</option></select></div>
+        <div class="field"><label style="display:flex;gap:6px;align-items:center;font-weight:400;margin-top:22px;"><input type="checkbox" id="evSoloVigentes" checked style="width:auto;min-height:auto;"> Solo la evaluación vigente de cada puesto</label></div>
+        <div><button class="btn small secondary" id="evExportBtn" type="button" style="margin-top:20px;">Descargar Excel (evaluaciones y medidas)</button></div>
+      </div>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Protocolo / puesto</th><th>Informe</th><th>Nivel</th><th>Vigencia</th><th>Caso</th><th>Medidas</th><th>Informe adjunto</th><th></th></tr></thead>
+        <tbody id="vsEvalTable"></tbody>
+      </table></div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrVsMedidas"><h2>Medidas correctoras</h2><button class="collapse-toggle" id="toggleVsMedidas" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyVsMedidas">
+      <div class="desc">Medidas para corregir lo que dejó una evaluación amarilla o roja. Cada una tiene responsable, plazo y estado; para darla por <strong>aplicada</strong> se exige la fecha de aplicación y la <strong>evidencia</strong> adjunta. El caso se cierra desde la tabla de evaluaciones: un caso rojo exige que todas sus medidas estén aplicadas y el acta del CDA que lo respalda.</div>
+      <h3 style="margin:10px 0 6px;font-size:15px;" id="mdFormTitulo">Registrar medida correctora</h3>
+      <div class="form-grid">
+        <div style="grid-column:1/-1;"><label>Evaluación a la que corresponde</label><select id="mdEval"></select></div>
+        <div><label>Clasificación (jerarquía DS 44)</label><select id="mdJerarquia"></select></div>
+        <div><label>Responsable</label><input id="mdResponsable" list="dlResponsables" placeholder="Nombre de la persona responsable"></div>
+        <div><label>Plazo</label><input type="date" id="mdPlazo"></div>
+        <div><label>Estado</label><select id="mdEstado"><option value="pendiente">Pendiente</option><option value="proceso">En proceso</option><option value="aplicada">Aplicada</option></select></div>
+        <div><label>Fecha de aplicación</label><input type="date" id="mdFechaAplic"></div>
+        <div><label>Evidencia (foto o documento)</label><input type="file" id="mdEvidencia" accept="image/*,.pdf,.doc,.docx"></div>
+      </div>
+      <label>Medida a aplicar</label>
+      <textarea id="mdDescripcion" placeholder="Describa la medida correctora"></textarea>
+      <label style="margin-top:8px;">Observaciones (opcional)</label>
+      <input id="mdObs">
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" id="saveMdBtn" type="button">Guardar medida</button>
+        <button class="btn secondary" id="cancelMdBtn" type="button" style="display:none;">Cancelar edición</button>
+      </div>
+      <div class="toolbar" style="margin-top:16px;">
+        <div class="field"><label>Protocolo</label><select id="mdFiltroProtocolo"></select></div>
+        <div class="field"><label>Estado</label><select id="mdFiltroEstado"><option value="">Todos</option><option value="pendiente">Pendiente</option><option value="proceso">En proceso</option><option value="aplicada">Aplicada</option><option value="atrasada">Atrasada</option></select></div>
+        <div class="field"><label>Responsable</label><select id="mdFiltroResp"></select></div>
+        <div class="field"><div class="kv" id="mdConteo" style="margin-top:22px;"></div></div>
+      </div>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Protocolo / puesto</th><th>Medida</th><th>Responsable</th><th>Plazo</th><th>Estado</th><th>Aplicación y evidencia</th><th></th></tr></thead>
+        <tbody id="vsMedidasTable"></tbody>
       </table></div>
     </div></div>
 
@@ -4004,8 +4073,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 41;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda"];
+const DB_VERSION = 42;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -10544,6 +10613,7 @@ function renderDashboard(){
       vsUsaNomina
         ? tile("Cumplimiento vigilancia de salud", vsG.pct+"%", vsG.vigentes+" de "+vsG.activos+" expuestos con examen vigente", null, "health", "var(--s1)")
         : tile("Cumplimiento vigilancia de salud", cumplPct+"%", vigentes+" de "+totalAsig+" vigentes", null, "health", "var(--s1)"),
+      ...(vsG.evalTotal || vsG.medidasTotal ? [tile("Vigilancia — casos rojos abiertos", vsG.casosRojos, vsG.medidasAtrasadas+" medida(s) correctora(s) atrasada(s) · "+vsG.evalVencidas+" evaluación(es) vencida(s)", null, "health", "var(--s1)")] : []),
       tile("TMERT — puestos críticos", tmertCriticos, "de "+tmertRepetitivos.length+" con trabajo repetitivo evaluado", tmertCriticos>0?"alto":"bajo", "health", "var(--s1)"),
     ]) +
     tileSection("Programa, capacitación e inspecciones", "var(--s1)", [
@@ -11386,6 +11456,7 @@ function misPendientesCalcular(){
   r.atrasadas += capsPend.filter(c=>c.fechaRealizada || estadoCapacitacion(c)==="atrasada").length;
   (CACHE.programa||[]).forEach(p=>{ if(p.responsable && normalizarNombreTexto(p.responsable)===n && estadoPrograma(p)==="atrasada") r.atrasadas++; });
   (CACHE.capacitaciones||[]).forEach(c=>{ if(c.relator && normalizarNombreTexto(c.relator)===n && estadoCapacitacion(c)==="atrasada") r.atrasadas++; });
+  (CACHE.medidasControlVS||[]).forEach(m=>{ if(m.responsable && normalizarNombreTexto(m.responsable)===n && vsMedidaAtrasada(m)) r.atrasadas++; });
   const per = (CACHE.programaPersonas||[]).find(x=>normalizarNombreTexto(x.nombre)===n);
   if(per){
     const hoy = new Date(), hoja = pcBuscarPrograma(hoy.getFullYear(), hoy.getMonth()+1, per);
@@ -15304,8 +15375,29 @@ function vsCtx(){
   const ex = new Map();
   (CACHE.examenes||[]).forEach(e=>{ const k = e.trabajadorId+"|"+e.protocoloId; if(!ex.has(k)) ex.set(k,[]); ex.get(k).push(e); });
   ex.forEach(l=>l.sort((a,b)=> String(b.fecha||b.citacionFecha||"").localeCompare(String(a.fecha||a.citacionFecha||""))));
-  return {tr, ex};
+  // Evaluación vigente = la más reciente por protocolo y puesto (las anteriores son historial).
+  const evVig = new Map();
+  (CACHE.vsEvaluaciones||[]).slice()
+    .sort((a,b)=> String(a.fechaInforme||"").localeCompare(String(b.fechaInforme||"")) || String(a.id).localeCompare(String(b.id)))
+    .forEach(ev=>evVig.set(ev.protocoloId+"|"+matrizNorm(ev.puesto), ev));
+  return {tr, ex, evVig};
 }
+/* Evaluación ambiental por puesto (Etapa 2): vigencia derivada de la próxima fecha informada o de la
+   vigencia en meses editable del protocolo (sin valor precargado); las medidas correctoras se atrasan
+   cuando vence su plazo sin estar aplicadas. */
+const VS_NIVEL_LABEL = {verde:"Verde", amarillo:"Amarillo", rojo:"Rojo"};
+const VS_NIVEL_PILL = {verde:"bajo", amarillo:"medio", rojo:"critico"};
+const VS_EVAL_VIG_LABEL = {vigente:"Vigente", por_vencer:"Por vencer", vencida:"Vencida", sin_vencimiento:"Sin vencimiento"};
+const VS_EVAL_VIG_PILL = {vigente:"vigente", por_vencer:"proximo", vencida:"vencido", sin_vencimiento:"pendiente"};
+const VS_MEDIDA_ESTADO_LABEL = {pendiente:"Pendiente", proceso:"En proceso", aplicada:"Aplicada"};
+function vsEvalEstado(ev, p){
+  let vence = ev.proximaFecha || null;
+  if(!vence && p && +p.evalMeses>0 && ev.fechaInforme) vence = vsIso(addMonths(ev.fechaInforme, +p.evalMeses));
+  if(!vence) return {vence:null, dias:null, sem:"sin_vencimiento"};
+  const dias = daysUntil(vence);
+  return {vence, dias, sem: dias<0 ? "vencida" : (p && dias<=vsDiasAlerta(p)) ? "por_vencer" : "vigente"};
+}
+function vsMedidaAtrasada(m){ return m.estado!=="aplicada" && !!m.plazo && daysUntil(m.plazo)<0; }
 function vsEvaluar(e, ctx){
   const t = ctx.tr.get(e.trabajadorId);
   const p = (CACHE.protocolos||[]).find(x=>x.id===e.protocoloId);
@@ -15326,7 +15418,8 @@ function vsEvaluar(e, ctx){
     if(ic){ const ent = irlEntregaDe(t.id, ic.id); if(ent){ irlFecha = ent.fecha; irlOrigen = "entrega"; } }
   }
   const faltaPlan = !!(examen && examen.resultado==="restricciones" && !String(examen.readecuacion||"").trim());
-  return {e, t, p, examen, citacion, vence, dias, sem, irlFecha, irlOrigen, faltaPlan, activo:(e.estado||"activo")==="activo"};
+  const evalPuesto = e.puesto ? (ctx.evVig.get(e.protocoloId+"|"+matrizNorm(e.puesto)) || null) : null;
+  return {e, t, p, examen, citacion, vence, dias, sem, irlFecha, irlOrigen, faltaPlan, evalPuesto, activo:(e.estado||"activo")==="activo"};
 }
 function vsCdaDe(protoId){
   return (CACHE.vsCda||[]).filter(c=>c.protocoloId===protoId).sort((a,b)=> String(b.fecha||"").localeCompare(String(a.fecha||"")));
@@ -15336,14 +15429,25 @@ function vsResumen(protoId, ctx){
   const filas = (CACHE.vsExpuestos||[]).filter(e=>e.protocoloId===protoId).map(e=>vsEvaluar(e, ctx)).filter(Boolean);
   const act = filas.filter(f=>f.activo);
   const n = fn => act.filter(fn).length;
+  // Etapa 2: evaluaciones vigentes por puesto y medidas correctoras del protocolo.
+  const proto = (CACHE.protocolos||[]).find(x=>x.id===protoId);
+  const evs = Array.from(ctx.evVig.values()).filter(ev=>ev.protocoloId===protoId);
+  const evEst = evs.map(ev=>vsEvalEstado(ev, proto));
+  const meds = (CACHE.medidasControlVS||[]).filter(m=>m.protocoloId===protoId);
   return { filas, activos:act.length, conIrl:n(f=>f.irlFecha), vigentes:n(f=>f.sem==="vigente"), porVencer:n(f=>f.sem==="por_vencer"),
-    vencidos:n(f=>f.sem==="vencido"), sinExamen:n(f=>f.sem==="sin_examen"), faltaPlan:n(f=>f.faltaPlan), cda:vsCdaDe(protoId) };
+    vencidos:n(f=>f.sem==="vencido"), sinExamen:n(f=>f.sem==="sin_examen"), faltaPlan:n(f=>f.faltaPlan), cda:vsCdaDe(protoId),
+    evalTotal:evs.length, evalVencidas:evEst.filter(s=>s.sem==="vencida").length, evalPorVencer:evEst.filter(s=>s.sem==="por_vencer").length,
+    casosRojos:evs.filter(ev=>ev.nivel==="rojo" && ev.estadoCaso!=="cerrado").length,
+    medidasTotal:meds.length, medidasAtrasadas:meds.filter(vsMedidaAtrasada).length };
 }
 function vsGlobal(){
   const ctx = vsCtx();
-  const g = {activos:0, vigentes:0, porVencer:0, vencidos:0, sinExamen:0, conIrl:0, faltaPlan:0, protocolos:0, sinCda:0};
+  const g = {activos:0, vigentes:0, porVencer:0, vencidos:0, sinExamen:0, conIrl:0, faltaPlan:0, protocolos:0, sinCda:0,
+    evalTotal:0, evalVencidas:0, evalPorVencer:0, casosRojos:0, medidasTotal:0, medidasAtrasadas:0};
   (CACHE.protocolos||[]).forEach(p=>{
     const r = vsResumen(p.id, ctx);
+    g.evalTotal += r.evalTotal; g.evalVencidas += r.evalVencidas; g.evalPorVencer += r.evalPorVencer; g.casosRojos += r.casosRojos;
+    g.medidasTotal += r.medidasTotal; g.medidasAtrasadas += r.medidasAtrasadas;
     if(!r.activos) return;
     g.protocolos++; g.activos += r.activos; g.vigentes += r.vigentes; g.porVencer += r.porVencer; g.vencidos += r.vencidos;
     g.sinExamen += r.sinExamen; g.conIrl += r.conIrl; g.faltaPlan += r.faltaPlan; if(!r.cda.length) g.sinCda++;
@@ -15361,6 +15465,16 @@ function vsProximosVencimientos(){
     const f0 = lista.slice().sort((a,b)=>a.dias-b.dias)[0];
     out.push({tipo:"Vigilancia "+p.nombre, desc:lista.length+" trabajador(es) con examen por vencer o vencido", fecha:f0.vence, days:f0.dias});
   });
+  // Etapa 2: evaluaciones de puesto por vencer o vencidas y medidas correctoras sin aplicar con plazo cercano.
+  ctx.evVig.forEach(ev=>{
+    const p = (CACHE.protocolos||[]).find(x=>x.id===ev.protocoloId); if(!p) return;
+    const st = vsEvalEstado(ev, p);
+    if(st.vence && (st.sem==="vencida" || st.sem==="por_vencer")) out.push({tipo:"Evaluación "+p.nombre, desc:"Puesto: "+ev.puesto, fecha:st.vence, days:st.dias});
+  });
+  (CACHE.medidasControlVS||[]).forEach(m=>{
+    if(m.estado==="aplicada" || !m.plazo) return;
+    out.push({tipo:"Medida correctora "+protoName(m.protocoloId), desc:(m.descripcion||"").slice(0,70)+(m.responsable?" ("+m.responsable+")":""), fecha:m.plazo, days:daysUntil(m.plazo)});
+  });
   return out;
 }
 function vsMotivos(f){
@@ -15373,10 +15487,12 @@ function vsMotivos(f){
   if(f.faltaPlan) m.push({tipo:"falta_plan", txt:"Con restricciones: falta plan de readecuación"});
   return m;
 }
+/* Alertas rojas del módulo: exámenes vencidos o faltantes, evaluaciones de puesto vencidas, casos rojos abiertos y medidas atrasadas. */
+function vsAlertasTotal(g){ return g.vencidos + g.sinExamen + g.evalVencidas + g.casosRojos + g.medidasAtrasadas; }
 function vsActualizarInsignias(){
   const btn = document.querySelector('#mainNav button[data-view="vigilancia"]');
   if(!btn) return;
-  const g = vsGlobal(), n = vsPuedeVer() ? g.vencidos + g.sinExamen : 0;
+  const g = vsGlobal(), n = vsPuedeVer() ? vsAlertasTotal(g) : 0;
   if(n) btn.setAttribute("data-badge", n>99 ? "99+" : String(n)); else btn.removeAttribute("data-badge");
 }
 
@@ -15409,8 +15525,11 @@ function renderVsTablero(){
     tile("Vencidos o sin examen", g.vencidos+g.sinExamen, g.vencidos+" vencido(s) · "+g.sinExamen+" sin examen", null, "alert", "var(--s1)"),
     tile("Sin IRL", g.activos-g.conIrl, "expuestos sin IRL registrada", null, "document", "var(--s1)"),
     tile("Protocolos sin CDA", g.sinCda, "con expuestos y sin registro de CDA", null, "shield", "var(--s1)"),
+    tile("Evaluaciones de puesto", g.evalVencidas+g.evalPorVencer, g.evalVencidas+" vencida(s) · "+g.evalPorVencer+" por vencer · "+g.evalTotal+" vigente(s) en total", null, "calendar", "var(--s1)"),
+    tile("Casos rojos abiertos", g.casosRojos, "puestos con evaluación roja sin cerrar", null, "alert", "var(--s1)"),
+    tile("Medidas correctoras atrasadas", g.medidasAtrasadas, "de "+g.medidasTotal+" registradas", null, "alert", "var(--s1)"),
   ].join("");
-  const protos = vsProtocolosOrdenados().filter(p=>protocoloAplica(p) || (CACHE.vsExpuestos||[]).some(e=>e.protocoloId===p.id));
+  const protos = vsProtocolosOrdenados().filter(p=>protocoloAplica(p) || (CACHE.vsExpuestos||[]).some(e=>e.protocoloId===p.id) || (CACHE.vsEvaluaciones||[]).some(e=>e.protocoloId===p.id));
   const pill = (n, clase) => n ? `<span class="pill ${clase}">${n}</span>` : "0";
   vsEl("vsTableroTable").innerHTML = protos.map(p=>{
     const r = vsResumen(p.id, ctx);
@@ -15421,10 +15540,11 @@ function renderVsTablero(){
       <td>${r.activos ? Math.round(r.conIrl/r.activos*100)+"% ("+r.conIrl+")" : "—"}</td>
       <td>${r.activos ? Math.round(r.vigentes/r.activos*100)+"% ("+r.vigentes+")" : "—"}</td>
       <td>${pill(r.porVencer,"proximo")}</td><td>${pill(r.vencidos,"vencido")}</td><td>${pill(r.sinExamen,"vencido")}</td><td>${pill(r.faltaPlan,"proximo")}</td>
+      <td>${pill(r.evalVencidas,"vencido")}</td><td>${pill(r.casosRojos,"vencido")}</td><td>${pill(r.medidasAtrasadas,"vencido")}</td>
       <td>${cda}</td>
       <td style="white-space:nowrap;"><button class="btn secondary small" data-vs-ver="${p.id}">Ver nómina</button></td>
     </tr>`;
-  }).join("") || `<tr><td class="empty" colspan="10">Aún no hay protocolos que apliquen ni nóminas cargadas</td></tr>`;
+  }).join("") || `<tr><td class="empty" colspan="13">Aún no hay protocolos que apliquen ni nóminas cargadas</td></tr>`;
   renderVsAlertas(ctx);
 }
 function vsAlertasLista(ctx){
@@ -15456,7 +15576,7 @@ function renderVsNomina(){
   const periodo = vsEl("vsNomPeriodo"), dias = vsEl("vsNomDiasAlerta");
   if(document.activeElement!==periodo) periodo.value = p ? (p.periodicidadMeses||"") : "";
   if(document.activeElement!==dias) dias.value = p ? vsDiasAlerta(p) : "";
-  if(!p){ vsEl("vsNomProtoInfo").textContent = ""; vsEl("vsNomTable").innerHTML = `<tr><td class="empty" colspan="9">Seleccione un protocolo</td></tr>`; vsEl("vsNomConteo").textContent = ""; return; }
+  if(!p){ vsEl("vsNomProtoInfo").textContent = ""; vsEl("vsNomTable").innerHTML = `<tr><td class="empty" colspan="10">Seleccione un protocolo</td></tr>`; vsEl("vsNomConteo").textContent = ""; return; }
   const ctx = vsCtx(), r = vsResumen(p.id, ctx);
   vsEl("vsNomProtoInfo").textContent = `${p.agente||""} · ${r.activos} activo(s) · CDA: ${r.cda.length?"registrado":"sin registro"}`;
   const q = matrizNorm(vsEl("vsNomBuscar").value), area = vsEl("vsNomArea").value, sem = vsEl("vsNomSem").value, act = vsEl("vsNomActivo").value;
@@ -15480,6 +15600,7 @@ function renderVsNomina(){
       <td><strong>${incEsc(f.t.nombre)}</strong><div class="kv">${incEsc(f.t.rut||"sin RUT")}</div></td>
       <td>${incEsc(f.t.cargo||"—")}<div class="kv">${incEsc(areaName(f.t.areaId))}</div></td>
       <td>${incEsc(f.e.puesto||"—")}</td>
+      <td>${f.evalPuesto ? `<span class="pill ${VS_NIVEL_PILL[f.evalPuesto.nivel]||"pendiente"}">${VS_NIVEL_LABEL[f.evalPuesto.nivel]||"—"}</span><div class="kv">${fmtDate(f.evalPuesto.fechaInforme)}</div>` : '<span class="kv">Sin evaluación</span>'}</td>
       <td>${irl}</td>
       <td>${ex}${cit}</td>
       <td>${apt}</td>
@@ -15487,7 +15608,7 @@ function renderVsNomina(){
       <td style="white-space:nowrap;">${estadoTxt}</td>
       <td style="white-space:nowrap;"><button class="btn secondary small" data-vs-edit="${f.e.id}">Control</button> <button class="subtle-btn" data-vs-quitar="${f.e.id}">Quitar</button></td>
     </tr>`;
-  }).join("") || `<tr><td class="empty" colspan="9">${r.filas.length ? "Ningún trabajador coincide con los filtros" : "Aún no hay trabajadores en la nómina de este protocolo"}</td></tr>`;
+  }).join("") || `<tr><td class="empty" colspan="10">${r.filas.length ? "Ningún trabajador coincide con los filtros" : "Aún no hay trabajadores en la nómina de este protocolo"}</td></tr>`;
 }
 async function vsGuardarConfigProtocolo(){
   const p = vsProtocoloActual(); if(!p) return;
@@ -15818,6 +15939,306 @@ function vsAbrirModalExpuesto(id, examenEditId){
   });
 }
 
+/* --- Evaluación ambiental por puesto y medidas correctoras (Etapa 2) --- */
+let evEditingId = null, mdEditingId = null;
+function vsMedidasDe(evId){ return (CACHE.medidasControlVS||[]).filter(m=>m.evaluacionId===evId); }
+function vsEvalEtiqueta(ev){ return `${protoName(ev.protocoloId)} · ${ev.puesto} · ${fmtDate(ev.fechaInforme)} · ${VS_NIVEL_LABEL[ev.nivel]||""}`; }
+function vsFillSelectsEtapa2(){
+  const items = vsProtocolosOrdenados().map(p=>({id:p.id, label:vsEtiqueta(p)}));
+  const val = id => vsEl(id).value;
+  const prev = {evP:val("evProtocolo"), evF:val("evFiltroProtocolo"), mdF:val("mdFiltroProtocolo"), mdE:val("mdEval"), area:val("evArea"), jer:val("mdJerarquia"), resp:val("mdFiltroResp")};
+  fillSelect(vsEl("evProtocolo"), items, true);
+  if(items.some(i=>i.id===prev.evP)) vsEl("evProtocolo").value = prev.evP;
+  [["evFiltroProtocolo", prev.evF], ["mdFiltroProtocolo", prev.mdF]].forEach(([id, v])=>{
+    fillSelect(vsEl(id), items, false);
+    vsEl(id).insertAdjacentHTML("afterbegin", '<option value="">Todos los protocolos</option>');
+    vsEl(id).value = v || "";
+  });
+  vsEl("evArea").innerHTML = '<option value="">Sin área</option>' + (CACHE.areas||[]).map(a=>`<option value="${a.id}">${incEsc(a.nombre)}</option>`).join("");
+  vsEl("evArea").value = prev.area || "";
+  vsEl("mdJerarquia").innerHTML = '<option value="">Sin clasificar</option>' + JERARQUIA_DS44.map(j=>`<option value="${j.code}">${j.code}) ${j.label}</option>`).join("");
+  vsEl("mdJerarquia").value = prev.jer || "";
+  const puestos = Array.from(new Set([].concat((CACHE.vsExpuestos||[]).map(e=>e.puesto), (CACHE.trabajadores||[]).map(t=>t.cargo), (CACHE.vsEvaluaciones||[]).map(e=>e.puesto)).map(s=>String(s||"").trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+  fillDatalist(vsEl("dlVsPuestos"), puestos);
+  const evs = (CACHE.vsEvaluaciones||[]).slice().sort((a,b)=>String(b.fechaInforme||"").localeCompare(String(a.fechaInforme||"")));
+  vsEl("mdEval").innerHTML = '<option value="">Seleccione...</option>' + evs.map(ev=>`<option value="${ev.id}">${incEsc(vsEvalEtiqueta(ev))}</option>`).join("");
+  if(evs.some(e=>e.id===prev.mdE)) vsEl("mdEval").value = prev.mdE;
+  fillTextFilter(vsEl("mdFiltroResp"), (CACHE.medidasControlVS||[]).map(m=>m.responsable), "Todos");
+  if(Array.from(vsEl("mdFiltroResp").options).some(o=>o.value===prev.resp)) vsEl("mdFiltroResp").value = prev.resp;
+  const meses = vsEl("evMeses"), pr = (CACHE.protocolos||[]).find(p=>p.id===vsEl("evProtocolo").value);
+  if(document.activeElement!==meses) meses.value = pr && +pr.evalMeses>0 ? pr.evalMeses : "";
+}
+function vsEvalFilas(ctx){
+  const fp = vsEl("evFiltroProtocolo").value, fn = vsEl("evFiltroNivel").value, fv = vsEl("evFiltroVig").value, solo = vsEl("evSoloVigentes").checked;
+  const vigIds = new Set(Array.from(ctx.evVig.values()).map(e=>e.id));
+  const orden = id => { const i = VS_ORDEN.indexOf(id); return i<0 ? 99 : i; };
+  return (CACHE.vsEvaluaciones||[]).filter(ev=>!fp || ev.protocoloId===fp).map(ev=>{
+    const p = (CACHE.protocolos||[]).find(x=>x.id===ev.protocoloId);
+    return {ev, p, st:vsEvalEstado(ev, p), vigente:vigIds.has(ev.id)};
+  }).filter(r=>(!solo || r.vigente) && (!fn || r.ev.nivel===fn) && (!fv || r.st.sem===fv))
+    .sort((a,b)=> orden(a.ev.protocoloId)-orden(b.ev.protocoloId) || String(a.ev.puesto).localeCompare(String(b.ev.puesto)) || String(b.ev.fechaInforme||"").localeCompare(String(a.ev.fechaInforme||"")));
+}
+function renderVsEval(){
+  const ctx = vsCtx(), filas = vsEvalFilas(ctx);
+  vsEl("vsEvalTable").innerHTML = filas.map(({ev, p, st, vigente})=>{
+    const meds = vsMedidasDe(ev.id), aplic = meds.filter(m=>m.estado==="aplicada").length, atras = meds.filter(vsMedidaAtrasada).length;
+    let caso = "—";
+    if(ev.nivel!=="verde"){
+      if(!vigente) caso = '<span class="kv">Superado por una reevaluación</span>';
+      else if(ev.estadoCaso==="cerrado"){
+        const cda = ev.cierreCdaId ? (CACHE.vsCda||[]).find(c=>c.id===ev.cierreCdaId) : null;
+        caso = `<span class="pill vigente">Cerrado</span><div class="kv">${ev.cierreFecha?fmtDate(ev.cierreFecha):""}${ev.cierreCdaId ? (cda ? " · acta CDA del "+fmtDate(cda.fecha) : " · acta CDA eliminada") : ""}</div>`;
+      } else caso = `<span class="pill ${ev.nivel==="rojo"?"vencido":"proximo"}">Abierto</span>`;
+    }
+    const acciones = [
+      vigente && ev.nivel!=="verde" ? `<button class="btn secondary small" data-ev-medida="${ev.id}">Agregar medida</button>` : "",
+      vigente ? `<button class="btn secondary small" data-ev-reeval="${ev.id}">Reevaluar</button>` : "",
+      vigente && ev.nivel!=="verde" && ev.estadoCaso!=="cerrado" ? `<button class="btn small" data-ev-cerrar="${ev.id}">Cerrar caso</button>` : "",
+      vigente && ev.nivel!=="verde" && ev.estadoCaso==="cerrado" ? `<button class="btn secondary small" data-ev-reabrir="${ev.id}">Reabrir</button>` : "",
+      `<button class="btn secondary small" data-ev-edit="${ev.id}">Editar</button>`,
+      `<button class="subtle-btn" data-ev-del="${ev.id}">Eliminar</button>`,
+    ].filter(Boolean).join(" ");
+    return `<tr>
+      <td><strong>${incEsc(ev.puesto)}</strong><div class="kv">${p?incEsc(vsEtiqueta(p)):"—"}${ev.areaId?" · "+incEsc(areaName(ev.areaId)):""}</div>${vigente?"":'<span class="pill pendiente">Anterior</span>'}</td>
+      <td>${fmtDate(ev.fechaInforme)}<div class="kv">${incEsc(ev.organismo||"")}${ev.valor?" · "+incEsc(ev.valor):""}</div>${ev.obs?`<div class="kv">${incEsc(ev.obs)}</div>`:""}</td>
+      <td><span class="pill ${VS_NIVEL_PILL[ev.nivel]||"pendiente"}">${VS_NIVEL_LABEL[ev.nivel]||"—"}</span></td>
+      <td><span class="pill ${VS_EVAL_VIG_PILL[st.sem]}">${VS_EVAL_VIG_LABEL[st.sem]}</span>${st.vence?`<div class="kv">${fmtDate(st.vence)}</div>`:""}</td>
+      <td>${caso}</td>
+      <td>${meds.length ? `${aplic}/${meds.length} aplicadas${atras?` <span class="pill vencido">${atras} atrasada(s)</span>`:""}` : "—"}</td>
+      <td>${ev.archivoData ? `<a href="${ev.archivoData}" download="${incEsc(ev.archivoNombre||"Informe")}" class="subtle-btn">Descargar</a>` : '<span class="empty">Sin archivo</span>'}</td>
+      <td style="white-space:nowrap;">${acciones}</td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="8">${(CACHE.vsEvaluaciones||[]).length ? "Ninguna evaluación coincide con los filtros" : "Aún no hay evaluaciones registradas"}</td></tr>`;
+}
+function resetEvForm(){
+  evEditingId = null;
+  ["evProtocolo","evPuesto","evArea","evFecha","evNivel","evValor","evProxima","evObs"].forEach(id=>vsEl(id).value = "");
+  vsEl("evOrganismo").value = "Mutualidad"; vsEl("evArchivo").value = "";
+  vsEl("saveEvBtn").textContent = "Guardar evaluación"; vsEl("cancelEvBtn").style.display = "none"; vsEl("evFormTitulo").textContent = "Registrar evaluación";
+}
+on(vsEl("cancelEvBtn"), "click", ()=>{ resetEvForm(); renderVigilancia(); });
+on(vsEl("evProtocolo"), "change", ()=>{ vsFillSelectsEtapa2(); });
+on(vsEl("evMeses"), "change", async ()=>{
+  const p = (CACHE.protocolos||[]).find(x=>x.id===vsEl("evProtocolo").value);
+  if(!p){ alert("Elija primero el protocolo."); vsEl("evMeses").value = ""; return; }
+  const raw = vsEl("evMeses").value.trim(), n = parseInt(raw, 10);
+  if(raw && !(n>=1 && n<=120)){ alert("La vigencia debe ser un número de meses entre 1 y 120, o quedar vacía."); vsEl("evMeses").value = +p.evalMeses>0 ? p.evalMeses : ""; return; }
+  p.evalMeses = raw ? n : null;
+  await put("protocolos", p);
+  await loadCache();
+  renderVigilancia(); renderDashboard();
+});
+["evFiltroProtocolo","evFiltroNivel","evFiltroVig","evSoloVigentes"].forEach(id=>on(vsEl(id), "change", renderVsEval));
+on(vsEl("saveEvBtn"), "click", async ()=>{
+  const protocoloId = vsEl("evProtocolo").value, puesto = vsEl("evPuesto").value.trim(), fecha = vsEl("evFecha").value;
+  const nivel = vsEl("evNivel").value, prox = vsEl("evProxima").value;
+  if(!protocoloId || !puesto || !fecha || !nivel){ alert("Complete protocolo, puesto, fecha del informe y nivel."); return; }
+  if(prox && prox <= fecha){ alert("La próxima evaluación debe ser posterior a la fecha del informe."); return; }
+  const file = vsEl("evArchivo").files[0];
+  if(file && file.size > 6*1024*1024){ alert("El informe supera los 6 MB. Suba una versión más liviana."); return; }
+  const previo = evEditingId ? (CACHE.vsEvaluaciones||[]).find(e=>e.id===evEditingId) : null;
+  const dup = (CACHE.vsEvaluaciones||[]).some(e=>e.id!==evEditingId && e.protocoloId===protocoloId && matrizNorm(e.puesto)===matrizNorm(puesto) && e.fechaInforme===fecha);
+  if(dup && !confirm("Ya existe una evaluación de este puesto con la misma fecha de informe. ¿Registrar igual?")) return;
+  const rec = {
+    id: evEditingId || uid(), protocoloId, puesto, areaId: vsEl("evArea").value, fechaInforme: fecha,
+    organismo: vsEl("evOrganismo").value, nivel, valor: vsEl("evValor").value.trim(), proximaFecha: prox, obs: vsEl("evObs").value.trim(),
+    archivoNombre: file ? file.name : (previo ? previo.archivoNombre||null : null),
+    archivoData: file ? await readFileAsDataUrl(file) : (previo ? previo.archivoData||null : null),
+    estadoCaso: previo ? (previo.estadoCaso||"abierto") : "abierto", cierreFecha: previo ? previo.cierreFecha||"" : "", cierreCdaId: previo ? previo.cierreCdaId||"" : "",
+  };
+  await put("vsEvaluaciones", rec);
+  await loadCache();
+  const edit = !!evEditingId;
+  resetEvForm();
+  vsRefrescarTodo();
+  alert(edit ? "Evaluación actualizada." : (rec.nivel==="verde" ? "Evaluación registrada." : "Evaluación registrada. Agregue las medidas correctoras desde la tabla (botón «Agregar medida»)."));
+});
+on(vsEl("vsEvalTable"), "click", async (e)=>{
+  const b = e.target.closest("button[data-ev-medida],button[data-ev-reeval],button[data-ev-cerrar],button[data-ev-reabrir],button[data-ev-edit],button[data-ev-del]");
+  if(!b) return;
+  const id = b.dataset.evMedida || b.dataset.evReeval || b.dataset.evCerrar || b.dataset.evReabrir || b.dataset.evEdit || b.dataset.evDel;
+  const ev = (CACHE.vsEvaluaciones||[]).find(x=>x.id===id); if(!ev) return;
+  if(b.dataset.evMedida){
+    resetMdForm(); vsEl("mdEval").value = ev.id;
+    vsEl("hdrVsMedidas").scrollIntoView({behavior:"smooth", block:"start"}); vsEl("mdDescripcion").focus();
+  } else if(b.dataset.evReeval){
+    resetEvForm();
+    vsEl("evProtocolo").value = ev.protocoloId; vsEl("evPuesto").value = ev.puesto; vsEl("evArea").value = ev.areaId||"";
+    vsEl("evFormTitulo").textContent = "Reevaluación de "+ev.puesto;
+    vsFillSelectsEtapa2();
+    vsEl("evFormTitulo").scrollIntoView({behavior:"smooth", block:"start"});
+  } else if(b.dataset.evEdit){
+    evEditingId = ev.id;
+    vsEl("evProtocolo").value = ev.protocoloId; vsEl("evPuesto").value = ev.puesto; vsEl("evArea").value = ev.areaId||"";
+    vsEl("evFecha").value = ev.fechaInforme||""; vsEl("evOrganismo").value = ev.organismo||"Otro"; vsEl("evNivel").value = ev.nivel||"";
+    vsEl("evValor").value = ev.valor||""; vsEl("evProxima").value = ev.proximaFecha||""; vsEl("evObs").value = ev.obs||""; vsEl("evArchivo").value = "";
+    vsEl("saveEvBtn").textContent = "Guardar cambios"; vsEl("cancelEvBtn").style.display = "";
+    vsEl("evFormTitulo").textContent = "Editar evaluación"+(ev.archivoNombre?" (se conserva el informe actual si no sube otro)":"");
+    vsFillSelectsEtapa2();
+    vsEl("evFormTitulo").scrollIntoView({behavior:"smooth", block:"start"});
+  } else if(b.dataset.evCerrar){
+    vsAbrirCierreCaso(ev.id);
+  } else if(b.dataset.evReabrir){
+    if(!confirm("¿Reabrir este caso? Quedará pendiente hasta que se vuelva a cerrar.")) return;
+    ev.estadoCaso = "abierto"; ev.cierreFecha = ""; ev.cierreCdaId = "";
+    await put("vsEvaluaciones", ev); await loadCache(); vsRefrescarTodo();
+  } else if(b.dataset.evDel){
+    const n = vsMedidasDe(ev.id).length;
+    if(!confirm(`¿Eliminar la evaluación de "${ev.puesto}" del ${fmtDate(ev.fechaInforme)}?${n?` También se eliminarán sus ${n} medida(s) correctora(s).`:""} Esta acción no se puede deshacer.`)) return;
+    for(const m of vsMedidasDe(ev.id)) await deleteRecord("medidasControlVS", m.id);
+    await deleteRecord("vsEvaluaciones", ev.id);
+    await loadCache();
+    if(evEditingId===ev.id) resetEvForm();
+    if(mdEditingId && !(CACHE.medidasControlVS||[]).some(m=>m.id===mdEditingId)) resetMdForm();
+    vsRefrescarTodo();
+  }
+});
+/* Cierre del caso: todas las medidas aplicadas (con evidencia por construcción); un caso rojo exige además al menos una medida y el acta del CDA. */
+function vsAbrirCierreCaso(evId){
+  const ev = (CACHE.vsEvaluaciones||[]).find(x=>x.id===evId); if(!ev) return;
+  const meds = vsMedidasDe(ev.id), cdas = vsCdaDe(ev.protocoloId), rojo = ev.nivel==="rojo";
+  openModal(`
+    <h3>Cerrar caso — ${incEsc(ev.puesto)}</h3>
+    <div class="kv" style="margin-bottom:8px;">${incEsc(vsEvalEtiqueta(ev))}</div>
+    <div class="kv">${rojo ? "Un caso rojo se cierra cuando todas sus medidas correctoras están aplicadas con evidencia y existe el acta del Comité de Aplicación (CDA) que lo respalda." : "Un caso amarillo se cierra cuando todas sus medidas correctoras están aplicadas con evidencia. El acta del CDA es opcional."}</div>
+    <div style="overflow-x:auto;margin-top:8px;"><table><thead><tr><th>Medida</th><th>Responsable</th><th>Estado</th></tr></thead><tbody>
+      ${meds.map(m=>`<tr><td>${incEsc(m.descripcion||"")}</td><td>${incEsc(m.responsable||"—")}</td><td><span class="pill ${m.estado==="aplicada"?"cerrada":(vsMedidaAtrasada(m)?"vencido":"pendiente")}">${vsMedidaAtrasada(m)?"Atrasada":(VS_MEDIDA_ESTADO_LABEL[m.estado]||"Pendiente")}</span></td></tr>`).join("") || `<tr><td class="empty" colspan="3">Este caso no tiene medidas correctoras registradas</td></tr>`}
+    </tbody></table></div>
+    <div class="form-grid" style="margin-top:10px;">
+      <div><label>Fecha de cierre</label><input type="date" id="ccFecha" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div><label>Acta del CDA que respalda el cierre${rojo?"":" (opcional)"}</label><select id="ccCda"><option value="">${cdas.length?"Seleccione...":"No hay registros de CDA de este protocolo"}</option>${cdas.map(c=>`<option value="${c.id}">${fmtDate(c.fecha)} — ${CDA_TIPO_LABEL[c.tipo]||""}${c.archivoNombre?" (con documento)":""}</option>`).join("")}</select></div>
+    </div>
+    <div class="toolbar" style="margin-top:12px;">
+      <button class="btn" id="ccCerrarBtn" type="button">Cerrar caso</button>
+      ${rojo && !cdas.length ? '<button class="btn secondary" id="ccIrCdaBtn" type="button">Ir a CDA por protocolo</button>' : ""}
+      <button class="btn secondary" id="ccCancelBtn" type="button">Cancelar</button>
+    </div>`, {wide:true});
+  on(vsEl("ccCancelBtn"), "click", closeModal);
+  if(vsEl("ccIrCdaBtn")) on(vsEl("ccIrCdaBtn"), "click", ()=>{ closeModal(); subpestanasMostrarDe("hdrVsCda"); vsEl("hdrVsCda").scrollIntoView({behavior:"smooth", block:"start"}); });
+  on(vsEl("ccCerrarBtn"), "click", async ()=>{
+    const fecha = vsEl("ccFecha").value, cdaId = vsEl("ccCda").value;
+    if(!fecha){ alert("Indique la fecha de cierre."); return; }
+    if(rojo && !meds.length){ alert("Un caso rojo exige al menos una medida correctora aplicada. Regístrela primero en «Medidas correctoras»."); return; }
+    if(meds.some(m=>m.estado!=="aplicada")){ alert("Todas las medidas correctoras deben estar aplicadas (con fecha y evidencia) para cerrar el caso."); return; }
+    if(rojo && !cdaId){ alert("Un caso rojo exige elegir el registro del CDA que respalda el cierre. Si aún no está registrado, créelo en «CDA por protocolo»."); return; }
+    ev.estadoCaso = "cerrado"; ev.cierreFecha = fecha; ev.cierreCdaId = cdaId || "";
+    await put("vsEvaluaciones", ev);
+    await loadCache();
+    closeModal(); vsRefrescarTodo();
+  });
+}
+
+function resetMdForm(){
+  mdEditingId = null;
+  ["mdEval","mdJerarquia","mdResponsable","mdPlazo","mdFechaAplic","mdDescripcion","mdObs"].forEach(id=>vsEl(id).value = "");
+  vsEl("mdEstado").value = "pendiente"; vsEl("mdEvidencia").value = "";
+  vsEl("saveMdBtn").textContent = "Guardar medida"; vsEl("cancelMdBtn").style.display = "none"; vsEl("mdFormTitulo").textContent = "Registrar medida correctora";
+}
+on(vsEl("cancelMdBtn"), "click", resetMdForm);
+function vsMedidasFiltradas(){
+  const fp = vsEl("mdFiltroProtocolo").value, fe = vsEl("mdFiltroEstado").value, fr = vsEl("mdFiltroResp").value;
+  return (CACHE.medidasControlVS||[]).filter(m=>(!fp || m.protocoloId===fp) && (!fr || (m.responsable||"").trim()===fr) &&
+    (!fe || (fe==="atrasada" ? vsMedidaAtrasada(m) : m.estado===fe)))
+    .sort((a,b)=> (vsMedidaAtrasada(b)-vsMedidaAtrasada(a)) || String(a.plazo||"9999").localeCompare(String(b.plazo||"9999")));
+}
+function renderVsMedidas(){
+  const lista = vsMedidasFiltradas(), todas = (CACHE.medidasControlVS||[]).length;
+  vsEl("mdConteo").textContent = todas ? `${lista.length} de ${todas} medida(s)` : "";
+  vsEl("vsMedidasTable").innerHTML = lista.map(m=>{
+    const atr = vsMedidaAtrasada(m), j = m.jerarquia ? `<span class="kv" style="color:${JERARQUIA_COLOR[m.jerarquia]||"inherit"};">${m.jerarquia}) ${JERARQUIA_LABEL[m.jerarquia]||""}</span>` : "";
+    const pillClase = atr ? "vencido" : (m.estado==="aplicada" ? "cerrada" : (m.estado==="proceso" ? "proceso" : "pendiente"));
+    return `<tr>
+      <td><strong>${incEsc(m.puesto||"—")}</strong><div class="kv">${incEsc(protoName(m.protocoloId))}</div></td>
+      <td style="white-space:pre-wrap;">${incEsc(m.descripcion||"")}${j?`<div>${j}</div>`:""}${m.obs?`<div class="kv">${incEsc(m.obs)}</div>`:""}</td>
+      <td>${incEsc(m.responsable||"—")}</td>
+      <td>${m.plazo?fmtDate(m.plazo):"—"}${atr?`<div class="kv" style="color:#a03d1a;">vencido hace ${-daysUntil(m.plazo)} día(s)</div>`:""}</td>
+      <td><span class="pill ${pillClase}">${atr?"Atrasada":(VS_MEDIDA_ESTADO_LABEL[m.estado]||"Pendiente")}</span></td>
+      <td>${m.fechaAplicacion?fmtDate(m.fechaAplicacion):"—"}<div>${m.evidenciaData?`<a href="${m.evidenciaData}" download="${incEsc(m.evidenciaNombre||"Evidencia")}" class="subtle-btn">Evidencia</a>`:'<span class="empty">Sin evidencia</span>'}</div></td>
+      <td style="white-space:nowrap;"><button class="btn secondary small" data-md-edit="${m.id}">Editar</button> <button class="subtle-btn" data-md-del="${m.id}">Eliminar</button></td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="7">${todas ? "Ninguna medida coincide con los filtros" : "Aún no hay medidas correctoras registradas"}</td></tr>`;
+}
+["mdFiltroProtocolo","mdFiltroEstado","mdFiltroResp"].forEach(id=>on(vsEl(id), "change", renderVsMedidas));
+on(vsEl("saveMdBtn"), "click", async ()=>{
+  const ev = (CACHE.vsEvaluaciones||[]).find(x=>x.id===vsEl("mdEval").value);
+  const descripcion = vsEl("mdDescripcion").value.trim(), responsable = vsEl("mdResponsable").value.trim();
+  const plazo = vsEl("mdPlazo").value, estado = vsEl("mdEstado").value, fechaAplic = vsEl("mdFechaAplic").value;
+  if(!ev){ alert("Elija la evaluación a la que corresponde la medida."); return; }
+  if(!descripcion){ alert("Describa la medida a aplicar."); return; }
+  if(responsableEsGenerico(responsable)){ alert("Designe una persona o cargo concreto como responsable (no un genérico como «Trabajador»)."); return; }
+  if(!plazo){ alert("Indique el plazo de la medida."); return; }
+  const file = vsEl("mdEvidencia").files[0];
+  if(file && file.size > 6*1024*1024){ alert("La evidencia supera los 6 MB. Suba una versión más liviana."); return; }
+  const previo = mdEditingId ? (CACHE.medidasControlVS||[]).find(m=>m.id===mdEditingId) : null;
+  const tieneEvidencia = !!file || !!(previo && previo.evidenciaData);
+  if(estado==="aplicada"){
+    if(!fechaAplic){ alert("Para dar la medida por aplicada, indique la fecha de aplicación."); return; }
+    if(fechaAplic > new Date().toISOString().slice(0,10)){ alert("La fecha de aplicación no puede ser futura."); return; }
+    if(!tieneEvidencia){ alert("Para dar la medida por aplicada, adjunte la evidencia (foto o documento)."); return; }
+  }
+  const rec = {
+    id: mdEditingId || uid(), protocoloId: ev.protocoloId, evaluacionId: ev.id, puesto: ev.puesto, descripcion,
+    jerarquia: vsEl("mdJerarquia").value, responsable, plazo, estado, fechaAplicacion: fechaAplic, obs: vsEl("mdObs").value.trim(),
+    evidenciaNombre: file ? file.name : (previo ? previo.evidenciaNombre||null : null),
+    evidenciaData: file ? await readFileAsDataUrl(file) : (previo ? previo.evidenciaData||null : null),
+  };
+  await put("medidasControlVS", rec);
+  let reabierto = false;
+  if(ev.estadoCaso==="cerrado" && estado!=="aplicada"){ ev.estadoCaso = "abierto"; ev.cierreFecha = ""; ev.cierreCdaId = ""; await put("vsEvaluaciones", ev); reabierto = true; }
+  await loadCache();
+  const edit = !!mdEditingId;
+  resetMdForm();
+  vsRefrescarTodo();
+  alert((edit ? "Medida actualizada." : "Medida registrada.") + (reabierto ? " El caso estaba cerrado y se reabrió porque esta medida no está aplicada." : ""));
+});
+on(vsEl("vsMedidasTable"), "click", async (e)=>{
+  const ed = e.target.closest("[data-md-edit]");
+  if(ed){
+    const m = (CACHE.medidasControlVS||[]).find(x=>x.id===ed.dataset.mdEdit); if(!m) return;
+    mdEditingId = m.id;
+    vsEl("mdEval").value = m.evaluacionId||""; vsEl("mdJerarquia").value = m.jerarquia||""; vsEl("mdResponsable").value = m.responsable||"";
+    vsEl("mdPlazo").value = m.plazo||""; vsEl("mdEstado").value = m.estado||"pendiente"; vsEl("mdFechaAplic").value = m.fechaAplicacion||"";
+    vsEl("mdDescripcion").value = m.descripcion||""; vsEl("mdObs").value = m.obs||""; vsEl("mdEvidencia").value = "";
+    vsEl("saveMdBtn").textContent = "Guardar cambios"; vsEl("cancelMdBtn").style.display = "";
+    vsEl("mdFormTitulo").textContent = "Editar medida correctora"+(m.evidenciaNombre?" (se conserva la evidencia actual si no sube otra)":"");
+    vsEl("mdFormTitulo").scrollIntoView({behavior:"smooth", block:"start"});
+    return;
+  }
+  const del = e.target.closest("[data-md-del]");
+  if(del){
+    const m = (CACHE.medidasControlVS||[]).find(x=>x.id===del.dataset.mdDel); if(!m) return;
+    if(!confirm("¿Eliminar esta medida correctora? Esta acción no se puede deshacer.")) return;
+    await deleteRecord("medidasControlVS", m.id);
+    await loadCache();
+    if(mdEditingId===m.id) resetMdForm();
+    vsRefrescarTodo();
+  }
+});
+on(vsEl("evExportBtn"), "click", ()=>{
+  if(typeof XLSX==="undefined"){ alert("No se pudo cargar el generador de Excel (revise su conexión a internet e intente de nuevo)."); return; }
+  const fp = vsEl("evFiltroProtocolo").value;
+  const evs = (CACHE.vsEvaluaciones||[]).filter(ev=>!fp || ev.protocoloId===fp);
+  const meds = (CACHE.medidasControlVS||[]).filter(m=>!fp || m.protocoloId===fp);
+  if(!evs.length && !meds.length){ alert("No hay evaluaciones ni medidas para descargar."); return; }
+  const ctx = vsCtx(), vigIds = new Set(Array.from(ctx.evVig.values()).map(e=>e.id));
+  const filasEv = evs.map(ev=>{
+    const p = (CACHE.protocolos||[]).find(x=>x.id===ev.protocoloId), st = vsEvalEstado(ev, p), cda = ev.cierreCdaId ? (CACHE.vsCda||[]).find(c=>c.id===ev.cierreCdaId) : null;
+    return [protoName(ev.protocoloId), ev.puesto, ev.areaId?areaName(ev.areaId):"", fmtDate(ev.fechaInforme), ev.organismo||"", VS_NIVEL_LABEL[ev.nivel]||"", ev.valor||"",
+      st.vence?fmtDate(st.vence):"", VS_EVAL_VIG_LABEL[st.sem], vigIds.has(ev.id)?"Vigente":"Anterior",
+      ev.nivel==="verde"?"":(ev.estadoCaso==="cerrado"?"Cerrado":"Abierto"), ev.cierreFecha?fmtDate(ev.cierreFecha):"", cda?fmtDate(cda.fecha):"", ev.obs||""];
+  });
+  const filasMd = meds.map(m=>{
+    const ev = (CACHE.vsEvaluaciones||[]).find(x=>x.id===m.evaluacionId);
+    return [protoName(m.protocoloId), m.puesto||"", ev?fmtDate(ev.fechaInforme):"", m.descripcion||"", m.jerarquia?(m.jerarquia+") "+(JERARQUIA_LABEL[m.jerarquia]||"")):"", m.responsable||"",
+      m.plazo?fmtDate(m.plazo):"", vsMedidaAtrasada(m)?"Atrasada":(VS_MEDIDA_ESTADO_LABEL[m.estado]||""), m.fechaAplicacion?fmtDate(m.fechaAplicacion):"", m.evidenciaData?"Sí":"No", m.obs||""];
+  });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Protocolo","Puesto / GES","Área","Fecha informe","Organismo","Nivel","Valor informado","Vence","Vigencia","Evaluación","Caso","Fecha de cierre","Acta CDA (fecha)","Observaciones"], ...filasEv]), "Evaluaciones");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Protocolo","Puesto / GES","Fecha evaluación","Medida","Jerarquía","Responsable","Plazo","Estado","Fecha aplicación","Evidencia","Observaciones"], ...filasMd]), "Medidas correctoras");
+  const emp = (CACHE.empresa && CACHE.empresa.razonSocial) ? CACHE.empresa.razonSocial.replace(/[^a-zA-Z0-9]+/g,"_") : "Empresa";
+  XLSX.writeFile(wb, `Vigilancia_evaluaciones_medidas_${emp}_${new Date().toISOString().slice(0,10)}.xlsx`);
+});
+
 /* --- Comité de Aplicación (CDA) por protocolo --- */
 let cdaEditingId = null;
 function resetCdaForm(){
@@ -15886,7 +16307,8 @@ on(vsEl("vsCdaTable"), "click", async (e)=>{
   const del = e.target.closest("[data-cda-del]");
   if(del){
     const c = (CACHE.vsCda||[]).find(x=>x.id===del.dataset.cdaDel); if(!c) return;
-    if(!confirm(`¿Eliminar el registro de CDA del ${fmtDate(c.fecha)} (${protoName(c.protocoloId)})? Esta acción no se puede deshacer.`)) return;
+    const usadoEn = (CACHE.vsEvaluaciones||[]).filter(ev=>ev.cierreCdaId===c.id).length;
+    if(!confirm(`¿Eliminar el registro de CDA del ${fmtDate(c.fecha)} (${protoName(c.protocoloId)})? Esta acción no se puede deshacer.${usadoEn?` Respalda el cierre de ${usadoEn} caso(s) de evaluación, que quedarán sin acta de CDA.`:""}`)) return;
     await deleteRecord("vsCda", c.id);
     await loadCache();
     if(cdaEditingId===c.id) resetCdaForm();
@@ -15900,6 +16322,9 @@ function renderVigilancia(){
   renderVsTablero();
   renderVsNomina();
   renderVsAdd();
+  vsFillSelectsEtapa2();
+  renderVsEval();
+  renderVsMedidas();
   renderVsCda();
   vsActualizarInsignias();
   subpestanasAplicar("vigilancia");
@@ -15907,14 +16332,18 @@ function renderVigilancia(){
 }
 subpestanasCrear("vigilancia", [
   {key:"tablero", icono:"grafico", label:"Tablero y alertas", desc:"Qué vence y quién no tiene examen o IRL", hdrs:["hdrVsTablero"],
-    badge:()=>{ const g = vsGlobal(), n = g.vencidos+g.sinExamen; return n ? {texto:`${n} alerta${n===1?"":"s"}`, nivel:"r"} : (g.porVencer ? {texto:`${g.porVencer} por vencer`, nivel:"y"} : null); }},
+    badge:()=>{ const g = vsGlobal(), n = vsAlertasTotal(g); return n ? {texto:`${n} alerta${n===1?"":"s"}`, nivel:"r"} : (g.porVencer ? {texto:`${g.porVencer} por vencer`, nivel:"y"} : null); }},
   {key:"nomina", icono:"personas", label:"Nómina y control", desc:"Expuestos por protocolo: IRL, examen, aptitud y vencimiento", hdrs:["hdrVsNomina"]},
+  {key:"evaluacion", icono:"buscar", label:"Evaluación y medidas", desc:"Evaluación ambiental por puesto, medidas correctoras y cierre de casos", hdrs:["hdrVsEval","hdrVsMedidas"],
+    badge:()=>{ const g = vsGlobal(), n = g.evalVencidas+g.casosRojos+g.medidasAtrasadas; return n ? {texto:`${n} por atender`, nivel:"r"} : null; }},
   {key:"cda", icono:"documento", label:"CDA por protocolo", desc:"Comité de Aplicación de cada protocolo y sus actas", hdrs:["hdrVsCda"],
     badge:()=>{ const g = vsGlobal(); return g.sinCda ? {texto:`${g.sinCda} sin CDA`, nivel:"y"} : null; }},
   {key:"protocolos", icono:"lista", label:"Protocolos y matriz", desc:"Qué protocolos aplican según la matriz y su matriz por protocolo", hdrs:["hdrProtocolosAplicablesSegunLaMatrizDeRiesgos","hdrMatrizDeRiesgosPorProtocolo"]},
 ], "tarjetas");
 setupCollapsible("hdrVsTablero", "bodyVsTablero", "toggleVsTablero", "collapsed_vsTablero");
 setupCollapsible("hdrVsNomina", "bodyVsNomina", "toggleVsNomina", "collapsed_vsNomina");
+setupCollapsible("hdrVsEval", "bodyVsEval", "toggleVsEval", "collapsed_vsEval");
+setupCollapsible("hdrVsMedidas", "bodyVsMedidas", "toggleVsMedidas", "collapsed_vsMedidas");
 setupCollapsible("hdrVsCda", "bodyVsCda", "toggleVsCda", "collapsed_vsCda");
 
 /* --- Bitácora de cumplimiento por protocolo --- */
@@ -20763,6 +21192,7 @@ function datosInformeGerencia(){
     vsG.activos > 0
       ? ["Cumplimiento vigilancia de salud", vsG.pct+"% ("+vsG.vigentes+" de "+vsG.activos+" expuestos con examen vigente; "+(vsG.vencidos+vsG.sinExamen)+" vencidos o sin examen)"]
       : ["Cumplimiento vigilancia de salud", cumplPct+"% ("+vigentes+" de "+totalAsig+" vigentes)"],
+    ...(vsG.evalTotal || vsG.medidasTotal ? [["Vigilancia: casos rojos abiertos / medidas atrasadas", vsG.casosRojos+" / "+vsG.medidasAtrasadas]] : []),
     ["Hallazgos de inspección con acción abierta", accionesAbiertas],
     ["Cumplimiento programa de seguridad", pgPct+"% ("+pgRealizadas+" de "+pgTotal+")"],
     ["Cumplimiento plan de capacitación", capPct+"% ("+capAsistieron+" de "+capConvocados+")"],
