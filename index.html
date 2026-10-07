@@ -469,6 +469,12 @@
       </table>
     </div></div>
 
+    <div class="card" id="cardMisCapacitaciones">
+      <div class="card-header-row" id="hdrMisCapacitaciones"><h2>Mis capacitaciones</h2><button class="collapse-toggle" id="toggleMisCapacitaciones" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMisCapacitaciones">
+      <div class="desc">Capacitaciones a las que estás convocado y en las que todavía no se registra tu asistencia.</div>
+      <div id="misCapacitacionesWrap"></div>
+    </div></div>
+
     <div class="card" id="cardMisHallazgos">
       <div class="card-header-row" id="hdrMisHallazgos"><h2>Mis hallazgos asignados</h2><button class="collapse-toggle" id="toggleMisHallazgos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMisHallazgos">
       <div class="desc">Hallazgos de inspecciones y observaciones cuyo responsable coincide con el usuario que inició sesión, para que pueda cerrar sus propias acciones directamente desde aquí.</div>
@@ -1625,6 +1631,16 @@
   <!-- PLAN DE CAPACITACIÓN -->
   <div class="view" id="view-capacitacion">
     <div class="card">
+      <div class="card-header-row" id="hdrCapMatriz"><h2>Plan anual de capacitación</h2><button class="collapse-toggle" id="toggleCapMatriz" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyCapMatriz">
+      <div class="desc">Cada fila es una capacitación y su color muestra el mes en que se programó: azul, pendiente (con el día); verde, realizada (con el % de asistencia); rojo, atrasada. Haz clic en una fila para abrirla, registrar asistencia o editarla.</div>
+      <div class="toolbar">
+        <div class="field"><label>Año</label><select id="capMatAnio"></select></div>
+      </div>
+      <div class="grid-tiles" id="capMatTiles"></div>
+      <div id="capMatrizWrap" style="overflow-x:auto;margin-top:12px;"></div>
+    </div></div>
+
+    <div class="card">
       <div class="card-header-row" id="hdrNuevaCapacitacion"><h2>Nueva capacitación</h2><button class="collapse-toggle" id="toggleNuevaCapacitacion" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyNuevaCapacitacion">
       <div class="desc">Incluye inducciones, capacitaciones específicas por riesgo del puesto de trabajo y aquellas obligatorias según el DS 44.</div>
       <div class="form-grid">
@@ -1646,15 +1662,33 @@
         </div>
         <div>
           <label>Relator</label>
-          <input id="capRelator" placeholder="Nombre relator / organismo">
+          <input id="capRelator" list="capRelatorList" placeholder="Nombre relator / organismo"><datalist id="capRelatorList"></datalist>
         </div>
         <div>
           <label>Procedimiento / documento asociado (opcional)</label>
           <select id="capDocumento"><option value="">Sin documento asociado</option></select>
         </div>
       </div>
-      <div style="margin-top:16px;">
+      <label style="margin-top:14px;">Dirigida a</label>
+      <div class="desc" style="margin:0 0 4px;">Los convocados quedan cargados en la capacitación y solo marcas quién asistió; cada convocado la ve en "Mis pendientes". Quienes ingresen después no se suman solos: al editar la capacitación y guardar, se actualiza la lista.</div>
+      <div class="toolbar" style="margin-top:2px;">
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="radio" name="capDirigida" value="ninguno" checked style="width:auto;min-height:auto;"> Sin definir (agrego los asistentes a mano)</label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="radio" name="capDirigida" value="todos" style="width:auto;min-height:auto;"> Todos los trabajadores</label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="radio" name="capDirigida" value="cargos" style="width:auto;min-height:auto;"> Cargos específicos</label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="radio" name="capDirigida" value="personas" style="width:auto;min-height:auto;"> Personas específicas</label>
+      </div>
+      <div id="capDirigidaCargosWrap" style="display:none;margin-top:6px;"></div>
+      <div id="capDirigidaPersonasWrap" style="display:none;margin-top:6px;">
+        <div class="toolbar">
+          <div class="field"><label>Trabajador</label><select id="capDirPersonaSel"></select></div>
+          <div><button class="btn small secondary" id="capDirPersonaAddBtn" type="button" style="margin-top:20px;">+ Agregar</button></div>
+        </div>
+        <div id="capDirPersonasLista"></div>
+      </div>
+      <div class="kv" id="capDirigidaResumen" style="margin-top:6px;"></div>
+      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn" id="saveCapBtn">Agregar al plan</button>
+        <button class="btn secondary" id="cancelEditCapBtn" style="display:none;">Cancelar edición</button>
       </div>
       <div class="desc" style="margin-top:14px;">Importar varias capacitaciones desde un Excel con columnas <strong>Nombre</strong>, <strong>Tipo</strong>, <strong>Fecha programada</strong>, <strong>Duración (horas)</strong> y <strong>Relator</strong> (opcionalmente también <strong>Fecha de realización</strong>, para cargar de una vez capacitaciones ya realizadas). Un Tipo que todavía no exista se agrega automáticamente al catálogo, igual que al escribirlo a mano en el campo Tipo de arriba.</div>
       <div class="toolbar">
@@ -4215,6 +4249,8 @@ setupCollapsible("hdrIndicadoresDeSiniestralidadDS67YRegistroHistorico", "bodyIn
 setupCollapsible("hdrEvaluacionDeSiniestralidadDS67CotizacionAdicional", "bodyEvaluacionDeSiniestralidadDS67CotizacionAdicional", "toggleEvaluacionDeSiniestralidadDS67CotizacionAdicional", "collapsed_evaluacionDeSiniestralidadDS67CotizacionAdicional");
 setupCollapsible("hdrControlEstadisticoMensualYAnual", "bodyControlEstadisticoMensualYAnual", "toggleControlEstadisticoMensualYAnual", "collapsed_controlEstadisticoMensualYAnual");
 setupCollapsible("hdrClasificacionDeAccidentesEIncidentes", "bodyClasificacionDeAccidentesEIncidentes", "toggleClasificacionDeAccidentesEIncidentes", "collapsed_clasificacionDeAccidentesEIncidentes");
+setupCollapsible("hdrCapMatriz", "bodyCapMatriz", "toggleCapMatriz", "collapsed_capMatriz");
+setupCollapsible("hdrMisCapacitaciones", "bodyMisCapacitaciones", "toggleMisCapacitaciones", "collapsed_misCapacitaciones");
 setupCollapsible("hdrPcResumen", "bodyPcResumen", "togglePcResumen", "collapsed_pcResumen");
 setupCollapsible("hdrPcMensual", "bodyPcMensual", "togglePcMensual", "collapsed_pcMensual");
 setupCollapsible("hdrPcPlan", "bodyPcPlan", "togglePcPlan", "collapsed_pcPlan");
@@ -4834,6 +4870,7 @@ function irAVista(nombreVista){
   if(nombreVista==="dashboard") renderDashboard();
   if(nombreVista==="accidentabilidad") renderAccidentabilidad();
   if(nombreVista==="programa") renderProgramaCargo();
+  if(nombreVista==="capacitacion") capRenderMatriz();
   if(nombreVista==="mis-pendientes"){ renderMisActividadesMensuales(); renderMisHallazgos(); renderMisPendientes(); }
   if(nombreVista==="seguridad"){ renderInfractores(); renderVelocidad(); }
   if(nombreVista==="cphys") renderCphys();
@@ -9171,7 +9208,8 @@ subpestanasCrear("inspecciones", [
   {key:"estadisticas", icono:"grafico", label:"Estadísticas", desc:"Hallazgos repetitivos y estadística mensual", hdrs:["hdrTop10HallazgosRepetitivos","hdrEstadisticaMensualYAnualPorClasificacion"]},
 ], "tarjetas");
 subpestanasCrear("capacitacion", [
-  {key:"plan", icono:"registro", label:"Plan de capacitación", desc:"Plan, cumplimiento y estadísticas de capacitación", hdrs:["hdrNuevaCapacitacion","hdrPlanDeCapacitacionCumplimiento","hdrEstadisticasDelPlanDeCapacitacion","hdrCumplimientoDeCapacitacionPorResponsableRelator"]},
+  {key:"matriz", icono:"grafico", label:"Plan anual", desc:"Matriz anual de capacitaciones y su cumplimiento", hdrs:["hdrCapMatriz"]},
+  {key:"plan", icono:"registro", label:"Programar y asistencia", desc:"Programar, convocar, registrar asistencia y estadísticas", hdrs:["hdrNuevaCapacitacion","hdrPlanDeCapacitacionCumplimiento","hdrEstadisticasDelPlanDeCapacitacion","hdrCumplimientoDeCapacitacionPorResponsableRelator"]},
   {key:"iap", icono:"alerta", label:"Incidentes de alto potencial (IAP)", desc:"Incidentes de alto potencial y su difusión", hdrs:["hdrIap","hdrIapListado"]},
   {key:"cursos", icono:"curso", label:"Cursos DS 44", desc:"Cursos obligatorios, completados y alertas", hdrs:["hdrCursosDs44","hdrRegistroDeCursosCompletados","hdrAlertasDeVencimiento","hdrReporteDeCumplimientoCursosDS44"]},
 ], "tarjetas");
@@ -10766,11 +10804,14 @@ function renderMisActividadesMensuales(){
    (programa general, capacitaciones como relator y programa por cargo del
    mes en curso: actividades con alguna semana vencida sin cumplir). */
 function misPendientesCalcular(){
-  const r = {hallazgos:0, atrasadas:0, pct:null};
+  const r = {hallazgos:0, atrasadas:0, pct:null, capsPorAsistir:0};
   const usuario = usuarioDeSesion();
   if(!usuario || !usuario.nombre) return r;
   const n = normalizarNombreTexto(usuario.nombre);
   r.hallazgos = misHallazgosDelUsuario().filter(it=>it.f.estado!=="cerrada").length;
+  const capsPend = misCapacitacionesDelUsuario();
+  r.capsPorAsistir = capsPend.length;
+  r.atrasadas += capsPend.filter(c=>c.fechaRealizada || estadoCapacitacion(c)==="atrasada").length;
   (CACHE.programa||[]).forEach(p=>{ if(p.responsable && normalizarNombreTexto(p.responsable)===n && estadoPrograma(p)==="atrasada") r.atrasadas++; });
   (CACHE.capacitaciones||[]).forEach(c=>{ if(c.relator && normalizarNombreTexto(c.relator)===n && estadoCapacitacion(c)==="atrasada") r.atrasadas++; });
   const per = (CACHE.programaPersonas||[]).find(x=>normalizarNombreTexto(x.nombre)===n);
@@ -10792,8 +10833,10 @@ function renderMisPendientes(){
   if(tiles) tiles.innerHTML = [
     tile("Hallazgos por cerrar", r.hallazgos, "asignados a mi nombre"),
     tile("Actividades atrasadas", r.atrasadas, "programa y capacitaciones"),
+    tile("Capacitaciones por asistir", r.capsPorAsistir, "a las que estoy convocado"),
     tile("Cumplimiento del mes", r.pct===null ? "—" : pcPct(r.pct), "mi programa por cargo"),
   ].join("");
+  renderMisCapacitaciones();
 }
 
 const MIS_HALLAZGOS_EVIDENCIA = {};
@@ -15948,17 +15991,235 @@ on(document.getElementById("saveCapBtn"), "click", async () => {
   const relator = document.getElementById("capRelator").value.trim();
   const documentoId = document.getElementById("capDocumento").value || "";
   if(!nombre || !fechaProgramada){ alert("Complete nombre y fecha programada."); return; }
-  await put("capacitaciones", {id:uid(), nombre, tipo, fechaProgramada, fechaRealizada:null, horas, relator, documentoId, participantes:[]});
+  const dirigidaA = capDirigidaLeer();
+  if(dirigidaA.tipo==="cargos" && !dirigidaA.cargos.length){ alert('Marca al menos un cargo, o elige otra opción en "Dirigida a".'); return; }
+  if(dirigidaA.tipo==="personas" && !dirigidaA.personasIds.length){ alert('Agrega al menos una persona, o elige otra opción en "Dirigida a".'); return; }
+  let rec, convocadosMsg = "";
+  if(capEditingId){
+    const anterior = CACHE.capacitaciones.find(c=>c.id===capEditingId);
+    if(!anterior){ alert("La capacitación que estabas editando ya no existe."); capResetForm(); return; }
+    rec = {...anterior, nombre, tipo, fechaProgramada, horas, relator, documentoId, dirigidaA};
+  } else {
+    rec = {id:uid(), nombre, tipo, fechaProgramada, fechaRealizada:null, horas, relator, documentoId, participantes:[], dirigidaA};
+  }
+  capSincronizarParticipantes(rec, dirigidaA);
+  capActualizarRealizada(rec);
+  if(dirigidaA.tipo!=="ninguno") convocadosMsg = ` Convocados: ${(rec.participantes||[]).length}.`;
+  const editando = !!capEditingId;
+  await put("capacitaciones", rec);
   await loadCache();
-  ["capNombre","capFecha","capHoras","capRelator"].forEach(id=>document.getElementById(id).value="");
-  document.getElementById("capDocumento").value = "";
+  capResetForm();
   renderCapFiltros();
   renderCapacitacionesList();
   renderCapStats();
   renderCapCumplimientoPorResponsable();
+  capRenderMatriz();
   if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
-  alert("Capacitación agregada al plan. Ahora puedes agregar a los trabajadores que asistan desde el listado de abajo.");
+  alert((editando ? "Capacitación actualizada." : "Capacitación agregada al plan.") + convocadosMsg + (dirigidaA.tipo==="ninguno" ? " Ahora puedes agregar a los trabajadores que asistan desde el listado de abajo." : " Marca la asistencia desde el listado de abajo."));
 });
+on(document.getElementById("cancelEditCapBtn"), "click", ()=>{ capResetForm(); });
+
+/* ---- "Dirigida a": convocados, edición y realizada automática ---- */
+var capEditingId = null, capDirPersonas = [], capDirCargosSel = [];
+function capHoyIso(){ return incFechaIso(new Date()); }
+function capCargosDisponibles(){
+  return Array.from(new Set((CACHE.trabajadores||[]).map(t=>String(t.cargo||"").trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+}
+function capDirigidaTipoActual(){
+  const r = document.querySelector('input[name="capDirigida"]:checked');
+  return r ? r.value : "ninguno";
+}
+function capDirigidaLeer(){
+  const tipo = capDirigidaTipoActual();
+  const cargos = Array.from(document.querySelectorAll("#capDirigidaCargosWrap input[data-cap-dir-cargo]:checked")).map(i=>i.dataset.capDirCargo);
+  return {tipo, cargos: tipo==="cargos" ? cargos : [], personasIds: tipo==="personas" ? capDirPersonas.slice() : []};
+}
+function capConvocadosDe(d){
+  const trabs = CACHE.trabajadores||[];
+  if(d.tipo==="todos") return trabs.map(t=>t.id);
+  if(d.tipo==="cargos"){ const cs = new Set((d.cargos||[]).map(pcNorm)); return trabs.filter(t=>t.cargo && cs.has(pcNorm(t.cargo))).map(t=>t.id); }
+  if(d.tipo==="personas") return (d.personasIds||[]).filter(id=>trabs.some(t=>t.id===id));
+  return [];
+}
+/* Suma los convocados nuevos, conserva a quienes ya asistieron y quita solo a los
+   no asistentes que ya no corresponden. Con "Sin definir" no toca la lista. */
+function capSincronizarParticipantes(rec, d){
+  if(d.tipo==="ninguno") return;
+  const objetivo = new Set(capConvocadosDe(d));
+  const nuevos = (rec.participantes||[]).filter(p=>p.asistio || objetivo.has(p.trabajadorId));
+  objetivo.forEach(id=>{ if(!nuevos.some(p=>p.trabajadorId===id)) nuevos.push({trabajadorId:id, asistio:false, aprobado:false}); });
+  rec.participantes = nuevos;
+}
+/* Realizada automática: con al menos un asistente y sin fecha de realización, queda
+   realizada (fecha programada, o hoy si esa fecha aún no llega). Si ya no queda
+   ningún asistente y era automática, vuelve a pendiente. */
+function capActualizarRealizada(rec){
+  const hay = (rec.participantes||[]).some(p=>p.asistio);
+  if(hay && !rec.fechaRealizada){
+    const hoy = capHoyIso();
+    rec.fechaRealizada = rec.fechaProgramada && rec.fechaProgramada<=hoy ? rec.fechaProgramada : hoy;
+    rec.realizadaAuto = true;
+  } else if(!hay && rec.fechaRealizada && rec.realizadaAuto){
+    rec.fechaRealizada = null; rec.realizadaAuto = false;
+  }
+}
+function capDirigidaTexto(c){
+  const d = c.dirigidaA;
+  if(!d || d.tipo==="ninguno") return "Sin definir";
+  if(d.tipo==="todos") return "Todos los trabajadores";
+  if(d.tipo==="cargos") return "Cargos: " + (d.cargos||[]).join(", ");
+  if(d.tipo==="personas") return `${(d.personasIds||[]).length} persona(s) específica(s)`;
+  return "Sin definir";
+}
+function capDrawDirigida(){
+  const tipo = capDirigidaTipoActual();
+  const prev = document.querySelectorAll("#capDirigidaCargosWrap input[data-cap-dir-cargo]");
+  if(prev.length) capDirCargosSel = Array.from(prev).filter(i=>i.checked).map(i=>i.dataset.capDirCargo);
+  const wrapC = document.getElementById("capDirigidaCargosWrap");
+  wrapC.style.display = tipo==="cargos" ? "" : "none";
+  const cargos = capCargosDisponibles();
+  wrapC.innerHTML = cargos.length
+    ? cargos.map(c=>{ const n = (CACHE.trabajadores||[]).filter(t=>pcNorm(t.cargo)===pcNorm(c)).length; return `<label style="display:inline-flex;align-items:center;gap:6px;font-weight:400;margin-right:16px;"><input type="checkbox" data-cap-dir-cargo="${incEsc(c)}" style="width:auto;min-height:auto;"${capDirCargosSel.includes(c)?" checked":""}> ${incEsc(c)} (${n})</label>`; }).join("")
+    : '<div class="empty">Los trabajadores no tienen cargo registrado (se define en Configuración → Trabajadores).</div>';
+  const wrapP = document.getElementById("capDirigidaPersonasWrap");
+  wrapP.style.display = tipo==="personas" ? "" : "none";
+  const usados = new Set(capDirPersonas);
+  fillSelect(document.getElementById("capDirPersonaSel"), (CACHE.trabajadores||[]).filter(t=>!usados.has(t.id)).map(t=>({id:t.id,label:incEsc(t.nombre)+(t.cargo?" — "+incEsc(t.cargo):"")})), true);
+  document.getElementById("capDirPersonasLista").innerHTML = capDirPersonas.map((id,i)=>`<div class="checklist-item"><div>${incEsc(trabName(id))}</div><button class="subtle-btn" data-cap-dir-quitar="${i}" type="button">Quitar</button></div>`).join("") || '<div class="empty">Sin personas agregadas</div>';
+  capActualizarResumenDirigida();
+}
+function capActualizarResumenDirigida(){
+  const d = capDirigidaLeer();
+  const el = document.getElementById("capDirigidaResumen");
+  el.textContent = d.tipo==="ninguno" ? "" : `Se convocará a ${capConvocadosDe(d).length} trabajador(es).`;
+}
+function capRenderFormExtras(){
+  const nombres = Array.from(new Set((CACHE.trabajadores||[]).map(t=>t.nombre).concat((CACHE.programaPersonas||[]).map(p=>p.nombre)).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+  document.getElementById("capRelatorList").innerHTML = nombres.map(n=>`<option value="${incEsc(n)}"></option>`).join("");
+  capDrawDirigida();
+}
+document.querySelectorAll('input[name="capDirigida"]').forEach(r=>on(r, "change", capDrawDirigida));
+on(document.getElementById("capDirigidaCargosWrap"), "change", capActualizarResumenDirigida);
+on(document.getElementById("capDirPersonaAddBtn"), "click", ()=>{
+  const id = document.getElementById("capDirPersonaSel").value;
+  if(!id) return;
+  if(!capDirPersonas.includes(id)) capDirPersonas.push(id);
+  capDrawDirigida();
+});
+on(document.getElementById("capDirPersonasLista"), "click", (e)=>{
+  const b = e.target.closest("[data-cap-dir-quitar]"); if(!b) return;
+  capDirPersonas.splice(+b.dataset.capDirQuitar, 1);
+  capDrawDirigida();
+});
+function capResetForm(){
+  capEditingId = null; capDirPersonas = []; capDirCargosSel = [];
+  ["capNombre","capFecha","capHoras","capRelator"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("capDocumento").value = "";
+  document.querySelector('input[name="capDirigida"][value="ninguno"]').checked = true;
+  document.getElementById("saveCapBtn").textContent = "Agregar al plan";
+  document.getElementById("cancelEditCapBtn").style.display = "none";
+  capDrawDirigida();
+}
+function capStartEdit(id){
+  const c = CACHE.capacitaciones.find(x=>x.id===id); if(!c) return;
+  capEditingId = id;
+  document.getElementById("capNombre").value = c.nombre || "";
+  document.getElementById("capTipo").value = c.tipo || "";
+  document.getElementById("capFecha").value = c.fechaProgramada || "";
+  document.getElementById("capHoras").value = c.horas || "";
+  document.getElementById("capRelator").value = c.relator || "";
+  document.getElementById("capDocumento").value = c.documentoId || "";
+  const d = c.dirigidaA || {tipo:"ninguno", cargos:[], personasIds:[]};
+  capDirPersonas = (d.personasIds||[]).slice(); capDirCargosSel = (d.cargos||[]).slice();
+  const radio = document.querySelector(`input[name="capDirigida"][value="${d.tipo||"ninguno"}"]`) || document.querySelector('input[name="capDirigida"][value="ninguno"]');
+  radio.checked = true;
+  capDrawDirigida();
+  document.getElementById("saveCapBtn").textContent = "Guardar cambios";
+  document.getElementById("cancelEditCapBtn").style.display = "";
+  subpestanasMostrarDe("hdrNuevaCapacitacion");
+  document.getElementById("hdrNuevaCapacitacion").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+/* ---- Plan anual: matriz de capacitaciones por mes ---- */
+function capRenderMatriz(){
+  const selA = document.getElementById("capMatAnio");
+  if(!selA) return;
+  const anioActual = new Date().getFullYear();
+  const anios = Array.from(new Set((CACHE.capacitaciones||[]).map(c=>+(c.fechaProgramada||"").slice(0,4)).filter(Boolean).concat([anioActual]))).sort((a,b)=>b-a);
+  const cur = selA.value;
+  selA.innerHTML = anios.map(a=>`<option value="${a}">${a}</option>`).join("");
+  selA.value = anios.map(String).includes(cur) ? cur : String(anioActual);
+  const anio = +selA.value;
+  const lista = (CACHE.capacitaciones||[]).filter(c=>+(c.fechaProgramada||"").slice(0,4)===anio).sort((a,b)=>(a.fechaProgramada||"").localeCompare(b.fechaProgramada||""));
+  const total = lista.length, realizadas = lista.filter(c=>c.fechaRealizada).length;
+  const parts = lista.flatMap(c=>c.participantes||[]);
+  const asistieron = parts.filter(p=>p.asistio).length;
+  const hhCap = lista.filter(c=>c.fechaRealizada).reduce((s,c)=>s+(+c.horas||0)*(c.participantes||[]).filter(p=>p.asistio).length, 0);
+  const hhTrab = (CACHE.horasHombre||[]).filter(h=>String(h.periodo||"").startsWith(String(anio))).reduce((s,h)=>s+(+h.horasHombre||0),0);
+  document.getElementById("capMatTiles").innerHTML = [
+    tile("Cumplimiento del programa", total ? Math.round(realizadas/total*100)+"%" : "—", `${realizadas} de ${total} realizadas`),
+    tile("Cumplimiento de asistencia", parts.length ? Math.round(asistieron/parts.length*100)+"%" : "—", `${asistieron} de ${parts.length} convocados`),
+    tile("HH capacitadas vs HH trabajadas", hhTrab ? (Math.round(hhCap/hhTrab*10000)/100)+"%" : "—", `${hhCap} de ${hhTrab} HH`),
+  ].join("");
+  const wrap = document.getElementById("capMatrizWrap");
+  if(!lista.length){ wrap.innerHTML = `<div class="empty">Sin capacitaciones programadas en ${anio}. Programa la primera en "Programar y asistencia".</div>`; return; }
+  const COLOR = {realizada:"#bfe8c9", atrasada:"#f6c1bc", pendiente:"#cfe3fb"};
+  const porMes = MESES_NOMBRE.map(()=>({prog:0, real:0}));
+  const filas = lista.map(c=>{
+    const st = capacitacionCumplimiento(c), estado = estadoCapacitacion(c);
+    const mi = +(c.fechaProgramada||"").slice(5,7) - 1;
+    if(mi>=0 && mi<12){ porMes[mi].prog++; if(c.fechaRealizada) porMes[mi].real++; }
+    const celdas = MESES_NOMBRE.map((_,k)=>{
+      if(k!==mi) return '<td></td>';
+      const dia = +(c.fechaProgramada||"").slice(8,10);
+      const txt = estado==="realizada" ? (st.convocados ? st.pct+"%" : "✓") : estado==="atrasada" ? "! "+dia : String(dia);
+      return `<td style="text-align:center;font-weight:600;background:${COLOR[estado]};" title="${incEsc(CAP_ESTADO_TXT[estado])}">${txt}</td>`;
+    }).join("");
+    return `<tr data-cap-abrir="${c.id}" style="cursor:pointer;">
+      <td>${incEsc(c.nombre)}</td><td>${incEsc(CAP_TIPO_LABEL[c.tipo]||c.tipo||"—")}</td><td>${incEsc(c.relator||"—")}</td>
+      <td style="text-align:center;">${c.horas||0}</td><td style="text-align:center;">${st.convocados}</td><td style="text-align:center;">${st.convocados ? st.pct+"%" : "—"}</td>${celdas}</tr>`;
+  }).join("");
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Capacitación</th><th>Tipo</th><th>Relator</th><th style="text-align:center;">Horas</th><th style="text-align:center;">Convocados</th><th style="text-align:center;">Asistencia</th>${MESES_NOMBRE.map(m=>`<th style="text-align:center;">${m.slice(0,3)}</th>`).join("")}</tr></thead>
+    <tbody>${filas}
+      <tr style="background:var(--grid);font-weight:600;"><td colspan="6">Programadas / realizadas por mes</td>${porMes.map(m=>`<td style="text-align:center;">${m.prog ? m.real+"/"+m.prog : "·"}</td>`).join("")}</tr>
+    </tbody></table>`;
+}
+var CAP_ESTADO_TXT = {realizada:"Realizada", atrasada:"Atrasada", pendiente:"Pendiente"};
+on(document.getElementById("capMatAnio"), "change", capRenderMatriz);
+on(document.getElementById("capMatrizWrap"), "click", (e)=>{
+  const tr = e.target.closest("[data-cap-abrir]"); if(!tr) return;
+  const id = tr.dataset.capAbrir;
+  ["filterCapTipo","filterCapMes","filterCapResponsable","filterCapDocumento"].forEach(f=>{ const el = document.getElementById(f); if(el) el.value = ""; });
+  try{ localStorage.setItem("collapsed_cap_"+id, "1"); }catch(err){}
+  subpestanasMostrarDe("hdrNuevaCapacitacion");
+  renderCapacitacionesList(); renderCapStats(); renderCapCumplimientoPorResponsable();
+  const h = document.getElementById("capHdr_"+id);
+  if(h) h.scrollIntoView({behavior:"smooth", block:"center"});
+});
+
+/* ---- Mis capacitaciones (en "Mis pendientes") ---- */
+function misCapacitacionesDelUsuario(){
+  const usuario = usuarioDeSesion();
+  if(!usuario || !usuario.nombre) return [];
+  const n = normalizarNombreTexto(usuario.nombre);
+  const trab = (CACHE.trabajadores||[]).find(t=>normalizarNombreTexto(t.nombre)===n);
+  if(!trab) return [];
+  return (CACHE.capacitaciones||[]).filter(c=>(c.participantes||[]).some(p=>p.trabajadorId===trab.id && !p.asistio))
+    .sort((a,b)=>(a.fechaProgramada||"").localeCompare(b.fechaProgramada||""));
+}
+function renderMisCapacitaciones(){
+  const wrap = document.getElementById("misCapacitacionesWrap");
+  if(!wrap) return;
+  const usuario = usuarioDeSesion();
+  if(!usuario){ wrap.innerHTML = '<div class="empty">Inicie sesión para ver sus capacitaciones.</div>'; return; }
+  const lista = misCapacitacionesDelUsuario();
+  wrap.innerHTML = lista.length ? `<table><thead><tr><th>Capacitación</th><th>Fecha</th><th>Relator</th><th>Estado</th></tr></thead><tbody>${lista.map(c=>{
+    const est = estadoCapacitacion(c);
+    const txt = c.fechaRealizada ? "Realizada sin tu asistencia" : est==="atrasada" ? "Atrasada" : "Por asistir";
+    return `<tr><td>${incEsc(c.nombre)}</td><td>${fmtDate(c.fechaProgramada)}</td><td>${incEsc(c.relator||"—")}</td><td><span class="pill ${c.fechaRealizada||est==="atrasada"?"alto":"medio"}">${txt}</span></td></tr>`;
+  }).join("")}</tbody></table>` : '<div class="empty">No tienes capacitaciones pendientes por asistir.</div>';
+}
 
 const CAP_TIPO_LABEL = {induccion:"Inducción", especifica:"Específica por riesgo del puesto", ds44:"Obligatoria DS 44", refuerzo:"Refuerzo / recapacitación"};
 
@@ -16348,12 +16609,13 @@ function renderCapacitacionesList(){
         <div>
           <strong>${c.nombre}</strong>
           <div class="kv">${CAP_TIPO_LABEL[c.tipo]||c.tipo} · Programada: ${fmtDate(c.fechaProgramada)} · ${c.horas||0} hrs · ${c.relator||"—"}</div>
+          <div class="kv">Dirigida a: ${incEsc(capDirigidaTexto(c))} <button class="subtle-btn" data-cap-editar="${c.id}" type="button">Editar</button></div>
           ${c.documentoId ? (()=>{ const doc = CACHE.documentos.find(d=>d.id===c.documentoId); return doc ? `<div class="kv">Documento: <span class="pill bajo">${tipoDocumentoLabel(doc)}: ${doc.nombre}</span></div>` : `<div class="kv">Documento: <span class="pill" style="opacity:.6;">Documento eliminado</span></div>`; })() : ""}
         </div>
         <div style="display:flex;align-items:flex-start;gap:10px;">
           <div style="text-align:right;">
             <span class="pill ${stats.pct>=80?'bajo':stats.pct>=50?'medio':'critico'}">${stats.asistieron}/${stats.convocados} asistencia confirmada (${stats.pct}%)</span>
-            <div class="kv">${c.fechaRealizada? "Realizada: "+fmtDate(c.fechaRealizada) : `<button class="subtle-btn" data-cap-done="${c.id}">Marcar realizada</button>`}</div>
+            <div class="kv">${c.fechaRealizada? `Realizada: <input type="date" data-cap-fecha-real="${c.id}" value="${c.fechaRealizada}" style="width:auto;min-height:auto;padding:2px 6px;" title="${c.realizadaAuto?"Se marcó sola al registrar asistencia; puedes cambiar la fecha":"Fecha en que se realizó"}">` : `<button class="subtle-btn" data-cap-done="${c.id}">Marcar realizada</button>`}</div>
           </div>
           <button class="collapse-toggle" id="capToggle_${c.id}" type="button" aria-label="Contraer o expandir">▾</button>
         </div>
@@ -16400,11 +16662,11 @@ function descargarCapacitacionPdf(){
   const lineaDatos = datosEmpresaLineaPdf();
   if(lineaDatos){ doc.text(lineaDatos, 14, y); y += 6; }
   doc.text(`Generado el ${fmtDate(new Date().toISOString().slice(0,10))}`, 14, y); y += 8;
-  doc.autoTable({ startY:y, head:[["Capacitación","Tipo","Fecha prog.","Horas","Relator","Realizada","Asistencia"]],
+  doc.autoTable({ startY:y, head:[["Capacitación","Tipo","Fecha prog.","Horas","Relator","Dirigida a","Realizada","Asistencia"]],
     body: list.length ? list.map(c=>{
       const stats = capacitacionCumplimiento(c);
-      return [c.nombre, CAP_TIPO_LABEL[c.tipo]||c.tipo, fmtDate(c.fechaProgramada), c.horas||0, c.relator||"—", c.fechaRealizada?fmtDate(c.fechaRealizada):"—", `${stats.asistieron}/${stats.convocados} (${stats.pct}%)`];
-    }) : [["Sin capacitaciones para el filtro seleccionado","","","","","",""]],
+      return [c.nombre, CAP_TIPO_LABEL[c.tipo]||c.tipo, fmtDate(c.fechaProgramada), c.horas||0, c.relator||"—", capDirigidaTexto(c), c.fechaRealizada?fmtDate(c.fechaRealizada):"—", `${stats.asistieron}/${stats.convocados} (${stats.pct}%)`];
+    }) : [["Sin capacitaciones para el filtro seleccionado","","","","","","",""]],
     styles:{fontSize:8.5}, headStyles:{fillColor:[42,120,214]} });
   doc.save(`Plan_Capacitacion_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
 }
@@ -16414,6 +16676,18 @@ on(document.getElementById("capacitacionesList"), "change", async (e) => {
   const asisCb = e.target.closest("input[data-cap-asis]");
   const aprCb = e.target.closest("input[data-cap-apr]");
   const docInput = e.target.closest("input[data-cap-doc]");
+  const fechaRealInput = e.target.closest("input[data-cap-fecha-real]");
+  if(fechaRealInput){
+    const rec = CACHE.capacitaciones.find(c=>c.id===fechaRealInput.dataset.capFechaReal);
+    if(!rec) return;
+    rec.fechaRealizada = fechaRealInput.value || null;
+    rec.realizadaAuto = false;
+    await put("capacitaciones", rec);
+    await loadCache();
+    renderCapacitacionesList(); renderCapStats(); renderCapCumplimientoPorResponsable(); capRenderMatriz();
+    if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
+    return;
+  }
   if(docInput){
     const file = docInput.files[0];
     if(!file) return;
@@ -16435,23 +16709,31 @@ on(document.getElementById("capacitacionesList"), "change", async (e) => {
   const rec = CACHE.capacitaciones.find(c=>c.id===capId);
   const part = rec.participantes.find(p=>p.trabajadorId===trabId);
   if(asisCb) part.asistio = cb.checked; else part.aprobado = cb.checked;
+  capActualizarRealizada(rec);
   await put("capacitaciones", rec);
   await loadCache();
   renderCapacitacionesList();
   renderCapStats();
+  renderCapCumplimientoPorResponsable();
+  capRenderMatriz();
+  if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
 });
 on(document.getElementById("capacitacionesList"), "click", async (e) => {
+  const editBtn = e.target.closest("button[data-cap-editar]");
+  if(editBtn){ capStartEdit(editBtn.dataset.capEditar); return; }
   const doneBtn = e.target.closest("button[data-cap-done]");
   const quitarBtn = e.target.closest("button[data-cap-quitar]");
   const agregarBtn = e.target.closest("button[data-cap-agregar]");
   if(doneBtn){
     const rec = CACHE.capacitaciones.find(c=>c.id===doneBtn.dataset.capDone);
-    rec.fechaRealizada = new Date().toISOString().slice(0,10);
+    rec.fechaRealizada = capHoyIso();
+    rec.realizadaAuto = false;
     await put("capacitaciones", rec);
     await loadCache();
     renderCapacitacionesList();
     renderCapStats();
     renderCapCumplimientoPorResponsable();
+    capRenderMatriz();
     if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
     return;
   }
@@ -16459,10 +16741,12 @@ on(document.getElementById("capacitacionesList"), "click", async (e) => {
     const [capId, trabId] = quitarBtn.dataset.capQuitar.split("|");
     const rec = CACHE.capacitaciones.find(c=>c.id===capId);
     rec.participantes = (rec.participantes||[]).filter(p=>p.trabajadorId!==trabId);
+    capActualizarRealizada(rec);
     await put("capacitaciones", rec);
     await loadCache();
     renderCapacitacionesList();
     renderCapStats();
+    capRenderMatriz();
     return;
   }
   if(agregarBtn){
@@ -16475,10 +16759,13 @@ on(document.getElementById("capacitacionesList"), "click", async (e) => {
     if(!rec.participantes.find(p=>p.trabajadorId===trabId)){
       rec.participantes.push({trabajadorId:trabId, asistio:true, aprobado:false});
     }
+    capActualizarRealizada(rec);
     await put("capacitaciones", rec);
     await loadCache();
     renderCapacitacionesList();
     renderCapStats();
+    capRenderMatriz();
+    if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
     return;
   }
   const detectarBtn = e.target.closest("button[data-cap-detectar]");
@@ -16501,10 +16788,12 @@ on(document.getElementById("capacitacionesList"), "click", async (e) => {
       if(existente){ existente.asistio = true; }
       else { rec.participantes.push({trabajadorId:t.id, asistio:true, aprobado:false}); nuevos++; }
     });
+    capActualizarRealizada(rec);
     await put("capacitaciones", rec);
     await loadCache();
     renderCapacitacionesList();
     renderCapStats();
+    capRenderMatriz();
     alert(`Se detectaron ${resultado.coincidencias.length} nombre(s) en el documento y se marcaron como asistentes (${nuevos} agregado(s) de nuevo). Revise la lista y corrija si algo no corresponde.`);
   }
 });
@@ -22931,6 +23220,8 @@ async function refreshAll(){
   renderCapFiltros();
   renderCapacitacionesList();
   renderCapCumplimientoPorResponsable();
+  capRenderFormExtras();
+  capRenderMatriz();
   renderIap();
   renderCursosObligatoriosTable();
   renderCursosSelects();
