@@ -131,6 +131,9 @@
   .grd-tab:hover{background:rgba(42,120,214,.08);}
   .grd-tab.active{color:var(--s1);border-bottom-color:var(--s1);}
   .subtab-oculta{display:none !important;}
+  .vs-oculta{display:none !important;}
+  .vs-sem{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+  .vs-sem.vigente{background:#0ca30c;} .vs-sem.por_vencer{background:#fab219;} .vs-sem.vencido,.vs-sem.sin_examen{background:#d03b3b;} .vs-sem.sin_dato{background:#898781;}
   .grd-tabs.estilo-tarjetas{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;border-bottom:none;margin-bottom:16px;}
   .grd-tabs.estilo-pildoras{gap:8px;border-bottom:none;margin-bottom:16px;}
   .grd-tabs svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
@@ -1390,6 +1393,118 @@
   <!-- VIGILANCIA DE SALUD -->
   <div class="view" id="view-vigilancia">
     <div class="card">
+      <div class="card-header-row" id="hdrVsTablero"><h2>Tablero de control de la vigilancia de salud</h2><button class="collapse-toggle" id="toggleVsTablero" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyVsTablero">
+      <div class="desc">Aquí se <strong>controla</strong> la vigilancia de salud (la ejecutan la mutualidad y los centros de salud): quién está expuesto a cada protocolo, si tiene su IRL (Obligación de Informar los Riesgos Laborales, DS 44), si su examen está vigente y qué vence pronto. Los datos los carga Prevención desde las listas y resultados que entrega la mutualidad. <strong>Registre solo fechas y aptitud (apto / con restricciones / no apto); nunca diagnósticos ni resultados clínicos.</strong> El acceso a esta pestaña se limita desde los perfiles de acceso.</div>
+      <div class="grid-tiles" id="vsTableroTiles" style="margin-bottom:14px;"></div>
+      <h3 style="margin:14px 0 6px;font-size:15px;">Estado por protocolo</h3>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Protocolo</th><th>Expuestos activos</th><th>Con IRL</th><th>Examen vigente</th><th>Por vencer</th><th>Vencidos</th><th>Sin examen</th><th>Restricciones sin plan</th><th>CDA</th><th></th></tr></thead>
+        <tbody id="vsTableroTable"></tbody>
+      </table></div>
+      <h3 style="margin:18px 0 6px;font-size:15px;">Alertas por trabajador</h3>
+      <div class="toolbar">
+        <div class="field"><label>Protocolo</label><select id="vsAlertaProtocolo"></select></div>
+        <div class="field"><label>Mostrar</label><select id="vsAlertaTipo"><option value="">Todas las alertas</option><option value="vencido">Examen vencido</option><option value="sin_examen">Sin examen</option><option value="por_vencer">Por vencer</option><option value="sin_irl">Sin IRL</option><option value="falta_plan">Falta plan de readecuación</option></select></div>
+        <div class="field"><div class="kv" id="vsAlertaConteo" style="margin-top:22px;"></div></div>
+      </div>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Protocolo</th><th>Trabajador</th><th>Cargo / Área</th><th>Alerta</th><th>Vence</th></tr></thead>
+        <tbody id="vsAlertasTable"></tbody>
+      </table></div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrVsNomina"><h2>Nómina de expuestos y control por trabajador</h2><button class="collapse-toggle" id="toggleVsNomina" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyVsNomina">
+      <div class="desc">Elija un protocolo y mantenga su nómina de trabajadores expuestos. Para cada uno se controla la IRL, la fecha de citación, el último examen, la aptitud y el vencimiento. El vencimiento se calcula con la periodicidad del protocolo (o con la próxima citación que informe la mutualidad). <strong>La periodicidad precargada es referencial: confírmela con su mutualidad y corríjala aquí.</strong></div>
+      <div class="toolbar">
+        <div class="field"><label>Protocolo</label><select id="vsNomProtocolo"></select></div>
+        <div class="field"><label>Periodicidad (meses)</label><input type="number" min="1" max="120" id="vsNomPeriodo" style="max-width:110px;"></div>
+        <div class="field"><label>Alertar con (días)</label><input type="number" min="1" max="365" id="vsNomDiasAlerta" style="max-width:110px;"></div>
+        <div class="field"><div class="kv" id="vsNomProtoInfo" style="margin-top:22px;"></div></div>
+      </div>
+      <div class="toolbar" style="margin-top:6px;">
+        <button class="btn small" id="vsAddToggleBtn" type="button">Agregar desde Trabajadores</button>
+        <button class="btn small secondary" id="vsImpToggleBtn" type="button">Cargar lista de la mutualidad (Excel o texto)</button>
+        <button class="btn small secondary" id="vsExportNomBtn" type="button">Descargar Excel</button>
+      </div>
+
+      <div id="vsAddPanel" style="display:none;border:1px solid var(--grid);border-radius:8px;padding:10px 12px;margin:10px 0;">
+        <div class="kv" style="margin-bottom:6px;">Busque y marque a los trabajadores que están expuestos a este protocolo. Los que ya están en la nómina no se repiten.</div>
+        <div class="toolbar">
+          <div class="field" style="flex:2;min-width:240px;"><label>Buscar por nombre, RUT o cargo</label><input type="text" id="vsAddBuscar" placeholder="Escriba para filtrar"></div>
+          <div class="field"><label>Área</label><select id="vsAddArea"></select></div>
+          <div class="field"><label style="display:flex;gap:6px;align-items:center;font-weight:400;margin-top:22px;"><input type="checkbox" id="vsAddSugeridos" style="width:auto;min-height:auto;"> Solo sugeridos por la matriz</label></div>
+          <div><button class="btn small secondary" id="vsAddMarcarBtn" type="button" style="margin-top:20px;">Marcar o desmarcar las visibles</button></div>
+          <div><button class="btn small secondary" id="vsAddLimpiarBtn" type="button" style="margin-top:20px;">Desmarcar todas</button></div>
+          <div class="field"><div class="kv" id="vsAddResumen" style="margin-top:22px;"></div></div>
+        </div>
+        <div id="vsAddLista" style="max-height:260px;overflow:auto;border:1px solid var(--grid);border-radius:6px;padding:6px 10px;"></div>
+        <div class="form-grid" style="margin-top:8px;">
+          <div><label>Puesto / GES (opcional, para los marcados)</label><input id="vsAddPuesto" placeholder="Ej: Operador de maquinaria"></div>
+          <div><label>Expuesto desde (opcional)</label><input type="date" id="vsAddDesde"></div>
+        </div>
+        <div class="toolbar" style="margin-top:8px;"><button class="btn" id="vsAddGuardarBtn" type="button">Agregar los marcados a la nómina</button></div>
+      </div>
+
+      <div id="vsImpPanel" style="display:none;border:1px solid var(--grid);border-radius:8px;padding:10px 12px;margin:10px 0;">
+        <div class="desc" style="margin-top:0;">Cargue la lista o los resultados que entrega la mutualidad. Columnas reconocidas (en cualquier orden): <strong>RUT</strong>, <strong>Nombre</strong>, <strong>Cargo</strong>, <strong>Área</strong>, <strong>Puesto o GES</strong>, <strong>Fecha citación</strong>, <strong>Fecha examen</strong>, <strong>Resultado</strong> (Apto / Con restricciones / No apto) y <strong>Próxima citación</strong>. Solo <strong>RUT o Nombre</strong> es obligatorio. Cada fila se cruza con Trabajadores por RUT (o por nombre) y queda en la nómina de este protocolo; si trae fecha de examen se registra el examen. <strong>No suba diagnósticos.</strong> Por texto: una persona por línea, en ese mismo orden separada por coma o tabulador.</div>
+        <div class="toolbar">
+          <div class="field"><label>Archivo Excel (.xlsx)</label><input type="file" id="vsImpFile" accept=".xlsx,.xls"></div>
+          <div><button class="btn small" id="vsImpArchivoBtn" type="button" style="margin-top:20px;">Importar Excel</button></div>
+          <div class="field"><label style="display:flex;gap:6px;align-items:center;font-weight:400;margin-top:22px;"><input type="checkbox" id="vsImpCrear" style="width:auto;min-height:auto;"> Crear en Trabajadores a quienes no existan</label></div>
+        </div>
+        <div class="toolbar">
+          <div class="field" style="flex:2;min-width:280px;"><label>O pegue la lista (RUT, Nombre, Cargo, Área, Puesto, Fecha citación, Fecha examen, Resultado, Próxima citación)</label><textarea id="vsImpTexto" rows="4" placeholder="12.345.678-9, Juan Pérez, Operador, Bodega, Operador de grúa, 2026-08-10, 2026-08-20, Apto, 2027-08-20"></textarea></div>
+          <div><button class="btn small" id="vsImpTextoBtn" type="button" style="margin-top:20px;">Cargar texto</button></div>
+        </div>
+      </div>
+
+      <div class="toolbar" style="margin-top:12px;">
+        <div class="field" style="flex:2;min-width:220px;"><label>Buscar en la nómina</label><input type="text" id="vsNomBuscar" placeholder="Nombre, RUT o cargo"></div>
+        <div class="field"><label>Área</label><select id="vsNomArea"></select></div>
+        <div class="field"><label>Estado</label><select id="vsNomSem"><option value="">Todos</option><option value="vigente">Vigente</option><option value="por_vencer">Por vencer</option><option value="vencido">Vencido</option><option value="sin_examen">Sin examen</option></select></div>
+        <div class="field"><label>Situación</label><select id="vsNomActivo"><option value="">Todas</option><option value="activo">Activos</option><option value="licencia">Con licencia</option><option value="inactivo">Inactivos</option></select></div>
+        <div class="field"><div class="kv" id="vsNomConteo" style="margin-top:22px;"></div></div>
+      </div>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Trabajador</th><th>Cargo / Área</th><th>Puesto / GES</th><th>IRL</th><th>Último examen</th><th>Aptitud</th><th>Vence</th><th>Estado</th><th></th></tr></thead>
+        <tbody id="vsNomTable"></tbody>
+      </table></div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrVsCda"><h2>Comité de Aplicación (CDA) por protocolo</h2><button class="collapse-toggle" id="toggleVsCda" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyVsCda">
+      <div class="desc">Registre el Comité de Aplicación (CDA) de cada protocolo —su constitución, sesiones y actualizaciones— con el acta o documento de respaldo, para tenerlo a mano en caso de fiscalización.</div>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Protocolo</th><th>CDA</th><th>Registros</th><th>Último registro</th><th>Próxima revisión</th></tr></thead>
+        <tbody id="vsCdaResumenTable"></tbody>
+      </table></div>
+      <h3 style="margin:18px 0 6px;font-size:15px;" id="vsCdaFormTitulo">Registrar CDA</h3>
+      <div class="form-grid">
+        <div><label>Protocolo</label><select id="cdaProtocolo"></select></div>
+        <div><label>Tipo de registro</label><select id="cdaTipo"><option value="constitucion">Constitución del CDA</option><option value="sesion">Sesión / reunión</option><option value="actualizacion">Actualización de integrantes o acuerdos</option><option value="otro">Otro</option></select></div>
+        <div><label>Fecha</label><input type="date" id="cdaFecha"></div>
+        <div><label>Próxima revisión (opcional)</label><input type="date" id="cdaProxima"></div>
+        <div><label>Acta o documento (opcional)</label><input type="file" id="cdaArchivo" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"></div>
+      </div>
+      <label>Integrantes</label>
+      <textarea id="cdaIntegrantes" placeholder="Nombre y cargo de cada integrante (empleador, trabajadores, prevención, mutualidad...)"></textarea>
+      <label style="margin-top:10px;">Acuerdos y observaciones</label>
+      <textarea id="cdaObs" placeholder="Acuerdos, temas tratados u observaciones (opcional)"></textarea>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" id="saveCdaBtn" type="button">Guardar registro de CDA</button>
+        <button class="btn secondary" id="cancelCdaBtn" type="button" style="display:none;">Cancelar edición</button>
+      </div>
+      <div class="toolbar" style="margin-top:16px;">
+        <div class="field"><label>Filtrar por protocolo</label><select id="filterCdaProtocolo"></select></div>
+      </div>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Fecha</th><th>Protocolo</th><th>Tipo</th><th>Integrantes</th><th>Acuerdos / observaciones</th><th>Próxima revisión</th><th>Documento</th><th></th></tr></thead>
+        <tbody id="vsCdaTable"></tbody>
+      </table></div>
+    </div></div>
+
+    <div class="card">
       <div class="card-header-row" id="hdrProtocolosAplicablesSegunLaMatrizDeRiesgos"><h2>Protocolos aplicables según la matriz de riesgos</h2><button class="collapse-toggle" id="toggleProtocolosAplicablesSegunLaMatrizDeRiesgos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyProtocolosAplicablesSegunLaMatrizDeRiesgos">
       <div class="desc">Un protocolo MINSAL (DS 594) se marca como "Aplica" automáticamente cuando existe al menos una línea en la matriz de riesgos vigente cuyo peligro coincide con el agente de ese protocolo (ej. PREXOR aplica si hay líneas de "Exposición a ruido"). Si no estás de acuerdo con el resultado automático, puedes forzar manualmente que un protocolo aplique o no aplique.</div>
       <table>
@@ -1411,7 +1526,7 @@
       </table>
     </div></div>
 
-    <div class="card">
+    <div class="card vs-oculta">
       <div class="card-header-row" id="hdrBitacoraDeCumplimientoPorProtocolo"><h2>Bitácora de cumplimiento por protocolo</h2><button class="collapse-toggle" id="toggleBitacoraDeCumplimientoPorProtocolo" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyBitacoraDeCumplimientoPorProtocolo">
       <div class="desc">Registro cronológico de las actividades realizadas para dar cumplimiento a cada protocolo (evaluaciones, capacitaciones, mediciones, coordinaciones con la mutualidad, etc.).</div>
       <div class="form-grid">
@@ -1445,7 +1560,7 @@
       </table>
     </div></div>
 
-    <div class="card">
+    <div class="card vs-oculta">
       <div class="card-header-row" id="hdrCartaGanttDeProtocolos"><h2>Carta Gantt de protocolos</h2><button class="collapse-toggle" id="toggleCartaGanttDeProtocolos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyCartaGanttDeProtocolos">
       <div class="desc">Actividades de implementación y seguimiento de cada protocolo, organizadas por etapa y sub-etapa (formato basado en la carta Gantt real de mutualidad), con responsable, fechas, respaldo/evidencia requerida y registro de cumplimiento.</div>
       <div class="form-grid">
@@ -1499,7 +1614,7 @@
       </table>
     </div></div>
 
-    <div class="card">
+    <div class="card vs-oculta">
       <div class="card-header-row" id="hdrTmert"><h2 id="tmertFormTitle">Herramienta TMERT — Trastornos Musculoesqueléticos Relacionados al Trabajo</h2><button class="collapse-toggle" id="toggleTmert" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyTmert">
       <div class="desc">Formato basado en la Norma Técnica de Identificación y Evaluación de Factores de Riesgo de TMERT (MINSAL), replicado desde la herramienta Excel real: se caracteriza el puesto de trabajo, se aplica la identificación inicial de los 7 factores de riesgo y, si corresponde a trabajo repetitivo de miembros superiores, la identificación avanzada de condición aceptable/crítica, generando automáticamente el resultado y permitiendo registrar el plan de acción.</div>
@@ -1587,7 +1702,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card vs-oculta">
       <div class="card-header-row" id="hdrTmertListado"><h2>Puestos de trabajo evaluados (TMERT)</h2><button class="collapse-toggle" id="toggleTmertListado" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyTmertListado">
       <div id="tmertResumenWrap" style="margin-bottom:14px;"></div>
@@ -3889,8 +4004,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 40;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual"];
+const DB_VERSION = 41;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -5067,6 +5182,7 @@ function irAVista(nombreVista){
   if(nombreVista==="dashboard") renderDashboard();
   if(nombreVista==="accidentabilidad") renderAccidentabilidad();
   if(nombreVista==="programa") renderProgramaCargo();
+  if(nombreVista==="vigilancia") renderVigilancia();
   if(nombreVista==="capacitacion") capRenderMatriz();
   if(nombreVista==="inspecciones") renderAnalisisConductual();
   if(nombreVista==="mis-pendientes"){ renderMisActividadesMensuales(); renderMisHallazgos(); renderMisPendientes(); }
@@ -10301,6 +10417,10 @@ function renderDashboard(){
     return v && v.estado==="vigente";
   }).length;
   const cumplPct = totalAsig? Math.round(vigentes/totalAsig*100) : 0;
+  // Si ya hay nómina de expuestos cargada (control de vigilancia), el indicador pasa a medir
+  // trabajadores con examen vigente; sin nómina se mantiene el cálculo anterior por bitácora.
+  const vsG = vsGlobal();
+  const vsUsaNomina = vsG.activos > 0;
 
   const pgTotal = CACHE.programa.length;
   const pgRealizadas = CACHE.programa.filter(p=>estadoPrograma(p)==="realizada").length;
@@ -10421,7 +10541,9 @@ function renderDashboard(){
       tile("Compromisos — cumplimiento "+compAnioActual, compPctAnual===null?"—":compPctAnual+"%", compPctAnual===null?"sin ítems de control registrados":(compTranscurridos+" meses considerados"), null, "document", "var(--s1)"),
     ]) +
     tileSection("Salud y bienestar", "var(--s1)", [
-      tile("Cumplimiento vigilancia de salud", cumplPct+"%", vigentes+" de "+totalAsig+" vigentes", null, "health", "var(--s1)"),
+      vsUsaNomina
+        ? tile("Cumplimiento vigilancia de salud", vsG.pct+"%", vsG.vigentes+" de "+vsG.activos+" expuestos con examen vigente", null, "health", "var(--s1)")
+        : tile("Cumplimiento vigilancia de salud", cumplPct+"%", vigentes+" de "+totalAsig+" vigentes", null, "health", "var(--s1)"),
       tile("TMERT — puestos críticos", tmertCriticos, "de "+tmertRepetitivos.length+" con trabajo repetitivo evaluado", tmertCriticos>0?"alto":"bajo", "health", "var(--s1)"),
     ]) +
     tileSection("Programa, capacitación e inspecciones", "var(--s1)", [
@@ -10443,7 +10565,12 @@ function renderDashboard(){
   renderBarChart(document.getElementById("chartRiskLevel"), riskRows, r=>NIVEL_COLOR[r.label.toLowerCase()==="muy alto"?"critico":r.label.toLowerCase()]);
 
   // chart 2: cumplimiento por protocolo (solo protocolos que aplican según la matriz)
+  const vsCtxDash = vsCtx();
   const healthRows = protAplicables.map(p=>{
+    if(vsTieneNomina(p.id)){
+      const r = vsResumen(p.id, vsCtxDash), pctP = r.activos ? Math.round(r.vigentes/r.activos*100) : 0;
+      return {label:p.nombre, value: pctP, display: r.vigentes+" de "+r.activos+" vigentes"};
+    }
     const v = protocoloVigenciaBitacora(p);
     const pct = v? (v.estado==="vigente"?100 : v.estado==="proximo"?50 : 0) : 0;
     return {label:p.nombre, value: pct, display: v? (v.estado==="vigente"?"Vigente":v.estado==="proximo"?"Próximo a vencer":"Vencido") : "Sin datos"};
@@ -10458,7 +10585,8 @@ function renderDashboard(){
   // upcoming
   const upcoming = [];
   CACHE.matriz.forEach(m=>{ if(m.plazo && m.estado!=="cerrada"){ const days=daysUntil(m.plazo); if(days<=30) upcoming.push({tipo:"Acción de control", desc:`${m.peligro} (${areaName(m.areaId)})`, fecha:m.plazo, days}); }});
-  protAplicables.forEach(p=>{ const v = protocoloVigenciaBitacora(p); if(v && v.vigenteHasta){ const days = daysUntil(v.vigenteHasta); if(days<=30) upcoming.push({tipo:"Vigencia protocolo "+p.nombre, desc: "Próxima reevaluación", fecha:v.vigenteHasta, days}); } });
+  protAplicables.forEach(p=>{ if(vsTieneNomina(p.id)) return; const v = protocoloVigenciaBitacora(p); if(v && v.vigenteHasta){ const days = daysUntil(v.vigenteHasta); if(days<=30) upcoming.push({tipo:"Vigencia protocolo "+p.nombre, desc: "Próxima reevaluación", fecha:v.vigenteHasta, days}); } });
+  vsProximosVencimientos().filter(u=>u.days<=30).forEach(u=>upcoming.push(u));
   CACHE.ganttProtocolo.forEach(g=>{ if(ganttEstadoDerivado(g)!=="cumplido" && g.fechaFin){ const days = daysUntil(g.fechaFin); if(days<=30) upcoming.push({tipo:"Actividad "+protoName(g.protocoloId), desc: g.actividad, fecha:g.fechaFin, days}); } });
   CACHE.programa.forEach(p=>{ if(!p.fechaRealizada && p.fechaProgramada){ const days = daysUntil(p.fechaProgramada); if(days<=30) upcoming.push({tipo:"Programa: "+p.nombre, desc: areaName(p.areaId), fecha:p.fechaProgramada, days}); }});
   CACHE.capacitaciones.forEach(c=>{ if(!c.fechaRealizada && c.fechaProgramada){ const days = daysUntil(c.fechaProgramada); if(days<=30) upcoming.push({tipo:"Capacitación: "+c.nombre, desc: (c.participantes||[]).length+" convocados", fecha:c.fechaProgramada, days}); }});
@@ -11279,6 +11407,11 @@ function renderMisPendientes(){
     tile("Actividades atrasadas", r.atrasadas, "programa y capacitaciones"),
     tile("Capacitaciones por asistir", r.capsPorAsistir, "a las que estoy convocado"),
     tile("Cumplimiento del mes", r.pct===null ? "—" : pcPct(r.pct), "mi programa por cargo"),
+    ...(function(){
+      if(!vsPuedeVer()) return [];
+      const g = vsGlobal();
+      return g.activos ? [tile("Vigilancia de salud", g.vencidos+g.sinExamen, "vencidos o sin examen · "+g.porVencer+" por vencer")] : [];
+    })(),
   ].join("");
   renderMisCapacitaciones();
 }
@@ -14981,6 +15114,7 @@ const PROTOCOLO_KEYWORDS = {
   psicosocial: ["estres laboral","psicosocial","acoso","violencia"],
   uv: ["radiacion ultravioleta","radiacion solar","exteriores"],
   hipobaria: ["altitud","hipobaria","hiperbaria","buceo"],
+  plaguicidas: ["plaguicida","pesticida","agroquimico","fitosanitario"],
 };
 function protocoloLineasMatriz(protocoloId){
   const keywords = (PROTOCOLO_KEYWORDS[protocoloId] || []).map(k=>quitarAcentos(k).toLowerCase());
@@ -15040,6 +15174,7 @@ on(document.getElementById("protocolosAplicaTable"), "change", async (e) => {
   renderVsMatrizProtocoloTable();
   renderBitFiltros();
   renderGanttFiltros();
+  renderVigilancia();
 });
 
 /* --- Matriz de riesgos por protocolo (formato tipo SUSESO) --- */
@@ -15104,6 +15239,683 @@ function renderVsMatrizProtocoloTable(){
   }).join("") || `<tr><td class="empty" colspan="6">${protocoloId? "Sin líneas de la matriz asociadas a este protocolo" : "Seleccione un protocolo que aplique"}</td></tr>`;
 }
 document.getElementById("vsMatrizProtocolo").addEventListener("change", renderVsMatrizProtocoloTable);
+
+/* =========================================================
+   VIGILANCIA DE SALUD — CONTROL (no ejecución).
+   Pehuén controla lo que ejecutan la mutualidad y los centros de salud:
+   nómina de expuestos por protocolo ("vsExpuestos"), exámenes por
+   trabajador y protocolo (store "examenes": fecha, citacionFecha,
+   resultado apto/restricciones/no_apto, proximaFecha, readecuacion),
+   IRL (reutiliza irlCargos/irlEntregas) y registro del Comité de
+   Aplicación de cada protocolo ("vsCda"). Solo fechas y aptitud: nunca
+   diagnósticos. El vencimiento se deriva de la periodicidad EDITABLE del
+   protocolo (o de la próxima citación que informe la mutualidad); no hay
+   reglas fijas de vencimiento.
+   ========================================================= */
+const VS_ORDEN = ["prexor","planesi","tmert","plaguicidas","psicosocial","uv","hipobaria"];
+const VS_ETIQUETA = {prexor:"PREXOR (ruido)", planesi:"PLANESI (sílice)"};
+const VS_PROTOCOLOS_BASE = [
+  {id:"prexor", nombre:"PREXOR", agente:"Ruido (exposición ocupacional)", periodicidadMeses:12},
+  {id:"planesi", nombre:"PLANESI", agente:"Sílice", periodicidadMeses:12},
+  {id:"tmert", nombre:"TMERT", agente:"Trastornos musculoesqueléticos por trabajo repetitivo", periodicidadMeses:12},
+  {id:"plaguicidas", nombre:"Plaguicidas", agente:"Plaguicidas (exposición ocupacional)", periodicidadMeses:12},
+  {id:"psicosocial", nombre:"Riesgos psicosociales", agente:"Factores psicosociales (SUSESO-ISTAS21)", periodicidadMeses:24},
+  {id:"uv", nombre:"Radiación UV", agente:"Radiación solar (trabajo en exteriores)", periodicidadMeses:12},
+  {id:"hipobaria", nombre:"Hipobaria / hiperbaria", agente:"Altitud geográfica o condiciones hiperbáricas", periodicidadMeses:12},
+];
+const VS_SEM_LABEL = {vigente:"Vigente", por_vencer:"Por vencer", vencido:"Vencido", sin_examen:"Sin examen"};
+const VS_SEM_PILL = {vigente:"vigente", por_vencer:"proximo", vencido:"vencido", sin_examen:"vencido"};
+const VS_SEM_ORDEN = {vencido:0, sin_examen:1, por_vencer:2, vigente:3};
+const VS_APTITUD_LABEL = {apto:"Apto", restricciones:"Con restricciones", no_apto:"No apto"};
+const VS_APTITUD_PILL = {apto:"bajo", restricciones:"medio", no_apto:"critico"};
+const VS_ESTADO_LABEL = {activo:"Activo", licencia:"Con licencia", inactivo:"Inactivo"};
+const CDA_TIPO_LABEL = {constitucion:"Constitución del CDA", sesion:"Sesión / reunión", actualizacion:"Actualización", otro:"Otro"};
+function vsEl(id){ return document.getElementById(id); }
+function vsEtiqueta(p){ return VS_ETIQUETA[p.id] || p.nombre; }
+function vsProtocolosOrdenados(){
+  return (CACHE.protocolos||[]).slice().sort((a,b)=>{
+    const ia = VS_ORDEN.indexOf(a.id), ib = VS_ORDEN.indexOf(b.id);
+    return (ia<0?99:ia)-(ib<0?99:ib) || String(a.nombre||"").localeCompare(String(b.nombre||""));
+  });
+}
+function vsIso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function vsPuedeVer(){ const per = perfilDeSesion(); return !per || (per.vistas||[]).includes("vigilancia"); }
+function vsDiasAlerta(p){ const n = +p.diasAlerta; return n>0 ? n : 60; }
+function vsNormRut(r){ const s = String(r||"").replace(/[^0-9kK]/g,"").toUpperCase(); return /^\d{6,9}[0-9K]$/.test(s) ? s : ""; }
+
+/* Crea los protocolos básicos que falten (p. ej. Plaguicidas). Solo actúa si
+   ya hay protocolos cargados, para no sobrescribir nada si una carga falló. */
+let vsAsegurando = false;
+async function vsAsegurarProtocolos(){
+  if(vsAsegurando || !Array.isArray(CACHE.protocolos) || !CACHE.protocolos.length) return false;
+  if(storageMode==="api" && !(typeof authToken!=="undefined" && authToken)) return false;
+  const faltan = VS_PROTOCOLOS_BASE.filter(b=>!CACHE.protocolos.some(p=>p.id===b.id));
+  if(!faltan.length) return false;
+  vsAsegurando = true;
+  try{ for(const b of faltan) await put("protocolos", Object.assign({}, b)); await loadCache(); return true; }
+  catch(e){ console.warn("No se pudieron crear los protocolos básicos", e); return false; }
+  finally{ vsAsegurando = false; }
+}
+
+/* Contexto de cálculo: trabajadores por id y exámenes agrupados por
+   trabajador|protocolo (más reciente primero), armado una sola vez por render. */
+function vsCtx(){
+  const tr = new Map((CACHE.trabajadores||[]).map(t=>[t.id,t]));
+  const ex = new Map();
+  (CACHE.examenes||[]).forEach(e=>{ const k = e.trabajadorId+"|"+e.protocoloId; if(!ex.has(k)) ex.set(k,[]); ex.get(k).push(e); });
+  ex.forEach(l=>l.sort((a,b)=> String(b.fecha||b.citacionFecha||"").localeCompare(String(a.fecha||a.citacionFecha||""))));
+  return {tr, ex};
+}
+function vsEvaluar(e, ctx){
+  const t = ctx.tr.get(e.trabajadorId);
+  const p = (CACHE.protocolos||[]).find(x=>x.id===e.protocoloId);
+  if(!t || !p) return null;
+  const lista = ctx.ex.get(e.trabajadorId+"|"+e.protocoloId) || [];
+  const examen = lista.find(x=>x.fecha) || null;
+  const citacion = lista.find(x=>x.citacionFecha && (!examen || x.citacionFecha > examen.fecha)) || null;
+  let vence = null;
+  if(examen) vence = examen.proximaFecha || (+p.periodicidadMeses>0 ? vsIso(addMonths(examen.fecha, +p.periodicidadMeses)) : null);
+  const dias = vence ? daysUntil(vence) : null;
+  let sem;
+  if(!examen) sem = "sin_examen";
+  else if(dias===null) sem = "vigente";
+  else sem = dias<0 ? "vencido" : dias<=vsDiasAlerta(p) ? "por_vencer" : "vigente";
+  let irlFecha = e.irlFecha || null, irlOrigen = e.irlFecha ? "manual" : null;
+  if(!irlFecha){
+    const ic = irlCargoDeTrabajador(t);
+    if(ic){ const ent = irlEntregaDe(t.id, ic.id); if(ent){ irlFecha = ent.fecha; irlOrigen = "entrega"; } }
+  }
+  const faltaPlan = !!(examen && examen.resultado==="restricciones" && !String(examen.readecuacion||"").trim());
+  return {e, t, p, examen, citacion, vence, dias, sem, irlFecha, irlOrigen, faltaPlan, activo:(e.estado||"activo")==="activo"};
+}
+function vsCdaDe(protoId){
+  return (CACHE.vsCda||[]).filter(c=>c.protocoloId===protoId).sort((a,b)=> String(b.fecha||"").localeCompare(String(a.fecha||"")));
+}
+function vsResumen(protoId, ctx){
+  ctx = ctx || vsCtx();
+  const filas = (CACHE.vsExpuestos||[]).filter(e=>e.protocoloId===protoId).map(e=>vsEvaluar(e, ctx)).filter(Boolean);
+  const act = filas.filter(f=>f.activo);
+  const n = fn => act.filter(fn).length;
+  return { filas, activos:act.length, conIrl:n(f=>f.irlFecha), vigentes:n(f=>f.sem==="vigente"), porVencer:n(f=>f.sem==="por_vencer"),
+    vencidos:n(f=>f.sem==="vencido"), sinExamen:n(f=>f.sem==="sin_examen"), faltaPlan:n(f=>f.faltaPlan), cda:vsCdaDe(protoId) };
+}
+function vsGlobal(){
+  const ctx = vsCtx();
+  const g = {activos:0, vigentes:0, porVencer:0, vencidos:0, sinExamen:0, conIrl:0, faltaPlan:0, protocolos:0, sinCda:0};
+  (CACHE.protocolos||[]).forEach(p=>{
+    const r = vsResumen(p.id, ctx);
+    if(!r.activos) return;
+    g.protocolos++; g.activos += r.activos; g.vigentes += r.vigentes; g.porVencer += r.porVencer; g.vencidos += r.vencidos;
+    g.sinExamen += r.sinExamen; g.conIrl += r.conIrl; g.faltaPlan += r.faltaPlan; if(!r.cda.length) g.sinCda++;
+  });
+  g.pct = g.activos ? Math.round(g.vigentes/g.activos*100) : 0;
+  return g;
+}
+function vsTieneNomina(protoId){ return (CACHE.vsExpuestos||[]).some(e=>e.protocoloId===protoId && (e.estado||"activo")==="activo"); }
+/* Un renglón por protocolo con trabajadores por vencer o vencidos (fecha más cercana); lo usan el Dashboard y el informe. */
+function vsProximosVencimientos(){
+  const ctx = vsCtx(), out = [];
+  (CACHE.protocolos||[]).forEach(p=>{
+    const lista = vsResumen(p.id, ctx).filas.filter(f=>f.activo && (f.sem==="vencido" || f.sem==="por_vencer") && f.vence);
+    if(!lista.length) return;
+    const f0 = lista.slice().sort((a,b)=>a.dias-b.dias)[0];
+    out.push({tipo:"Vigilancia "+p.nombre, desc:lista.length+" trabajador(es) con examen por vencer o vencido", fecha:f0.vence, days:f0.dias});
+  });
+  return out;
+}
+function vsMotivos(f){
+  if(!f.activo) return [];
+  const m = [];
+  if(f.sem==="vencido") m.push({tipo:"vencido", txt:`Examen vencido hace ${-f.dias} día(s)`});
+  else if(f.sem==="sin_examen") m.push({tipo:"sin_examen", txt:"Sin examen registrado"+(f.citacion?` (citado el ${fmtDate(f.citacion.citacionFecha)})`:"")});
+  else if(f.sem==="por_vencer") m.push({tipo:"por_vencer", txt:`Vence en ${f.dias} día(s)`});
+  if(!f.irlFecha) m.push({tipo:"sin_irl", txt:"Sin IRL"});
+  if(f.faltaPlan) m.push({tipo:"falta_plan", txt:"Con restricciones: falta plan de readecuación"});
+  return m;
+}
+function vsActualizarInsignias(){
+  const btn = document.querySelector('#mainNav button[data-view="vigilancia"]');
+  if(!btn) return;
+  const g = vsGlobal(), n = vsPuedeVer() ? g.vencidos + g.sinExamen : 0;
+  if(n) btn.setAttribute("data-badge", n>99 ? "99+" : String(n)); else btn.removeAttribute("data-badge");
+}
+
+/* --- Selectores --- */
+function vsFillSelects(){
+  const items = vsProtocolosOrdenados().map(p=>({id:p.id, label:vsEtiqueta(p)}));
+  const val = id => { const el = vsEl(id); return el ? el.value : ""; };
+  const nom = val("vsNomProtocolo"), ale = val("vsAlertaProtocolo"), cda = val("cdaProtocolo"), fcda = val("filterCdaProtocolo");
+  fillSelect(vsEl("vsNomProtocolo"), items, false);
+  vsEl("vsNomProtocolo").value = items.some(i=>i.id===nom) ? nom : ((items[0]||{}).id || "");
+  fillSelect(vsEl("vsAlertaProtocolo"), items, false);
+  vsEl("vsAlertaProtocolo").insertAdjacentHTML("afterbegin", '<option value="">Todos los protocolos</option>');
+  vsEl("vsAlertaProtocolo").value = ale || "";
+  fillSelect(vsEl("cdaProtocolo"), items, true);
+  if(items.some(i=>i.id===cda)) vsEl("cdaProtocolo").value = cda;
+  fillSelect(vsEl("filterCdaProtocolo"), items, false);
+  vsEl("filterCdaProtocolo").insertAdjacentHTML("afterbegin", '<option value="">Todos los protocolos</option>');
+  vsEl("filterCdaProtocolo").value = fcda || "";
+  paFillAreaSelect("vsNomArea");
+  paFillAreaSelect("vsAddArea");
+}
+
+/* --- Tablero y alertas --- */
+function renderVsTablero(){
+  const ctx = vsCtx(), g = vsGlobal();
+  vsEl("vsTableroTiles").innerHTML = [
+    tile("Expuestos activos", g.activos, g.protocolos+" protocolo(s) con nómina", null, "people", "var(--s1)"),
+    tile("Con examen vigente", g.activos ? g.pct+"%" : "—", g.vigentes+" de "+g.activos, null, "health", "var(--s1)"),
+    tile("Por vencer", g.porVencer, "dentro del plazo de alerta", null, "calendar", "var(--s1)"),
+    tile("Vencidos o sin examen", g.vencidos+g.sinExamen, g.vencidos+" vencido(s) · "+g.sinExamen+" sin examen", null, "alert", "var(--s1)"),
+    tile("Sin IRL", g.activos-g.conIrl, "expuestos sin IRL registrada", null, "document", "var(--s1)"),
+    tile("Protocolos sin CDA", g.sinCda, "con expuestos y sin registro de CDA", null, "shield", "var(--s1)"),
+  ].join("");
+  const protos = vsProtocolosOrdenados().filter(p=>protocoloAplica(p) || (CACHE.vsExpuestos||[]).some(e=>e.protocoloId===p.id));
+  const pill = (n, clase) => n ? `<span class="pill ${clase}">${n}</span>` : "0";
+  vsEl("vsTableroTable").innerHTML = protos.map(p=>{
+    const r = vsResumen(p.id, ctx);
+    const cda = r.cda.length ? `<span class="pill vigente">Registrado</span>` : (r.activos ? `<span class="pill vencido">Sin CDA</span>` : "—");
+    return `<tr>
+      <td><strong>${incEsc(vsEtiqueta(p))}</strong>${protocoloAplica(p)?"":' <span class="kv">(no aplica según la matriz)</span>'}</td>
+      <td>${r.activos}</td>
+      <td>${r.activos ? Math.round(r.conIrl/r.activos*100)+"% ("+r.conIrl+")" : "—"}</td>
+      <td>${r.activos ? Math.round(r.vigentes/r.activos*100)+"% ("+r.vigentes+")" : "—"}</td>
+      <td>${pill(r.porVencer,"proximo")}</td><td>${pill(r.vencidos,"vencido")}</td><td>${pill(r.sinExamen,"vencido")}</td><td>${pill(r.faltaPlan,"proximo")}</td>
+      <td>${cda}</td>
+      <td style="white-space:nowrap;"><button class="btn secondary small" data-vs-ver="${p.id}">Ver nómina</button></td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="10">Aún no hay protocolos que apliquen ni nóminas cargadas</td></tr>`;
+  renderVsAlertas(ctx);
+}
+function vsAlertasLista(ctx){
+  const protoSel = vsEl("vsAlertaProtocolo").value, tipo = vsEl("vsAlertaTipo").value, out = [];
+  vsProtocolosOrdenados().forEach(p=>{
+    if(protoSel && p.id!==protoSel) return;
+    vsResumen(p.id, ctx).filas.forEach(f=>{ const m = vsMotivos(f); if(m.length) out.push({f, m}); });
+  });
+  const filtrado = tipo ? out.filter(o=>o.m.some(x=>x.tipo===tipo)) : out;
+  filtrado.sort((a,b)=> (VS_SEM_ORDEN[a.f.sem]-VS_SEM_ORDEN[b.f.sem]) || ((a.f.dias===null?9999:a.f.dias)-(b.f.dias===null?9999:b.f.dias)) || String(a.f.t.nombre).localeCompare(String(b.f.t.nombre)));
+  return filtrado;
+}
+function renderVsAlertas(ctx){
+  const lista = vsAlertasLista(ctx || vsCtx()), tope = 300;
+  vsEl("vsAlertaConteo").textContent = lista.length ? `${lista.length} trabajador(es) con alertas${lista.length>tope?` (se muestran los primeros ${tope})`:""}` : "";
+  vsEl("vsAlertasTable").innerHTML = lista.slice(0, tope).map(({f, m})=>`<tr>
+    <td>${incEsc(vsEtiqueta(f.p))}</td>
+    <td><strong>${incEsc(f.t.nombre)}</strong><div class="kv">${incEsc(f.t.rut||"")}</div></td>
+    <td>${incEsc(f.t.cargo||"—")}<div class="kv">${incEsc(areaName(f.t.areaId))}</div></td>
+    <td>${m.map(x=>`<span class="pill ${x.tipo==="vencido"||x.tipo==="sin_examen"?"vencido":"proximo"}" style="margin:0 4px 4px 0;display:inline-block;">${incEsc(x.txt)}</span>`).join("")}</td>
+    <td>${f.vence ? fmtDate(f.vence) : "—"}</td>
+  </tr>`).join("") || `<tr><td class="empty" colspan="5">Sin alertas con el filtro elegido</td></tr>`;
+}
+
+/* --- Nómina y control --- */
+function vsProtocoloActual(){ return (CACHE.protocolos||[]).find(p=>p.id===vsEl("vsNomProtocolo").value) || null; }
+function renderVsNomina(){
+  const p = vsProtocoloActual();
+  const periodo = vsEl("vsNomPeriodo"), dias = vsEl("vsNomDiasAlerta");
+  if(document.activeElement!==periodo) periodo.value = p ? (p.periodicidadMeses||"") : "";
+  if(document.activeElement!==dias) dias.value = p ? vsDiasAlerta(p) : "";
+  if(!p){ vsEl("vsNomProtoInfo").textContent = ""; vsEl("vsNomTable").innerHTML = `<tr><td class="empty" colspan="9">Seleccione un protocolo</td></tr>`; vsEl("vsNomConteo").textContent = ""; return; }
+  const ctx = vsCtx(), r = vsResumen(p.id, ctx);
+  vsEl("vsNomProtoInfo").textContent = `${p.agente||""} · ${r.activos} activo(s) · CDA: ${r.cda.length?"registrado":"sin registro"}`;
+  const q = matrizNorm(vsEl("vsNomBuscar").value), area = vsEl("vsNomArea").value, sem = vsEl("vsNomSem").value, act = vsEl("vsNomActivo").value;
+  const filas = r.filas.filter(f=>
+    (!area || f.t.areaId===area) &&
+    (!q || matrizNorm([f.t.nombre, f.t.rut, f.t.cargo, f.e.puesto].join(" ")).includes(q)) &&
+    (!sem || (f.activo && f.sem===sem)) &&
+    (!act || (f.e.estado||"activo")===act)
+  ).sort((a,b)=> ((a.activo?VS_SEM_ORDEN[a.sem]:9)-(b.activo?VS_SEM_ORDEN[b.sem]:9)) || String(a.t.nombre).localeCompare(String(b.t.nombre)));
+  vsEl("vsNomConteo").textContent = r.filas.length ? `${filas.length} de ${r.filas.length} en la nómina` : "";
+  vsEl("vsNomTable").innerHTML = filas.map(f=>{
+    const estadoTxt = f.activo
+      ? `<span class="vs-sem ${f.sem}"></span><span class="pill ${VS_SEM_PILL[f.sem]}">${VS_SEM_LABEL[f.sem]}</span>`
+      : `<span class="vs-sem sin_dato"></span><span class="pill pendiente">${VS_ESTADO_LABEL[f.e.estado]||"Inactivo"}</span>`;
+    const irl = f.irlFecha ? `${fmtDate(f.irlFecha)}<div class="kv">${f.irlOrigen==="entrega"?"según IRL del cargo":"registrada a mano"}</div>` : `<span class="pill vencido">Sin IRL</span>`;
+    const ex = f.examen ? fmtDate(f.examen.fecha) : "—";
+    const cit = f.citacion ? `<div class="kv">Citado el ${fmtDate(f.citacion.citacionFecha)}</div>` : "";
+    const apt = f.examen && f.examen.resultado ? `<span class="pill ${VS_APTITUD_PILL[f.examen.resultado]||"pendiente"}">${VS_APTITUD_LABEL[f.examen.resultado]||incEsc(f.examen.resultado)}</span>${f.faltaPlan?'<div class="kv" style="color:#a03d1a;">Falta plan de readecuación</div>':""}` : "—";
+    const vence = f.vence ? `${fmtDate(f.vence)}<div class="kv">${f.dias<0?`vencido hace ${-f.dias} día(s)`:`en ${f.dias} día(s)`}</div>` : "—";
+    return `<tr>
+      <td><strong>${incEsc(f.t.nombre)}</strong><div class="kv">${incEsc(f.t.rut||"sin RUT")}</div></td>
+      <td>${incEsc(f.t.cargo||"—")}<div class="kv">${incEsc(areaName(f.t.areaId))}</div></td>
+      <td>${incEsc(f.e.puesto||"—")}</td>
+      <td>${irl}</td>
+      <td>${ex}${cit}</td>
+      <td>${apt}</td>
+      <td>${vence}</td>
+      <td style="white-space:nowrap;">${estadoTxt}</td>
+      <td style="white-space:nowrap;"><button class="btn secondary small" data-vs-edit="${f.e.id}">Control</button> <button class="subtle-btn" data-vs-quitar="${f.e.id}">Quitar</button></td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="9">${r.filas.length ? "Ningún trabajador coincide con los filtros" : "Aún no hay trabajadores en la nómina de este protocolo"}</td></tr>`;
+}
+async function vsGuardarConfigProtocolo(){
+  const p = vsProtocoloActual(); if(!p) return;
+  const per = parseInt(vsEl("vsNomPeriodo").value, 10), dias = parseInt(vsEl("vsNomDiasAlerta").value, 10);
+  if(!(per>=1 && per<=120)){ alert("La periodicidad debe ser un número de meses entre 1 y 120."); vsEl("vsNomPeriodo").value = p.periodicidadMeses||""; return; }
+  if(!(dias>=1 && dias<=365)){ alert("Los días de alerta deben estar entre 1 y 365."); vsEl("vsNomDiasAlerta").value = vsDiasAlerta(p); return; }
+  p.periodicidadMeses = per; p.diasAlerta = dias;
+  await put("protocolos", p);
+  await loadCache();
+  renderProtocolosAplicaTable();
+  renderVigilancia();
+}
+function vsRefrescarTodo(){ renderProtocolosAplicaTable(); renderVigilancia(); renderDashboard(); }
+["vsNomPeriodo","vsNomDiasAlerta"].forEach(id=>on(vsEl(id), "change", vsGuardarConfigProtocolo));
+on(vsEl("vsNomProtocolo"), "change", ()=>{ vsAddSel = new Set(); renderVsNomina(); renderVsAdd(); });
+["vsNomBuscar"].forEach(id=>on(vsEl(id), "input", renderVsNomina));
+["vsNomArea","vsNomSem","vsNomActivo"].forEach(id=>on(vsEl(id), "change", renderVsNomina));
+["vsAlertaProtocolo","vsAlertaTipo"].forEach(id=>on(vsEl(id), "change", ()=>renderVsAlertas()));
+on(vsEl("vsTableroTable"), "click", (e)=>{
+  const b = e.target.closest("[data-vs-ver]"); if(!b) return;
+  vsEl("vsNomProtocolo").value = b.dataset.vsVer; vsAddSel = new Set();
+  renderVsNomina(); renderVsAdd();
+  subpestanasMostrarDe("hdrVsNomina");
+  vsEl("hdrVsNomina").scrollIntoView({behavior:"smooth", block:"start"});
+});
+on(vsEl("vsNomTable"), "click", async (e)=>{
+  const ed = e.target.closest("[data-vs-edit]");
+  if(ed){ vsAbrirModalExpuesto(ed.dataset.vsEdit); return; }
+  const q = e.target.closest("[data-vs-quitar]");
+  if(q){
+    const rec = (CACHE.vsExpuestos||[]).find(x=>x.id===q.dataset.vsQuitar); if(!rec) return;
+    if(!confirm(`¿Quitar a ${trabName(rec.trabajadorId)} de la nómina de ${protoName(rec.protocoloId)}? Sus exámenes ya registrados no se borran.`)) return;
+    await deleteRecord("vsExpuestos", rec.id);
+    await loadCache();
+    vsRefrescarTodo();
+  }
+});
+
+/* --- Agregar expuestos desde Trabajadores (búsqueda + selección múltiple) --- */
+var vsAddSel = new Set();
+function vsAddCandidatos(){
+  const protoId = vsEl("vsNomProtocolo").value;
+  const yaEn = new Set((CACHE.vsExpuestos||[]).filter(e=>e.protocoloId===protoId).map(e=>e.trabajadorId));
+  const q = matrizNorm(vsEl("vsAddBuscar").value), area = vsEl("vsAddArea").value, soloSug = vsEl("vsAddSugeridos").checked;
+  const sugAreas = new Set(protocoloLineasMatriz(protoId).map(l=>l.areaId));
+  return (CACHE.trabajadores||[]).filter(t=>!yaEn.has(t.id) && (!area || t.areaId===area) && (!soloSug || sugAreas.has(t.areaId)) &&
+    (!q || matrizNorm([t.nombre, t.rut, t.cargo, areaName(t.areaId)].join(" ")).includes(q)))
+    .sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
+}
+function renderVsAdd(){
+  if(vsEl("vsAddPanel").style.display==="none") return;
+  const protoId = vsEl("vsNomProtocolo").value;
+  const yaEn = new Set((CACHE.vsExpuestos||[]).filter(e=>e.protocoloId===protoId).map(e=>e.trabajadorId));
+  vsAddSel = new Set(Array.from(vsAddSel).filter(id=>!yaEn.has(id) && (CACHE.trabajadores||[]).some(t=>t.id===id)));
+  const lista = vsAddCandidatos(), tope = 400;
+  vsEl("vsAddLista").innerHTML = lista.length ? lista.slice(0, tope).map(t=>
+    `<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px 0;"><input type="checkbox" data-vs-add="${t.id}" style="width:auto;min-height:auto;margin-top:3px;"${vsAddSel.has(t.id)?" checked":""}><span><strong>${incEsc(t.nombre)}</strong> <span class="kv">${incEsc(t.rut||"sin RUT")}</span><div class="kv">${incEsc(t.cargo||"sin cargo")} · ${incEsc(areaName(t.areaId))}</div></span></label>`).join("") +
+    (lista.length>tope ? `<div class="kv">Se muestran los primeros ${tope}; afine la búsqueda para ver el resto.</div>` : "")
+    : `<div class="empty">${vsEl("vsAddSugeridos").checked && !protocoloLineasMatriz(protoId).length ? "La matriz no tiene líneas asociadas a este protocolo: desmarque «Solo sugeridos por la matriz»." : "Ningún trabajador disponible coincide con la búsqueda."}</div>`;
+  paResumenSeleccion("vsAddResumen", vsAddSel, lista.map(t=>t.id));
+}
+["vsAddBuscar"].forEach(id=>on(vsEl(id), "input", renderVsAdd));
+["vsAddArea","vsAddSugeridos"].forEach(id=>on(vsEl(id), "change", renderVsAdd));
+on(vsEl("vsAddLista"), "change", (e)=>{
+  const cb = e.target.closest("[data-vs-add]"); if(!cb) return;
+  if(cb.checked) vsAddSel.add(cb.dataset.vsAdd); else vsAddSel.delete(cb.dataset.vsAdd);
+  paResumenSeleccion("vsAddResumen", vsAddSel, vsAddCandidatos().map(t=>t.id));
+});
+on(vsEl("vsAddMarcarBtn"), "click", ()=>{ paAlternarVisibles(vsAddSel, vsAddCandidatos().map(t=>t.id)); renderVsAdd(); });
+on(vsEl("vsAddLimpiarBtn"), "click", ()=>{ vsAddSel = new Set(); renderVsAdd(); });
+on(vsEl("vsAddToggleBtn"), "click", ()=>{
+  const panel = vsEl("vsAddPanel"); panel.style.display = panel.style.display==="none" ? "" : "none";
+  vsEl("vsImpPanel").style.display = "none"; renderVsAdd();
+});
+on(vsEl("vsImpToggleBtn"), "click", ()=>{
+  const panel = vsEl("vsImpPanel"); panel.style.display = panel.style.display==="none" ? "" : "none";
+  vsEl("vsAddPanel").style.display = "none";
+});
+/* Escribe varios registros en tandas para no hacer una sola petición larga por fila. */
+async function vsEscribirLote(escrituras){
+  for(let i=0; i<escrituras.length; i+=8) await Promise.all(escrituras.slice(i, i+8).map(([store, rec])=>put(store, rec)));
+}
+on(vsEl("vsAddGuardarBtn"), "click", async ()=>{
+  const protoId = vsEl("vsNomProtocolo").value;
+  if(!protoId){ alert("Elija un protocolo."); return; }
+  if(!vsAddSel.size){ alert("Marque al menos un trabajador de la lista."); return; }
+  const puesto = vsEl("vsAddPuesto").value.trim(), desde = vsEl("vsAddDesde").value;
+  const yaEn = new Set((CACHE.vsExpuestos||[]).filter(e=>e.protocoloId===protoId).map(e=>e.trabajadorId));
+  const nuevos = Array.from(vsAddSel).filter(id=>!yaEn.has(id));
+  await vsEscribirLote(nuevos.map(id=>["vsExpuestos", {id:uid(), protocoloId:protoId, trabajadorId:id, puesto, desde, estado:"activo", irlFecha:""}]));
+  await loadCache();
+  vsAddSel = new Set(); vsEl("vsAddPuesto").value = ""; vsEl("vsAddDesde").value = "";
+  vsRefrescarTodo();
+  alert(`${nuevos.length} trabajador(es) agregado(s) a la nómina de ${protoName(protoId)}.`);
+});
+
+/* --- Cargar la lista de la mutualidad (Excel o texto) --- */
+function vsParseFecha(v){
+  if(v===null || v===undefined || v==="") return "";
+  const arma = (y, m, d) => {
+    y = +y; m = +m; d = +d;
+    const dt = new Date(y, m-1, d);
+    return (dt.getFullYear()===y && dt.getMonth()===m-1 && dt.getDate()===d) ? vsIso(dt) : "";
+  };
+  if(v instanceof Date) return isNaN(v) ? "" : new Date(v.getTime() + 12*3600*1000).toISOString().slice(0,10);
+  if(typeof v==="number") return (v>20000 && v<80000) ? new Date(Math.round((v-25569)*86400000)).toISOString().slice(0,10) : "";
+  const s = String(v).trim();
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s);
+  if(m) return arma(m[1], m[2], m[3]);
+  m = /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/.exec(s);
+  if(m){ let y = +m[3]; if(y<100) y += 2000; return arma(y, m[2], m[1]); }
+  return "";
+}
+function vsParseResultado(v){
+  const s = matrizNorm(v);
+  if(!s) return "";
+  if(s.includes("no apto") || s.includes("no_apto") || s==="noapto" || s.includes("inapto")) return "no_apto";
+  if(s.includes("restric") || s.includes("condicion") || s.includes("observ")) return "restricciones";
+  if(s.includes("apto")) return "apto";
+  return "";
+}
+async function vsImportarFilas(filas){
+  const protoId = vsEl("vsNomProtocolo").value;
+  if(!protoId){ alert("Elija primero el protocolo al que corresponde la lista."); return; }
+  const crear = vsEl("vsImpCrear").checked;
+  const porRut = new Map(), porNombre = new Map();
+  (CACHE.trabajadores||[]).forEach(t=>{ const r = vsNormRut(t.rut); if(r) porRut.set(r, t); porNombre.set(matrizNorm(t.nombre), t); });
+  const existentes = new Map((CACHE.vsExpuestos||[]).filter(e=>e.protocoloId===protoId).map(e=>[e.trabajadorId, e]));
+  const examExist = new Set((CACHE.examenes||[]).filter(x=>x.protocoloId===protoId).map(x=>x.trabajadorId+"|"+(x.fecha||"")+"|"+(x.citacionFecha||"")));
+  const res = {nuevos:0, yaEstaban:0, examenes:0, creados:0, omitidas:0, sinResultado:0, fechaInvalida:0, sinTrab:[]};
+  const escrituras = [];
+  for(const fila of filas){
+    const rutN = vsNormRut(fila.rut), nomN = matrizNorm(fila.nombre);
+    if(!rutN && !nomN){ res.omitidas++; continue; }
+    let t = (rutN && porRut.get(rutN)) || (nomN && porNombre.get(nomN)) || null;
+    if(!t){
+      if(crear && fila.nombre){
+        const a = (CACHE.areas||[]).find(x=>matrizNorm(x.nombre)===matrizNorm(fila.area));
+        t = {id:uid(), nombre:String(fila.nombre).trim(), rut:fila.rut?String(fila.rut).trim():"", cargo:fila.cargo?String(fila.cargo).trim():"", areaId:a?a.id:""};
+        escrituras.push(["trabajadores", t]); res.creados++;
+        if(rutN) porRut.set(rutN, t); porNombre.set(nomN, t);
+      } else { res.sinTrab.push(fila.nombre || fila.rut); continue; }
+    }
+    let exp = existentes.get(t.id);
+    if(!exp){
+      exp = {id:uid(), protocoloId:protoId, trabajadorId:t.id, puesto:fila.puesto?String(fila.puesto).trim():"", desde:"", estado:"activo", irlFecha:""};
+      existentes.set(t.id, exp); escrituras.push(["vsExpuestos", exp]); res.nuevos++;
+    } else {
+      res.yaEstaban++;
+      if(fila.puesto && !exp.puesto){ exp.puesto = String(fila.puesto).trim(); escrituras.push(["vsExpuestos", exp]); }
+    }
+    const fEx = vsParseFecha(fila.examen), fCit = vsParseFecha(fila.citacion), fProx = vsParseFecha(fila.proxima);
+    if((fila.examen && !fEx) || (fila.citacion && !fCit) || (fila.proxima && !fProx)) res.fechaInvalida++;
+    if(fEx || fCit){
+      const key = t.id+"|"+fEx+"|"+fCit;
+      if(!examExist.has(key)){
+        examExist.add(key);
+        const resultado = vsParseResultado(fila.resultado);
+        if(fEx && !resultado) res.sinResultado++;
+        escrituras.push(["examenes", {id:uid(), trabajadorId:t.id, protocoloId:protoId, fecha:fEx, citacionFecha:fCit, resultado, proximaFecha:fProx, readecuacion:"", obs:""}]);
+        res.examenes++;
+      }
+    }
+  }
+  if(!escrituras.length && !res.sinTrab.length){ alert("No se encontraron filas para cargar."); return; }
+  await vsEscribirLote(escrituras);
+  await loadCache();
+  vsRefrescarTodo();
+  const lineas = [`Carga terminada en ${protoName(protoId)}:`, `• ${res.nuevos} trabajador(es) nuevo(s) en la nómina${res.yaEstaban?` (${res.yaEstaban} ya estaban)`:""}`, `• ${res.examenes} examen(es)/citación(es) registrado(s)`];
+  if(res.creados) lineas.push(`• ${res.creados} trabajador(es) creado(s) en Trabajadores`);
+  if(res.omitidas) lineas.push(`• ${res.omitidas} fila(s) omitida(s) por no traer RUT ni nombre`);
+  if(res.sinResultado) lineas.push(`• ${res.sinResultado} examen(es) sin aptitud reconocible (se esperaba Apto, Con restricciones o No apto)`);
+  if(res.fechaInvalida) lineas.push(`• ${res.fechaInvalida} fecha(s) no reconocida(s) y omitida(s)`);
+  if(res.sinTrab.length) lineas.push(`• ${res.sinTrab.length} persona(s) no encontradas en Trabajadores (no se cargaron): ${res.sinTrab.slice(0,8).join(", ")}${res.sinTrab.length>8?"…":""}`);
+  alert(lineas.join("\n"));
+}
+const VS_COLS = {
+  rut:["rut","run"],
+  nombre:["nombre","nombres","nombre completo","trabajador","nombre del trabajador"],
+  cargo:["cargo","ocupacion"],
+  area:["area","area de trabajo","seccion"],
+  puesto:["puesto","puesto de trabajo","puesto o ges","ges","grupo de exposicion similar"],
+  citacion:["fecha citacion","fecha de citacion","citacion","fecha notificacion","fecha de notificacion"],
+  examen:["fecha examen","fecha de examen","examen","fecha evaluacion","fecha de evaluacion"],
+  resultado:["resultado","aptitud","estado de aptitud","resultado aptitud","estado aptitud"],
+  proxima:["proxima citacion","proximo examen","proxima evaluacion","proximo control","fecha vencimiento","vencimiento","proxima fecha","fecha proxima citacion"],
+};
+on(vsEl("vsImpArchivoBtn"), "click", async ()=>{
+  const file = vsEl("vsImpFile").files[0];
+  if(!file){ alert("Seleccione un archivo Excel (.xlsx)."); return; }
+  if(typeof XLSX==="undefined"){ alert("No se pudo cargar el lector de Excel (revise su conexión a internet e intente de nuevo)."); return; }
+  const wb = XLSX.read(await file.arrayBuffer(), {type:"array", cellDates:true});
+  const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:true, defval:null});
+  let hr = -1;
+  for(let i=0; i<Math.min(aoa.length, 15); i++){
+    const cols = (aoa[i]||[]).map(c=>matrizNorm(c));
+    if(cols.some(c=>VS_COLS.rut.includes(c) || VS_COLS.nombre.includes(c))){ hr = i; break; }
+  }
+  if(hr===-1){ alert("No se encontró una columna RUT o Nombre en las primeras filas del archivo."); return; }
+  const headers = (aoa[hr]||[]).map(c=>matrizNorm(c));
+  const idx = {}; Object.keys(VS_COLS).forEach(k=>{ idx[k] = headers.findIndex(h=>VS_COLS[k].includes(h)); });
+  const val = (row, k) => (idx[k]>=0 && row[idx[k]]!==null && row[idx[k]]!==undefined) ? row[idx[k]] : "";
+  const filas = aoa.slice(hr+1).filter(r=>r && r.some(c=>c!==null && c!=="")).map(r=>({
+    rut:val(r,"rut"), nombre:val(r,"nombre"), cargo:val(r,"cargo"), area:val(r,"area"), puesto:val(r,"puesto"),
+    citacion:val(r,"citacion"), examen:val(r,"examen"), resultado:val(r,"resultado"), proxima:val(r,"proxima"),
+  }));
+  if(!filas.length){ alert("El archivo no tiene filas con datos."); return; }
+  await vsImportarFilas(filas);
+  vsEl("vsImpFile").value = "";
+});
+on(vsEl("vsImpTextoBtn"), "click", async ()=>{
+  const lineas = vsEl("vsImpTexto").value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  if(!lineas.length){ alert("Pegue al menos una línea."); return; }
+  const filas = lineas.map(l=>{
+    const p = l.split(/\t|,/).map(x=>x.trim());
+    return {rut:p[0]||"", nombre:p[1]||"", cargo:p[2]||"", area:p[3]||"", puesto:p[4]||"", citacion:p[5]||"", examen:p[6]||"", resultado:p[7]||"", proxima:p[8]||""};
+  });
+  await vsImportarFilas(filas);
+  vsEl("vsImpTexto").value = "";
+});
+
+/* --- Excel de la nómina --- */
+on(vsEl("vsExportNomBtn"), "click", ()=>{
+  const p = vsProtocoloActual();
+  if(!p){ alert("Elija un protocolo."); return; }
+  if(typeof XLSX==="undefined"){ alert("No se pudo cargar el generador de Excel (revise su conexión a internet e intente de nuevo)."); return; }
+  const r = vsResumen(p.id);
+  if(!r.filas.length){ alert("La nómina de este protocolo está vacía."); return; }
+  const cab = ["RUT","Nombre","Cargo","Área","Puesto / GES","Situación","IRL (fecha)","Fecha citación","Fecha último examen","Aptitud","Plan de readecuación","Vence","Estado"];
+  const filas = r.filas.sort((a,b)=>String(a.t.nombre).localeCompare(String(b.t.nombre))).map(f=>[
+    f.t.rut||"", f.t.nombre||"", f.t.cargo||"", areaName(f.t.areaId), f.e.puesto||"", VS_ESTADO_LABEL[f.e.estado||"activo"]||"",
+    f.irlFecha ? fmtDate(f.irlFecha) : "Sin IRL", f.citacion ? fmtDate(f.citacion.citacionFecha) : "", f.examen ? fmtDate(f.examen.fecha) : "",
+    f.examen && f.examen.resultado ? (VS_APTITUD_LABEL[f.examen.resultado]||f.examen.resultado) : "",
+    f.examen && f.examen.resultado==="restricciones" ? (f.faltaPlan ? "FALTA" : "Registrado") : "",
+    f.vence ? fmtDate(f.vence) : "", f.activo ? VS_SEM_LABEL[f.sem] : (VS_ESTADO_LABEL[f.e.estado]||"Inactivo"),
+  ]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([cab, ...filas]), "Nómina");
+  const emp = (CACHE.empresa && CACHE.empresa.razonSocial) ? CACHE.empresa.razonSocial.replace(/[^a-zA-Z0-9]+/g,"_") : "Empresa";
+  XLSX.writeFile(wb, `Vigilancia_${p.id}_${emp}_${new Date().toISOString().slice(0,10)}.xlsx`);
+});
+
+/* --- Ficha de control de un trabajador (nómina + exámenes) --- */
+let vsExamenEditId = null;
+function vsAbrirModalExpuesto(id, examenEditId){
+  const e = (CACHE.vsExpuestos||[]).find(x=>x.id===id); if(!e) return;
+  const ctx = vsCtx(), f = vsEvaluar(e, ctx);
+  if(!f){ alert("No se encontró el trabajador o el protocolo de este registro."); return; }
+  vsExamenEditId = examenEditId || null;
+  const hist = ctx.ex.get(e.trabajadorId+"|"+e.protocoloId) || [];
+  const ed = vsExamenEditId ? hist.find(x=>x.id===vsExamenEditId) : null;
+  const optRes = (v) => ["","apto","restricciones","no_apto"].map(k=>`<option value="${k}"${(v||"")===k?" selected":""}>${k?VS_APTITUD_LABEL[k]:"Seleccione..."}</option>`).join("");
+  openModal(`
+    <h3>${incEsc(f.t.nombre)} — ${incEsc(vsEtiqueta(f.p))}</h3>
+    <div class="kv" style="margin-bottom:10px;">${incEsc(f.t.rut||"sin RUT")} · ${incEsc(f.t.cargo||"sin cargo")} · ${incEsc(areaName(f.t.areaId))}</div>
+    <h4 style="margin:8px 0 4px;">Datos en la nómina</h4>
+    <div class="form-grid">
+      <div><label>Puesto / GES</label><input id="vsmPuesto" value="${incEsc(e.puesto||"")}"></div>
+      <div><label>Expuesto desde</label><input type="date" id="vsmDesde" value="${incEsc(e.desde||"")}"></div>
+      <div><label>Situación</label><select id="vsmEstado">${Object.keys(VS_ESTADO_LABEL).map(k=>`<option value="${k}"${(e.estado||"activo")===k?" selected":""}>${VS_ESTADO_LABEL[k]}</option>`).join("")}</select></div>
+      <div><label>IRL entregada (fecha)</label><input type="date" id="vsmIrl" value="${incEsc(e.irlFecha||"")}"></div>
+    </div>
+    <div class="kv">${f.irlOrigen==="entrega" ? `La IRL del cargo ya figura entregada el ${fmtDate(f.irlFecha)} (pestaña Inducción y cumplimiento). Solo complete la fecha si quiere registrar una IRL específica de este protocolo.` : "Si la IRL de este cargo se entrega desde Inducción y cumplimiento, se reconoce sola; si no, registre aquí la fecha."}</div>
+    <div class="toolbar" style="margin-top:8px;"><button class="btn" id="vsmGuardarNominaBtn" type="button">Guardar datos de la nómina</button></div>
+
+    <h4 style="margin:16px 0 4px;">${ed?"Editar examen / citación":"Registrar examen o citación"}</h4>
+    <div class="kv">Registre solo fechas y aptitud; no ingrese diagnósticos.</div>
+    <div class="form-grid">
+      <div><label>Fecha de citación</label><input type="date" id="vsmCit" value="${incEsc(ed?ed.citacionFecha||"":"")}"></div>
+      <div><label>Fecha del examen</label><input type="date" id="vsmFecha" value="${incEsc(ed?ed.fecha||"":"")}"></div>
+      <div><label>Aptitud</label><select id="vsmRes">${optRes(ed?ed.resultado:"")}</select></div>
+      <div><label>Próxima citación (si la informa la mutualidad)</label><input type="date" id="vsmProx" value="${incEsc(ed?ed.proximaFecha||"":"")}"></div>
+    </div>
+    <label>Plan de readecuación de tareas (obligatorio si la aptitud es «Con restricciones»)</label>
+    <textarea id="vsmPlan" placeholder="Medidas de readecuación de tareas acordadas">${incEsc(ed?ed.readecuacion||"":"")}</textarea>
+    <label style="margin-top:8px;">Observaciones (opcional)</label>
+    <input id="vsmObs" value="${incEsc(ed?ed.obs||"":"")}">
+    <div class="toolbar" style="margin-top:10px;">
+      <button class="btn" id="vsmGuardarExamenBtn" type="button">${ed?"Guardar cambios del examen":"Registrar examen"}</button>
+      ${ed?'<button class="btn secondary" id="vsmCancelarExamenBtn" type="button">Cancelar edición</button>':""}
+    </div>
+
+    <h4 style="margin:16px 0 4px;">Historial</h4>
+    <div style="overflow-x:auto;"><table>
+      <thead><tr><th>Citación</th><th>Examen</th><th>Aptitud</th><th>Próxima citación</th><th>Plan de readecuación</th><th></th></tr></thead>
+      <tbody id="vsmHistBody">${hist.map(x=>`<tr>
+        <td>${x.citacionFecha?fmtDate(x.citacionFecha):"—"}</td><td>${x.fecha?fmtDate(x.fecha):"—"}</td>
+        <td>${x.resultado?`<span class="pill ${VS_APTITUD_PILL[x.resultado]||"pendiente"}">${VS_APTITUD_LABEL[x.resultado]||incEsc(x.resultado)}</span>`:"—"}</td>
+        <td>${x.proximaFecha?fmtDate(x.proximaFecha):"—"}</td><td>${incEsc(x.readecuacion||"—")}</td>
+        <td style="white-space:nowrap;"><button class="btn secondary small" data-vsm-ed="${x.id}">Editar</button> <button class="subtle-btn" data-vsm-del="${x.id}">Eliminar</button></td>
+      </tr>`).join("") || `<tr><td class="empty" colspan="6">Sin exámenes ni citaciones registrados</td></tr>`}</tbody>
+    </table></div>
+    <div class="toolbar" style="margin-top:12px;"><button class="btn secondary" id="vsmCerrarBtn" type="button">Cerrar</button></div>
+  `, {wide:true});
+  on(vsEl("vsmCerrarBtn"), "click", closeModal);
+  on(vsEl("vsmGuardarNominaBtn"), "click", async ()=>{
+    e.puesto = vsEl("vsmPuesto").value.trim(); e.desde = vsEl("vsmDesde").value;
+    e.estado = vsEl("vsmEstado").value; e.irlFecha = vsEl("vsmIrl").value;
+    await put("vsExpuestos", e);
+    await loadCache();
+    closeModal(); vsRefrescarTodo();
+  });
+  if(ed) on(vsEl("vsmCancelarExamenBtn"), "click", ()=>vsAbrirModalExpuesto(id));
+  on(vsEl("vsmGuardarExamenBtn"), "click", async ()=>{
+    const cit = vsEl("vsmCit").value, fecha = vsEl("vsmFecha").value, res = vsEl("vsmRes").value;
+    const prox = vsEl("vsmProx").value, plan = vsEl("vsmPlan").value.trim();
+    if(!cit && !fecha){ alert("Indique la fecha de citación o la fecha del examen."); return; }
+    if(fecha && !res){ alert("Indique la aptitud (Apto, Con restricciones o No apto)."); return; }
+    if(res==="restricciones" && !plan){ alert("Con restricciones: debe registrar el plan de readecuación de tareas."); return; }
+    if(fecha && prox && prox <= fecha){ alert("La próxima citación debe ser posterior a la fecha del examen."); return; }
+    const rec = Object.assign({}, ed || {}, {id: ed ? ed.id : uid(), trabajadorId:e.trabajadorId, protocoloId:e.protocoloId, fecha, citacionFecha:cit, resultado:res, proximaFecha:prox, readecuacion:plan, obs:vsEl("vsmObs").value.trim()});
+    await put("examenes", rec);
+    await loadCache();
+    vsRefrescarTodo();
+    vsAbrirModalExpuesto(id);
+  });
+  on(vsEl("vsmHistBody"), "click", async (ev)=>{
+    const b = ev.target.closest("[data-vsm-ed]");
+    if(b){ vsAbrirModalExpuesto(id, b.dataset.vsmEd); return; }
+    const d = ev.target.closest("[data-vsm-del]");
+    if(d){
+      if(!confirm("¿Eliminar este registro de examen o citación? Esta acción no se puede deshacer.")) return;
+      await deleteRecord("examenes", d.dataset.vsmDel);
+      await loadCache();
+      vsRefrescarTodo();
+      vsAbrirModalExpuesto(id);
+    }
+  });
+}
+
+/* --- Comité de Aplicación (CDA) por protocolo --- */
+let cdaEditingId = null;
+function resetCdaForm(){
+  cdaEditingId = null;
+  vsEl("cdaProtocolo").value = ""; vsEl("cdaTipo").value = "constitucion"; vsEl("cdaFecha").value = ""; vsEl("cdaProxima").value = "";
+  vsEl("cdaArchivo").value = ""; vsEl("cdaIntegrantes").value = ""; vsEl("cdaObs").value = "";
+  vsEl("saveCdaBtn").textContent = "Guardar registro de CDA"; vsEl("cancelCdaBtn").style.display = "none"; vsEl("vsCdaFormTitulo").textContent = "Registrar CDA";
+}
+function renderVsCda(){
+  const protos = vsProtocolosOrdenados();
+  vsEl("vsCdaResumenTable").innerHTML = protos.map(p=>{
+    const regs = vsCdaDe(p.id), ult = regs[0];
+    const requiere = protocoloAplica(p) || vsTieneNomina(p.id);
+    return `<tr>
+      <td><strong>${incEsc(vsEtiqueta(p))}</strong></td>
+      <td>${regs.length ? '<span class="pill vigente">Registrado</span>' : (requiere ? '<span class="pill vencido">Sin CDA</span>' : '<span class="kv">No aplica</span>')}</td>
+      <td>${regs.length}</td>
+      <td>${ult ? fmtDate(ult.fecha)+' <span class="kv">('+(CDA_TIPO_LABEL[ult.tipo]||"")+')</span>' : "—"}</td>
+      <td>${ult && ult.proximaRevision ? fmtDate(ult.proximaRevision) : "—"}</td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="5">Sin protocolos</td></tr>`;
+  const filtro = vsEl("filterCdaProtocolo").value;
+  const regs = (CACHE.vsCda||[]).filter(c=>!filtro || c.protocoloId===filtro).sort((a,b)=>String(b.fecha||"").localeCompare(String(a.fecha||"")));
+  vsEl("vsCdaTable").innerHTML = regs.map(c=>`<tr>
+    <td>${fmtDate(c.fecha)}</td><td>${incEsc(protoName(c.protocoloId))}</td><td>${CDA_TIPO_LABEL[c.tipo]||"—"}</td>
+    <td style="white-space:pre-wrap;">${incEsc(c.integrantes||"—")}</td><td style="white-space:pre-wrap;">${incEsc(c.obs||"—")}</td>
+    <td>${c.proximaRevision?fmtDate(c.proximaRevision):"—"}</td>
+    <td>${c.archivoData ? `<a href="${c.archivoData}" download="${incEsc(c.archivoNombre||"CDA")}" class="subtle-btn">Descargar</a>` : '<span class="empty">Sin archivo</span>'}</td>
+    <td style="white-space:nowrap;"><button class="btn secondary small" data-cda-edit="${c.id}">Editar</button> <button class="subtle-btn" data-cda-del="${c.id}">Eliminar</button></td>
+  </tr>`).join("") || `<tr><td class="empty" colspan="8">Sin registros de CDA</td></tr>`;
+}
+on(vsEl("filterCdaProtocolo"), "change", renderVsCda);
+on(vsEl("cancelCdaBtn"), "click", resetCdaForm);
+on(vsEl("saveCdaBtn"), "click", async ()=>{
+  const protocoloId = vsEl("cdaProtocolo").value, fecha = vsEl("cdaFecha").value;
+  if(!protocoloId || !fecha){ alert("Complete el protocolo y la fecha."); return; }
+  const file = vsEl("cdaArchivo").files[0];
+  if(file && file.size > 6*1024*1024){ alert("El documento supera los 6 MB. Suba una versión más liviana."); return; }
+  const previo = cdaEditingId ? (CACHE.vsCda||[]).find(c=>c.id===cdaEditingId) : null;
+  const rec = {
+    id: cdaEditingId || uid(), protocoloId, fecha,
+    tipo: vsEl("cdaTipo").value, proximaRevision: vsEl("cdaProxima").value,
+    integrantes: vsEl("cdaIntegrantes").value.trim(), obs: vsEl("cdaObs").value.trim(),
+    archivoNombre: file ? file.name : (previo ? previo.archivoNombre||null : null),
+    archivoData: file ? await readFileAsDataUrl(file) : (previo ? previo.archivoData||null : null),
+  };
+  await put("vsCda", rec);
+  await loadCache();
+  const edit = !!cdaEditingId;
+  resetCdaForm();
+  vsRefrescarTodo();
+  alert(edit ? "Registro de CDA actualizado." : "Registro de CDA guardado.");
+});
+on(vsEl("vsCdaTable"), "click", async (e)=>{
+  const ed = e.target.closest("[data-cda-edit]");
+  if(ed){
+    const c = (CACHE.vsCda||[]).find(x=>x.id===ed.dataset.cdaEdit); if(!c) return;
+    cdaEditingId = c.id;
+    vsEl("cdaProtocolo").value = c.protocoloId; vsEl("cdaTipo").value = c.tipo||"otro"; vsEl("cdaFecha").value = c.fecha||"";
+    vsEl("cdaProxima").value = c.proximaRevision||""; vsEl("cdaIntegrantes").value = c.integrantes||""; vsEl("cdaObs").value = c.obs||"";
+    vsEl("cdaArchivo").value = "";
+    vsEl("saveCdaBtn").textContent = "Guardar cambios"; vsEl("cancelCdaBtn").style.display = ""; vsEl("vsCdaFormTitulo").textContent = "Editar registro de CDA"+(c.archivoNombre?" (se conserva el documento actual si no sube otro)":"");
+    vsEl("vsCdaFormTitulo").scrollIntoView({behavior:"smooth", block:"start"});
+    return;
+  }
+  const del = e.target.closest("[data-cda-del]");
+  if(del){
+    const c = (CACHE.vsCda||[]).find(x=>x.id===del.dataset.cdaDel); if(!c) return;
+    if(!confirm(`¿Eliminar el registro de CDA del ${fmtDate(c.fecha)} (${protoName(c.protocoloId)})? Esta acción no se puede deshacer.`)) return;
+    await deleteRecord("vsCda", c.id);
+    await loadCache();
+    if(cdaEditingId===c.id) resetCdaForm();
+    vsRefrescarTodo();
+  }
+});
+
+/* --- Orquestador de la pestaña --- */
+function renderVigilancia(){
+  vsFillSelects();
+  renderVsTablero();
+  renderVsNomina();
+  renderVsAdd();
+  renderVsCda();
+  vsActualizarInsignias();
+  subpestanasAplicar("vigilancia");
+  vsAsegurarProtocolos().then(cambio=>{ if(cambio) renderVigilancia(); });
+}
+subpestanasCrear("vigilancia", [
+  {key:"tablero", icono:"grafico", label:"Tablero y alertas", desc:"Qué vence y quién no tiene examen o IRL", hdrs:["hdrVsTablero"],
+    badge:()=>{ const g = vsGlobal(), n = g.vencidos+g.sinExamen; return n ? {texto:`${n} alerta${n===1?"":"s"}`, nivel:"r"} : (g.porVencer ? {texto:`${g.porVencer} por vencer`, nivel:"y"} : null); }},
+  {key:"nomina", icono:"personas", label:"Nómina y control", desc:"Expuestos por protocolo: IRL, examen, aptitud y vencimiento", hdrs:["hdrVsNomina"]},
+  {key:"cda", icono:"documento", label:"CDA por protocolo", desc:"Comité de Aplicación de cada protocolo y sus actas", hdrs:["hdrVsCda"],
+    badge:()=>{ const g = vsGlobal(); return g.sinCda ? {texto:`${g.sinCda} sin CDA`, nivel:"y"} : null; }},
+  {key:"protocolos", icono:"lista", label:"Protocolos y matriz", desc:"Qué protocolos aplican según la matriz y su matriz por protocolo", hdrs:["hdrProtocolosAplicablesSegunLaMatrizDeRiesgos","hdrMatrizDeRiesgosPorProtocolo"]},
+], "tarjetas");
+setupCollapsible("hdrVsTablero", "bodyVsTablero", "toggleVsTablero", "collapsed_vsTablero");
+setupCollapsible("hdrVsNomina", "bodyVsNomina", "toggleVsNomina", "collapsed_vsNomina");
+setupCollapsible("hdrVsCda", "bodyVsCda", "toggleVsCda", "collapsed_vsCda");
 
 /* --- Bitácora de cumplimiento por protocolo --- */
 function renderBitFiltros(){
@@ -19925,6 +20737,7 @@ function datosInformeGerencia(){
   const totalAsig = protAplicables.length;
   const vigentes = protAplicables.filter(p=>{ const v = protocoloVigenciaBitacora(p); return v && v.estado==="vigente"; }).length;
   const cumplPct = totalAsig? Math.round(vigentes/totalAsig*100) : 0;
+  const vsG = vsGlobal();
   const pgTotal = CACHE.programa.length;
   const pgRealizadas = CACHE.programa.filter(p=>estadoPrograma(p)==="realizada").length;
   const pgPct = pgTotal? Math.round(pgRealizadas/pgTotal*100) : 0;
@@ -19947,7 +20760,9 @@ function datosInformeGerencia(){
   const indicadoresBody = [
     ["Días sin accidentes con tiempo perdido", racha.actual===null?"—":racha.actual],
     ["Riesgos muy altos en matriz", riesgosCriticos+" de "+CACHE.matriz.length+" líneas"],
-    ["Cumplimiento vigilancia de salud", cumplPct+"% ("+vigentes+" de "+totalAsig+" vigentes)"],
+    vsG.activos > 0
+      ? ["Cumplimiento vigilancia de salud", vsG.pct+"% ("+vsG.vigentes+" de "+vsG.activos+" expuestos con examen vigente; "+(vsG.vencidos+vsG.sinExamen)+" vencidos o sin examen)"]
+      : ["Cumplimiento vigilancia de salud", cumplPct+"% ("+vigentes+" de "+totalAsig+" vigentes)"],
     ["Hallazgos de inspección con acción abierta", accionesAbiertas],
     ["Cumplimiento programa de seguridad", pgPct+"% ("+pgRealizadas+" de "+pgTotal+")"],
     ["Cumplimiento plan de capacitación", capPct+"% ("+capAsistieron+" de "+capConvocados+")"],
@@ -19983,7 +20798,8 @@ function datosInformeGerencia(){
 
   const upcoming = [];
   CACHE.matriz.forEach(m=>{ if(m.plazo && m.estado!=="cerrada"){ const days=daysUntil(m.plazo); if(days<=30) upcoming.push(["Acción de control", `${m.peligro} (${areaName(m.areaId)})`, fmtDate(m.plazo), days]); }});
-  protAplicables.forEach(p=>{ const v = protocoloVigenciaBitacora(p); if(v && v.vigenteHasta){ const days = daysUntil(v.vigenteHasta); if(days<=30) upcoming.push(["Vigencia protocolo "+p.nombre, "Próxima reevaluación", fmtDate(v.vigenteHasta), days]); } });
+  protAplicables.forEach(p=>{ if(vsTieneNomina(p.id)) return; const v = protocoloVigenciaBitacora(p); if(v && v.vigenteHasta){ const days = daysUntil(v.vigenteHasta); if(days<=30) upcoming.push(["Vigencia protocolo "+p.nombre, "Próxima reevaluación", fmtDate(v.vigenteHasta), days]); } });
+  vsProximosVencimientos().filter(u=>u.days<=30).forEach(u=>upcoming.push([u.tipo, u.desc, fmtDate(u.fecha), u.days]));
   CACHE.programa.forEach(p=>{ if(!p.fechaRealizada && p.fechaProgramada){ const days = daysUntil(p.fechaProgramada); if(days<=30) upcoming.push(["Programa: "+p.nombre, areaName(p.areaId), fmtDate(p.fechaProgramada), days]); }});
   CACHE.capacitaciones.forEach(c=>{ if(!c.fechaRealizada && c.fechaProgramada){ const days = daysUntil(c.fechaProgramada); if(days<=30) upcoming.push(["Capacitación: "+c.nombre, (c.participantes||[]).length+" convocados", fmtDate(c.fechaProgramada), days]); }});
   upcoming.sort((a,b)=>a[3]-b[3]);
@@ -24562,6 +25378,7 @@ async function refreshAll(){
   renderGanttTable();
   renderGanttChart();
   renderGanttResumen();
+  renderVigilancia();
   renderFufFiltros();
   renderFufTable();
   renderDs44ObligacionesTable();
