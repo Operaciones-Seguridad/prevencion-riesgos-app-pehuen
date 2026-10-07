@@ -2740,9 +2740,10 @@
           <option value="sin_evaluar">Sin evaluar</option>
         </select></div>
         <div><button class="btn secondary small" id="exportFufBtn">Descargar Excel</button></div>
+        <div><button class="btn small" id="fufInformePdfBtn">Descargar informe PDF (cumplido y pendiente)</button></div>
       </div>
       <table>
-        <thead><tr><th style="width:40px;">N°</th><th>Ítem del FUF</th><th style="width:150px;">Nivel de cumplimiento</th><th style="width:130px;">Fecha evaluación</th><th style="width:220px;">Observaciones</th><th style="width:210px;">Evidencia</th></tr></thead>
+        <thead><tr><th style="width:40px;">N°</th><th>Ítem del FUF</th><th style="width:150px;">Nivel de cumplimiento</th><th style="width:130px;">Fecha evaluación</th><th style="width:220px;">Observaciones</th><th style="width:210px;">Regularizar (responsable y plazo)</th><th style="width:210px;">Evidencia</th></tr></thead>
         <tbody id="fufTable"></tbody>
       </table>
       </div>
@@ -2899,10 +2900,25 @@
       <div class="toolbar" style="margin-top:14px;">
         <div class="field" style="flex:2;min-width:260px;"><label>Buscar procedimiento</label><input type="text" id="procMatrizBuscar" placeholder="Ej: altura, difusión, manejo de carga, nombre de un proceso o peligro..."></div>
         <div class="field"><label>Estado</label><select id="procMatrizEstado"><option value="">Todos</option><option value="pendiente">Pendientes de confeccionar</option><option value="confeccionado">Confeccionados</option></select></div>
+        <div class="field"><label>Área</label><select id="procMatrizArea"></select></div>
+        <div><button class="btn small secondary" id="procMarcarBtn" type="button" style="margin-top:20px;">Marcar o desmarcar las visibles</button></div>
+        <div><button class="btn small secondary" id="procLimpiarBtn" type="button" style="margin-top:20px;">Desmarcar todas</button></div>
         <div class="field"><div class="kv" id="procMatrizConteo" style="margin-top:22px;"></div></div>
       </div>
+      <div id="procGrupoPanel" style="display:none;border:1px solid var(--grid);border-radius:8px;padding:10px 12px;margin:8px 0;">
+        <div class="kv" id="procGrupoResumen" style="margin-bottom:6px;"></div>
+        <div class="form-grid">
+          <div style="grid-column:1/-1;"><label>Procedimiento al que se vinculan las marcadas</label><select id="procGrupoDoc"></select></div>
+        </div>
+        <div class="kv" style="margin-top:4px;">Si eliges un área arriba, el vínculo se aplica solo a las líneas de esa área; sin área, a todas las líneas que tengan esa medida.</div>
+        <div class="toolbar" style="margin-top:8px;">
+          <button class="btn" id="procGrupoVincularBtn" type="button">Vincular las marcadas al procedimiento</button>
+          <button class="btn secondary" id="procGrupoNuevoBtn" type="button">Registrar un procedimiento nuevo para las marcadas</button>
+          <button class="btn secondary" id="procGrupoQuitarBtn" type="button">Quitar el vínculo de las marcadas</button>
+        </div>
+      </div>
       <table>
-        <thead><tr><th>Medida de control administrativa (D) de la Matriz</th><th>Líneas que la exigen</th><th>Estado</th><th>Acción</th></tr></thead>
+        <thead><tr><th></th><th>Medida de control administrativa (D) de la Matriz</th><th>Líneas que la exigen</th><th>Estado</th><th>Acción</th></tr></thead>
         <tbody id="procedimientosMatrizTable"></tbody>
       </table>
       </div>
@@ -5193,11 +5209,13 @@ function renderFufTable(){
   const html = [];
   rows.forEach(it=>{
     if(it.seccion !== lastSeccion){
-      html.push(`<tr><td colspan="6" style="background:#f2f4f7;font-weight:700;padding:8px 10px;">${it.seccion}</td></tr>`);
+      html.push(`<tr><td colspan="7" style="background:#f2f4f7;font-weight:700;padding:8px 10px;">${it.seccion}</td></tr>`);
       lastSeccion = it.seccion;
     }
     const rec = fufRecord(it.numero);
     const nivel = rec.nivel || "sin_evaluar";
+    const pendiente = nivel!=="cumple" && nivel!=="no_aplica";
+    const atrasado = pendiente && rec.plazoRegulariza && rec.plazoRegulariza < new Date().toISOString().slice(0,10);
     const nivelCls = nivel==="cumple" ? "vigente" : nivel==="no_cumple" ? "vencido" : nivel==="cumple_parcial" ? "proximo" : "";
     html.push(`<tr>
       <td>${it.numero}</td>
@@ -5214,13 +5232,14 @@ function renderFufTable(){
       </td>
       <td><input type="date" data-fuf-field="fecha" data-fuf-id="${it.numero}" value="${rec.fecha||""}"></td>
       <td><textarea data-fuf-field="observaciones" data-fuf-id="${it.numero}" rows="2" placeholder="Observaciones">${rec.observaciones||""}</textarea></td>
+      <td>${pendiente ? `<input data-fuf-field="responsableRegulariza" data-fuf-id="${it.numero}" list="dlResponsables" value="${incEsc(rec.responsableRegulariza||"")}" placeholder="Responsable" style="margin-bottom:4px;"><input type="date" data-fuf-field="plazoRegulariza" data-fuf-id="${it.numero}" value="${rec.plazoRegulariza||""}">${atrasado ? '<div style="margin-top:4px;"><span class="pill vencido">Atrasado</span></div>' : ""}` : '<span class="kv">—</span>'}</td>
       <td>
         ${rec.evidenciaNombre ? `<div class="kv">📎 ${rec.evidenciaNombre}</div><div style="margin-top:4px;display:flex;gap:6px;"><button class="subtle-btn" data-fuf-ver="${it.numero}" type="button">Ver</button><button class="subtle-btn" data-fuf-quitar="${it.numero}" type="button">Quitar</button></div>` : `<span class="kv">Sin evidencia</span>`}
         <input type="file" data-fuf-file="${it.numero}" accept="image/*,application/pdf" style="margin-top:6px;font-size:11px;">
       </td>
     </tr>`);
   });
-  document.getElementById("fufTable").innerHTML = html.join("") || `<tr><td class="empty" colspan="6">Sin ítems para el filtro seleccionado</td></tr>`;
+  document.getElementById("fufTable").innerHTML = html.join("") || `<tr><td class="empty" colspan="7">Sin ítems para el filtro seleccionado</td></tr>`;
   renderFufStats();
 }
 on(document.getElementById("fufTable"), "change", async (e) => {
@@ -5287,6 +5306,8 @@ on(document.getElementById("exportFufBtn"), "click", async () => {
       "Nivel de cumplimiento": FUF_NIVEL_LABEL[rec.nivel||"sin_evaluar"],
       "Fecha de evaluación": rec.fecha ? fmtDate(rec.fecha) : "",
       "Observaciones": rec.observaciones || "",
+      "Responsable de regularizar": rec.responsableRegulariza || "",
+      "Plazo para regularizar": rec.plazoRegulariza ? fmtDate(rec.plazoRegulariza) : "",
       "Evidencia adjunta": rec.evidenciaNombre || "",
     };
   });
@@ -5296,6 +5317,88 @@ on(document.getElementById("exportFufBtn"), "click", async () => {
   const empresaNombre = (CACHE.empresa && CACHE.empresa.razonSocial) ? CACHE.empresa.razonSocial.replace(/[^a-zA-Z0-9]+/g,"_") : "Empresa";
   XLSX.writeFile(wb, `Cumplimiento_FUF_DS44_${empresaNombre}_${new Date().toISOString().slice(0,10)}.xlsx`);
 });
+
+/* Informe PDF del FUF: resumen, cumplimiento por materia, PENDIENTES de
+   regularizar (lo principal, de mayor a menor gravedad y por plazo), lo que
+   cumple y lo que no aplica. Siempre sobre los 62 ítems, sin depender de los
+   filtros de pantalla. El % es el mismo de pantalla: Cumple / (62 - No aplica). */
+function fufDatosInforme(){
+  const items = FUF_ITEMS.map(it=>{ const rec = fufRecord(it.numero); return {it, rec, nivel: rec.nivel || "sin_evaluar"}; });
+  const counts = {cumple:0, cumple_parcial:0, no_cumple:0, no_aplica:0, sin_evaluar:0};
+  items.forEach(x=>{ counts[x.nivel] = (counts[x.nivel]||0) + 1; });
+  const evaluables = items.length - counts.no_aplica;
+  const pct = evaluables>0 ? Math.round(counts.cumple/evaluables*1000)/10 : 0;
+  return {items, counts, evaluables, pct};
+}
+function descargarInformeFufPdf(){
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const {items, counts, evaluables, pct} = fufDatosInforme();
+  const hoyIso = new Date().toISOString().slice(0,10);
+  const corto = (t, n)=>{ t = String(t||"").replace(/\s+/g," ").trim(); return t.length>n ? t.slice(0,n-3).trim()+"..." : t; };
+  const doc = new JsPDFClass();
+  let y = grdPdfEncabezado(doc, "Informe de cumplimiento legal - FUF DS 44/2024");
+  const pendientesN = counts.no_cumple + counts.cumple_parcial + counts.sin_evaluar;
+  doc.autoTable({ startY:y, head:[["Resumen","Valor"]], body:[
+    ["Cumplimiento total (Cumple / ítems que aplican)", `${pct}%  (${counts.cumple} de ${evaluables})`],
+    ["Cumple", counts.cumple], ["Cumple parcialmente", counts.cumple_parcial], ["No cumple", counts.no_cumple],
+    ["Sin evaluar (se consideran pendientes)", counts.sin_evaluar], ["No aplica", counts.no_aplica],
+    ["PENDIENTES de regularizar (parcial + no cumple + sin evaluar)", pendientesN],
+  ], styles:{fontSize:9}, headStyles:{fillColor:[42,120,214]}, columnStyles:{1:{halign:"center"}} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  // Cumplimiento por materia
+  const materias = [];
+  items.forEach(x=>{
+    let m = materias.find(k=>k.nombre===x.it.seccion);
+    if(!m){ m = {nombre:x.it.seccion, n:0, cumple:0, parcial:0, no:0, sin:0, na:0}; materias.push(m); }
+    m.n++; if(x.nivel==="cumple") m.cumple++; else if(x.nivel==="cumple_parcial") m.parcial++; else if(x.nivel==="no_cumple") m.no++; else if(x.nivel==="sin_evaluar") m.sin++; else m.na++;
+  });
+  doc.setFontSize(12); doc.text("Cumplimiento por materia", 14, y); y += 3;
+  doc.autoTable({ startY:y, head:[["Materia","Ítems","Cumple","Parcial","No cumple","Sin evaluar","No aplica","% cumple"]],
+    body: materias.map(m=>[corto(m.nombre, 70), m.n, m.cumple, m.parcial, m.no, m.sin, m.na, (m.n-m.na) ? Math.round(m.cumple/(m.n-m.na)*100)+"%" : "-"]),
+    styles:{fontSize:8}, headStyles:{fillColor:[42,120,214]}, columnStyles:{0:{cellWidth:70}} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  // Pendientes (lo principal)
+  const orden = {no_cumple:0, cumple_parcial:1, sin_evaluar:2};
+  const pend = items.filter(x=>x.nivel in orden).sort((a,b)=> orden[a.nivel]-orden[b.nivel] || (a.rec.plazoRegulariza||"9999").localeCompare(b.rec.plazoRegulariza||"9999") || (+a.it.numero)-(+b.it.numero));
+  if(y > 230){ doc.addPage(); y = 16; }
+  doc.setFontSize(13); doc.setTextColor(192,57,43); doc.text(`Pendientes de regularizar (${pend.length})`, 14, y); doc.setTextColor(0); y += 3;
+  doc.autoTable({ startY:y, head:[["N°","Materia / ítem","Art.","Estado","Observaciones","Responsable","Plazo"]],
+    body: pend.length ? pend.map(x=>{
+      const atras = x.rec.plazoRegulariza && x.rec.plazoRegulariza < hoyIso;
+      return [x.it.numero, `${corto(x.it.seccion, 60)}\n${corto(x.it.texto, 280)}`, x.it.articulo||"-", FUF_NIVEL_LABEL[x.nivel], corto(x.rec.observaciones, 160)||"-", x.rec.responsableRegulariza||"-", x.rec.plazoRegulariza ? fmtDate(x.rec.plazoRegulariza)+(atras?"\nATRASADO":"") : "-"];
+    }) : [["","No hay pendientes: todos los ítems que aplican cumplen.","","","","",""]],
+    styles:{fontSize:7.5, cellPadding:1.8}, headStyles:{fillColor:[192,57,43]},
+    columnStyles:{0:{cellWidth:9}, 1:{cellWidth:68}, 2:{cellWidth:14}, 3:{cellWidth:20}, 4:{cellWidth:34}, 5:{cellWidth:22}, 6:{cellWidth:18}},
+    didParseCell:(d)=>{ if(d.section==="body" && d.column.index===6 && String(d.cell.raw).includes("ATRASADO")) d.cell.styles.textColor = [192,57,43]; } });
+  y = doc.lastAutoTable.finalY + 8;
+
+  // Cumplen
+  const cumplen = items.filter(x=>x.nivel==="cumple");
+  if(y > 235){ doc.addPage(); y = 16; }
+  doc.setFontSize(12); doc.setTextColor(26,140,74); doc.text(`Ítems que cumplen (${cumplen.length})`, 14, y); doc.setTextColor(0); y += 3;
+  doc.autoTable({ startY:y, head:[["N°","Materia","Ítem","Evaluado","Evidencia"]],
+    body: cumplen.length ? cumplen.map(x=>[x.it.numero, corto(x.it.seccion, 45), corto(x.it.texto, 120), x.rec.fecha ? fmtDate(x.rec.fecha) : "-", x.rec.evidenciaNombre ? "Si" : "No"]) : [["","Todavía no hay ítems evaluados como 'Cumple'.","","",""]],
+    styles:{fontSize:7.5, cellPadding:1.6}, headStyles:{fillColor:[26,140,74]}, columnStyles:{0:{cellWidth:9}, 1:{cellWidth:40}, 3:{cellWidth:20}, 4:{cellWidth:16}} });
+  y = doc.lastAutoTable.finalY + 8;
+
+  // No aplica
+  const noAplica = items.filter(x=>x.nivel==="no_aplica");
+  if(noAplica.length){
+    if(y > 245){ doc.addPage(); y = 16; }
+    doc.setFontSize(12); doc.text(`No aplica (${noAplica.length})`, 14, y); y += 3;
+    doc.autoTable({ startY:y, head:[["N°","Ítem","Observaciones"]], body: noAplica.map(x=>[x.it.numero, corto(x.it.texto, 140), corto(x.rec.observaciones, 100)||"-"]), styles:{fontSize:7.5, cellPadding:1.6}, headStyles:{fillColor:[120,120,120]}, columnStyles:{0:{cellWidth:9}} });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+  if(y > 262){ doc.addPage(); y = 16; }
+  doc.setFontSize(8);
+  escribirTextoPaginado(doc, "Este informe refleja la autoevaluación registrada en Pehuen sobre el Formulario Unico de Fiscalizacion (DS 44/2024) y no reemplaza una fiscalizacion. Los items 'Sin evaluar' se consideran pendientes hasta que se evaluen.", 14, y, {maxWidth:182, lineHeight:4});
+  agregarPiePaginasPdf(doc, "Cumplimiento legal FUF DS 44");
+  doc.save(`Informe_Cumplimiento_FUF_DS44_${((CACHE.empresa&&CACHE.empresa.razonSocial)||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}_${hoyIso}.pdf`);
+}
+on(document.getElementById("fufInformePdfBtn"), "click", descargarInformeFufPdf);
 
 /* =========================================================
    OBLIGACIONES DS 44 (sección nueva y separada del FUF de arriba,
@@ -6482,14 +6585,14 @@ function tipoDocumentoLabel(d){
 
 /* Deduplica las medidas de control administrativas (D) de toda la Matriz
    de riesgos, contando cuántas líneas y qué procesos las requieren. */
-function procedimientosDesdeMatriz(){
+function procedimientosDesdeMatriz(areaId){
   const map = new Map();
-  (CACHE.matriz||[]).forEach(m=>{
+  (CACHE.matriz||[]).filter(m=>!areaId || m.areaId===areaId).forEach(m=>{
     jerarquiaDe(m).filter(it=>it.jerarquia==="D").forEach(it=>{
       const texto = (it.texto||"").trim();
       if(!texto) return;
       const key = texto.toLowerCase().replace(/\s+/g," ");
-      if(!map.has(key)) map.set(key, {texto, count:0, procesos:new Set(), documentoId:null, busqueda:new Set()});
+      if(!map.has(key)) map.set(key, {texto, key, count:0, procesos:new Set(), documentoId:null, busqueda:new Set()});
       const e = map.get(key);
       e.count++;
       if(m.proceso) e.procesos.add(m.proceso);
@@ -6555,8 +6658,13 @@ function documentosVigentesMap(){
   });
   return map;
 }
+var procSel = new Set(), docVinculoPendiente = null;
 function renderProcedimientosMatriz(){
-  const items = procedimientosDesdeMatriz();
+  { const selA = document.getElementById("procMatrizArea"), cur = selA.value;
+    selA.innerHTML = '<option value="">Todas</option>' + (CACHE.areas||[]).map(a=>`<option value="${a.id}">${incEsc(a.nombre)}</option>`).join("");
+    if(cur && Array.from(selA.options).some(o=>o.value===cur)) selA.value = cur; }
+  const items = procedimientosDesdeMatriz(document.getElementById("procMatrizArea").value);
+  procSel = new Set(Array.from(procSel).filter(k=>items.some(it=>it.key===k)));
   // El buscador filtra solo lo que se muestra; el índice original (idx) se
   // conserva porque "Vincular a documento" lo usa para ubicar el procedimiento
   // dentro de la lista completa (window.__procedimientosMatrizActuales).
@@ -6577,12 +6685,13 @@ function renderProcedimientosMatriz(){
       : `<button class="subtle-btn" data-doc-crear="${encodeURIComponent(it.texto)}">Registrar procedimiento</button>`)
       + ` <button class="subtle-btn" data-doc-vincular="${idx}">Vincular a documento</button>`;
     return `<tr>
+      <td><input type="checkbox" data-proc-sel="${idx}" style="width:auto;min-height:auto;"${procSel.has(it.key)?" checked":""}></td>
       <td>${it.texto}</td>
       <td>${it.count} línea(s)${it.procesos.size? `<div class="kv">${Array.from(it.procesos).join(", ")}</div>`:""}</td>
       <td>${estadoHtml}</td>
       <td>${accionHtml}</td>
     </tr>`;
-  }).join("") : `<tr><td class="empty" colspan="4">${items.length ? "Ningún procedimiento coincide con la búsqueda" : "No hay medidas de control administrativas (D) cargadas en la Matriz de riesgos"}</td></tr>`;
+  }).join("") : `<tr><td class="empty" colspan="5">${items.length ? "Ningún procedimiento coincide con la búsqueda" : "No hay medidas de control administrativas (D) cargadas en la Matriz de riesgos"}</td></tr>`;
   const pendientes = items.filter(it=>!documentoDeControl(it)).length;
   document.getElementById("procedimientosMatrizTiles").innerHTML = [
     tile("Procedimientos identificados en la Matriz", items.length, "medidas de control administrativas (D) distintas"),
@@ -6590,19 +6699,93 @@ function renderProcedimientosMatriz(){
     tile("Pendientes de confeccionar", pendientes, "sin documento registrado todavía"),
   ].join("");
   window.__procedimientosMatrizActuales = items;
+  procActualizarPanel(items);
+}
+/* Panel de acciones sobre las medidas marcadas: vincularlas todas a un
+   procedimiento, registrar uno nuevo para ellas o quitar el vínculo. */
+function procActualizarPanel(items){
+  const marcadas = items.filter(it=>procSel.has(it.key));
+  const panel = document.getElementById("procGrupoPanel");
+  panel.style.display = marcadas.length ? "" : "none";
+  if(!marcadas.length) return;
+  const lineas = marcadas.reduce((s,it)=>s+it.count, 0);
+  document.getElementById("procGrupoResumen").textContent = `${marcadas.length} medida(s) marcada(s), que exigen ${lineas} línea(s) de la Matriz.`;
+  const sel = document.getElementById("procGrupoDoc"), cur = sel.value;
+  const docs = (CACHE.documentos||[]).filter(d=>d.tipo==="procedimiento").slice().sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
+  sel.innerHTML = docs.length ? docs.map(d=>`<option value="${d.id}">${incEsc(tipoDocumentoLabel(d))}: ${incEsc(d.nombre)} (v.${d.version||"—"})</option>`).join("") : '<option value="">Todavía no hay procedimientos registrados</option>';
+  if(cur && Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur;
+}
+function procMarcadas(){
+  return (window.__procedimientosMatrizActuales||[]).filter(it=>procSel.has(it.key));
 }
 document.getElementById("procMatrizBuscar").addEventListener("input", renderProcedimientosMatriz);
 document.getElementById("procMatrizEstado").addEventListener("change", renderProcedimientosMatriz);
+document.getElementById("procMatrizArea").addEventListener("change", renderProcedimientosMatriz);
+on(document.getElementById("procedimientosMatrizTable"), "change", (e)=>{
+  const cb = e.target.closest("[data-proc-sel]"); if(!cb) return;
+  const it = (window.__procedimientosMatrizActuales||[])[+cb.dataset.procSel]; if(!it) return;
+  if(cb.checked) procSel.add(it.key); else procSel.delete(it.key);
+  procActualizarPanel(window.__procedimientosMatrizActuales||[]);
+});
+on(document.getElementById("procMarcarBtn"), "click", ()=>{
+  // "visibles" = las que pasan la búsqueda y el filtro de estado (las filas dibujadas)
+  const ids = Array.from(document.querySelectorAll("#procedimientosMatrizTable [data-proc-sel]")).map(c=>(window.__procedimientosMatrizActuales||[])[+c.dataset.procSel]).filter(Boolean).map(it=>it.key);
+  const todas = ids.length && ids.every(k=>procSel.has(k));
+  ids.forEach(k=>{ if(todas) procSel.delete(k); else procSel.add(k); });
+  renderProcedimientosMatriz();
+});
+on(document.getElementById("procLimpiarBtn"), "click", ()=>{ procSel = new Set(); renderProcedimientosMatriz(); });
+function procRefrescarTrasVinculo(){
+  renderProcedimientosMatriz();
+  renderMatrizTable();
+  renderMatrizHistorialTable();
+  if(typeof renderControlDocumental==="function") renderControlDocumental();
+}
+on(document.getElementById("procGrupoVincularBtn"), "click", async ()=>{
+  const marcadas = procMarcadas();
+  const documentoId = document.getElementById("procGrupoDoc").value;
+  if(!marcadas.length){ alert("Marca al menos una medida de la lista."); return; }
+  if(!documentoId){ alert("Elige el procedimiento al que se vincularán (si no hay, registra uno nuevo)."); return; }
+  const areaId = document.getElementById("procMatrizArea").value;
+  const doc = (CACHE.documentos||[]).find(d=>d.id===documentoId);
+  if(!confirm(`Se vincularán ${marcadas.length} medida(s) al procedimiento "${doc?doc.nombre:""}"${areaId?` en el área ${areaName(areaId)}`:" en todas las áreas"}. ¿Continuar?`)) return;
+  let lineas = 0;
+  for(const b of marcadas) lineas += await vincularBucketADocumento(b, documentoId, areaId);
+  procSel = new Set();
+  await loadCache();
+  procRefrescarTrasVinculo();
+  alert(`${marcadas.length} medida(s) vinculada(s) al procedimiento (${lineas} línea(s) de la Matriz actualizada(s)).`);
+});
+on(document.getElementById("procGrupoQuitarBtn"), "click", async ()=>{
+  const marcadas = procMarcadas();
+  if(!marcadas.length){ alert("Marca al menos una medida de la lista."); return; }
+  const areaId = document.getElementById("procMatrizArea").value;
+  if(!confirm(`Se quitará el vínculo con el procedimiento de ${marcadas.length} medida(s)${areaId?` en el área ${areaName(areaId)}`:" en todas las áreas"}. ¿Continuar?`)) return;
+  let lineas = 0;
+  for(const b of marcadas) lineas += await desvincularBucket(b, areaId);
+  procSel = new Set();
+  await loadCache();
+  procRefrescarTrasVinculo();
+  alert(`Vínculo quitado en ${lineas} línea(s) de la Matriz.`);
+});
+on(document.getElementById("procGrupoNuevoBtn"), "click", ()=>{
+  const marcadas = procMarcadas();
+  if(!marcadas.length){ alert("Marca al menos una medida de la lista."); return; }
+  docVinculoPendiente = {textos: marcadas.map(it=>it.texto), areaId: document.getElementById("procMatrizArea").value};
+  resetDocumentoForm({tipo:"procedimiento", nombre: marcadas[0].texto});
+  document.getElementById("hdrDocumento").scrollIntoView({behavior:"smooth", block:"start"});
+  alert(`Completa el documento y presiona "Guardar versión": al guardarlo se vincularán automáticamente las ${marcadas.length} medida(s) marcadas.`);
+});
 /* Vincula TODAS las líneas de la matriz cuyo control D tenga el mismo texto
    (normalizado) que este bucket a un documento elegido -- resuelve de una
    vez el caso típico de "el mismo procedimiento repetido en N líneas". */
-function vincularBucketADocumento(bucket, documentoId){
+function vincularBucketADocumento(bucket, documentoId, areaId){
   const doc = (CACHE.documentos||[]).find(d=>d.id===documentoId);
   if(!doc) return Promise.resolve(0);
   const normTexto = s => (s||"").toLowerCase().replace(/\s+/g," ").trim();
   const keyTexto = normTexto(bucket.texto);
   const cambios = [];
-  (CACHE.matriz||[]).forEach(m=>{
+  (CACHE.matriz||[]).filter(m=>!areaId || m.areaId===areaId).forEach(m=>{
     let cambio = false;
     const controles = jerarquiaDe(m);
     controles.forEach(it=>{
@@ -6623,6 +6806,25 @@ function vincularBucketADocumento(bucket, documentoId){
     }
     return cambios.length;
   })();
+}
+/* Quita el vínculo con un documento de las líneas cuya medida D tiene el texto
+   del bucket (opcionalmente solo las de un área). Devuelve cuántas líneas cambió. */
+async function desvincularBucket(bucket, areaId){
+  const normTexto = s => (s||"").toLowerCase().replace(/\s+/g," ").trim();
+  const keyTexto = normTexto(bucket.texto);
+  let n = 0;
+  for(const m of (CACHE.matriz||[]).filter(x=>!areaId || x.areaId===areaId)){
+    const controles = jerarquiaDe(m).map(c=>({...c}));
+    let cambio = false;
+    controles.forEach(it=>{ if(it.jerarquia==="D" && normTexto(it.texto)===keyTexto && it.documentoId){ it.documentoId = ""; cambio = true; } });
+    if(cambio){
+      const rec = { ...m, controlesJerarquizados: controles };
+      await put("matriz", rec);
+      await logHistorial(rec.id, matrizLineLabel(rec), "Control transferido", "", `Se quitó el vínculo de la medida "${bucket.texto}" con su documento`);
+      n++;
+    }
+  }
+  return n;
 }
 on(document.getElementById("procedimientosMatrizTable"), "click", (e) => {
   const crearBtn = e.target.closest("[data-doc-crear]");
@@ -6652,7 +6854,7 @@ on(document.getElementById("procedimientosMatrizTable"), "click", (e) => {
     on(document.getElementById("vincularDocCancelarBtn"), "click", ()=> closeModal());
     on(document.getElementById("vincularDocConfirmarBtn"), "click", async ()=>{
       const documentoId = document.getElementById("vincularDocSel").value;
-      const n = await vincularBucketADocumento(bucket, documentoId);
+      const n = await vincularBucketADocumento(bucket, documentoId, document.getElementById("procMatrizArea").value);
       await loadCache();
       closeModal();
       renderProcedimientosMatriz();
@@ -6778,9 +6980,20 @@ on(document.getElementById("saveDocumentoBtn"), "click", async ()=>{
   const rec = leerDocumentoDelFormulario(anterior);
   await put("documentos", rec);
   await loadCache();
+  // Si el documento se registró desde "Registrar un procedimiento nuevo para las
+  // medidas marcadas", se vinculan ahora esas medidas al documento recién guardado.
+  let vinculadas = 0;
+  if(docVinculoPendiente && rec.tipo==="procedimiento"){
+    const pend = docVinculoPendiente; docVinculoPendiente = null;
+    for(const texto of pend.textos) vinculadas += await vincularBucketADocumento({texto}, rec.id, pend.areaId);
+    procSel = new Set();
+    await loadCache();
+    renderMatrizTable(); renderMatrizHistorialTable();
+  }
   resetDocumentoForm();
   renderControlDocumental();
   renderCommonSelects(); // refresca el selector "Procedimiento / documento asociado" del Plan de capacitación
+  if(vinculadas) alert(`Documento guardado y vinculado a ${vinculadas} línea(s) de la Matriz.`);
 });
 on(document.getElementById("generarDocumentoPdfFormBtn"), "click", ()=>{
   const nombre = document.getElementById("docNombre").value.trim();
