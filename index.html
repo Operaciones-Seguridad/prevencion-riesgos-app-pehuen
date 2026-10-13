@@ -1330,6 +1330,7 @@
         <tbody id="paPendientesTable"></tbody>
       </table>
       <div id="paResidualAviso" style="margin-top:10px;"></div>
+      <div id="paAceptadosWrap"></div>
 
       <h2 id="paFormTitle" style="margin-top:22px;font-size:15px;">Nueva acción</h2>
       <div class="form-grid">
@@ -4233,6 +4234,7 @@
       <div class="form-grid">
         <div><label>Nombre del perfil</label><input id="perfilNombre" placeholder="Ej: Prevencionista de Riesgos, Bodeguero..."></div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:22px;"><input type="checkbox" id="perfilEsAdmin" style="width:auto;"><label style="margin:0;">Es Administrador (puede gestionar accesos)</label></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:22px;"><input type="checkbox" id="perfilPuedeAceptar" style="width:auto;"><label style="margin:0;">Puede aceptar riesgos Medio tolerados (Prevencionista)</label></div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:22px;"><input type="checkbox" id="perfilDescargaDashboard" style="width:auto;" checked><label style="margin:0;">Puede descargar el Dashboard en PDF o PPT</label></div>
       </div>
       <label>Pestañas visibles para este perfil</label>
@@ -10401,7 +10403,7 @@ subpestanasCrear("matriz", [
   {key:"levantamiento", icono:"lista", label:"Levantamiento por área", desc:"Levantamiento IPER por área de trabajo", hdrs:["hdrLevantamiento"]},
   {key:"mapas", icono:"mapa", label:"Mapas y análisis", desc:"Mapas de riesgo, niveles y equidad de género", hdrs:["hdrMapaDeRiesgosPorAreaProceso","hdrMapaDeRiesgosPlanoDePlantaYSimbologia","hdrMatrizDeRiesgosPorNivelYPorArea","hdrEquidadGenero"]},
   {key:"accion", icono:"grafico", label:"Plan de acción y controles", desc:"Plan de acción, controles DS 44 y EPP", hdrs:["hdrPlanDeAccionMatrizDeRiesgos","hdrJerarquiaDeControlesDS44","hdrTraspasosPendientes","hdrEstudioEpp"],
-    badge:()=>{ const cub = new Set((CACHE.planAccionMatriz||[]).map(p=>p.matrizId)); const n = paLineasRequierenAccion().filter(m=>!cub.has(m.id)).length; return n ? {texto:`${n} sin plan`, nivel:"y"} : null; }},
+    badge:()=>{ const n = paLineasRequierenAccion().length; return n ? {texto:`${n} sin plan`, nivel:"y"} : null; }},
 ], "tarjetas");
 
 subpestanasCrear("programa", [
@@ -14071,7 +14073,7 @@ function renderMatrizTable(){
       <td>${m.categoria||"—"}</td>
       <td><strong>${m.peligro}</strong>${m.levantamientoId?` <span class="pill bajo" title="Generada desde un Levantamiento de riesgos">Levantamiento</span>`:""}<div class="kv">${m.riesgo}</div>${m.efecto?`<div class="kv">${m.efecto.length>140?m.efecto.slice(0,140)+"…":m.efecto}</div>`:""}</td>
       <td>Puro: ${m.probabilidad} x ${m.consecuencia} = ${m.probabilidad*m.consecuencia}${tieneResidualEvaluado(m)?`<div class="kv">Residual: ${m.probabilidadResidual} x ${m.consecuenciaResidual} = ${m.probabilidadResidual*m.consecuenciaResidual}</div>`:""}</td>
-      <td><span class="pill ${m.nivel}">${nivelLabel(m.nivel)}</span><div class="kv">${tieneResidualEvaluado(m)?"(residual)":"(puro)"}</div></td>
+      <td><span class="pill ${m.nivel}">${nivelLabel(m.nivel)}</span><div class="kv">${tieneResidualEvaluado(m)?"(residual)":"(puro)"}</div>${paAceptacionHtml(m)}</td>
       <td><div class="kv">${m.hombres||0} H · ${m.mujeres||0} M${m.otros?` · ${m.otros} otros`:""}</div></td>
       <td>${m.sensible && (m.gruposSensibles||[]).length ? `<span class="pill alto" title="${(m.gruposSensibles||[]).join(", ")}">Sí</span><div class="kv" style="margin-top:4px;">${(m.gruposSensibles||[]).join(", ")}</div>` : '<span class="pill bajo">No</span>'}</td>
       <td>${(() => {
@@ -15833,16 +15835,182 @@ on(document.getElementById("printPlanoRiesgosBtn"), "click", async () => { impri
    (logHistorial), el mismo que ya se revisa por línea de matriz.
    ========================================================= */
 const PA_TIPO_LABEL = { mitigar:"Mitigar", evitar:"Evitar", transferir:"Transferir", aceptar:"Aceptar" };
-/* Un plan de acción se exige según el riesgo que queda DESPUÉS de los controles:
-   - con riesgo residual evaluado se usa el residual;
-   - sin medidas de control escritas, el riesgo residual es igual al inherente (nada lo baja) y requiere acción;
-   - con medidas de control pero sin residual evaluado todavía no se sabe: la línea queda «por evaluar el riesgo residual»
-     (no se cuenta como pendiente de plan hasta evaluarla). */
+/* ===== TRATAMIENTO DEL RIESGO: acción cumplida -> reevaluar el residual -> nueva ronda o aceptación =====
+   Una línea necesita plan de acción cuando su riesgo RESIDUAL (después de los controles) sigue Medio o más y no tiene
+   ninguna acción abierta (pendiente / en proceso) ni una aceptación vigente. Al cumplir una acción se vuelve a evaluar
+   probabilidad y consecuencia y el resultado queda en la línea de la matriz (probabilidadResidual / consecuenciaResidual):
+   Bajo = controlada; Medio = nueva acción o aceptación justificada (solo quien tenga el permiso, hoy el Prevencionista);
+   Alto / Muy alto = obliga a una nueva ronda de acciones.
+   m.aceptacionRiesgo = {fecha, por, justificacion, revisarEn, nivel, controlesAplicados, revocada}. */
 function paTieneControles(m){ const it = jerarquiaDe(m); return !!(it && it.length) || !!(m.controles && String(m.controles).trim()); }
-function paResidualPorEvaluar(m){ return nivelRiesgoLinea(m) !== "bajo" && !tieneResidualEvaluado(m) && paTieneControles(m); }
+function paAccionesDe(m){ return (CACHE.planAccionMatriz||[]).filter(p=>p.matrizId===m.id); }
+function paAccionesAbiertas(m){ return paAccionesDe(m).filter(p=>p.estado!=="cumplida"); }
+function paHoyIso(){ return new Date().toISOString().slice(0,10); }
+function paAceptacionVigente(m){ const a = m.aceptacionRiesgo; return (a && !a.revocada && (!a.revisarEn || a.revisarEn >= paHoyIso())) ? a : null; }
+function paAceptacionVencida(m){ const a = m.aceptacionRiesgo; return !!(a && !a.revocada && a.revisarEn && a.revisarEn < paHoyIso()); }
+/* Con controles escritos, sin residual evaluado y sin acciones abiertas ni aceptación: todavía no se sabe qué riesgo queda. */
+function paResidualPorEvaluar(m){ return nivelRiesgoLinea(m) !== "bajo" && !tieneResidualEvaluado(m) && paTieneControles(m) && !paAccionesAbiertas(m).length && !paAceptacionVigente(m); }
 function paLineasMedioOMas(){ return CACHE.matriz.filter(m => nivelRiesgoLinea(m) !== "bajo"); }
-function paLineasRequierenAccion(){ return CACHE.matriz.filter(m => nivelRiesgoLinea(m) !== "bajo" && !paResidualPorEvaluar(m)); }
+function paLineasRequierenAccion(){ return CACHE.matriz.filter(m => nivelRiesgoLinea(m) !== "bajo" && !paResidualPorEvaluar(m) && !paAccionesAbiertas(m).length && !paAceptacionVigente(m)); }
 function paLineasResidualPorEvaluar(){ return CACHE.matriz.filter(paResidualPorEvaluar); }
+function paEstadoTratamiento(m){
+  if(paAccionesAbiertas(m).length) return {k:"tratamiento", label:"En tratamiento", pill:"proceso"};
+  if(nivelRiesgoLinea(m)==="bajo") return {k:"controlado", label:"Controlado", pill:"bajo"};
+  if(paAceptacionVigente(m)) return {k:"aceptado", label:"Medio aceptado", pill:"medio"};
+  if(paResidualPorEvaluar(m)) return {k:"por_evaluar", label:"Por evaluar residual", pill:"pendiente"};
+  return {k:"requiere", label:"Requiere más medidas", pill:"critico"};
+}
+function paResumenTratamiento(){
+  const acept = CACHE.matriz.filter(m=>paAceptacionVigente(m)), venc = CACHE.matriz.filter(paAceptacionVencida);
+  return {requieren: paLineasRequierenAccion().length, aceptados: acept.length, aceptadosVencidos: venc.length,
+    aceptadosPorVencer: acept.filter(m=>m.aceptacionRiesgo.revisarEn && daysUntil(m.aceptacionRiesgo.revisarEn) <= 30).length};
+}
+/* Solo el Prevencionista acepta riesgos Medio: permiso del perfil (si no está definido, los perfiles cuyo nombre contiene «prevencion»). */
+function paPuedeAceptarRiesgos(){
+  const per = perfilDeSesion();
+  if(!per) return true; // sin sistema de sesión (modo local de un solo usuario)
+  if(per.puedeAceptarRiesgos !== undefined) return !!per.puedeAceptarRiesgos;
+  return /prevencion/.test(matrizNorm(per.nombre||""));
+}
+function paAceptacionHtml(m){
+  const a = m.aceptacionRiesgo; if(!a || a.revocada) return "";
+  const venc = paAceptacionVencida(m);
+  return `<div class="kv" style="margin-top:4px;"><span class="pill ${venc?"vencido":"medio"}">${venc?"Aceptación vencida":"Riesgo Medio aceptado"}</span> por ${incEsc(a.por||"—")} el ${fmtDate(a.fecha)}${a.revisarEn?" · revisión "+fmtDate(a.revisarEn):""}</div>`;
+}
+/* Acciones ya cumplidas con «probabilidad/consecuencia después» pero sin residual en la línea: se toma ese valor (una sola vez). */
+let paResidualMigrado = false;
+async function paMigrarResiduales(){
+  let n = 0;
+  for(const m of (CACHE.matriz||[])){
+    if(tieneResidualEvaluado(m)) continue;
+    const c = paAccionesDe(m).filter(p=>p.estado==="cumplida" && p.probDespues && p.consDespues).sort((a,b)=>String(b.fechaCumplida||b.fechaCreacion||"").localeCompare(String(a.fechaCumplida||a.fechaCreacion||"")))[0];
+    if(!c) continue;
+    await put("matriz", {...m, probabilidadResidual:+c.probDespues, consecuenciaResidual:+c.consDespues});
+    await logHistorial(m.id, matrizLineLabel(m), "Riesgo residual", "Sin evaluar", `${c.probDespues} x ${c.consDespues} (tomado de la acción cumplida: ${c.actividad||"—"})`);
+    n++;
+  }
+  if(n) await loadCache();
+  return n;
+}
+function paNuevaAccionPara(matrizId){
+  paResetForm(); paFillMatrizSelect();
+  const sel = document.getElementById("paMatrizId"); sel.value = matrizId;
+  paActualizarContexto();
+  document.getElementById("paFormTitle").scrollIntoView({behavior:"smooth", block:"start"});
+}
+/* Ventana «Riesgo después de la acción» (una o varias acciones que pasan a cumplidas). */
+function paAbrirCumplida(ids){
+  const acs = ids.map(id=>(CACHE.planAccionMatriz||[]).find(p=>p.id===id)).filter(Boolean);
+  if(!acs.length) return;
+  const unica = acs.length===1 ? acs[0] : null, m0 = unica ? paMatrizLinea(unica.matrizId) : null;
+  const p0 = m0 ? (+probResidualEfectiva(m0)||3) : 3, c0 = m0 ? (+consResidualEfectiva(m0)||3) : 3;
+  const opt = (v)=>[1,2,3,4,5].map(x=>`<option value="${x}"${x===v?" selected":""}>${x}</option>`).join("");
+  openModal(`
+    <h3>Riesgo después de la acción</h3>
+    ${m0 ? `<div class="kv" style="margin-bottom:6px;">${incEsc(matrizLineLabel(m0))} · riesgo actual: <strong>${nivelLabel(nivelRiesgoLinea(m0))}</strong><br>Acción: ${incEsc(unica.actividad||"—")}</div>` : `<div class="kv" style="margin-bottom:6px;">${acs.length} acciones marcadas: se usará el mismo valor para todas sus líneas de la matriz.</div>`}
+    <div class="desc">Al cumplir una acción hay que volver a evaluar el riesgo que queda (riesgo residual). Ese valor se guarda en la línea de la matriz y define si necesita más medidas.</div>
+    <div class="form-grid">
+      <div><label>Probabilidad después (1-5)</label><select id="cmpProb">${opt(p0)}</select></div>
+      <div><label>Consecuencia después (1-5)</label><select id="cmpCons">${opt(c0)}</select></div>
+      <div><label>Fecha de cumplimiento</label><input type="date" id="cmpFecha" value="${paHoyIso()}"></div>
+    </div>
+    <div id="cmpNivel" style="margin:8px 0;"></div>
+    <label>Observación sobre la eficacia (opcional)</label>
+    <textarea id="cmpObs" placeholder="Ej: se instaló la baranda y se verificó en terreno"></textarea>
+    <div class="toolbar" style="margin-top:10px;"><button class="btn" id="cmpConfirmarBtn" type="button">Confirmar cumplimiento</button><button class="btn secondary" id="cmpCancelarBtn" type="button">Cancelar</button></div>`);
+  const nivelVivo = ()=>{ const n = nivelRiesgo(+document.getElementById("cmpProb").value, +document.getElementById("cmpCons").value); document.getElementById("cmpNivel").innerHTML = `Riesgo resultante: <span class="pill ${n}">${nivelLabel(n)}</span>`; };
+  on(document.getElementById("cmpProb"), "change", nivelVivo); on(document.getElementById("cmpCons"), "change", nivelVivo); nivelVivo();
+  on(document.getElementById("cmpCancelarBtn"), "click", async ()=>{ closeModal(); await loadCache(); renderPlanAccion(); });
+  on(document.getElementById("cmpConfirmarBtn"), "click", async ()=>{
+    const prob = paClamp15(document.getElementById("cmpProb").value, 3), cons = paClamp15(document.getElementById("cmpCons").value, 3);
+    const fecha = document.getElementById("cmpFecha").value || paHoyIso(), obs = document.getElementById("cmpObs").value.trim();
+    const nivel = nivelRiesgo(prob, cons), lineas = new Set();
+    for(const p0a of acs){
+      const p = (CACHE.planAccionMatriz||[]).find(x=>x.id===p0a.id); if(!p) continue;
+      const anterior = p.estado, m = paMatrizLinea(p.matrizId);
+      p.estado = "cumplida"; p.fechaCumplida = fecha; p.probDespues = prob; p.consDespues = cons; p.eficaciaObservacion = obs;
+      await put("planAccionMatriz", p);
+      if(m){
+        const antes = nivelLabel(nivelRiesgoLinea(m)), rec = {...m, probabilidadResidual:prob, consecuenciaResidual:cons};
+        if(rec.aceptacionRiesgo && !rec.aceptacionRiesgo.revocada) rec.aceptacionRiesgo = {...rec.aceptacionRiesgo, revocada:true, revocadaMotivo:"Nueva evaluación del riesgo residual"};
+        await put("matriz", rec);
+        await logHistorial(p.matrizId, matrizLineLabel(m), "Estado del plan de acción", anterior, "cumplida");
+        await logHistorial(p.matrizId, matrizLineLabel(m), "Riesgo residual (acción cumplida)", `${antes}`, `${nivelLabel(nivel)} (${prob} x ${cons})${obs?" — "+obs:""}`);
+        lineas.add(p.matrizId);
+      }
+    }
+    await loadCache();
+    renderPlanAccion();
+    try{ renderMatrizTable(); renderMatrizCharts(); renderMapaRiesgos(); }catch(e){}
+    if(!unica){
+      closeModal();
+      const mas = Array.from(lineas).filter(id=>{ const m = paMatrizLinea(id); return m && nivelRiesgoLinea(m)!=="bajo"; }).length;
+      alert(`${acs.length} acción(es) cumplida(s). Riesgo residual ${nivelLabel(nivel)} en ${lineas.size} línea(s)${nivel==="bajo" ? ": quedan controladas." : `: ${mas} requieren más medidas y aparecen en «Pendientes de plan de acción».`}`);
+      return;
+    }
+    const idLinea = unica.matrizId, body = document.getElementById("modalBody");
+    if(nivel==="bajo"){
+      body.innerHTML = `<h3>✔ Línea controlada</h3><p>El riesgo residual quedó en <span class="pill bajo">Bajo</span>. No necesita más medidas.</p><div class="toolbar"><button class="btn" id="decCerrarBtn" type="button">Cerrar</button></div>`;
+      on(document.getElementById("decCerrarBtn"), "click", closeModal);
+      return;
+    }
+    const puede = paPuedeAceptarRiesgos();
+    body.innerHTML = `<h3>El riesgo sigue en ${nivelLabel(nivel)}</h3>
+      <p>Después de la acción el riesgo residual quedó <span class="pill ${nivel}">${nivelLabel(nivel)}</span>. ${nivel==="medio" ? "Puedes <strong>definir una nueva acción</strong> (siguiente ronda) o, si ya se aplicaron todos los controles razonables, <strong>aceptar el riesgo Medio</strong> con una justificación." : "Un riesgo así <strong>no es aceptable</strong>: hay que definir una nueva acción (siguiente ronda)."}</p>
+      ${nivel==="medio" && !puede ? '<div class="kv">Solo el Prevencionista de Riesgos puede aceptar un riesgo Medio.</div>' : ""}
+      <div class="toolbar" style="margin-top:10px;"><button class="btn" id="decNuevaBtn" type="button">Definir nueva acción</button>${nivel==="medio" && puede ? '<button class="btn secondary" id="decAceptarBtn" type="button">Aceptar el riesgo Medio</button>' : ""}<button class="btn secondary" id="decDespuesBtn" type="button">Decidir después</button></div>`;
+    on(document.getElementById("decNuevaBtn"), "click", ()=>{ closeModal(); paNuevaAccionPara(idLinea); });
+    const ac = document.getElementById("decAceptarBtn"); if(ac) on(ac, "click", ()=>{ closeModal(); paAbrirAceptacion(idLinea); });
+    on(document.getElementById("decDespuesBtn"), "click", closeModal);
+  });
+}
+/* Aceptación justificada de un riesgo Medio (solo con permiso). */
+function paAbrirAceptacion(matrizId){
+  const m = paMatrizLinea(matrizId); if(!m) return;
+  if(!paPuedeAceptarRiesgos()){ alert("Solo el Prevencionista de Riesgos puede aceptar un riesgo Medio."); return; }
+  if(nivelRiesgoLinea(m)!=="medio"){ alert("Solo se puede aceptar un riesgo que quedó en nivel Medio."); return; }
+  const rev = new Date(); rev.setFullYear(rev.getFullYear()+1);
+  openModal(`
+    <h3>Aceptar el riesgo Medio</h3>
+    <div class="kv" style="margin-bottom:6px;">${incEsc(matrizLineLabel(m))} · riesgo residual <span class="pill medio">Medio</span> · ${jerarquiaDe(m).length} medida(s) de control · ${paAccionesDe(m).length} acción(es) en el plan</div>
+    <div class="desc">Un riesgo Medio solo puede tolerarse si ya se aplicaron todos los controles razonablemente posibles. Queda registrado quién lo aceptó y cuándo debe revisarse; al vencer la revisión vuelve a pendientes.</div>
+    <label>Justificación (obligatoria)</label>
+    <textarea id="acpJust" placeholder="Ej: Se aplicaron los controles de ingeniería y administrativos disponibles; no existe una medida adicional factible y el riesgo se monitorea en las inspecciones mensuales."></textarea>
+    <div class="form-grid"><div><label>Fecha de revisión</label><input type="date" id="acpRev" value="${rev.toISOString().slice(0,10)}"></div></div>
+    <div class="toolbar" style="margin-top:10px;"><button class="btn" id="acpGuardarBtn" type="button">Aceptar el riesgo</button><button class="btn secondary" id="acpCancelarBtn" type="button">Cancelar</button></div>`);
+  on(document.getElementById("acpCancelarBtn"), "click", closeModal);
+  on(document.getElementById("acpGuardarBtn"), "click", async ()=>{
+    const just = document.getElementById("acpJust").value.trim(), revisarEn = document.getElementById("acpRev").value;
+    if(!just){ alert("Escribe la justificación de la aceptación."); return; }
+    if(!revisarEn || revisarEn <= paHoyIso()){ alert("Indica una fecha de revisión posterior a hoy."); return; }
+    const u = usuarioDeSesion();
+    await put("matriz", {...m, aceptacionRiesgo:{fecha:paHoyIso(), por:(u&&u.nombre)||"Prevencionista", justificacion:just, revisarEn, nivel:"medio", controlesAplicados:jerarquiaDe(m).length, revocada:false}});
+    await logHistorial(m.id, matrizLineLabel(m), "Riesgo Medio aceptado", "", `Por ${(u&&u.nombre)||"Prevencionista"} — ${just} (revisión ${fmtDate(revisarEn)})`);
+    await loadCache(); closeModal(); renderPlanAccion();
+    try{ renderMatrizTable(); }catch(e){}
+  });
+}
+async function paRevocarAceptacion(matrizId){
+  const m = paMatrizLinea(matrizId); if(!m || !m.aceptacionRiesgo) return;
+  if(!paPuedeAceptarRiesgos()){ alert("Solo el Prevencionista de Riesgos puede revocar la aceptación de un riesgo Medio."); return; }
+  if(!confirm("¿Revocar la aceptación de este riesgo Medio? La línea volverá a «Pendientes de plan de acción».")) return;
+  await put("matriz", {...m, aceptacionRiesgo:{...m.aceptacionRiesgo, revocada:true, revocadaMotivo:"Revocada manualmente"}});
+  await logHistorial(m.id, matrizLineLabel(m), "Riesgo Medio aceptado", "Aceptado", "Revocada");
+  await loadCache(); renderPlanAccion();
+  try{ renderMatrizTable(); }catch(e){}
+}
+function renderPaAceptados(){
+  const wrap = document.getElementById("paAceptadosWrap"); if(!wrap) return;
+  const ls = CACHE.matriz.filter(m=>m.aceptacionRiesgo && !m.aceptacionRiesgo.revocada);
+  if(!ls.length){ wrap.innerHTML = ""; return; }
+  const puede = paPuedeAceptarRiesgos();
+  wrap.innerHTML = `<h2 style="margin-top:22px;font-size:15px;">Riesgos Medio aceptados</h2>
+    <div class="desc">Riesgos que quedaron en Medio después de los controles y fueron aceptados con justificación por el Prevencionista. Al llegar la fecha de revisión vuelven a pendientes.</div>
+    <table><thead><tr><th>Área</th><th>Peligro / Riesgo</th><th>Aceptado por</th><th>Justificación</th><th>Revisión</th><th></th></tr></thead><tbody>${ls.map(m=>{ const a = m.aceptacionRiesgo, venc = paAceptacionVencida(m);
+      return `<tr><td>${areaName(m.areaId)}</td><td><strong>${incEsc(m.peligro||"")}</strong><div class="kv">${incEsc(m.riesgo||"")}</div></td><td>${incEsc(a.por||"—")}<div class="kv">${fmtDate(a.fecha)}</div></td><td>${incEsc(a.justificacion||"")}</td><td>${a.revisarEn?fmtDate(a.revisarEn):"—"}${venc?' <span class="pill vencido">Vencida</span>':""}</td><td>${puede?`<button class="subtle-btn" data-pa-revocar="${m.id}" type="button">Revocar</button>`:""}</td></tr>`; }).join("")}</tbody></table>`;
+}
+on(document.getElementById("paAceptadosWrap"), "click", (e)=>{ const b = e.target.closest("[data-pa-revocar]"); if(b) paRevocarAceptacion(b.dataset.paRevocar); });
+on(document.getElementById("paPendientesTable"), "click", (e)=>{ const b = e.target.closest("[data-pa-aceptar]"); if(b) paAbrirAceptacion(b.dataset.paAceptar); });
 function paMatrizLinea(matrizId){
   return CACHE.matriz.find(m=>m.id===matrizId) || null;
 }
@@ -15871,14 +16039,12 @@ function paFillAreaSelect(id){
   if(cur && Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur;
 }
 function paPendientesFiltradas(){
-  const cubiertas = new Set((CACHE.planAccionMatriz||[]).map(p=>p.matrizId));
   const q = matrizNorm(document.getElementById("paPendBuscar").value), area = document.getElementById("paPendArea").value;
-  return paLineasRequierenAccion().filter(m=>!cubiertas.has(m.id) && (!area || m.areaId===area) && (!q || paTextoBusqueda(m).includes(q)));
+  return paLineasRequierenAccion().filter(m=>(!area || m.areaId===area) && (!q || paTextoBusqueda(m).includes(q)));
 }
 function renderPaPendientes(){
   paFillAreaSelect("paPendArea");
-  const cubiertas = new Set((CACHE.planAccionMatriz||[]).map(p=>p.matrizId));
-  const total = paLineasRequierenAccion().filter(m=>!cubiertas.has(m.id));
+  const total = paLineasRequierenAccion();
   paPendSel = new Set(Array.from(paPendSel).filter(id=>total.some(m=>m.id===id)));
   const pendientes = paPendientesFiltradas();
   document.getElementById("paPendientesTable").innerHTML = pendientes.length
@@ -15888,8 +16054,8 @@ function renderPaPendientes(){
           <td><input type="checkbox" data-pa-pend-sel="${m.id}" style="width:auto;min-height:auto;"${paPendSel.has(m.id)?" checked":""}></td>
           <td>${areaName(m.areaId)}</td>
           <td><strong>${m.peligro}</strong><div class="kv">${m.riesgo}</div></td>
-          <td><span class="pill ${n}">${nivelLabel(n)}</span></td>
-          <td><button class="btn secondary small" data-pa-nueva="${m.id}">Definir acción</button></td>
+          <td><span class="pill ${n}">${nivelLabel(n)}</span>${paAccionesDe(m).length ? `<div class="kv">Requiere más medidas · ronda ${paAccionesDe(m).length+1}</div>` : ""}${paAceptacionVencida(m) ? '<div class="kv"><span class="pill vencido">Aceptación vencida</span></div>' : ""}</td>
+          <td><button class="btn secondary small" data-pa-nueva="${m.id}">Definir acción</button>${(n==="medio" && paAccionesDe(m).some(a=>a.estado==="cumplida") && paPuedeAceptarRiesgos()) ? ` <button class="subtle-btn" data-pa-aceptar="${m.id}" type="button">Aceptar riesgo Medio</button>` : ""}</td>
         </tr>`;
       }).join("")
     : `<tr><td colspan="5" class="empty">${total.length ? "Ninguna línea coincide con la búsqueda" : "No hay líneas medio/alto/muy alto sin plan de acción"}</td></tr>`;
@@ -16038,7 +16204,7 @@ on(document.getElementById("paGuardarBtn"), "click", async ()=>{
     const grupoId = ids.length > 1 ? uid() : null;
     for(const id of ids){
       const ml = paMatrizLinea(id);
-      const rec = { id: uid(), matrizId: id, ...datosComunes, estado: "pendiente", probAntes: ml.probabilidad, consAntes: ml.consecuencia, probDespues: null, consDespues: null, eficaciaObservacion: "", fechaCreacion: new Date().toISOString() };
+      const rec = { id: uid(), matrizId: id, ...datosComunes, estado: "pendiente", ronda: paAccionesDe(ml).length+1, probAntes: probResidualEfectiva(ml), consAntes: consResidualEfectiva(ml), probDespues: null, consDespues: null, eficaciaObservacion: "", fechaCreacion: new Date().toISOString() };
       if(grupoId) rec.grupoId = grupoId;
       await put("planAccionMatriz", rec);
       await logHistorial(id, matrizLineLabel(ml), "Plan de acción", "", `Creada: ${PA_TIPO_LABEL[rec.tipoAccion]} — ${actividad}${grupoId?` (aplicada a ${ids.length} líneas)`:""}`);
@@ -16103,9 +16269,9 @@ function renderPaTable(){
       <td><input type="checkbox" data-pa-seg-sel="${p.id}" style="width:auto;min-height:auto;"${paSegSel.has(p.id)?" checked":""}></td>
       <td>${m ? areaName(m.areaId) : "—"}</td>
       <td>${m ? `<strong>${m.peligro}</strong><div class="kv">${m.riesgo}</div>` : "(línea eliminada)"}</td>
-      <td>${n ? `<span class="pill ${n}">${nivelLabel(n)}</span>` : "—"}</td>
+      <td>${n ? `<span class="pill ${n}">${nivelLabel(n)}</span>` : "—"}${m ? (()=>{ const et = paEstadoTratamiento(m); return `<div style="margin-top:4px;"><span class="pill ${et.pill}">${et.label}</span></div>`; })() : ""}</td>
       <td>${PA_TIPO_LABEL[p.tipoAccion]||"—"}</td>
-      <td>${p.actividad||"—"}${p.grupoId && tamanoGrupo[p.grupoId]>1 ? `<div style="margin-top:4px;"><span class="pill bajo" title="Acción aplicada a varias líneas de la matriz">Grupo de ${tamanoGrupo[p.grupoId]}</span></div>` : ""}</td>
+      <td>${p.actividad||"—"}${(p.ronda||1)>1 ? `<div class="kv">Ronda ${p.ronda}</div>` : ""}${p.grupoId && tamanoGrupo[p.grupoId]>1 ? `<div style="margin-top:4px;"><span class="pill bajo" title="Acción aplicada a varias líneas de la matriz">Grupo de ${tamanoGrupo[p.grupoId]}</span></div>` : ""}</td>
       <td>${p.responsable||"—"}</td>
       <td>${p.plazo?fmtDate(p.plazo):"—"}</td>
       <td>${p.proximaRevision?fmtDate(p.proximaRevision):"—"}</td>
@@ -16136,6 +16302,7 @@ on(document.getElementById("paBulkEstadoBtn"), "click", async ()=>{
   const marcadas = (CACHE.planAccionMatriz||[]).filter(p=>paSegSel.has(p.id));
   if(!marcadas.length){ alert("Marca al menos una acción de la lista."); return; }
   const nuevo = document.getElementById("paBulkEstado").value;
+  if(nuevo === "cumplida" && marcadas.some(p=>p.estado!=="cumplida")){ const ids = marcadas.filter(p=>p.estado!=="cumplida").map(p=>p.id); paSegSel = new Set(); paAbrirCumplida(ids); return; }
   let probStr = null, consStr = null, obs = "";
   if(nuevo === "cumplida" && marcadas.some(p=>p.estado!=="cumplida")){
     probStr = prompt("Probabilidad DESPUÉS de implementar la acción (1-5), para todas las marcadas:", "3");
@@ -16230,18 +16397,9 @@ on(document.getElementById("paTable"), "change", async (e) => {
   if(!p) return;
   const anterior = p.estado;
   if(sel.value === "cumplida" && anterior !== "cumplida"){
-    const probStr = prompt("Probabilidad DESPUÉS de implementar la acción (1-5):", String(p.probAntes||3));
-    if(probStr===null){ sel.value = anterior; return; }
-    const consStr = prompt("Consecuencia DESPUÉS de implementar la acción (1-5):", String(p.consAntes||3));
-    if(consStr===null){ sel.value = anterior; return; }
-    const obs = prompt("Observación sobre la eficacia de la acción implementada (opcional):", "") || "";
-    p.probDespues = paClamp15(probStr, p.probAntes||3);
-    p.consDespues = paClamp15(consStr, p.consAntes||3);
-    p.eficaciaObservacion = obs;
-    const nivelAntes = nivelRiesgo(p.probAntes, p.consAntes);
-    const nivelDespues = nivelRiesgo(p.probDespues, p.consDespues);
-    const m = paMatrizLinea(p.matrizId);
-    await logHistorial(p.matrizId, m?matrizLineLabel(m):p.matrizId, "Eficacia de la acción (Plan de Acción)", nivelLabel(nivelAntes), `${nivelLabel(nivelDespues)}${obs?" — "+obs:""}`);
+    sel.value = anterior;
+    paAbrirCumplida([p.id]);
+    return;
   }
   p.estado = sel.value;
   await put("planAccionMatriz", p);
@@ -16274,7 +16432,7 @@ function imprimirPlanAccion(){
     if(!porArea.has(key)) porArea.set(key, { nombre: areaName(key), acciones:[], pendientes:[] });
     porArea.get(key).acciones.push({p,m});
   });
-  paLineasRequierenAccion().filter(m=>!cubiertas.has(m.id)).forEach(m=>{
+  paLineasRequierenAccion().forEach(m=>{
     const key = m.areaId || "";
     if(!porArea.has(key)) porArea.set(key, { nombre: areaName(key), acciones:[], pendientes:[] });
     porArea.get(key).pendientes.push(m);
@@ -16305,10 +16463,12 @@ function imprimirPlanAccion(){
 on(document.getElementById("printPlanAccionBtn"), "click", async () => { imprimirPlanAccion(); });
 
 function renderPlanAccion(){
+  if(!paResidualMigrado){ paResidualMigrado = true; paMigrarResiduales().then(n=>{ if(n) renderPlanAccion(); }).catch(()=>{}); }
   document.getElementById("paRevisionAnual").value = (CACHE.empresa && CACHE.empresa.proximaRevisionMatriz) || "";
   renderPaPendientes();
   if(!paEditingId) paFillMatrizSelect();
   renderPaTable();
+  renderPaAceptados();
 }
 
 /* Card "Traspasos pendientes desde la Matriz": lista, para todas las
@@ -27780,6 +27940,7 @@ function resetPerfilForm(){
   perfilEditingId = null;
   document.getElementById("perfilNombre").value = "";
   document.getElementById("perfilEsAdmin").checked = false;
+  document.getElementById("perfilPuedeAceptar").checked = false;
   document.getElementById("perfilDescargaDashboard").checked = true;
   drawPerfilVistasCheckboxes(["dashboard"]);
   document.getElementById("savePerfilBtn").textContent = "Guardar perfil";
@@ -27792,6 +27953,7 @@ function startEditPerfil(id){
   perfilEditingId = id;
   document.getElementById("perfilNombre").value = rec.nombre || "";
   document.getElementById("perfilEsAdmin").checked = !!rec.esAdmin;
+  document.getElementById("perfilPuedeAceptar").checked = rec.puedeAceptarRiesgos !== undefined ? !!rec.puedeAceptarRiesgos : /prevencion/.test(matrizNorm(rec.nombre||""));
   document.getElementById("perfilDescargaDashboard").checked = rec.descargaDashboard !== false;
   drawPerfilVistasCheckboxes(rec.vistas||[]);
   document.getElementById("savePerfilBtn").textContent = "Guardar cambios";
@@ -27803,7 +27965,7 @@ on(document.getElementById("savePerfilBtn"), "click", async () => {
   if(!nombre){ alert("Escribe el nombre del perfil."); return; }
   const vistas = Array.from(document.querySelectorAll('#perfilVistasWrap input[data-perfilvista]:checked')).map(cb=>cb.dataset.perfilvista);
   if(!vistas.length){ alert("Marca al menos una pestaña visible para este perfil."); return; }
-  const rec = { id: perfilEditingId || uid(), nombre, esAdmin: document.getElementById("perfilEsAdmin").checked, descargaDashboard: document.getElementById("perfilDescargaDashboard").checked, vistas };
+  const rec = { id: perfilEditingId || uid(), nombre, esAdmin: document.getElementById("perfilEsAdmin").checked, puedeAceptarRiesgos: document.getElementById("perfilPuedeAceptar").checked, descargaDashboard: document.getElementById("perfilDescargaDashboard").checked, vistas };
   await put("accesoPerfiles", rec);
   await loadCache();
   resetPerfilForm();
@@ -28622,7 +28784,7 @@ function dashPdca(){
   const pctPg = pgAnio.length ? Math.round(pgReal/pgAnio.length*100) : null, pctCap = capAnio.length ? Math.round(capReal/capAnio.length*100) : null;
   const pcts = [pctPg, pctCap].filter(v=>v!==null), pctHacer = pcts.length ? Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length) : null;
   const insMes = (CACHE.inspecciones||[]).filter(i=>String(i.fecha||"").slice(0,7)===mesIso).length;
-  const ro = objResumenAnio(anio), rm = objResumenMedidas(anio);
+  const ro = objResumenAnio(anio), rm = objResumenMedidas(anio), rt = paResumenTratamiento();
   const fufCounts = {cumple:0, no_aplica:0}; FUF_ITEMS.forEach(it=>{ const rec = (CACHE.cumplimientoLegal||[]).find(r=>r.numero===it.numero); const n = (rec&&rec.nivel)||"sin_evaluar"; if(n==="cumple"||n==="no_aplica") fufCounts[n]++; });
   const fufEval = FUF_ITEMS.length - fufCounts.no_aplica, fufPct = fufEval ? Math.round(fufCounts.cumple/fufEval*100) : null;
   const sinInvest = (CACHE.accidentes||[]).filter(a=>OBJ_TIPOS_ACC_INVESTIGABLES.includes(a.tipo) && !a.investigado).length;
@@ -28637,8 +28799,8 @@ function dashPdca(){
       items:[`Programa de seguridad: ${pctPg===null?"sin actividades":pctPg+"% ("+pgReal+" de "+pgAnio.length+")"}`, `Plan de capacitación: ${pctCap===null?"sin capacitaciones":pctCap+"% ("+capReal+" de "+capAnio.length+")"}`, `Inspecciones del mes: ${insMes}`], vista:"programa"},
     {k:"verificar", n:"3 · Verificar", sub:"Indicadores, cumplimiento legal e investigaciones", sem: semPct(verificarPct),
       items:[`Indicadores en meta: ${ro.conDatos?ro.enMeta+" de "+ro.conDatos:"sin datos"}${ro.fuera?" · "+ro.fuera+" fuera de meta":""}`, `Cumplimiento legal DS 44: ${fufPct===null?"—":fufPct+"%"}`, `Accidentes sin investigar: ${sinInvest}`], vista:"objetivos"},
-    {k:"actuar", n:"4 · Actuar", sub:"Medidas de control y acciones correctivas", sem: rm.sinMedida>0||rm.atrasadas>0 ? "alto" : (rm.abiertas>0 ? "medio" : "bajo"),
-      items:[`Fuera de meta SIN medida de control: ${rm.sinMedida} mes(es) en ${rm.indicadoresSinMedida} indicador(es)`, `Medidas abiertas: ${rm.abiertas} (${rm.atrasadas} atrasada(s)) · cerradas: ${rm.cerradas}`, `Hallazgos de inspección con acción abierta: ${hallazgos}`], vista:"objetivos", medidas:true},
+    {k:"actuar", n:"4 · Actuar", sub:"Medidas de control y acciones correctivas", sem: rm.sinMedida>0||rm.atrasadas>0 ? "alto" : (rm.abiertas>0 || rt.requieren>0 || rt.aceptadosVencidos>0 ? "medio" : "bajo"),
+      items:[`Fuera de meta SIN medida de control: ${rm.sinMedida} mes(es) en ${rm.indicadoresSinMedida} indicador(es)`, `Medidas abiertas: ${rm.abiertas} (${rm.atrasadas} atrasada(s)) · cerradas: ${rm.cerradas}`, `Riesgos de la matriz que requieren más medidas: ${rt.requieren} · Medio aceptados: ${rt.aceptados}${rt.aceptadosVencidos?" ("+rt.aceptadosVencidos+" con revisión vencida)":""}`, `Hallazgos de inspección con acción abierta: ${hallazgos}`], vista:"objetivos", medidas:true},
   ], rm, ro};
 }
 const PDCA_COLOR = {bajo:"#0a6b0a", medio:"#c98a00", alto:"#c0392b", null:"#9aa0a6"};
@@ -28705,6 +28867,7 @@ function informePhvaPdf(anio){
     `Meses fuera de meta en meses cerrados: ${rm.desviaciones}; con medida de control: ${rm.desviaciones-rm.sinMedida}; SIN medida: ${rm.sinMedida}.`,
     `Medidas registradas: ${rm.total} (abiertas ${rm.abiertas}, atrasadas ${rm.atrasadas}, cerradas ${rm.cerradas}, evaluadas como eficaces ${rm.eficaces}).`,
     rm.sinMedida ? "Quedan indicadores fuera de meta sin medida de control: deben registrarse antes de cerrar la revisión." : "Todos los indicadores fuera de meta tienen una medida de control registrada.",
+    (()=>{ const rt = paResumenTratamiento(); return `Matriz de riesgos: ${rt.requieren} línea(s) requieren más medidas; ${rt.aceptados} riesgo(s) Medio aceptado(s) con justificación${rt.aceptadosVencidos?` (${rt.aceptadosVencidos} con revisión vencida)`:""}.`; })(),
   ];
   concl.forEach(t=>{ y = escribirTextoPaginado(doc, "- "+t, 14, y, {maxWidth:182}) + 1; });
   y += 14; if(y > 250){ doc.addPage(); y = 30; }
