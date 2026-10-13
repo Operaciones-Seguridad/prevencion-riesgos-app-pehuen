@@ -4238,6 +4238,22 @@
       </div>
     </div>
 
+    <div class="card" id="empresasUsoWrap" style="display:none;">
+      <div class="card-header-row" id="hdrEmpresasUso"><h2>Uso de almacenamiento por empresa</h2><button class="collapse-toggle" id="toggleEmpresasUso" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyEmpresasUso">
+      <div class="desc">Solo visible para el administrador de la plataforma. Muestra cuánto ocupa lo guardado de cada empresa en la base de datos y qué tipo de información pesa más (los documentos y planos suelen ser lo más grande). Es solo lectura: no cambia ni borra nada. El tamaño por empresa es aproximado (solo sus datos); el total de la base de datos incluye además el espacio interno de Postgres.</div>
+      <div class="toolbar">
+        <div class="field"><label>Espacio disponible en la base de datos (MB)</label><input type="number" id="usoLimiteMb" min="100" step="100" value="1024" style="max-width:150px;"><div class="kv">Mira «Storage» de la base de datos en Render y ajústalo si cambió.</div></div>
+        <button class="btn secondary small" id="usoCalcularBtn" type="button" style="margin-top:20px;">↻ Calcular uso</button>
+      </div>
+      <div id="usoResumenWrap" style="margin:10px 0;"></div>
+      <table>
+        <thead><tr><th>Empresa</th><th style="width:90px;">Estado</th><th style="width:110px;">Datos</th><th style="width:90px;">% del espacio</th><th style="width:90px;">Registros</th><th>Lo que más pesa</th></tr></thead>
+        <tbody id="usoTable"><tr><td colspan="6" class="empty">Presiona «Calcular uso».</td></tr></tbody>
+      </table>
+      </div>
+    </div>
+
     <div class="card" id="empresasAdminWrap" style="display:none;">
       <div class="card-header-row" id="hdrEmpresas"><h2>Empresas (administrador de la plataforma)</h2><button class="collapse-toggle" id="toggleEmpresas" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyEmpresas">
@@ -4771,6 +4787,7 @@ setupCollapsible("hdrGrdRespuesta", "bodyGrdRespuesta", "toggleGrdRespuesta", "c
 setupCollapsible("hdrGrdSimulacros", "bodyGrdSimulacros", "toggleGrdSimulacros", "collapsed_grdSimulacros");
 setupCollapsible("hdrGrdPlanAccion", "bodyGrdPlanAccion", "toggleGrdPlanAccion", "collapsed_grdPlanAccion");
 setupCollapsible("hdrPlanEmergencia", "bodyPlanEmergencia", "togglePlanEmergencia", "collapsed_planEmergencia");
+setupCollapsible("hdrEmpresasUso", "bodyEmpresasUso", "toggleEmpresasUso", "collapsed_empresasUso");
 setupCollapsible("hdrPlanosEmergencia", "bodyPlanosEmergencia", "togglePlanosEmergencia", "collapsed_planosEmergencia");
 setupCollapsible("hdrExtintores", "bodyExtintores", "toggleExtintores", "collapsed_extintores");
 setupCollapsible("hdrRegistroExtintores", "bodyRegistroExtintores", "toggleRegistroExtintores", "collapsed_registroExtintores");
@@ -26843,6 +26860,69 @@ async function renderEmpresasTable(){
   }).join("");
 }
 on(document.getElementById("refrescarEmpresasBtn"), "click", renderEmpresasTable);
+
+/* --- Uso de almacenamiento por empresa (solo superAdmin, solo lectura) --- */
+const USO_ETIQUETAS = {documentos:"Documentos", planoRiesgos:"Planos", matriz:"Matriz de riesgos", matrizHistorial:"Historial de la matriz", matrizVersiones:"Versiones MIPER", trabajadores:"Trabajadores", accidentes:"Accidentes", inspecciones:"Inspecciones", capacitaciones:"Capacitaciones", epp:"EPP", astRegistros:"AST", vsExamenesOcup:"Exámenes ocupacionales", vsExpuestos:"Expuestos (vigilancia)", vsEvaluaciones:"Evaluaciones de puesto", grdPlanEmergencia:"Plan de emergencia", registroExtintores:"Extintores", arbolesCausales:"Árboles causales", programa:"Programa de seguridad", cumplimientoLegal:"Cumplimiento legal", riohys:"RIOHyS", horasHombre:"Horas-hombre", accesoUsuarios:"Usuarios"};
+function usoFmtBytes(b){
+  b = +b || 0;
+  if(b < 1024) return b + " B";
+  if(b < 1024*1024) return (b/1024).toFixed(b < 10*1024 ? 1 : 0).replace(".",",") + " KB";
+  if(b < 1024*1024*1024) return (b/1024/1024).toFixed(b < 10*1024*1024 ? 1 : 0).replace(".",",") + " MB";
+  return (b/1024/1024/1024).toFixed(2).replace(".",",") + " GB";
+}
+function usoFmtPct(parte, total){
+  if(!total || !parte) return "0 %";
+  const p = parte/total*100;
+  return (p < 0.1 ? "<0,1" : p.toFixed(1).replace(".",",")) + " %";
+}
+function usoLimiteBytes(){
+  let mb = +document.getElementById("usoLimiteMb").value;
+  if(!(mb >= 100)) mb = 1024;
+  return mb*1024*1024;
+}
+function usoResumenHtml(d, limite){
+  const pct = d.baseDatosBytes/limite*100;
+  const color = pct >= 85 ? "#d03b3b" : (pct >= 70 ? "#eda100" : "#0ca30c");
+  const mensaje = pct >= 85 ? "Estás cerca del límite: conviene ampliar el espacio de la base de datos en Render antes de sumar más clientes."
+    : (pct >= 70 ? "Ya se usó más de dos tercios del espacio: ve planificando una ampliación." : "Hay espacio de sobra por ahora.");
+  const conDatos = d.empresas.filter(e=>e.registros>0);
+  let estimacion = "";
+  if(conDatos.length >= 2){
+    const prom = d.totalDatosBytes/conDatos.length;
+    const libre = Math.max(0, limite*0.85 - d.baseDatosBytes);
+    estimacion = `<div class="kv" style="margin-top:6px;">Cada empresa con datos ocupa en promedio ${usoFmtBytes(prom)}: con ese uso caben unas <strong>${prom>0 ? Math.floor(libre/prom) : "—"}</strong> empresas más antes de llegar al 85 % del espacio.</div>`;
+  }
+  return `<div><strong>Base de datos total: ${usoFmtBytes(d.baseDatosBytes)} de ${usoFmtBytes(limite)} (${pct.toFixed(1).replace(".",",")} %)</strong> · datos de las empresas: ${usoFmtBytes(d.totalDatosBytes)}</div>
+    <div style="height:14px;background:#e6e4de;border-radius:7px;overflow:hidden;margin:6px 0;max-width:520px;"><div style="height:100%;width:${Math.min(100,pct).toFixed(1)}%;background:${color};"></div></div>
+    <div class="kv" style="color:${color};font-weight:600;">${mensaje}</div>${estimacion}`;
+}
+async function renderEmpresasUso(){
+  const tbody = document.getElementById("usoTable"), resumen = document.getElementById("usoResumenWrap");
+  if(!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" class="empty">Calculando…</td></tr>';
+  let d = null, errMsg = "";
+  try{ d = await apiFetch("GET", "/api/empresas/uso"); }catch(e){ errMsg = e.message || ""; }
+  if(!d || !Array.isArray(d.empresas)){
+    resumen.innerHTML = "";
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">No se pudo calcular el uso${errMsg ? ": "+incEsc(errMsg) : ""}.</td></tr>`;
+    return;
+  }
+  const limite = usoLimiteBytes();
+  resumen.innerHTML = usoResumenHtml(d, limite);
+  tbody.innerHTML = d.empresas.length ? d.empresas.map(e=>`<tr>
+    <td>${incEsc(e.nombre)}</td>
+    <td>${e.aprobada===false ? '<span class="pill medio">Pendiente</span>' : '<span class="pill vigente">Activa</span>'}</td>
+    <td><strong>${usoFmtBytes(e.bytes)}</strong></td>
+    <td>${usoFmtPct(e.bytes, limite)}</td>
+    <td>${e.registros}</td>
+    <td class="kv">${(e.top||[]).filter(t=>t.bytes>0).map(t=>`${incEsc(USO_ETIQUETAS[t.store]||t.store)}: ${usoFmtBytes(t.bytes)}`).join(" · ") || "—"}</td>
+  </tr>`).join("") : '<tr><td colspan="6" class="empty">No hay empresas registradas.</td></tr>';
+}
+on(document.getElementById("usoCalcularBtn"), "click", renderEmpresasUso);
+(function(){
+  try{ const v = localStorage.getItem("uso_limite_mb"); if(v && +v>=100) document.getElementById("usoLimiteMb").value = v; }catch(e){}
+  on(document.getElementById("usoLimiteMb"), "change", ()=>{ try{ localStorage.setItem("uso_limite_mb", document.getElementById("usoLimiteMb").value); }catch(e){} });
+})();
 on(document.getElementById("empresasTable"), "click", async (ev) => {
   const btnAprobar = ev.target.closest("[data-aprobar-empresa]");
   if(btnAprobar){
@@ -27031,6 +27111,8 @@ function aplicarPermisosSesion(){
   const empresasWrap = document.getElementById("empresasAdminWrap");
   const mostrarEmpresasWrap = SESION.superAdmin && storageMode==="api";
   if(empresasWrap) empresasWrap.style.display = mostrarEmpresasWrap ? "" : "none";
+  const empresasUsoWrap = document.getElementById("empresasUsoWrap");
+  if(empresasUsoWrap) empresasUsoWrap.style.display = mostrarEmpresasWrap ? "" : "none";
   if(mostrarEmpresasWrap) renderEmpresasTable();
   const respaldoDatosWrap = document.getElementById("respaldoDatosWrap");
   if(respaldoDatosWrap) respaldoDatosWrap.style.display = (esAdmin && storageMode==="api") ? "" : "none";
