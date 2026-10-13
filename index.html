@@ -2100,7 +2100,7 @@
 
     <div class="card">
       <div class="card-header-row" id="hdrPcMensual"><h2>Programa mensual por persona</h2><button class="collapse-toggle" id="togglePcMensual" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyPcMensual">
-      <div class="desc">Hoja de actividades del mes de una persona del programa: lo proyectado y lo realizado en cada semana. Las actividades que se registran en la app (inspecciones, observaciones, reuniones del comité, capacitaciones) pueden contarse solas desde esos registros; las demás se marcan a mano. Además aparecen aquí, al final de la lista y en azul, las <strong>actividades con fecha</strong> de esa persona (las traspasadas desde la Matriz y las creadas en «Actividades sueltas»), con botones para registrar su realización. Los cambios se guardan solos.</div>
+      <div class="desc">Hoja de actividades del mes de una persona del programa (incluye sus capacitaciones como relator): lo proyectado y lo realizado en cada semana. Las actividades que se registran en la app (inspecciones, observaciones, reuniones del comité, capacitaciones) pueden contarse solas desde esos registros; las demás se marcan a mano. Además aparecen aquí, al final de la lista y en azul, las <strong>actividades con fecha</strong> de esa persona (las traspasadas desde la Matriz y las creadas en «Actividades sueltas»), con botones para registrar su realización. Los cambios se guardan solos.</div>
       <div class="toolbar">
         <div class="field"><label>Año</label><select id="pcAnio"></select></div>
         <div class="field"><label>Mes</label><select id="pcMes"></select></div>
@@ -2177,7 +2177,7 @@
 
     <div class="card">
       <div class="card-header-row" id="hdrNuevaCapacitacion"><h2>Nueva capacitación</h2><button class="collapse-toggle" id="toggleNuevaCapacitacion" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyNuevaCapacitacion">
-      <div class="desc">Incluye inducciones, capacitaciones específicas por riesgo del puesto de trabajo y aquellas obligatorias según el DS 44.</div>
+      <div class="desc">Incluye inducciones, capacitaciones específicas por riesgo del puesto de trabajo y aquellas obligatorias según el DS 44. Si el relator es una persona de «Personas del programa», la capacitación aparece también en su <strong>Programa mensual</strong> (semana de su fecha), con un botón para volver aquí a registrar la asistencia.</div>
       <div class="kv" id="capDesdeDocHint" style="display:none;background:#fff4de;border:1px solid #e8c875;border-radius:8px;padding:8px 10px;margin-bottom:10px;"></div>
       <div class="form-grid">
         <div>
@@ -5366,7 +5366,9 @@ async function ejecutarTraspaso(m, item, clave, destino, responsable, fecha){
   if(destino === "capacitacion"){
     const tipoCap = "General";
     await addCatalogValue("capTipo", tipoCap);
-    await put("capacitaciones", { id: destinoId, nombre: item.texto, tipo: tipoCap, fechaProgramada: fecha, fechaRealizada: null, horas: 0, relator: responsable, documentoId: "", participantes: [] });
+    const capTr = { id: destinoId, nombre: item.texto, tipo: tipoCap, fechaProgramada: fecha, fechaRealizada: null, horas: 0, relator: responsable, documentoId: "", participantes: [] };
+    await put("capacitaciones", capTr);
+    await pcAsegurarHojaDe(capTr);
   } else {
     const actProg = { id: destinoId, nombre: item.texto, tipo: "inspeccion", areaId: m.areaId, responsable, fechaProgramada: fecha, fechaRealizada: null };
     await put("programa", actProg);
@@ -5388,7 +5390,9 @@ async function ejecutarTraspasoGrupo(items, destino, nombre, responsable, fecha)
   if(destino === "capacitacion"){
     const id = uid();
     await addCatalogValue("capTipo", "General");
-    await put("capacitaciones", { id, nombre, tipo: "General", fechaProgramada: fecha, fechaRealizada: null, horas: 0, relator: responsable, documentoId: "", participantes: [] });
+    const capTr = { id, nombre, tipo: "General", fechaProgramada: fecha, fechaRealizada: null, horas: 0, relator: responsable, documentoId: "", participantes: [] };
+    await put("capacitaciones", capTr);
+    await pcAsegurarHojaDe(capTr);
     idPorArea.set("*", id); creadas = 1;
   } else {
     for(const x of items){
@@ -13531,7 +13535,7 @@ function ofrecerTraspasosDetectados(matrizId){
       return;
     }
     for(const x of marcados){
-      if(x.destino==="programa"){
+      if(x.destino==="programa" || x.destino==="capacitacion"){
         const per = pcExigirPersona(document.querySelector(`[data-traspasomodal-resp="${x.idx}"]`).value.trim());
         if(!per) return;
       }
@@ -13539,7 +13543,7 @@ function ofrecerTraspasosDetectados(matrizId){
     for(const x of marcados){
       const responsable = document.querySelector(`[data-traspasomodal-resp="${x.idx}"]`).value.trim();
       const fecha = document.querySelector(`[data-traspasomodal-fecha="${x.idx}"]`).value;
-      await ejecutarTraspaso(rec, x.item, x.clave, x.destino, x.destino==="programa" ? pcPersonaPorNombre(responsable).nombre : responsable, fecha);
+      await ejecutarTraspaso(rec, x.item, x.clave, x.destino, (x.destino==="programa" || x.destino==="capacitacion") ? pcPersonaPorNombre(responsable).nombre : responsable, fecha);
     }
     await put("matriz", rec);
     await loadCache();
@@ -16345,7 +16349,7 @@ on(document.getElementById("trasGrupoTraspasarBtn"), "click", async ()=>{
   if(!responsable){ alert("Designa el responsable de la actividad (elige un nombre de la lista o escríbelo) antes de traspasar."); return; }
   if(!fecha){ alert("Indica la fecha programada antes de traspasar."); return; }
   let responsableFinal = responsable;
-  if(destino==="programa"){ const per = pcExigirPersona(responsable); if(!per) return; responsableFinal = per.nombre; }
+  if(destino==="programa" || destino==="capacitacion"){ const per = pcExigirPersona(responsable); if(!per) return; responsableFinal = per.nombre; }
   const areas = new Set(marcadas.map(x=>x.m.areaId||""));
   const creadas = destino==="programa" ? areas.size : 1;
   if(!confirm(`Se creará ${creadas} actividad(es) "${nombre}" en ${TRASPASO_DESTINO_LABEL[destino]} y las ${marcadas.length} medida(s) marcadas quedarán como traspasadas. ¿Continuar?`)) return;
@@ -16382,7 +16386,7 @@ on(document.getElementById("traspasosPendientesTable"), "click", async (e) => {
     if(!responsable){ alert("Designa el responsable de la actividad (elige un nombre de la lista o escríbelo) antes de traspasar."); return; }
     if(!fecha){ alert("Indica la fecha programada antes de traspasar."); return; }
     let responsableFila = responsable;
-    if(destino==="programa"){ const per = pcExigirPersona(responsable); if(!per) return; responsableFila = per.nombre; }
+    if(destino==="programa" || destino==="capacitacion"){ const per = pcExigirPersona(responsable); if(!per) return; responsableFila = per.nombre; }
     await ejecutarTraspaso(x.m, x.item, x.clave, destino, responsableFila, fecha);
     await put("matriz", x.m);
     await loadCache();
@@ -19413,10 +19417,16 @@ on(document.getElementById("pgConsolidarBtn"), "click", async ()=>{
     conPersona++;
     if(await pcAsegurarHojaDe(a)) hojasCreadas++;
   }
+  let capConPersona = 0, capSinPersona = 0;
+  for(const c of (CACHE.capacitaciones||[])){
+    if(!pcPersonaPorNombre(c.relator)){ capSinPersona++; continue; }
+    capConPersona++;
+    if(await pcAsegurarHojaDe(c)) hojasCreadas++;
+  }
   await loadCache();
   renderProgramaTable();
   if(typeof renderProgramaCargo === "function") renderProgramaCargo();
-  alert(`${conPersona} actividad(es) ya están en el programa mensual de su responsable${hojasCreadas ? ` (se crearon ${hojasCreadas} hoja(s) mensual(es) que faltaban)` : ""}.` + (sinPersona ? `\n\n${sinPersona} actividad(es) tienen un responsable que no está en «Personas del programa» (aparecen con «⚠ Sin persona del programa» en la tabla): edítalas o usa «Asignar a las marcadas» para elegir una persona.` : ""));
+  alert(`${conPersona} actividad(es) y ${capConPersona} capacitación(es) ya están en el programa mensual de su responsable${hojasCreadas ? ` (se crearon ${hojasCreadas} hoja(s) mensual(es) que faltaban)` : ""}.` + (capSinPersona ? `\n\n${capSinPersona} capacitación(es) tienen un relator que no está en «Personas del programa» (por ejemplo un relator externo): siguen en el módulo Capacitación y no aparecen en ningún programa mensual.` : "") + (sinPersona ? `\n\n${sinPersona} actividad(es) tienen un responsable que no está en «Personas del programa» (aparecen con «⚠ Sin persona del programa» en la tabla): edítalas o usa «Asignar a las marcadas» para elegir una persona.` : ""));
 });
 
 /* Registrar la realización de una actividad del programa: permite indicar la
@@ -19624,7 +19634,7 @@ function pcRealEfectivo(prog, a){ return pcRealAuto(prog, a) || pcSem4(a.real); 
 function pcVirtuales(p){
   const per = pcPersonaDeProg(p), n = pcNorm(per ? per.nombre : p.nombre);
   if(!n) return [];
-  return (CACHE.programa||[])
+  const delPrograma = (CACHE.programa||[])
     .filter(a=>a.responsable && pcNorm(a.responsable)===n && pcSemanaDe(a.fechaProgramada, p.anio, p.mes)>=0)
     .sort((a,b)=>String(a.fechaProgramada).localeCompare(String(b.fechaProgramada)))
     .map(a=>{
@@ -19632,6 +19642,18 @@ function pcVirtuales(p){
       proy[s] = 1; if(a.fechaRealizada) real[s] = 1;
       return {id:"pg:"+a.id, programaId:a.id, nombre:a.nombre, proy, realVirtual:real, fuente:{tipo:"programa"}, virtual:true};
     });
+  // Capacitaciones del plan donde la persona es relator. Si la hoja ya cuenta capacitaciones con la fuente automática
+  // «Capacitación como relator», no se agregan (esa fuente ya las cuenta y se duplicaría).
+  const yaAutomatica = (p.actividades||[]).some(a=>pcFuente(a).tipo==="capacitacion");
+  const capacitaciones = yaAutomatica ? [] : (CACHE.capacitaciones||[])
+    .filter(c=>c.relator && pcNorm(c.relator)===n && pcSemanaDe(c.fechaProgramada, p.anio, p.mes)>=0)
+    .sort((a,b)=>String(a.fechaProgramada).localeCompare(String(b.fechaProgramada)))
+    .map(c=>{
+      const s = pcSemanaDe(c.fechaProgramada, p.anio, p.mes), proy = [0,0,0,0], real = [0,0,0,0];
+      proy[s] = 1; if(c.fechaRealizada) real[s] = 1;
+      return {id:"cp:"+c.id, capacitacionId:c.id, nombre:c.nombre, proy, realVirtual:real, fuente:{tipo:"programa"}, virtual:true};
+    });
+  return delPrograma.concat(capacitaciones);
 }
 /* Lo realizado en una semana distinta a la proyectada cuenta igual dentro del mes: cada semana se cubre primero con su
    propio realizado (topado en lo proyectado) y lo que sobra de otras semanas de la MISMA actividad cubre las semanas
@@ -19647,7 +19669,7 @@ function pcCalcular(p){
     const proy = pcSem4(a.proy), auto = pcRealAuto(p, a), real = auto || pcSem4(a.real);
     const cant = proy.reduce((s,x)=>s+x,0), realTot = real.reduce((s,x)=>s+x,0);
     const cb = pcCubierto(proy, real);
-    return {nombre:a.nombre, proy, real, cubierto: cb.cub, sobrante: cb.sobra, auto: !!auto, fuente: pcFuente(a), cant, realTot, pct: cant>0 ? Math.min(realTot,cant)/cant : null, virtual: !!a.virtual, programaId: a.programaId, actId: a.id};
+    return {nombre:a.nombre, proy, real, cubierto: cb.cub, sobrante: cb.sobra, auto: !!auto, fuente: pcFuente(a), cant, realTot, pct: cant>0 ? Math.min(realTot,cant)/cant : null, virtual: !!a.virtual, programaId: a.programaId, capacitacionId: a.capacitacionId, actId: a.id};
   });
   const totProy = [0,0,0,0], totReal = [0,0,0,0], totCap = [0,0,0,0];
   filas.forEach(f=>{ for(let i=0;i<4;i++){ totProy[i]+=f.proy[i]; totReal[i]+=f.real[i]; totCap[i]+=f.cubierto[i]; } });
@@ -19669,7 +19691,7 @@ function pcExigirPersona(nombre){
 }
 /* Crea la hoja del mes de la persona responsable si todavía no existe (con la planificación del cargo, si la hay). */
 async function pcAsegurarHojaDe(a){
-  const per = pcPersonaPorNombre(a.responsable);
+  const per = pcPersonaPorNombre(a.responsable!==undefined ? a.responsable : a.relator);
   const m = /^(\d{4})-(\d{2})/.exec(a.fechaProgramada||"");
   if(!per || !m) return false;
   const anio = +m[1], mes = +m[2];
@@ -19910,6 +19932,8 @@ function pcHojaHtml(p){
   </tr>`; }).join("");
   const filasVirtuales = c.filas.map((f,i)=>({f,i})).filter(x=>x.f.virtual).map(({f,i})=>{
     const a = (CACHE.programa||[]).find(x=>x.id===f.programaId) || {};
+    const cap = f.capacitacionId ? ((CACHE.capacitaciones||[]).find(x=>x.id===f.capacitacionId) || {}) : null;
+    const capSt = cap ? capacitacionCumplimiento(cap) : null;
     const celdasSem = [0,1,2,3].map(s=>{
       const proy = f.proy[s], real = f.real[s];
       const bg = proy>0 ? (real>=proy ? "#bfe8c9" : (f.cubierto[s]>=proy ? "#dcf2e2" : (pcSemanaVencida(p.anio,p.mes,s) ? "#f6c1bc" : ""))) : "";
@@ -19917,8 +19941,9 @@ function pcHojaHtml(p){
     }).join("");
     return `<tr style="background:#f4f8ff;">
       <td>${i+1}</td>
-      <td><strong>${incEsc(f.nombre)}</strong><div class="kv">${incEsc(PG_TIPO_LABEL[a.tipo]||a.tipo||"")} · ${incEsc(areaName(a.areaId))} · programada el ${fmtDate(a.fechaProgramada)}${a.fechaRealizada ? " · realizada el "+fmtDate(a.fechaRealizada) : ""}</div></td>
-      <td><span class="pill medio">Actividad con fecha</span><div style="margin-top:4px;white-space:nowrap;"><button class="subtle-btn" data-pc-pg-registrar="${incEsc(f.programaId)}">${a.fechaRealizada ? "Editar registro" : "Registrar realización"}</button> <button class="subtle-btn" data-pc-pg-editar="${incEsc(f.programaId)}">Editar actividad</button></div></td>
+      ${cap ? `<td><strong>${incEsc(f.nombre)}</strong><div class="kv">${incEsc(CAP_TIPO_LABEL[cap.tipo]||cap.tipo||"Capacitación")} · programada el ${fmtDate(cap.fechaProgramada)} · ${cap.horas||0} hrs${cap.fechaRealizada ? " · realizada el "+fmtDate(cap.fechaRealizada) : ""} · asistencia ${capSt.asistieron}/${capSt.convocados}</div></td>
+      <td><span class="pill proximo">Capacitación</span><div style="margin-top:4px;white-space:nowrap;"><button class="subtle-btn" data-pc-cap-ir="${incEsc(f.capacitacionId)}">Registrar asistencia</button> <button class="subtle-btn" data-pc-cap-editar="${incEsc(f.capacitacionId)}">Editar capacitación</button></div></td>` : `<td><strong>${incEsc(f.nombre)}</strong><div class="kv">${incEsc(PG_TIPO_LABEL[a.tipo]||a.tipo||"")} · ${incEsc(areaName(a.areaId))} · programada el ${fmtDate(a.fechaProgramada)}${a.fechaRealizada ? " · realizada el "+fmtDate(a.fechaRealizada) : ""}</div></td>
+      <td><span class="pill medio">Actividad con fecha</span><div style="margin-top:4px;white-space:nowrap;"><button class="subtle-btn" data-pc-pg-registrar="${incEsc(f.programaId)}">${a.fechaRealizada ? "Editar registro" : "Registrar realización"}</button> <button class="subtle-btn" data-pc-pg-editar="${incEsc(f.programaId)}">Editar actividad</button></div></td>`}
       <td data-pc-cant="${i}" style="text-align:center;font-weight:600;"></td>
       ${celdasSem}
       <td data-pc-pct="${i}" style="text-align:center;font-weight:600;"></td>
@@ -20020,6 +20045,10 @@ on(pcEl("pcHojaWrap"), "click", async (e)=>{
   if(rgPg){ openProgramaModal(rgPg.dataset.pcPgRegistrar); return; }
   const edPg = e.target.closest("[data-pc-pg-editar]");
   if(edPg){ abrirEdicionActividadPrograma(edPg.dataset.pcPgEditar); return; }
+  const irCap = e.target.closest("[data-pc-cap-ir]");
+  if(irCap){ pcIrACapacitacion(irCap.dataset.pcCapIr); return; }
+  const edCap = e.target.closest("[data-pc-cap-editar]");
+  if(edCap){ pcIrACapacitacion(edCap.dataset.pcCapEditar, true); return; }
   const p = pcProgramas().find(x=>x.id===pcHojaId); if(!p) return;
   const q = e.target.closest("[data-pc-quitar]");
   if(q){
@@ -20259,6 +20288,7 @@ const PC_PALABRAS_VACIAS = new Set(["de","del","la","el","los","las","y","en","a
 function pcTokensNombre(s){ return pcNorm(s).split(" ").filter(t=>t.length>2 && !PC_PALABRAS_VACIAS.has(t)); }
 function pcTokCoincide(a, b){ return a===b || (a.length>=5 && b.length>=5 && a.slice(0,5)===b.slice(0,5)); }
 function pcTipoRegistroDeActividad(f){
+  if(f.capacitacionId) return "capacitacion";
   const tf = f.fuente && f.fuente.tipo;
   if(tf==="inspeccion" || tf==="observacion") return tf;
   if(f.virtual){ const a = (CACHE.programa||[]).find(x=>x.id===f.programaId); if(a && a.tipo==="inspeccion") return "inspeccion"; }
@@ -20309,7 +20339,26 @@ async function pcRegistrarInspeccionEnPrograma(rec, ref){
     return "Ojo: el inspector elegido no es «"+per.nombre+"», por eso esta inspección no se cuenta en su programa.";
   return "Se cuenta sola en tu programa mensual: «"+act.nombre+"».";
 }
+/* Abre una capacitación del plan en el módulo Capacitación: para registrar su asistencia (la deja expandida y a la vista) o para editarla. */
+function pcIrACapacitacion(id, editar){
+  const c = (CACHE.capacitaciones||[]).find(x=>x.id===id);
+  if(!c){ alert("Esa capacitación ya no existe en el plan de capacitación."); return; }
+  irAVista("capacitacion");
+  ["filterCapTipo","filterCapMes","filterCapResponsable","filterCapDocumento"].forEach(i=>{ const el = document.getElementById(i); if(el) el.value = ""; });
+  renderCapFiltros(); renderCapacitacionesList();
+  if(editar){
+    capStartEdit(id);
+    try{ subpestanasMostrarDe("hdrNuevaCapacitacion"); }catch(e){}
+    const h = document.getElementById("hdrNuevaCapacitacion"); if(h) h.scrollIntoView({behavior:"smooth", block:"start"});
+    return;
+  }
+  try{ subpestanasMostrarDe("hdrPlanDeCapacitacionCumplimiento"); }catch(e){}
+  const body = document.getElementById("capBody_"+id);
+  if(body && body.classList.contains("collapsed")){ const t = document.getElementById("capToggle_"+id); if(t) t.click(); }
+  const h = document.getElementById("capHdr_"+id); if(h) h.scrollIntoView({behavior:"smooth", block:"start"});
+}
 function pcRealizarActividad(f, hoja){
+  if(f.capacitacionId){ pcIrACapacitacion(f.capacitacionId); return; }
   const tipoReg = pcTipoRegistroDeActividad(f);
   if(!tipoReg){ alert("Esta actividad no se realiza con un formato de inspección u observación. Regístrala desde su programa mensual."); return; }
   const etiqueta = tipoReg==="observacion" ? "observación" : "inspección";
@@ -20431,7 +20480,7 @@ function renderMisProgramaCargo(){
     const c = pcCalcular(p);
     const items = c.filas.map((f,fi)=>({f,fi})).filter(x=>x.f.cant>0).map(({f,fi})=>{
       const ok = f.realTot>=f.cant, tipoReg = pcTipoRegistroDeActividad(f);
-      const btnRealizar = tipoReg ? ` <button class="subtle-btn" data-mis-pc-realizar="${p.id}:${fi}" title="Abre el formato de ${tipoReg==="observacion"?"observación":"inspección"} para realizarla ahora">▶ Realizar ${tipoReg==="observacion"?"observación":"inspección"}</button>` : "";
+      const btnRealizar = tipoReg==="capacitacion" ? ` <button class="subtle-btn" data-mis-pc-realizar="${p.id}:${fi}" title="Abre la capacitación para registrar la asistencia">▶ Registrar asistencia</button>` : (tipoReg ? ` <button class="subtle-btn" data-mis-pc-realizar="${p.id}:${fi}" title="Abre el formato de ${tipoReg==="observacion"?"observación":"inspección"} para realizarla ahora">▶ Realizar ${tipoReg==="observacion"?"observación":"inspección"}</button>` : "");
       return `<div style="margin-bottom:3px;">${incEsc(f.nombre)} <span class="pill ${ok?"bajo":"medio"}" style="margin-left:4px;">${f.realTot} de ${f.cant}</span>${f.auto?' <span class="kv" title="Se cuenta solo desde tus registros en la app">(automático)</span>':""}${btnRealizar}</div>`;
     }).join("") || '<div class="kv">Sin actividades programadas.</div>';
     return `<div style="border:1px solid var(--grid);border-radius:10px;padding:10px 12px;margin-bottom:10px;">
@@ -20486,6 +20535,7 @@ on(document.getElementById("saveCapBtn"), "click", async () => {
   if(dirigidaA.tipo!=="ninguno") convocadosMsg = ` Convocados: ${(rec.participantes||[]).length}.`;
   const editando = !!capEditingId;
   await put("capacitaciones", rec);
+  await pcAsegurarHojaDe(rec);
   await loadCache();
   capResetForm();
   renderCapFiltros();
@@ -21453,7 +21503,7 @@ function renderCapacitacionesList(){
       <div class="card-header-row" id="capHdr_${c.id}" style="align-items:flex-start;">
         <div>
           <strong>${c.nombre}</strong>
-          <div class="kv">${CAP_TIPO_LABEL[c.tipo]||c.tipo} · Programada: ${fmtDate(c.fechaProgramada)} · ${c.horas||0} hrs · ${c.relator||"—"}</div>
+          <div class="kv">${CAP_TIPO_LABEL[c.tipo]||c.tipo} · Programada: ${fmtDate(c.fechaProgramada)} · ${c.horas||0} hrs · ${c.relator||"—"}${c.relator && !pcPersonaPorNombre(c.relator) ? ' <span class="pill medio" title="Este relator no está en «Personas del programa»: la capacitación no aparece en ningún programa mensual.">⚠ Sin persona del programa</span>' : (c.relator ? ' <span class="pill bajo" title="Aparece en el programa mensual de su relator">En programa mensual</span>' : "")}</div>
           <div class="kv">Dirigida a: ${incEsc(capDirigidaTexto(c))}</div>
           <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn small secondary" data-cap-editar="${c.id}" type="button">Editar capacitación</button><button class="subtle-btn" data-cap-eliminar="${c.id}" type="button">Eliminar</button></div>
           ${c.documentoId ? (()=>{ const doc = CACHE.documentos.find(d=>d.id===c.documentoId); return doc ? `<div class="kv">Documento: <span class="pill bajo">${tipoDocumentoLabel(doc)}: ${doc.nombre}</span></div>` : `<div class="kv">Documento: <span class="pill" style="opacity:.6;">Documento eliminado</span></div>`; })() : ""}
