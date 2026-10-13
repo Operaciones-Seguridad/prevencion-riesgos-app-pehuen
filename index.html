@@ -11813,6 +11813,8 @@ on(document.getElementById("fmtIaSugerirBtn"), "click", async () => {
 
 /* Alta y edición de inspecciones/observaciones */
 let insEditingId = null;
+/* Si la inspección se abrió desde una actividad del programa (botón «Realizar»), al guardarla se registra como realizada ahí. */
+let insProgramaRef = null;
 /* El inspector se elige de la lista de trabajadores (así el programa por
    cargo puede contar sus inspecciones). Se guarda el nombre (inspector) y el
    id del trabajador (inspectorId). Un registro antiguo con nombre escrito a
@@ -11835,7 +11837,7 @@ function renderInsInspectorSelect(){
   if(cur && Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur; else insInspectorPorDefecto();
 }
 function resetInsForm(){
-  insEditingId = null;
+  insEditingId = null; insProgramaRef = null;
   document.getElementById("insInspector").value = "";
   insInspectorPorDefecto();
   document.getElementById("insFecha").value = "";
@@ -11920,14 +11922,17 @@ on(document.getElementById("saveInspeccionBtn"), "click", async () => {
     estado: "abierta",
     fechaCreacion: new Date().toISOString()
   };
+  const refPrograma = (insProgramaRef && insProgramaRef.formatoId===tipoId && insProgramaRef.tipoRegistro===tipoRegistro) ? insProgramaRef : null;
+  if(refPrograma) rec.programaRef = {tipo:refPrograma.tipo, hojaId:refPrograma.hojaId||"", actId:refPrograma.actId||"", programaId:refPrograma.programaId||""};
   await put("inspecciones", rec);
+  const msgPrograma = refPrograma ? await pcRegistrarInspeccionEnPrograma(rec, refPrograma) : "";
   await loadCache();
   resetInsForm();
   renderInspeccionesTable();
   renderInsStats();
   renderProgramaCargo(); renderMisActividadesMensuales();
-  if(hallazgosPendientesConCorreo(rec).length) mostrarCorreosPendientes(rec);
-  else alert(`${TIPO_REGISTRO_LABEL[tipoRegistro]} guardada.`);
+  if(hallazgosPendientesConCorreo(rec).length){ if(msgPrograma) alert(msgPrograma); mostrarCorreosPendientes(rec); }
+  else alert(`${TIPO_REGISTRO_LABEL[tipoRegistro]} guardada.` + (msgPrograma ? "\n\n" + msgPrograma : ""));
 });
 
 function renderInspeccionesTable(){
@@ -19612,7 +19617,7 @@ function pcCalcular(p){
   const filas = (p.actividades||[]).concat(pcVirtuales(p)).map(a=>{
     const proy = pcSem4(a.proy), auto = pcRealAuto(p, a), real = auto || pcSem4(a.real);
     const cant = proy.reduce((s,x)=>s+x,0), realTot = real.reduce((s,x)=>s+x,0);
-    return {nombre:a.nombre, proy, real, auto: !!auto, fuente: pcFuente(a), cant, realTot, pct: cant>0 ? Math.min(realTot,cant)/cant : null, virtual: !!a.virtual, programaId: a.programaId};
+    return {nombre:a.nombre, proy, real, auto: !!auto, fuente: pcFuente(a), cant, realTot, pct: cant>0 ? Math.min(realTot,cant)/cant : null, virtual: !!a.virtual, programaId: a.programaId, actId: a.id};
   });
   const totProy = [0,0,0,0], totReal = [0,0,0,0], totCap = [0,0,0,0];
   filas.forEach(f=>{ for(let i=0;i<4;i++){ totProy[i]+=f.proy[i]; totReal[i]+=f.real[i]; totCap[i]+=Math.min(f.real[i], f.proy[i]); } });
@@ -20248,7 +20253,32 @@ function pcFormatoParaActividad(f, tipoReg){
   });
   return mejorPuntaje>=0.5 ? mejor : null;
 }
-function pcRealizarActividad(f){
+/* Registra la inspección hecha desde el programa: actividad con fecha -> queda realizada; actividad manual de la hoja ->
+   suma 1 en la semana de la inspección; actividad automática -> se cuenta sola si el inspector es la misma persona. */
+async function pcRegistrarInspeccionEnPrograma(rec, ref){
+  if(ref.tipo==="programa"){
+    const a = (CACHE.programa||[]).find(x=>x.id===ref.programaId);
+    if(!a) return "";
+    if(a.fechaRealizada) return "La actividad «"+a.nombre+"» ya estaba registrada como realizada.";
+    a.fechaRealizada = rec.fecha; await put("programa", a);
+    return "Quedó registrada como realizada la actividad «"+a.nombre+"» de tu programa.";
+  }
+  const h = pcProgramas().find(x=>x.id===ref.hojaId), act = h && (h.actividades||[]).find(x=>x.id===ref.actId);
+  if(!act) return "";
+  const per = pcPersonaDeProg(h);
+  if(pcFuente(act).tipo==="manual"){
+    const sem = pcSemanaDe(rec.fecha, h.anio, h.mes);
+    if(sem<0) return "La fecha de la inspección no está en "+MESES_NOMBRE[h.mes-1]+" "+h.anio+": no se sumó a ese programa mensual.";
+    const real = pcSem4(act.real); real[sem] += 1; act.real = real;
+    await put("programaCargo", h);
+    return "Quedó registrada como realizada en tu programa mensual: «"+act.nombre+"» (semana "+(sem+1)+").";
+  }
+  const insp = pcNorm(rec.inspector||"");
+  if(per && insp && insp!==pcNorm(per.nombre) && rec.inspectorId!==per.trabajadorId)
+    return "Ojo: el inspector elegido no es «"+per.nombre+"», por eso esta inspección no se cuenta en su programa.";
+  return "Se cuenta sola en tu programa mensual: «"+act.nombre+"».";
+}
+function pcRealizarActividad(f, hoja){
   const tipoReg = pcTipoRegistroDeActividad(f);
   if(!tipoReg){ alert("Esta actividad no se realiza con un formato de inspección u observación. Regístrala desde su programa mensual."); return; }
   const etiqueta = tipoReg==="observacion" ? "observación" : "inspección";
@@ -20266,6 +20296,12 @@ function pcRealizarActividad(f){
   const prog = f.virtual ? (CACHE.programa||[]).find(x=>x.id===f.programaId) : null;
   if(prog && prog.areaId) document.getElementById("insArea").value = prog.areaId;
   const desc = document.getElementById("insDescripcion"); if(desc && !desc.value.trim()) desc.value = "Actividad del programa mensual: " + f.nombre;
+  const per = hoja ? pcPersonaDeProg(hoja) : null;
+  if(per){
+    const t = (CACHE.trabajadores||[]).find(x=>per.trabajadorId && x.id===per.trabajadorId) || (CACHE.trabajadores||[]).find(x=>pcNorm(x.nombre)===pcNorm(per.nombre));
+    if(t) document.getElementById("insInspector").value = t.id;
+  }
+  insProgramaRef = {tipo: f.virtual ? "programa" : "hoja", tipoRegistro: tipoReg, formatoId: formato.id, hojaId: hoja ? hoja.id : "", actId: f.actId||"", programaId: f.programaId||""};
   try{ subpestanasMostrarDe("hdrNuevaInspeccionObservacionEnTerreno"); }catch(e){}
   const h = document.getElementById("hdrNuevaInspeccionObservacionEnTerreno"); if(h) h.scrollIntoView({behavior:"smooth", block:"start"});
 }
@@ -20379,7 +20415,7 @@ on(pcEl("misProgramaCargoWrap"), "click", (e)=>{
   if(rz){
     const [hojaId, fi] = rz.dataset.misPcRealizar.split(":");
     const hoja = pcProgramas().find(x=>x.id===hojaId); if(!hoja) return;
-    const f = pcCalcular(hoja).filas[+fi]; if(f) pcRealizarActividad(f);
+    const f = pcCalcular(hoja).filas[+fi]; if(f) pcRealizarActividad(f, hoja);
     return;
   }
   const b = e.target.closest("[data-mis-pc]"); if(!b) return;
