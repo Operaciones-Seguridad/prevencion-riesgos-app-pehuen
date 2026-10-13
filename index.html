@@ -1316,7 +1316,7 @@
       </div>
 
       <h2 style="margin-top:22px;font-size:15px;">Pendientes de plan de acción</h2>
-      <div class="desc">Líneas de la matriz calificadas Medio, Alto o Muy alto que todavía no tienen ninguna acción definida. Usa el buscador y el filtro de área para encontrar líneas parecidas, márcalas y define una sola acción para todas.</div>
+      <div class="desc">Líneas de la matriz cuyo riesgo sigue siendo Medio, Alto o Muy alto <strong>después de los controles</strong> (riesgo residual) y que todavía no tienen ninguna acción definida. Una línea sin medidas de control cuenta con su riesgo inicial. Las líneas que ya tienen controles pero no tienen el riesgo residual evaluado aparecen aparte, abajo. Usa el buscador y el filtro de área para encontrar líneas parecidas, márcalas y define una sola acción para todas.</div>
       <div class="toolbar">
         <div class="field"><label>Buscar</label><input id="paPendBuscar" placeholder="Peligro, riesgo, actividad o proceso"></div>
         <div class="field"><label>Área</label><select id="paPendArea"></select></div>
@@ -1329,6 +1329,7 @@
         <thead><tr><th></th><th>Área</th><th>Peligro / Riesgo</th><th>Nivel</th><th></th></tr></thead>
         <tbody id="paPendientesTable"></tbody>
       </table>
+      <div id="paResidualAviso" style="margin-top:10px;"></div>
 
       <h2 id="paFormTitle" style="margin-top:22px;font-size:15px;">Nueva acción</h2>
       <div class="form-grid">
@@ -15832,9 +15833,16 @@ on(document.getElementById("printPlanoRiesgosBtn"), "click", async () => { impri
    (logHistorial), el mismo que ya se revisa por línea de matriz.
    ========================================================= */
 const PA_TIPO_LABEL = { mitigar:"Mitigar", evitar:"Evitar", transferir:"Transferir", aceptar:"Aceptar" };
-function paLineasRequierenAccion(){
-  return CACHE.matriz.filter(m => nivelRiesgoLinea(m) !== "bajo");
-}
+/* Un plan de acción se exige según el riesgo que queda DESPUÉS de los controles:
+   - con riesgo residual evaluado se usa el residual;
+   - sin medidas de control escritas, el riesgo residual es igual al inherente (nada lo baja) y requiere acción;
+   - con medidas de control pero sin residual evaluado todavía no se sabe: la línea queda «por evaluar el riesgo residual»
+     (no se cuenta como pendiente de plan hasta evaluarla). */
+function paTieneControles(m){ const it = jerarquiaDe(m); return !!(it && it.length) || !!(m.controles && String(m.controles).trim()); }
+function paResidualPorEvaluar(m){ return nivelRiesgoLinea(m) !== "bajo" && !tieneResidualEvaluado(m) && paTieneControles(m); }
+function paLineasMedioOMas(){ return CACHE.matriz.filter(m => nivelRiesgoLinea(m) !== "bajo"); }
+function paLineasRequierenAccion(){ return CACHE.matriz.filter(m => nivelRiesgoLinea(m) !== "bajo" && !paResidualPorEvaluar(m)); }
+function paLineasResidualPorEvaluar(){ return CACHE.matriz.filter(paResidualPorEvaluar); }
 function paMatrizLinea(matrizId){
   return CACHE.matriz.find(m=>m.id===matrizId) || null;
 }
@@ -15886,7 +15894,19 @@ function renderPaPendientes(){
       }).join("")
     : `<tr><td colspan="5" class="empty">${total.length ? "Ninguna línea coincide con la búsqueda" : "No hay líneas medio/alto/muy alto sin plan de acción"}</td></tr>`;
   paResumenSeleccion("paPendResumen", paPendSel, pendientes.map(m=>m.id));
+  const porEval = paLineasResidualPorEvaluar(), av = document.getElementById("paResidualAviso");
+  if(av) av.innerHTML = porEval.length ? `<div class="finding" style="background:#fff8e6;border-left:5px solid #eda100;"><strong>${porEval.length} línea(s) Medio o más ya tienen medidas de control, pero falta evaluar su riesgo residual.</strong> Evalúalo en la línea de la matriz: si después de los controles sigue Medio o más, pasará a esta lista de pendientes; si baja a Bajo, no necesita plan de acción.
+    <details style="margin-top:6px;"><summary style="cursor:pointer;">Ver las ${porEval.length} línea(s)</summary>
+      <table style="margin-top:6px;"><thead><tr><th>Área</th><th>Peligro / Riesgo</th><th>Nivel inicial</th><th></th></tr></thead><tbody>${porEval.slice(0,60).map(m=>`<tr><td>${areaName(m.areaId)}</td><td><strong>${incEsc(m.peligro||"")}</strong><div class="kv">${incEsc(m.riesgo||"")}</div></td><td><span class="pill ${nivelRiesgoLinea(m)}">${nivelLabel(nivelRiesgoLinea(m))}</span></td><td><button class="btn secondary small" data-pa-evaluar-residual="${m.id}" type="button">Evaluar residual</button></td></tr>`).join("")}</tbody></table>${porEval.length>60?`<div class="kv">Se muestran las primeras 60.</div>`:""}
+    </details></div>` : "";
 }
+on(document.getElementById("paResidualAviso"), "click", (e)=>{
+  const b = e.target.closest("[data-pa-evaluar-residual]"); if(!b) return;
+  irAVista("matriz");
+  try{ subpestanasMostrarDe("hdrNuevaLineaDeMatrizDeRiesgosIPER"); }catch(er){}
+  startEditMatriz(b.dataset.paEvaluarResidual);
+  const h = document.getElementById("hdrNuevaLineaDeMatrizDeRiesgosIPER"); if(h) h.scrollIntoView({behavior:"smooth", block:"start"});
+});
 ["paPendBuscar","paPendArea"].forEach(id=>on(document.getElementById(id), id==="paPendBuscar"?"input":"change", renderPaPendientes));
 on(document.getElementById("paPendientesTable"), "change", (e)=>{
   const cb = e.target.closest("[data-pa-pend-sel]"); if(!cb) return;
@@ -15918,7 +15938,7 @@ on(document.getElementById("paPendDefinirBtn"), "click", ()=>{
 });
 function paFillMatrizSelect(){
   const sel = document.getElementById("paMatrizId");
-  const items = paLineasRequierenAccion().map(m=>{
+  const items = paLineasMedioOMas().map(m=>{
     const n = nivelRiesgoLinea(m);
     return { id: m.id, label: `${areaName(m.areaId)} — ${m.peligro} (${nivelLabel(n)})` };
   });
@@ -15928,7 +15948,7 @@ function paFillMatrizSelect(){
 function paOtrasFiltradas(){
   const principal = document.getElementById("paMatrizId").value;
   const q = matrizNorm(document.getElementById("paOtrasBuscar").value), area = document.getElementById("paOtrasArea").value;
-  return paLineasRequierenAccion().filter(m=>m.id!==principal && (!area || m.areaId===area) && (!q || paTextoBusqueda(m).includes(q)));
+  return paLineasMedioOMas().filter(m=>m.id!==principal && (!area || m.areaId===area) && (!q || paTextoBusqueda(m).includes(q)));
 }
 function paRenderOtras(){
   const wrap = document.getElementById("paOtrasLista"); if(!wrap) return;
