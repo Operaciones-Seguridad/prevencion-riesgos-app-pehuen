@@ -4264,8 +4264,8 @@
         <button class="btn secondary small" id="refrescarEmpresasBtn">↻ Actualizar listado</button>
       </div>
       <table style="margin-top:10px;">
-        <thead><tr><th>Nombre</th><th style="width:110px;">Estado</th><th style="width:220px;">Acciones</th></tr></thead>
-        <tbody id="empresasTable"><tr><td colspan="3">Cargando…</td></tr></tbody>
+        <thead><tr><th>Nombre</th><th style="width:220px;">Contacto (administrador)</th><th style="width:110px;">Estado</th><th style="width:220px;">Acciones</th></tr></thead>
+        <tbody id="empresasTable"><tr><td colspan="4">Cargando…</td></tr></tbody>
       </table>
 
       <h2 style="margin-top:24px;">Agregar una empresa nueva</h2>
@@ -26830,17 +26830,23 @@ on(document.getElementById("importMatrizBtn"), "click", async () => {
 });
 
 /* --- Multi-empresa: listar/eliminar empresas (superAdmin), crear empresa nueva, exportar/importar respaldo --- */
+/* Columna «Contacto»: nombre, cargo y correo de los administradores de cada empresa (los entrega el servidor solo al administrador de la plataforma). */
+function empresaContactoHtml(contactos){
+  const lista = (contactos||[]).filter(c=>c.nombre || c.email);
+  if(!lista.length) return '<span class="kv">Sin datos de contacto</span>';
+  return lista.map(c=>`<div>${incEsc(c.nombre||"—")}${c.cargo ? ` <span class="kv">(${incEsc(c.cargo)})</span>` : ""}${c.email ? `<br><a href="mailto:${incEsc(c.email)}" class="kv">${incEsc(c.email)}</a>` : ""}</div>`).join("");
+}
 async function renderEmpresasTable(){
   const tbody = document.getElementById("empresasTable");
   if(!tbody) return;
   let empresas = null;
   try{ empresas = await apiFetch("GET", "/api/empresas"); }catch(e){ empresas = null; }
   if(empresas === null){
-    tbody.innerHTML = '<tr><td colspan="3">No se pudo cargar el listado de empresas.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4">No se pudo cargar el listado de empresas.</td></tr>';
     return;
   }
   if(!empresas.length){
-    tbody.innerHTML = '<tr><td colspan="3">No hay empresas registradas todavía.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4">No hay empresas registradas todavía.</td></tr>';
     return;
   }
   tbody.innerHTML = empresas.map(e => {
@@ -26851,6 +26857,7 @@ async function renderEmpresasTable(){
     const aprobarHtml = pendiente ? `<button class="btn small" data-aprobar-empresa="${e.id}" style="margin-right:6px;">Aprobar</button>` : "";
     return `<tr>
       <td>${e.nombre}${esActual ? ' <span class="desc" style="display:inline;margin:0;">(empresa actual)</span>' : ""}</td>
+      <td>${empresaContactoHtml(e.contactos)}</td>
       <td>${estadoHtml}</td>
       <td>${aprobarHtml}${esActual
         ? '<span class="desc" style="display:inline;margin:0;">No puedes eliminar la empresa con la que iniciaste sesión</span>'
