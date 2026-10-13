@@ -12067,7 +12067,7 @@ function misPendientesCalcular(){
     if(hoja){
       const c = pcCalcular(hoja);
       r.pct = c.mensual;
-      c.filas.forEach(f=>{ if(f.virtual) return; for(let s=0;s<4;s++){ if(f.proy[s]>f.real[s] && pcSemanaVencida(hoja.anio, hoja.mes, s)){ r.atrasadas++; break; } } });
+      c.filas.forEach(f=>{ if(f.virtual) return; for(let s=0;s<4;s++){ if(f.proy[s]>f.cubierto[s] && pcSemanaVencida(hoja.anio, hoja.mes, s)){ r.atrasadas++; break; } } });
     }
   }
   return r;
@@ -19613,14 +19613,24 @@ function pcVirtuales(p){
       return {id:"pg:"+a.id, programaId:a.id, nombre:a.nombre, proy, realVirtual:real, fuente:{tipo:"programa"}, virtual:true};
     });
 }
+/* Lo realizado en una semana distinta a la proyectada cuenta igual dentro del mes: cada semana se cubre primero con su
+   propio realizado (topado en lo proyectado) y lo que sobra de otras semanas de la MISMA actividad cubre las semanas
+   que quedaron pendientes, de la más antigua a la más nueva. */
+function pcCubierto(proy, real){
+  const cub = proy.map((p,i)=>Math.min(real[i], p));
+  let sobra = real.reduce((t,r,i)=>t+Math.max(0, r-proy[i]), 0);
+  for(let i=0;i<4 && sobra>0;i++){ const falta = proy[i]-cub[i]; if(falta>0){ const t = Math.min(falta, sobra); cub[i]+=t; sobra-=t; } }
+  return {cub, sobra};
+}
 function pcCalcular(p){
   const filas = (p.actividades||[]).concat(pcVirtuales(p)).map(a=>{
     const proy = pcSem4(a.proy), auto = pcRealAuto(p, a), real = auto || pcSem4(a.real);
     const cant = proy.reduce((s,x)=>s+x,0), realTot = real.reduce((s,x)=>s+x,0);
-    return {nombre:a.nombre, proy, real, auto: !!auto, fuente: pcFuente(a), cant, realTot, pct: cant>0 ? Math.min(realTot,cant)/cant : null, virtual: !!a.virtual, programaId: a.programaId, actId: a.id};
+    const cb = pcCubierto(proy, real);
+    return {nombre:a.nombre, proy, real, cubierto: cb.cub, sobrante: cb.sobra, auto: !!auto, fuente: pcFuente(a), cant, realTot, pct: cant>0 ? Math.min(realTot,cant)/cant : null, virtual: !!a.virtual, programaId: a.programaId, actId: a.id};
   });
   const totProy = [0,0,0,0], totReal = [0,0,0,0], totCap = [0,0,0,0];
-  filas.forEach(f=>{ for(let i=0;i<4;i++){ totProy[i]+=f.proy[i]; totReal[i]+=f.real[i]; totCap[i]+=Math.min(f.real[i], f.proy[i]); } });
+  filas.forEach(f=>{ for(let i=0;i<4;i++){ totProy[i]+=f.proy[i]; totReal[i]+=f.real[i]; totCap[i]+=f.cubierto[i]; } });
   const pctSem = totProy.map((t,i)=> t>0 ? totCap[i]/t : null);
   const def = pctSem.filter(x=>x!==null);
   return {filas, totProy, totReal, pctSem, mensual: def.length ? def.reduce((s,x)=>s+x,0)/def.length : null, cantTotal: totProy.reduce((s,x)=>s+x,0)};
@@ -19882,7 +19892,7 @@ function pcHojaHtml(p){
     const a = (CACHE.programa||[]).find(x=>x.id===f.programaId) || {};
     const celdasSem = [0,1,2,3].map(s=>{
       const proy = f.proy[s], real = f.real[s];
-      const bg = proy>0 ? (real>=proy ? "#bfe8c9" : (pcSemanaVencida(p.anio,p.mes,s) ? "#f6c1bc" : "")) : "";
+      const bg = proy>0 ? (real>=proy ? "#bfe8c9" : (f.cubierto[s]>=proy ? "#dcf2e2" : (pcSemanaVencida(p.anio,p.mes,s) ? "#f6c1bc" : ""))) : "";
       return `<td style="text-align:center;">${proy||""}</td><td style="text-align:center;background:${bg};">${real||""}</td>`;
     }).join("");
     return `<tr style="background:#f4f8ff;">
@@ -19920,7 +19930,7 @@ function pcHojaHtml(p){
       <button class="btn small secondary" id="pcAddActBtn" type="button">+ Agregar actividad</button>
     </div>
     <div id="pcMensualBox" style="margin-top:14px;display:inline-block;padding:10px 18px;border-radius:10px;font-size:18px;font-weight:700;"></div>
-    <div class="kv" style="margin-top:4px;">Verde en "Real.": cumplido; rojo: semana vencida sin cumplir; azul: realizado sin estar proyectado. Las casillas bloqueadas se cuentan solas desde los registros de la app. El realizado se topa en lo proyectado de cada semana para el cálculo.</div>
+    <div class="kv" style="margin-top:4px;">Verde en "Real.": cumplido; verde claro: cumplido con una realización de otra semana del mismo mes; rojo: semana vencida sin cumplir; azul: realizado de más (sin semana pendiente que cubrir). Las casillas bloqueadas se cuentan solas desde los registros de la app. Si una actividad se hace en otra semana del mes, igual cuenta para cubrir la semana pendiente; el realizado de cada actividad se topa en lo proyectado del mes.</div>
     <label style="margin-top:10px;">Observaciones</label>
     <textarea id="pcHObs" placeholder="Observaciones del mes...">${incEsc(p.observaciones||"")}</textarea>
     <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
@@ -19937,9 +19947,10 @@ function pcActualizarCalculos(p){
     const pct = q(`[data-pc-pct="${i}"]`); if(pct){ pct.textContent = pcPct(f.pct); pct.style.background = pcColorPct(f.pct); }
     for(let s=0;s<4;s++){
       const inp = q(`[data-pc-real="${i}:${s}"]`); if(!inp) continue;
-      const proy = f.proy[s], real = f.real[s];
+      const proy = f.proy[s], real = f.real[s], cub = f.cubierto[s];
       if(f.auto) inp.value = real;
-      inp.style.background = proy>0 ? (real>=proy ? "#bfe8c9" : (pcSemanaVencida(p.anio,p.mes,s) ? "#f6c1bc" : "")) : (real>0 ? "#cfe3fb" : "");
+      inp.title = (proy>0 && real<proy && cub>=proy) ? "Cumplida con una realización de otra semana del mes" : (inp.disabled ? "Se cuenta solo desde los registros de la app" : "");
+      inp.style.background = proy>0 ? (real>=proy ? "#bfe8c9" : (cub>=proy ? "#dcf2e2" : (pcSemanaVencida(p.anio,p.mes,s) ? "#f6c1bc" : ""))) : (real>0 ? (f.sobrante>0 ? "#cfe3fb" : "#dcf2e2") : "");
     }
   });
   const ct = q("[data-pc-cantTot]"); if(ct) ct.textContent = c.cantTotal;
