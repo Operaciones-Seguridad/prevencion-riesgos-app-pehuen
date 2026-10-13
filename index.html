@@ -4243,6 +4243,25 @@
       </div>
     </div>
 
+    <div class="card" id="empresasIngresosWrap" style="display:none;">
+      <div class="card-header-row" id="hdrEmpresasIngresos"><h2>Ingresos a la aplicación</h2><button class="collapse-toggle" id="toggleEmpresasIngresos" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyEmpresasIngresos">
+      <div class="desc">Solo visible para el administrador de la plataforma. Muestra quién entra a Pehuén, de qué empresa y cuándo. Se registra cada vez que alguien inicia sesión o abre la app con su sesión ya iniciada (como máximo una vez cada 30 minutos por persona). Solo se guarda el nombre, el correo y la hora, nunca claves ni direcciones de internet; los registros se borran solos a los 13 meses. El registro parte desde que se activó esta función.</div>
+      <div class="toolbar"><button class="btn secondary small" id="ingresosActualizarBtn" type="button">↻ Actualizar</button></div>
+      <div id="ingresosResumenWrap" style="margin:10px 0;"></div>
+      <h3 style="margin:14px 0 6px;font-size:14px;">Por usuario</h3>
+      <table>
+        <thead><tr><th>Usuario</th><th>Empresa</th><th>Último ingreso</th><th style="width:110px;">Últimos 30 días</th><th style="width:90px;">Total</th></tr></thead>
+        <tbody id="ingresosUsuariosTable"><tr><td colspan="5" class="empty">Cargando…</td></tr></tbody>
+      </table>
+      <h3 style="margin:18px 0 6px;font-size:14px;">Últimos ingresos</h3>
+      <table>
+        <thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Empresa</th></tr></thead>
+        <tbody id="ingresosRecientesTable"></tbody>
+      </table>
+      </div>
+    </div>
+
     <div class="card" id="empresasUsoWrap" style="display:none;">
       <div class="card-header-row" id="hdrEmpresasUso"><h2>Uso de almacenamiento por empresa</h2><button class="collapse-toggle" id="toggleEmpresasUso" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyEmpresasUso">
@@ -4793,6 +4812,7 @@ setupCollapsible("hdrGrdSimulacros", "bodyGrdSimulacros", "toggleGrdSimulacros",
 setupCollapsible("hdrGrdPlanAccion", "bodyGrdPlanAccion", "toggleGrdPlanAccion", "collapsed_grdPlanAccion");
 setupCollapsible("hdrPlanEmergencia", "bodyPlanEmergencia", "togglePlanEmergencia", "collapsed_planEmergencia");
 setupCollapsible("hdrEmpresasUso", "bodyEmpresasUso", "toggleEmpresasUso", "collapsed_empresasUso");
+setupCollapsible("hdrEmpresasIngresos", "bodyEmpresasIngresos", "toggleEmpresasIngresos", "collapsed_empresasIngresos");
 setupCollapsible("hdrPlanosEmergencia", "bodyPlanosEmergencia", "togglePlanosEmergencia", "collapsed_planosEmergencia");
 setupCollapsible("hdrExtintores", "bodyExtintores", "toggleExtintores", "collapsed_extintores");
 setupCollapsible("hdrRegistroExtintores", "bodyRegistroExtintores", "toggleRegistroExtintores", "collapsed_registroExtintores");
@@ -27157,6 +27177,44 @@ async function renderEmpresasUso(){
   </tr>`).join("") : '<tr><td colspan="6" class="empty">No hay empresas registradas.</td></tr>';
 }
 on(document.getElementById("usoCalcularBtn"), "click", renderEmpresasUso);
+
+/* --- Ingresos a la aplicación (solo superAdmin, solo lectura) --- */
+function ingresoFmt(iso){
+  const d = new Date(iso); if(isNaN(d)) return "—";
+  return d.toLocaleString("es-CL", {day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit"});
+}
+function ingresoHace(iso){
+  const ms = Date.now() - new Date(iso).getTime(); if(isNaN(ms) || ms < 0) return "";
+  const min = Math.round(ms/60000);
+  if(min < 2) return "ahora mismo";
+  if(min < 60) return "hace " + min + " min";
+  const h = Math.round(min/60); if(h < 24) return "hace " + h + " h";
+  const d = Math.round(h/24); return "hace " + d + (d===1 ? " día" : " días");
+}
+async function renderEmpresasIngresos(){
+  const tbU = document.getElementById("ingresosUsuariosTable"), tbR = document.getElementById("ingresosRecientesTable"), res = document.getElementById("ingresosResumenWrap");
+  if(!tbU) return;
+  let d = null, errMsg = "";
+  try{ d = await apiFetch("GET", "/api/empresas/ingresos"); }catch(e){ errMsg = e.message || ""; }
+  if(!d || !d.resumen){
+    res.innerHTML = ""; tbR.innerHTML = "";
+    tbU.innerHTML = `<tr><td colspan="5" class="empty">No se pudo leer el registro de ingresos${errMsg ? ": "+incEsc(errMsg) : ""}.</td></tr>`;
+    return;
+  }
+  const r = d.resumen;
+  res.innerHTML = `<div class="grid-tiles">${[
+    tile("Entraron en las últimas 24 horas", r.h24, "personas distintas", null, "people", "var(--s1)"),
+    tile("Entraron en los últimos 7 días", r.d7, "personas distintas", null, "people", "var(--s1)"),
+    tile("Entraron en los últimos 30 días", r.d30, "personas distintas", null, "people", "var(--s1)"),
+  ].join("")}</div>${r.desde ? `<div class="kv" style="margin-top:6px;">Registro desde el ${ingresoFmt(r.desde)} · ${r.total} ingreso(s) en total.</div>` : '<div class="kv" style="margin-top:6px;">Todavía no hay ingresos registrados: aparecerán a medida que la gente entre.</div>'}`;
+  tbU.innerHTML = d.usuarios.length ? d.usuarios.map(u=>`<tr>
+    <td>${incEsc(u.nombre||"—")}${u.email ? `<div class="kv">${incEsc(u.email)}</div>` : ""}</td>
+    <td>${incEsc(u.empresa)}</td>
+    <td>${ingresoFmt(u.ultimo)} <span class="kv">(${ingresoHace(u.ultimo)})</span></td>
+    <td>${u.ult30}</td><td>${u.total}</td></tr>`).join("") : '<tr><td colspan="5" class="empty">Sin ingresos registrados todavía.</td></tr>';
+  tbR.innerHTML = d.recientes.length ? d.recientes.map(x=>`<tr><td>${ingresoFmt(x.at)}</td><td>${incEsc(x.nombre||"—")}${x.email ? ` <span class="kv">${incEsc(x.email)}</span>` : ""}</td><td>${incEsc(x.empresa)}</td></tr>`).join("") : '<tr><td colspan="3" class="empty">—</td></tr>';
+}
+on(document.getElementById("ingresosActualizarBtn"), "click", renderEmpresasIngresos);
 (function(){
   try{ const v = localStorage.getItem("uso_limite_mb"); if(v && +v>=100) document.getElementById("usoLimiteMb").value = v; }catch(e){}
   on(document.getElementById("usoLimiteMb"), "change", ()=>{ try{ localStorage.setItem("uso_limite_mb", document.getElementById("usoLimiteMb").value); }catch(e){} });
@@ -27351,6 +27409,9 @@ function aplicarPermisosSesion(){
   if(empresasWrap) empresasWrap.style.display = mostrarEmpresasWrap ? "" : "none";
   const empresasUsoWrap = document.getElementById("empresasUsoWrap");
   if(empresasUsoWrap) empresasUsoWrap.style.display = mostrarEmpresasWrap ? "" : "none";
+  const empresasIngresosWrap = document.getElementById("empresasIngresosWrap");
+  if(empresasIngresosWrap) empresasIngresosWrap.style.display = mostrarEmpresasWrap ? "" : "none";
+  if(mostrarEmpresasWrap) renderEmpresasIngresos();
   if(mostrarEmpresasWrap) renderEmpresasTable();
   const respaldoDatosWrap = document.getElementById("respaldoDatosWrap");
   if(respaldoDatosWrap) respaldoDatosWrap.style.display = (esAdmin && storageMode==="api") ? "" : "none";
