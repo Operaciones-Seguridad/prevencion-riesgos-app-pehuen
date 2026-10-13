@@ -1351,10 +1351,6 @@
         <label style="display:flex;align-items:center;gap:8px;font-weight:400;"><input type="checkbox" id="paAplicarGrupo" checked style="width:auto;min-height:auto;"> Aplicar los cambios a las otras <span id="paGrupoN">0</span> acciones del mismo grupo (tipo, actividad, responsable, plazo, presupuesto, recursos y revisión; no cambia su estado ni su eficacia)</label>
       </div>
       <div class="form-grid" style="margin-top:10px;">
-        <div>
-          <label style="display:flex;align-items:center;gap:8px;font-weight:400;"><input type="checkbox" id="paControlesValidados" style="width:auto;min-height:auto;"> ¿Los controles actuales son reales y funcionan?</label>
-        </div>
-        <div><label>Observación de la validación</label><input id="paObservacionValidacion" placeholder="Ej: se verificó en terreno el 20-08-2026"></div>
         <div><label>Tipo de acción</label>
           <select id="paTipoAccion">
             <option value="mitigar">Mitigar</option>
@@ -1369,6 +1365,13 @@
         <div><label>Presupuesto estimado (opcional)</label><input type="number" id="paPresupuesto" min="0" placeholder="$"></div>
         <div><label>Recursos necesarios (opcional)</label><input id="paRecursos" placeholder="Materiales, tecnología, etc."></div>
         <div><label>Próxima revisión de avance</label><input type="date" id="paProximaRevision"></div>
+        <div style="grid-column:1/-1;border-top:1px solid var(--grid);padding-top:10px;margin-top:4px;">
+          <div class="kv" style="margin-bottom:6px;"><strong>Validación de los controles</strong> — se completa una vez tomadas las medidas de control, al verificar en terreno que los controles actuales existen y funcionan.</div>
+        </div>
+        <div>
+          <label style="display:flex;align-items:center;gap:8px;font-weight:400;"><input type="checkbox" id="paControlesValidados" style="width:auto;min-height:auto;"> ¿Los controles actuales son reales y funcionan?</label>
+        </div>
+        <div><label>Observación de la validación</label><input id="paObservacionValidacion" placeholder="Ej: se verificó en terreno el 20-08-2026"></div>
       </div>
       <div class="toolbar" style="margin-top:10px;">
         <button class="btn" id="paGuardarBtn">Guardar acción</button>
