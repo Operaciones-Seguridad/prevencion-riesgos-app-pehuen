@@ -2009,7 +2009,7 @@
   <div class="view" id="view-programa">
     <div class="card">
       <div class="card-header-row" id="hdrNuevaActividadDelProgramaDeSeguridad"><h2>Nueva actividad del programa de seguridad</h2><button class="collapse-toggle" id="toggleNuevaActividadDelProgramaDeSeguridad" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyNuevaActividadDelProgramaDeSeguridad">
-      <div class="desc">Actividades planificadas del programa anual (capacitaciones, inspecciones, simulacros, difusión de protocolos, reuniones de comité paritario, etc.) exigidas por el DS 44.</div>
+      <div class="desc">Actividades planificadas del programa anual (capacitaciones, inspecciones, simulacros, difusión de protocolos, reuniones de comité paritario, etc.) exigidas por el DS 44. El responsable debe ser una persona de «Personas del programa»: la actividad aparece también en su <strong>Programa mensual</strong>, en la semana de su fecha, y ahí puedes registrar su realización.</div>
       <div class="form-grid">
         <div>
           <label>Nombre de la actividad</label>
@@ -2032,7 +2032,7 @@
         </div>
         <div>
           <label>Responsable</label>
-          <input id="pgResponsable" list="dlResponsables" placeholder="Nombre responsable">
+          <input id="pgResponsable" list="dlPersonasPrograma" placeholder="Persona del programa">
         </div>
         <div>
           <label>Fecha programada</label>
@@ -2057,12 +2057,14 @@
         <div class="field"><label>Filtrar por responsable</label><select id="filterPgResponsable"><option value="">Todos los responsables</option></select></div>
       </div>
       <datalist id="dlResponsables"></datalist>
+      <datalist id="dlPersonasPrograma"></datalist>
       <div class="toolbar">
         <div><button class="btn small secondary" id="pgMarcarBtn" type="button">Marcar o desmarcar las visibles</button></div>
         <div><button class="btn small secondary" id="pgLimpiarBtn" type="button">Desmarcar todas</button></div>
-        <div class="field"><label>Designar responsable de las marcadas</label><input id="pgBulkResp" list="dlResponsables" placeholder="Elige o escribe el nombre"></div>
+        <div class="field"><label>Designar responsable de las marcadas</label><input id="pgBulkResp" list="dlPersonasPrograma" placeholder="Persona del programa"></div>
         <div><button class="btn small" id="pgBulkRespBtn" type="button" style="margin-top:20px;">Asignar a las marcadas</button></div>
         <div class="kv" id="pgSelResumen"></div>
+        <div><button class="btn small secondary" id="pgConsolidarBtn" type="button" title="Crea las hojas mensuales que falten para las actividades que ya tienen una persona del programa como responsable">Consolidar en el programa mensual</button></div>
       </div>
       <table>
         <thead><tr><th></th><th>Actividad</th><th>Tipo</th><th>Área</th><th>Responsable</th><th>Fecha programada</th><th>Estado</th><th>Fecha de realización</th><th>Documento probatorio</th><th></th></tr></thead>
@@ -2095,7 +2097,7 @@
 
     <div class="card">
       <div class="card-header-row" id="hdrPcMensual"><h2>Programa mensual por persona</h2><button class="collapse-toggle" id="togglePcMensual" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyPcMensual">
-      <div class="desc">Hoja de actividades del mes de una persona del programa: lo proyectado y lo realizado en cada semana. Las actividades que se registran en la app (inspecciones, observaciones, reuniones del comité, capacitaciones) pueden contarse solas desde esos registros; las demás se marcan a mano. Los cambios se guardan solos.</div>
+      <div class="desc">Hoja de actividades del mes de una persona del programa: lo proyectado y lo realizado en cada semana. Las actividades que se registran en la app (inspecciones, observaciones, reuniones del comité, capacitaciones) pueden contarse solas desde esos registros; las demás se marcan a mano. Además aparecen aquí, al final de la lista y en azul, las <strong>actividades con fecha</strong> de esa persona (las traspasadas desde la Matriz y las creadas en «Actividades sueltas»), con botones para registrar su realización. Los cambios se guardan solos.</div>
       <div class="toolbar">
         <div class="field"><label>Año</label><select id="pcAnio"></select></div>
         <div class="field"><label>Mes</label><select id="pcMes"></select></div>
@@ -5343,7 +5345,9 @@ async function ejecutarTraspaso(m, item, clave, destino, responsable, fecha){
     await addCatalogValue("capTipo", tipoCap);
     await put("capacitaciones", { id: destinoId, nombre: item.texto, tipo: tipoCap, fechaProgramada: fecha, fechaRealizada: null, horas: 0, relator: responsable, documentoId: "", participantes: [] });
   } else {
-    await put("programa", { id: destinoId, nombre: item.texto, tipo: "inspeccion", areaId: m.areaId, responsable, fechaProgramada: fecha, fechaRealizada: null });
+    const actProg = { id: destinoId, nombre: item.texto, tipo: "inspeccion", areaId: m.areaId, responsable, fechaProgramada: fecha, fechaRealizada: null };
+    await put("programa", actProg);
+    await pcAsegurarHojaDe(actProg);
   }
   m.controlesTraspasos = m.controlesTraspasos || {};
   m.controlesTraspasos[clave] = { estado: "traspasado", destino, destinoId, fecha };
@@ -5368,7 +5372,9 @@ async function ejecutarTraspasoGrupo(items, destino, nombre, responsable, fecha)
       const a = x.m.areaId || "";
       if(!idPorArea.has(a)){
         const id = uid();
-        await put("programa", { id, nombre, tipo: "inspeccion", areaId: a, responsable, fechaProgramada: fecha, fechaRealizada: null });
+        const actProg = { id, nombre, tipo: "inspeccion", areaId: a, responsable, fechaProgramada: fecha, fechaRealizada: null };
+        await put("programa", actProg);
+        await pcAsegurarHojaDe(actProg);
         idPorArea.set(a, id); creadas++;
       }
     }
@@ -10706,6 +10712,7 @@ function responsableEsGenerico(texto){
 }
 function renderCommonSelects(){
   { const dl = document.getElementById("dlResponsables"); if(dl) fillDatalist(dl, responsablesSugeridos()); }
+  { const dl = document.getElementById("dlPersonasPrograma"); if(dl) fillDatalist(dl, (CACHE.programaPersonas||[]).map(p=>p.nombre).filter(Boolean).sort((a,b)=>a.localeCompare(b))); }
   fillDatalist(document.getElementById("dlDocumentosProcedimiento"), (CACHE.documentos||[]).filter(d=>d.tipo==="procedimiento").map(d=>d.nombre).filter(Boolean));
   const areaOpts = CACHE.areas.map(a=>({id:a.id,label:a.nombre}));
   fillSelect(document.getElementById("insArea"), areaOpts, true);
@@ -12052,7 +12059,7 @@ function misPendientesCalcular(){
     if(hoja){
       const c = pcCalcular(hoja);
       r.pct = c.mensual;
-      c.filas.forEach(f=>{ for(let s=0;s<4;s++){ if(f.proy[s]>f.real[s] && pcSemanaVencida(hoja.anio, hoja.mes, s)){ r.atrasadas++; break; } } });
+      c.filas.forEach(f=>{ if(f.virtual) return; for(let s=0;s<4;s++){ if(f.proy[s]>f.real[s] && pcSemanaVencida(hoja.anio, hoja.mes, s)){ r.atrasadas++; break; } } });
     }
   }
   return r;
@@ -13496,9 +13503,15 @@ function ofrecerTraspasosDetectados(matrizId){
       return;
     }
     for(const x of marcados){
+      if(x.destino==="programa"){
+        const per = pcExigirPersona(document.querySelector(`[data-traspasomodal-resp="${x.idx}"]`).value.trim());
+        if(!per) return;
+      }
+    }
+    for(const x of marcados){
       const responsable = document.querySelector(`[data-traspasomodal-resp="${x.idx}"]`).value.trim();
       const fecha = document.querySelector(`[data-traspasomodal-fecha="${x.idx}"]`).value;
-      await ejecutarTraspaso(rec, x.item, x.clave, x.destino, responsable, fecha);
+      await ejecutarTraspaso(rec, x.item, x.clave, x.destino, x.destino==="programa" ? pcPersonaPorNombre(responsable).nombre : responsable, fecha);
     }
     await put("matriz", rec);
     await loadCache();
@@ -16303,10 +16316,12 @@ on(document.getElementById("trasGrupoTraspasarBtn"), "click", async ()=>{
   if(!nombre){ alert("Escribe el nombre de la actividad."); return; }
   if(!responsable){ alert("Designa el responsable de la actividad (elige un nombre de la lista o escríbelo) antes de traspasar."); return; }
   if(!fecha){ alert("Indica la fecha programada antes de traspasar."); return; }
+  let responsableFinal = responsable;
+  if(destino==="programa"){ const per = pcExigirPersona(responsable); if(!per) return; responsableFinal = per.nombre; }
   const areas = new Set(marcadas.map(x=>x.m.areaId||""));
   const creadas = destino==="programa" ? areas.size : 1;
   if(!confirm(`Se creará ${creadas} actividad(es) "${nombre}" en ${TRASPASO_DESTINO_LABEL[destino]} y las ${marcadas.length} medida(s) marcadas quedarán como traspasadas. ¿Continuar?`)) return;
-  await ejecutarTraspasoGrupo(marcadas, destino, nombre, responsable, fecha);
+  await ejecutarTraspasoGrupo(marcadas, destino, nombre, responsableFinal, fecha);
   trasSel = new Set(); trasNombreAuto = ""; ["trasGrupoNombre","trasGrupoResp","trasGrupoFecha"].forEach(id=>document.getElementById(id).value = "");
   await loadCache();
   renderProgramaTable(); renderPgFiltros();
@@ -16338,7 +16353,9 @@ on(document.getElementById("traspasosPendientesTable"), "click", async (e) => {
     const fecha = document.querySelector(`[data-traspasofila-fecha="${idx}"]`).value;
     if(!responsable){ alert("Designa el responsable de la actividad (elige un nombre de la lista o escríbelo) antes de traspasar."); return; }
     if(!fecha){ alert("Indica la fecha programada antes de traspasar."); return; }
-    await ejecutarTraspaso(x.m, x.item, x.clave, destino, responsable, fecha);
+    let responsableFila = responsable;
+    if(destino==="programa"){ const per = pcExigirPersona(responsable); if(!per) return; responsableFila = per.nombre; }
+    await ejecutarTraspaso(x.m, x.item, x.clave, destino, responsableFila, fecha);
     await put("matriz", x.m);
     await loadCache();
     renderProgramaTable(); renderPgFiltros();
@@ -19109,14 +19126,18 @@ on(document.getElementById("savePgBtn"), "click", async () => {
   const responsable = document.getElementById("pgResponsable").value.trim();
   const fechaProgramada = document.getElementById("pgFechaProg").value;
   if(!nombre || !areaId || !fechaProgramada){ alert("Complete nombre, área y fecha programada."); return; }
-  await put("programa", {id:uid(), nombre, tipo, areaId, responsable, fechaProgramada, fechaRealizada:null});
+  const per = pcExigirPersona(responsable); if(!per) return;
+  const nuevaAct = {id:uid(), nombre, tipo, areaId, responsable: per.nombre, fechaProgramada, fechaRealizada:null};
+  await put("programa", nuevaAct);
+  await pcAsegurarHojaDe(nuevaAct);
   await loadCache();
   ["pgNombre","pgResponsable","pgFechaProg"].forEach(id=>document.getElementById(id).value="");
   renderPgFiltros();
   renderProgramaTable();
   renderProgramaCumplimientoPorResponsable();
   if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
-  alert("Actividad agregada al programa de seguridad.");
+  if(typeof renderProgramaCargo === "function") renderProgramaCargo();
+  alert("Actividad agregada al programa de seguridad y al programa mensual de " + per.nombre + ".");
 });
 
 const PG_TIPO_LABEL = {capacitacion:"Capacitación", inspeccion:"Inspección", simulacro:"Simulacro / emergencia", difusion:"Difusión de protocolos", comite:"Comité paritario", otro:"Otro"};
@@ -19152,7 +19173,7 @@ on(document.getElementById("importPgBtn"), "click", async () => {
   const norm = s => String(s||"").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
   const tipoPorTexto = {};
   Object.entries(PG_TIPO_LABEL).forEach(([clave, etiqueta])=>{ tipoPorTexto[norm(etiqueta)] = clave; tipoPorTexto[norm(clave)] = clave; });
-  let importados = 0, omitidos = 0, sinArea = 0, tipoNoReconocido = 0;
+  let importados = 0, omitidos = 0, sinArea = 0, tipoNoReconocido = 0, sinPersonaImp = 0;
   for(const row of rows){
     const keys = Object.keys(row);
     const kNombre = keys.find(k=>["actividad","nombre","nombre de la actividad"].includes(norm(k)));
@@ -19179,7 +19200,9 @@ on(document.getElementById("importPgBtn"), "click", async () => {
     if(!areaId) sinArea++;
     const responsable = kResp? String(row[kResp]).trim() : "";
     const fechaRealizada = kFechaReal? (excelFechaToIso(row[kFechaReal]) || null) : null;
-    await put("programa", {id:uid(), nombre, tipo, areaId, responsable, fechaProgramada, fechaRealizada});
+    const actImp = {id:uid(), nombre, tipo, areaId, responsable, fechaProgramada, fechaRealizada};
+    await put("programa", actImp);
+    if(pcPersonaPorNombre(responsable)) await pcAsegurarHojaDe(actImp); else sinPersonaImp++;
     importados++;
   }
   await loadCache();
@@ -19188,7 +19211,8 @@ on(document.getElementById("importPgBtn"), "click", async () => {
   renderProgramaTable();
   renderProgramaCumplimientoPorResponsable();
   if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
-  alert(`Importación completa: ${importados} actividad(es) agregada(s) al programa de seguridad${omitidos? `, ${omitidos} fila(s) omitida(s) por no tener Actividad o Fecha programada válida`:""}${sinArea? `, ${sinArea} sin área asignada (por no traer columna Área o no coincidir con ninguna área ya creada)`:""}${tipoNoReconocido? `, ${tipoNoReconocido} con Tipo no reconocido (asignado como "Otro")`:""}.`);
+  alert(`Importación completa: ${importados} actividad(es) agregada(s) al programa de seguridad${omitidos? `, ${omitidos} fila(s) omitida(s) por no tener Actividad o Fecha programada válida`:""}${sinArea? `, ${sinArea} sin área asignada (por no traer columna Área o no coincidir con ninguna área ya creada)`:""}${tipoNoReconocido? `, ${tipoNoReconocido} con Tipo no reconocido (asignado como "Otro")`:""}.${sinPersonaImp? `\n\n${sinPersonaImp} actividad(es) tienen un responsable que no está en «Personas del programa», por eso todavía no aparecen en ningún programa mensual: edítalas o usa «Asignar a las marcadas» para elegir una persona del programa.`:""}`);
+  if(typeof renderProgramaCargo === "function") renderProgramaCargo();
 });
 
 /* Repuebla los filtros de mes y responsable del programa de seguridad con los
@@ -19225,7 +19249,7 @@ function renderProgramaTable(){
       <td>${p.nombre}</td>
       <td>${PG_TIPO_LABEL[p.tipo]||p.tipo}</td>
       <td>${areaName(p.areaId)}</td>
-      <td>${p.responsable||"—"}</td>
+      <td>${p.responsable||"—"}${pcPersonaPorNombre(p.responsable) ? "" : ' <span class="pill medio" title="Este responsable no está en «Personas del programa»: la actividad no aparece en ningún programa mensual. Edítala o usa «Asignar a las marcadas».">⚠ Sin persona del programa</span>'}</td>
       <td>${fmtDate(p.fechaProgramada)}</td>
       <td><span class="pill ${p.estado==='realizada'?'cerrada':p.estado==='atrasada'?'critico':'pendiente'}">${p.estado==='realizada'?'Realizada':p.estado==='atrasada'?'Atrasada':'Pendiente'}</span></td>
       <td>${p.fechaRealizada? fmtDate(p.fechaRealizada) : "—"}</td>
@@ -19259,13 +19283,15 @@ on(document.getElementById("pgBulkRespBtn"), "click", async ()=>{
   const responsable = document.getElementById("pgBulkResp").value.trim();
   if(!marcadas.length){ alert("Marca al menos una actividad de la lista."); return; }
   if(!responsable){ alert("Escribe o elige el responsable que quieres designar."); return; }
-  if(!confirm(`Se designará a "${responsable}" como responsable de ${marcadas.length} actividad(es). ¿Continuar?`)) return;
-  for(const p of marcadas){ p.responsable = responsable; await put("programa", p); }
+  const perBulk = pcExigirPersona(responsable); if(!perBulk) return;
+  if(!confirm(`Se designará a "${perBulk.nombre}" como responsable de ${marcadas.length} actividad(es). ¿Continuar?`)) return;
+  for(const p of marcadas){ p.responsable = perBulk.nombre; await put("programa", p); await pcAsegurarHojaDe(p); }
   pgSel = new Set(); document.getElementById("pgBulkResp").value = "";
   await loadCache();
   renderPgFiltros(); renderProgramaTable(); renderProgramaCumplimientoPorResponsable();
   if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
   if(typeof renderMisPendientes === "function") renderMisPendientes();
+  if(typeof renderProgramaCargo === "function") renderProgramaCargo();
   alert(`Responsable designado en ${marcadas.length} actividad(es).`);
 });
 /* Edición de una actividad del programa (nombre, tipo, área, responsable y
@@ -19280,7 +19306,7 @@ function abrirEdicionActividadPrograma(id){
     <div class="form-grid" style="margin-top:6px;">
       <div><label>Tipo</label><select id="pgEdTipo">${Object.entries(PG_TIPO_LABEL).map(([k,v])=>`<option value="${k}"${k===rec.tipo?" selected":""}>${v}</option>`).join("")}</select></div>
       <div><label>Área</label><select id="pgEdArea">${(CACHE.areas||[]).map(a=>`<option value="${a.id}"${a.id===rec.areaId?" selected":""}>${incEsc(a.nombre)}</option>`).join("")}</select></div>
-      <div><label>Responsable</label><input id="pgEdResp" list="dlResponsables" value="${incEsc(rec.responsable||"")}" placeholder="Elige o escribe el nombre"></div>
+      <div><label>Responsable</label><input id="pgEdResp" list="dlPersonasPrograma" value="${incEsc(rec.responsable||"")}" placeholder="Elige o escribe el nombre"></div>
       <div><label>Fecha programada</label><input id="pgEdFecha" type="date" value="${rec.fechaProgramada||""}"></div>
     </div>
     <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
@@ -19291,12 +19317,15 @@ function abrirEdicionActividadPrograma(id){
   document.getElementById("pgEdGuardarBtn").addEventListener("click", async ()=>{
     const nombre = document.getElementById("pgEdNombre").value.trim(), fecha = document.getElementById("pgEdFecha").value;
     if(!nombre || !fecha){ alert("Completa el nombre y la fecha programada."); return; }
+    const perEd = pcExigirPersona(document.getElementById("pgEdResp").value.trim()); if(!perEd) return;
     rec.nombre = nombre; rec.tipo = document.getElementById("pgEdTipo").value; rec.areaId = document.getElementById("pgEdArea").value;
-    rec.responsable = document.getElementById("pgEdResp").value.trim(); rec.fechaProgramada = fecha;
+    rec.responsable = perEd.nombre; rec.fechaProgramada = fecha;
     await put("programa", rec);
+    await pcAsegurarHojaDe(rec);
     await loadCache();
     closeModal();
     renderPgFiltros(); renderProgramaTable(); renderProgramaCumplimientoPorResponsable();
+    if(typeof renderProgramaCargo === "function") renderProgramaCargo();
     if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
     if(typeof renderMisPendientes === "function") renderMisPendientes();
   });
@@ -19336,6 +19365,20 @@ function descargarProgramaPdf(){
   doc.save(`Programa_Seguridad_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 on(document.getElementById("descargarProgramaPdfBtn"), "click", () => descargarProgramaPdf());
+/* Lleva al programa mensual las actividades que ya existían: crea la hoja del mes de cada persona del programa que
+   sea responsable de alguna. Las que no tienen persona del programa quedan marcadas en la tabla para corregirlas. */
+on(document.getElementById("pgConsolidarBtn"), "click", async ()=>{
+  let hojasCreadas = 0, conPersona = 0, sinPersona = 0;
+  for(const a of (CACHE.programa||[])){
+    if(!pcPersonaPorNombre(a.responsable)){ sinPersona++; continue; }
+    conPersona++;
+    if(await pcAsegurarHojaDe(a)) hojasCreadas++;
+  }
+  await loadCache();
+  renderProgramaTable();
+  if(typeof renderProgramaCargo === "function") renderProgramaCargo();
+  alert(`${conPersona} actividad(es) ya están en el programa mensual de su responsable${hojasCreadas ? ` (se crearon ${hojasCreadas} hoja(s) mensual(es) que faltaban)` : ""}.` + (sinPersona ? `\n\n${sinPersona} actividad(es) tienen un responsable que no está en «Personas del programa» (aparecen con «⚠ Sin persona del programa» en la tabla): edítalas o usa «Asignar a las marcadas» para elegir una persona.` : ""));
+});
 
 /* Registrar la realización de una actividad del programa: permite indicar la
    fecha REAL en que se realizó (no forzosamente hoy) y adjuntar un documento
@@ -19377,6 +19420,7 @@ function openProgramaModal(id){
     renderProgramaTable();
     renderProgramaCumplimientoPorResponsable();
     if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
+    if(typeof renderProgramaCargo === "function") renderProgramaCargo();
     closeModal();
   });
   const quitarBtn = document.getElementById("pgModalQuitarBtn");
@@ -19388,6 +19432,7 @@ function openProgramaModal(id){
     renderProgramaTable();
     renderProgramaCumplimientoPorResponsable();
     if(typeof renderMisActividadesMensuales === "function") renderMisActividadesMensuales();
+    if(typeof renderProgramaCargo === "function") renderProgramaCargo();
     closeModal();
   });
   document.getElementById("pgModalCerrarBtn").addEventListener("click", closeModal);
@@ -19453,7 +19498,7 @@ function renderProgramaCumplimientoPorResponsable(){
    2 = 8-14, 3 = 15-21, 4 = 22-fin); nada se guarda duplicado.
    ========================================================= */
 var pcPlEditId = null, pcPlActs = [], pcHojaId = null, pcPendiente = null, pcMigrado = false;
-var PC_FUENTE_LABEL = {manual:"Manual", inspeccion:"Inspección (automático)", observacion:"Observación (automático)", comite:"Reunión del Comité Paritario (automático)", capacitacion:"Capacitación como relator (automático)"};
+var PC_FUENTE_LABEL = {manual:"Manual", inspeccion:"Inspección (automático)", observacion:"Observación (automático)", comite:"Reunión del Comité Paritario (automático)", capacitacion:"Capacitación como relator (automático)", programa:"Actividad con fecha (automático)"};
 
 function pcEl(id){ return document.getElementById(id); }
 var PC_NORM_CACHE = new Map(), PC_IDX = null;
@@ -19508,6 +19553,7 @@ function pcPersonaDeProg(p){
 }
 /* Realizado automático por semana (arreglo de 4) o null si la actividad es manual. */
 function pcRealAuto(prog, a){
+  if(a.virtual) return a.realVirtual;
   const f = pcFuente(a);
   if(f.tipo==="manual") return null;
   const per = pcPersonaDeProg(prog);
@@ -19533,17 +19579,57 @@ function pcRealAuto(prog, a){
   return r;
 }
 function pcRealEfectivo(prog, a){ return pcRealAuto(prog, a) || pcSem4(a.real); }
+/* Actividades con fecha (store "programa") de la persona de esta hoja dentro de su mes: se muestran como filas de la
+   hoja mensual (proyectado 1 en la semana de su fecha; realizado 1 si ya tiene fecha de realización). No se guardan
+   en la hoja: se calculan al mostrarla, así siempre coinciden con el Programa de seguridad. */
+function pcVirtuales(p){
+  const per = pcPersonaDeProg(p), n = pcNorm(per ? per.nombre : p.nombre);
+  if(!n) return [];
+  return (CACHE.programa||[])
+    .filter(a=>a.responsable && pcNorm(a.responsable)===n && pcSemanaDe(a.fechaProgramada, p.anio, p.mes)>=0)
+    .sort((a,b)=>String(a.fechaProgramada).localeCompare(String(b.fechaProgramada)))
+    .map(a=>{
+      const s = pcSemanaDe(a.fechaProgramada, p.anio, p.mes), proy = [0,0,0,0], real = [0,0,0,0];
+      proy[s] = 1; if(a.fechaRealizada) real[s] = 1;
+      return {id:"pg:"+a.id, programaId:a.id, nombre:a.nombre, proy, realVirtual:real, fuente:{tipo:"programa"}, virtual:true};
+    });
+}
 function pcCalcular(p){
-  const filas = (p.actividades||[]).map(a=>{
+  const filas = (p.actividades||[]).concat(pcVirtuales(p)).map(a=>{
     const proy = pcSem4(a.proy), auto = pcRealAuto(p, a), real = auto || pcSem4(a.real);
     const cant = proy.reduce((s,x)=>s+x,0), realTot = real.reduce((s,x)=>s+x,0);
-    return {nombre:a.nombre, proy, real, auto: !!auto, fuente: pcFuente(a), cant, realTot, pct: cant>0 ? Math.min(realTot,cant)/cant : null};
+    return {nombre:a.nombre, proy, real, auto: !!auto, fuente: pcFuente(a), cant, realTot, pct: cant>0 ? Math.min(realTot,cant)/cant : null, virtual: !!a.virtual, programaId: a.programaId};
   });
   const totProy = [0,0,0,0], totReal = [0,0,0,0], totCap = [0,0,0,0];
   filas.forEach(f=>{ for(let i=0;i<4;i++){ totProy[i]+=f.proy[i]; totReal[i]+=f.real[i]; totCap[i]+=Math.min(f.real[i], f.proy[i]); } });
   const pctSem = totProy.map((t,i)=> t>0 ? totCap[i]/t : null);
   const def = pctSem.filter(x=>x!==null);
   return {filas, totProy, totReal, pctSem, mensual: def.length ? def.reduce((s,x)=>s+x,0)/def.length : null, cantTotal: totProy.reduce((s,x)=>s+x,0)};
+}
+/* Persona del programa por nombre (el responsable de una actividad con fecha debe ser una de ellas). */
+function pcPersonaPorNombre(nombre){
+  const n = pcNorm(String(nombre||"").trim());
+  return n ? (pcPersonas().find(x=>pcNorm(x.nombre)===n) || null) : null;
+}
+function pcExigirPersona(nombre){
+  const per = pcPersonaPorNombre(nombre);
+  if(!per) alert(String(nombre||"").trim()
+    ? `«${String(nombre).trim()}» no está en «Personas del programa». Elige a alguien de esa lista o agrégalo primero en Programa de seguridad → Personas del programa, para que la actividad quede en su programa mensual.`
+    : "Elige la persona responsable de la actividad (debe estar en «Personas del programa») para que quede en su programa mensual.");
+  return per;
+}
+/* Crea la hoja del mes de la persona responsable si todavía no existe (con la planificación del cargo, si la hay). */
+async function pcAsegurarHojaDe(a){
+  const per = pcPersonaPorNombre(a.responsable);
+  const m = /^(\d{4})-(\d{2})/.exec(a.fechaProgramada||"");
+  if(!per || !m) return false;
+  const anio = +m[1], mes = +m[2];
+  if(pcBuscarPrograma(anio, mes, per)) return false;
+  const rec = {id:uid(), anio, mes, cargo:per.cargo||"", nombre:per.nombre, personaId:per.id, trabajadorId:per.trabajadorId||"", focoCritico:"", actividades:[], observaciones:""};
+  const pl = pcBuscarPlan(anio, mes, per.cargo); if(pl) pcAplicarPlanAHoja(pl, rec);
+  await put("programaCargo", rec);
+  CACHE.programaCargo = (CACHE.programaCargo||[]).concat([rec]);
+  return true;
 }
 function pcBuscarPrograma(anio, mes, persona){
   const n = pcNorm(persona.nombre);
@@ -19570,7 +19656,7 @@ function pcFocosConocidos(){
   return Array.from(set);
 }
 function pcFuenteSelectHtml(attr, valor){
-  return `<select ${attr} style="min-width:150px;min-height:auto;padding:4px;">${Object.keys(PC_FUENTE_LABEL).map(k=>`<option value="${k}"${k===valor?" selected":""}>${PC_FUENTE_LABEL[k]}</option>`).join("")}</select>`;
+  return `<select ${attr} style="min-width:150px;min-height:auto;padding:4px;">${Object.keys(PC_FUENTE_LABEL).filter(k=>k!=="programa").map(k=>`<option value="${k}"${k===valor?" selected":""}>${PC_FUENTE_LABEL[k]}</option>`).join("")}</select>`;
 }
 function pcFormatoSelectHtml(attr, f){
   if(f.tipo!=="inspeccion" && f.tipo!=="observacion") return "";
@@ -19772,7 +19858,25 @@ function pcHojaHtml(p){
     ${[0,1,2,3].map(s=>`<td><input type="number" min="0" data-pc-proy="${i}:${s}" value="${f.proy[s]}" class="pc-n"></td><td><input type="number" min="0" data-pc-real="${i}:${s}" value="${f.real[s]}" class="pc-n"${f.auto?' disabled title="Se cuenta solo desde los registros de la app"':""}></td>`).join("")}
     <td data-pc-pct="${i}" style="text-align:center;font-weight:600;"></td>
     <td><button class="subtle-btn" data-pc-quitar="${i}" title="Quitar actividad">✕</button></td>
-  </tr>`; }).join("") || `<tr><td class="empty" colspan="14">Sin actividades. Agrega la primera abajo.</td></tr>`;
+  </tr>`; }).join("");
+  const filasVirtuales = c.filas.map((f,i)=>({f,i})).filter(x=>x.f.virtual).map(({f,i})=>{
+    const a = (CACHE.programa||[]).find(x=>x.id===f.programaId) || {};
+    const celdasSem = [0,1,2,3].map(s=>{
+      const proy = f.proy[s], real = f.real[s];
+      const bg = proy>0 ? (real>=proy ? "#bfe8c9" : (pcSemanaVencida(p.anio,p.mes,s) ? "#f6c1bc" : "")) : "";
+      return `<td style="text-align:center;">${proy||""}</td><td style="text-align:center;background:${bg};">${real||""}</td>`;
+    }).join("");
+    return `<tr style="background:#f4f8ff;">
+      <td>${i+1}</td>
+      <td><strong>${incEsc(f.nombre)}</strong><div class="kv">${incEsc(PG_TIPO_LABEL[a.tipo]||a.tipo||"")} · ${incEsc(areaName(a.areaId))} · programada el ${fmtDate(a.fechaProgramada)}${a.fechaRealizada ? " · realizada el "+fmtDate(a.fechaRealizada) : ""}</div></td>
+      <td><span class="pill medio">Actividad con fecha</span><div style="margin-top:4px;white-space:nowrap;"><button class="subtle-btn" data-pc-pg-registrar="${incEsc(f.programaId)}">${a.fechaRealizada ? "Editar registro" : "Registrar realización"}</button> <button class="subtle-btn" data-pc-pg-editar="${incEsc(f.programaId)}">Editar actividad</button></div></td>
+      <td data-pc-cant="${i}" style="text-align:center;font-weight:600;"></td>
+      ${celdasSem}
+      <td data-pc-pct="${i}" style="text-align:center;font-weight:600;"></td>
+      <td></td>
+    </tr>`;
+  }).join("");
+  const filasHtml = (filas + filasVirtuales) || `<tr><td class="empty" colspan="14">Sin actividades. Agrega la primera abajo.</td></tr>`;
   return `<style>.pc-n{width:54px;min-height:auto;padding:4px;text-align:center;}</style>
     <div class="form-grid" style="margin-bottom:6px;">
       <div><label>Persona</label><div style="padding:8px 0;font-weight:600;">${incEsc(p.nombre)}</div></div>
@@ -19785,7 +19889,7 @@ function pcHojaHtml(p){
         <tr><th rowspan="2">Item</th><th rowspan="2">Actividad mensual</th><th rowspan="2">Se cuenta desde</th><th rowspan="2" style="text-align:center;">Cant. mes</th><th colspan="8" style="text-align:center;">Cronograma semanal</th><th rowspan="2" style="text-align:center;">% avance</th><th rowspan="2"></th></tr>
         <tr>${semHdr}</tr>
       </thead>
-      <tbody>${filas}
+      <tbody>${filasHtml}
         <tr style="background:var(--grid);font-weight:600;"><td></td><td>Total</td><td></td><td data-pc-cantTot style="text-align:center;"></td>
           ${[0,1,2,3].map(s=>`<td data-pc-totproy="${s}" style="text-align:center;"></td><td data-pc-totreal="${s}" style="text-align:center;"></td>`).join("")}<td></td><td></td></tr>
         <tr style="font-weight:600;"><td></td><td>% de cumplimiento semanal</td><td></td><td></td>
@@ -19862,6 +19966,10 @@ on(pcEl("pcHojaWrap"), "change", async (e)=>{
 on(pcEl("pcHojaWrap"), "click", async (e)=>{
   const cr = e.target.closest("[data-pc-crear]");
   if(cr){ await pcCrear(cr.dataset.pcCrear); return; }
+  const rgPg = e.target.closest("[data-pc-pg-registrar]");
+  if(rgPg){ openProgramaModal(rgPg.dataset.pcPgRegistrar); return; }
+  const edPg = e.target.closest("[data-pc-pg-editar]");
+  if(edPg){ abrirEdicionActividadPrograma(edPg.dataset.pcPgEditar); return; }
   const p = pcProgramas().find(x=>x.id===pcHojaId); if(!p) return;
   const q = e.target.closest("[data-pc-quitar]");
   if(q){
