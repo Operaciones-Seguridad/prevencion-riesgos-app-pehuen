@@ -2050,12 +2050,15 @@
     </div></div>
 
     <div class="card">
-      <div class="card-header-row" id="hdrProgramaDeSeguridadCumplimiento"><h2>Programa de seguridad — cumplimiento</h2><button class="collapse-toggle" id="toggleProgramaDeSeguridadCumplimiento" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyProgramaDeSeguridadCumplimiento">
+      <div class="card-header-row" id="hdrProgramaDeSeguridadCumplimiento"><h2>Programa de seguridad — actividades por asignar</h2><button class="collapse-toggle" id="toggleProgramaDeSeguridadCumplimiento" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyProgramaDeSeguridadCumplimiento">
+      <div class="desc">Aquí quedan solo las actividades <strong>sin persona del programa</strong> como responsable. Las que ya tienen una persona del programa se programan y se cumplen en su <strong>Programa mensual</strong> (por eso no se listan aquí). Asígnales una persona con «Editar actividad» o «Asignar a las marcadas» y pasarán a su programa mensual.</div>
       <div class="toolbar">
         <div class="field"><label>Filtrar por estado</label><select id="filterPgEstado"><option value="">Todos</option><option value="pendiente">Pendiente</option><option value="realizada">Realizada</option><option value="atrasada">Atrasada</option></select></div>
         <div class="field"><label>Filtrar por mes</label><select id="filterPgMes"><option value="">Todos los meses</option></select></div>
         <div class="field"><label>Filtrar por responsable</label><select id="filterPgResponsable"><option value="">Todos los responsables</option></select></div>
+        <label style="display:flex;gap:8px;align-items:center;font-weight:400;margin-top:20px;"><input type="checkbox" id="filterPgTodas" style="width:auto;min-height:auto;"> Mostrar también las que ya están en un programa mensual</label>
       </div>
+      <div class="kv" id="pgOcultasResumen" style="margin-bottom:8px;"></div>
       <datalist id="dlResponsables"></datalist>
       <datalist id="dlPersonasPrograma"></datalist>
       <div class="toolbar">
@@ -19223,11 +19226,17 @@ function renderPgFiltros(){
 }
 
 var pgSel = new Set();
+/* Las actividades cuyo responsable es una persona del programa viven en su programa mensual: aquí solo se listan las
+   demás, salvo que se marque «Mostrar también…». */
+function pgMostrarTodas(){ const c = document.getElementById("filterPgTodas"); return !!(c && c.checked); }
+function pgEnProgramaMensual(p){ return !!pcPersonaPorNombre(p.responsable); }
 function pgFiltradas(){
   const fEstado = document.getElementById("filterPgEstado").value;
   const fMes = document.getElementById("filterPgMes").value;
   const fResp = document.getElementById("filterPgResponsable").value;
+  const todas = pgMostrarTodas();
   return CACHE.programa
+    .filter(p=> todas || !pgEnProgramaMensual(p))
     .map(p=>({...p, estado: estadoPrograma(p)}))
     .filter(p=> !fEstado || p.estado===fEstado)
     .filter(p=> !fMes || (p.fechaProgramada||"").slice(0,7)===fMes)
@@ -19243,6 +19252,9 @@ function renderProgramaTable(){
   pgSel = new Set(Array.from(pgSel).filter(id=>CACHE.programa.some(p=>p.id===id)));
   const rows = pgFiltradas();
   pgActualizarResumenSel(rows.map(p=>p.id));
+  { const ocultas = pgMostrarTodas() ? 0 : CACHE.programa.filter(pgEnProgramaMensual).length;
+    const el = document.getElementById("pgOcultasResumen");
+    if(el) el.textContent = ocultas ? `${ocultas} actividad(es) ya están en el programa mensual de su responsable (ocultas aquí; márcalo en «Mostrar también…» para verlas).` : ""; }
   document.getElementById("programaTable").innerHTML = rows.map(p=>`
     <tr>
       <td><input type="checkbox" data-pg-sel="${p.id}" style="width:auto;min-height:auto;"${pgSel.has(p.id)?" checked":""}></td>
@@ -19256,7 +19268,7 @@ function renderProgramaTable(){
       <td>${p.documento? `<a href="${p.documento}" download="${p.documentoNombre||'documento'}" class="subtle-btn">${p.documentoNombre||"Descargar"}</a>` : '<span class="empty">Sin documento</span>'}</td>
       <td style="white-space:nowrap;"><button class="btn small secondary" data-pg-registrar="${p.id}">${p.fechaRealizada? "Editar registro" : "Registrar realización"}</button> <button class="btn small secondary" data-pg-editar="${p.id}" title="Editar nombre, tipo, área, responsable o fecha programada">Editar actividad</button></td>
     </tr>
-  `).join("") || `<tr><td class="empty" colspan="10">Sin actividades registradas para el filtro seleccionado</td></tr>`;
+  `).join("") || `<tr><td class="empty" colspan="10">Sin actividades por asignar para el filtro seleccionado</td></tr>`;
 }
 on(document.getElementById("programaTable"), "click", async (e) => {
   const btnEd = e.target.closest("button[data-pg-editar]");
@@ -19331,6 +19343,7 @@ function abrirEdicionActividadPrograma(id){
   });
 }
 document.getElementById("filterPgEstado").addEventListener("change", renderProgramaTable);
+document.getElementById("filterPgTodas").addEventListener("change", renderProgramaTable);
 document.getElementById("filterPgMes").addEventListener("change", () => { renderProgramaTable(); renderProgramaCumplimientoPorResponsable(); });
 document.getElementById("filterPgResponsable").addEventListener("change", () => { renderProgramaTable(); renderProgramaCumplimientoPorResponsable(); });
 
@@ -19343,6 +19356,7 @@ function descargarProgramaPdf(){
   const fMes = document.getElementById("filterPgMes").value;
   const fResp = document.getElementById("filterPgResponsable").value;
   const rows = CACHE.programa
+    .filter(p=> pgMostrarTodas() || !pgEnProgramaMensual(p))
     .map(p=>({...p, estado: estadoPrograma(p)}))
     .filter(p=> !fEstado || p.estado===fEstado)
     .filter(p=> !fMes || (p.fechaProgramada||"").slice(0,7)===fMes)
