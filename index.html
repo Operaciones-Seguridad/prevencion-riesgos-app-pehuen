@@ -20216,6 +20216,60 @@ on(pcEl("pcPlLista"), "click", async (e)=>{
   }
 });
 
+/* ---- Realizar una actividad del programa desde «Mis pendientes» ----
+   Una actividad de inspección u observación abre «Realizar inspecciones» con el formato que le corresponde:
+   el elegido en la actividad (fuente + formato) o, si no hay, el formato cuyo nombre se parece al de la actividad. */
+const PC_PALABRAS_VACIAS = new Set(["de","del","la","el","los","las","y","en","al","con","para","por","una","uno","inspeccion","inspecciones","inspeccionar","observacion","observaciones","observar","revision","revisar","verificar","mensual","diaria","diariamente"]);
+function pcTokensNombre(s){ return pcNorm(s).split(" ").filter(t=>t.length>2 && !PC_PALABRAS_VACIAS.has(t)); }
+function pcTokCoincide(a, b){ return a===b || (a.length>=5 && b.length>=5 && a.slice(0,5)===b.slice(0,5)); }
+function pcTipoRegistroDeActividad(f){
+  const tf = f.fuente && f.fuente.tipo;
+  if(tf==="inspeccion" || tf==="observacion") return tf;
+  if(f.virtual){ const a = (CACHE.programa||[]).find(x=>x.id===f.programaId); if(a && a.tipo==="inspeccion") return "inspeccion"; }
+  const n = pcNorm(f.nombre);
+  if(/^inspecc/.test(n)) return "inspeccion";
+  if(/^observ/.test(n)) return "observacion";
+  return null;
+}
+function pcFormatoParaActividad(f, tipoReg){
+  const todos = CACHE.checklists||[];
+  const fid = f.fuente && f.fuente.formatoId;
+  if(fid){ const c = todos.find(x=>x.id===fid); if(c) return c; }
+  const lista = todos.filter(c=>(c.categoria||"ambos")==="ambos" || c.categoria===tipoReg);
+  const tn = pcNorm(f.nombre);
+  const exacto = lista.find(c=>pcNorm(c.nombre)===tn); if(exacto) return exacto;
+  const ta = pcTokensNombre(f.nombre); if(!ta.length) return null;
+  let mejor = null, mejorPuntaje = 0;
+  lista.forEach(c=>{
+    const tc = pcTokensNombre(c.nombre); if(!tc.length) return;
+    const aciertos = tc.filter(t=>ta.some(u=>pcTokCoincide(t,u))).length;
+    const puntaje = aciertos / Math.max(tc.length, ta.length);
+    if(aciertos>0 && puntaje>mejorPuntaje){ mejor = c; mejorPuntaje = puntaje; }
+  });
+  return mejorPuntaje>=0.5 ? mejor : null;
+}
+function pcRealizarActividad(f){
+  const tipoReg = pcTipoRegistroDeActividad(f);
+  if(!tipoReg){ alert("Esta actividad no se realiza con un formato de inspección u observación. Regístrala desde su programa mensual."); return; }
+  const etiqueta = tipoReg==="observacion" ? "observación" : "inspección";
+  const formato = pcFormatoParaActividad(f, tipoReg);
+  if(!formato){
+    alert(`No existe un formato de ${etiqueta} para «${f.nombre}».\n\nCrea el formato en Inspecciones → Formatos con un nombre parecido al de la actividad, o en el programa mensual elige para esa actividad «Inspección (automático)» y el formato que corresponde. Luego vuelve a intentarlo.`);
+    return;
+  }
+  irAVista("realizar-inspecciones");
+  resetInsForm();
+  document.getElementById("insTipoRegistro").value = tipoReg;
+  renderInsTipoOptions();
+  document.getElementById("insTipo").value = formato.id;
+  renderChecklistFor(formato.id);
+  const prog = f.virtual ? (CACHE.programa||[]).find(x=>x.id===f.programaId) : null;
+  if(prog && prog.areaId) document.getElementById("insArea").value = prog.areaId;
+  const desc = document.getElementById("insDescripcion"); if(desc && !desc.value.trim()) desc.value = "Actividad del programa mensual: " + f.nombre;
+  try{ subpestanasMostrarDe("hdrNuevaInspeccionObservacionEnTerreno"); }catch(e){}
+  const h = document.getElementById("hdrNuevaInspeccionObservacionEnTerreno"); if(h) h.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
 /* ---- Importar la planilla de Excel ---- */
 function pcFechaExcel(v){
   let d = null;
@@ -20308,9 +20362,10 @@ function renderMisProgramaCargo(){
   }
   wrap.innerHTML = `<h3 style="margin:0 0 6px;font-size:14px;">Mi programa por cargo — ${incEsc(per.cargo||"")}</h3>` + hojas.map(p=>{
     const c = pcCalcular(p);
-    const items = c.filas.filter(f=>f.cant>0).map(f=>{
-      const ok = f.realTot>=f.cant;
-      return `<div style="margin-bottom:3px;">${incEsc(f.nombre)} <span class="pill ${ok?"bajo":"medio"}" style="margin-left:4px;">${f.realTot} de ${f.cant}</span>${f.auto?' <span class="kv" title="Se cuenta solo desde tus registros en la app">(automático)</span>':""}</div>`;
+    const items = c.filas.map((f,fi)=>({f,fi})).filter(x=>x.f.cant>0).map(({f,fi})=>{
+      const ok = f.realTot>=f.cant, tipoReg = pcTipoRegistroDeActividad(f);
+      const btnRealizar = tipoReg ? ` <button class="subtle-btn" data-mis-pc-realizar="${p.id}:${fi}" title="Abre el formato de ${tipoReg==="observacion"?"observación":"inspección"} para realizarla ahora">▶ Realizar ${tipoReg==="observacion"?"observación":"inspección"}</button>` : "";
+      return `<div style="margin-bottom:3px;">${incEsc(f.nombre)} <span class="pill ${ok?"bajo":"medio"}" style="margin-left:4px;">${f.realTot} de ${f.cant}</span>${f.auto?' <span class="kv" title="Se cuenta solo desde tus registros en la app">(automático)</span>':""}${btnRealizar}</div>`;
     }).join("") || '<div class="kv">Sin actividades programadas.</div>';
     return `<div style="border:1px solid var(--grid);border-radius:10px;padding:10px 12px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">
@@ -20320,6 +20375,13 @@ function renderMisProgramaCargo(){
   }).join("");
 }
 on(pcEl("misProgramaCargoWrap"), "click", (e)=>{
+  const rz = e.target.closest("[data-mis-pc-realizar]");
+  if(rz){
+    const [hojaId, fi] = rz.dataset.misPcRealizar.split(":");
+    const hoja = pcProgramas().find(x=>x.id===hojaId); if(!hoja) return;
+    const f = pcCalcular(hoja).filas[+fi]; if(f) pcRealizarActividad(f);
+    return;
+  }
   const b = e.target.closest("[data-mis-pc]"); if(!b) return;
   const p = pcProgramas().find(x=>x.id===b.dataset.misPc); if(!p) return;
   const per = pcPersonaDeProg(p);
