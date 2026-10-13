@@ -28273,6 +28273,8 @@ on(document.getElementById("compAnioSel"), "change", () => { renderCompromisosMe
    usa la suma de R y la suma o el promedio de P (como la planilla de Carlos).
    Estado: mayor_mejor -> verde si KPI >= meta, amarillo si >= 90 % de la meta;
    menor_mejor -> verde si KPI <= meta, amarillo si <= 110 % de la meta.
+   Metas anuales: cada mes se evalúa con lo acumulado de enero a ese mes (meta prorrateada si la tasa se acumula con el tiempo).
+   Sin nada que cumplir (P = 0 y R = 0) un indicador de cumplimiento vale 100 %.
    ========================================================= */
 const OBJ_MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 const OBJ_TIPOS_ACC_INVESTIGABLES = ["ctp","stp","trayecto","enfermedad"];
@@ -28288,6 +28290,37 @@ const OBJ_AUTO = {
   investigacion:{label:"Automático: investigación de accidentes", nombre:"Investigación de accidentes", formula:"(N° de accidentes investigados / N° de accidentes) x 100", factor:100, agregacion:"suma", sentido:"mayor_mejor"},
   cierre_hallazgos:{label:"Automático: cierre de hallazgos de inspecciones", nombre:"Seguimiento y cierre de medidas de control", formula:"(N° de hallazgos cerrados / N° de hallazgos) x 100", factor:100, agregacion:"suma", sentido:"mayor_mejor"},
 };
+/* Meta con su símbolo y su unidad: «≥ 100 %» (mínimo a lograr, mayor es mejor) o «≤ 0,59 %» / «≤ 2,1 por 1.000.000 HH» (máximo permitido). */
+/* Misma meta que objMetaHtml pero en texto plano (PDF). */
+function objMetaTexto(i){
+  const m = objNum(i.meta);
+  if(m===null) return "-";
+  const menor = i.sentido==="menor_mejor";
+  const factor = OBJ_AUTO[i.fuente] ? OBJ_AUTO[i.fuente].factor : (+i.factor || (/1[,.]?000[,.]?000/.test(i.formula||"") ? 1000000 : 100));
+  return (menor ? "<= " : ">= ") + objFmt(m) + (factor===1000000 ? " por 1.000.000 HH" : " %") + (menor ? " (máximo)" : " (mínimo)");
+}
+function objMetaHtml(i){
+  const m = objNum(i.meta);
+  if(m===null) return "—";
+  const menor = i.sentido==="menor_mejor";
+  const factor = OBJ_AUTO[i.fuente] ? OBJ_AUTO[i.fuente].factor : (+i.factor || (/1[,.]?000[,.]?000/.test(i.formula||"") ? 1000000 : 100));
+  const unidad = factor===1000000 ? " por 1.000.000 HH" : " %";
+  return `<strong style="white-space:nowrap;">${menor ? "≤" : "≥"} ${objFmt(m)}${unidad}</strong><div class="kv">${menor ? "máximo permitido" : "mínimo a lograr"}</div>`;
+}
+/* «HH Capacitadas» venía de la planilla con una meta (0,006 → 0,6) que no calza con lo que mide (HH capacitadas sobre HH programadas, ~200 %).
+   Se corrige una sola vez: meta 100 % de lo programado y fórmula con «HH programadas». */
+let objHHCorregido = false;
+async function objCorregirHHCapacitadas(){
+  let cambios = 0;
+  for(const i of (CACHE.indicadoresGestion||[])){
+    if(matrizNorm(i.nombre)==="hh capacitadas" && /hh trabajadas/i.test(i.formula||"") && objNum(i.meta)!==null && objNum(i.meta)<5){
+      await put("indicadoresGestion", {...i, meta:100, sentido:"mayor_mejor", formula:"(N° HH capacitadas / N° HH programadas) x 100"});
+      cambios++;
+    }
+  }
+  if(cambios) await loadCache();
+  return cambios;
+}
 const OBJ_ESTADO_LABEL = {en_meta:"En meta", cerca:"Cerca de la meta", fuera:"Fuera de meta", sin_datos:"Sin datos", sin_meta:"Sin meta"};
 const OBJ_ESTADO_PILL = {en_meta:"bajo", cerca:"medio", fuera:"critico", sin_datos:"pendiente", sin_meta:"pendiente"};
 const OBJ_ESTADO_BG = {en_meta:"#d7f0d7", cerca:"#fff0c9", fuera:"#fbd5d5", sin_datos:"", sin_meta:""};
@@ -28308,7 +28341,11 @@ function objAutoMedicion(key, ym){
       const p = l.reduce((s,c)=>s+(+c.horas||0)*((c.participantes||[]).length),0), r = l.reduce((s,c)=>s+(+c.horas||0)*((c.participantes||[]).filter(x=>x.asistio).length),0);
       return p>0 ? {p, r} : null;
     }
-    case "investigacion": { const l = (CACHE.accidentes||[]).filter(a=>OBJ_TIPOS_ACC_INVESTIGABLES.includes(a.tipo) && String(a.fecha||"").slice(0,7)===ym); return l.length ? {p:l.length, r:l.filter(a=>a.investigado).length} : null; }
+    case "investigacion": {
+      const l = (CACHE.accidentes||[]).filter(a=>OBJ_TIPOS_ACC_INVESTIGABLES.includes(a.tipo) && String(a.fecha||"").slice(0,7)===ym);
+      if(l.length) return {p:l.length, r:l.filter(a=>a.investigado).length};
+      return ym <= new Date().toISOString().slice(0,7) ? {p:0, r:0} : null; // sin accidentes que investigar = 100 % (los meses futuros quedan vacíos)
+    }
     case "cierre_hallazgos": {
       const fs = (CACHE.inspecciones||[]).filter(i=>String(i.fecha||"").slice(0,7)===ym).flatMap(i=>i.findings||[]);
       return fs.length ? {p:fs.length, r:fs.filter(x=>x.estado==="cerrada").length} : null;
@@ -28324,19 +28361,48 @@ function objMedicion(ind, ym){
   const p = objNum(m.p), r = objNum(m.r);
   return (p===null && r===null) ? null : {p, r, auto:false};
 }
-function objKpi(ind, m){ return m && m.p>0 && m.r!==null ? (+ind.factor||100)*m.r/m.p : null; }
-function objConsolidado(ind, anio){
-  // Igual que la planilla de Carlos: R suma todos los meses que lo traen y P usa los meses que lo traen
-  // (suma o promedio), aunque algún mes tenga solo uno de los dos datos.
-  const filas = []; for(let mes=1; mes<=12; mes++){ const m = objMedicion(ind, objYm(anio, mes)); if(m) filas.push(m); }
+function objFactor(ind){ return OBJ_AUTO[ind.fuente] ? OBJ_AUTO[ind.fuente].factor : (+ind.factor||100); }
+/* Un indicador de cumplimiento (mayor es mejor, en %) sin nada que cumplir (P = 0 y R = 0), por ejemplo «investigación de
+   accidentes» en un mes sin accidentes, vale 100 %: no hay nada pendiente. */
+function objSinObligacion(ind, p, r){ return ind.sentido!=="menor_mejor" && objFactor(ind)===100 && p===0 && (r===0 || r===null); }
+function objKpi(ind, m){
+  if(!m) return null;
+  if(objSinObligacion(ind, m.p, m.r)) return 100;
+  return m.p>0 && m.r!==null ? (+ind.factor||100)*m.r/m.p : null;
+}
+/* Consolidado de enero hasta «hasta» (por defecto el año completo). Igual que la planilla de Carlos: R suma todos los meses
+   que lo traen y P usa los meses que lo traen (suma o promedio), aunque algún mes tenga solo uno de los dos datos. */
+function objConsolidado(ind, anio, hasta){
+  const filas = []; let ultimoMes = 0;
+  for(let mes=1; mes<=(hasta||12); mes++){ const m = objMedicion(ind, objYm(anio, mes)); if(m){ filas.push(m); ultimoMes = mes; } }
   const conR = filas.filter(m=>m.r!==null), conP = filas.filter(m=>m.p!==null);
-  if(!conR.length || !conP.length) return {kpi:null, meses:filas.length};
+  if(!conR.length || !conP.length) return {kpi:null, meses:filas.length, ultimoMes};
   const sumR = conR.reduce((s,m)=>s+m.r,0), sumP = conP.reduce((s,m)=>s+m.p,0);
   const P = ind.agregacion==="promedio" ? sumP/conP.length : sumP;
-  return {kpi: P>0 ? (+ind.factor||100)*sumR/P : null, meses:filas.length, sumR, P};
+  let kpi = P>0 ? (+ind.factor||100)*sumR/P : null;
+  if(kpi===null && objSinObligacion(ind, P, sumR)) kpi = 100;
+  return {kpi, meses:filas.length, sumR, P, ultimoMes};
 }
-function objEstado(ind, kpi){
+/* Metas anuales: cada mes se evalúa con lo ACUMULADO de enero a ese mes. Si la tasa se acumula con el tiempo (menor es mejor y
+   el denominador es un promedio, como la accidentabilidad por trabajadores), la meta anual se prorratea por los meses
+   transcurridos (meta x meses / 12). Las tasas sobre HH (frecuencia, gravedad) ya se normalizan solas y se comparan con la meta completa. */
+function objEsAnual(ind){ return String(ind.frecuencia||"").toLowerCase()==="anual"; }
+function objMetaEfectiva(ind, meses){
   const meta = objNum(ind.meta);
+  if(meta===null) return null;
+  if(objEsAnual(ind) && ind.sentido==="menor_mejor" && ind.agregacion==="promedio" && meses>0 && meses<12) return meta*meses/12;
+  return meta;
+}
+function objEstadoAnual(ind, c){ return objEstado(ind, c.kpi, objMetaEfectiva(ind, c.ultimoMes)); }
+/* % de cumplimiento de la meta: 100 % si se cumple; si no, qué tan cerca quedó. */
+function objCumplimientoPct(ind, kpi, metaEf){
+  const meta = metaEf!==undefined ? metaEf : objNum(ind.meta);
+  if(kpi===null || kpi===undefined || meta===null) return null;
+  if(ind.sentido==="menor_mejor"){ if(kpi <= meta + 1e-9) return 100; return meta>0 ? Math.round(meta/kpi*100) : 0; }
+  return meta>0 ? Math.min(100, Math.round(kpi/meta*100)) : 100;
+}
+function objEstado(ind, kpi, metaOverride){
+  const meta = metaOverride!==undefined ? metaOverride : objNum(ind.meta);
   if(kpi===null || kpi===undefined) return "sin_datos";
   if(meta===null) return "sin_meta";
   if(ind.sentido==="menor_mejor") return kpi <= meta + 1e-9 ? "en_meta" : (kpi <= meta*1.10 + 1e-9 ? "cerca" : "fuera");
@@ -28349,7 +28415,7 @@ function objObjetivosOrdenados(){ return (CACHE.objetivosGestion||[]).slice().so
 function objResumenAnio(anio){
   const activos = (CACHE.indicadoresGestion||[]).filter(i=>i.activo!==false);
   let conDatos = 0, enMeta = 0, fuera = 0;
-  activos.forEach(i=>{ const c = objConsolidado(i, anio); if(c.kpi===null) return; const e = objEstado(i, c.kpi); if(e==="sin_meta") return; conDatos++; if(e==="en_meta") enMeta++; else if(e==="fuera") fuera++; });
+  activos.forEach(i=>{ const c = objConsolidado(i, anio); if(c.kpi===null) return; const e = objEstadoAnual(i, c); if(e==="sin_meta") return; conDatos++; if(e==="en_meta") enMeta++; else if(e==="fuera") fuera++; });
   return {total:activos.length, conDatos, enMeta, fuera};
 }
 let objObjEditandoId = null, objIndEditandoId = null, objAnioPreferido = null;
@@ -28361,6 +28427,7 @@ function objAniosDisponibles(){
 }
 function renderObjetivos(){
   if(!document.getElementById("objAnio")) return;
+  if(!objHHCorregido){ objHHCorregido = true; objCorregirHHCapacitadas().then(n=>{ if(n) renderObjetivos(); }).catch(()=>{}); }
   const selA = document.getElementById("objAnio"), curA = objAnioPreferido ? String(objAnioPreferido) : selA.value;
   objAnioPreferido = null;
   const anios = objAniosDisponibles();
@@ -28376,13 +28443,16 @@ function renderObjTablero(){
   const grupos = objetivos.map(o=>({o, inds:inds.filter(i=>i.objetivoId===o.id)})).concat([{o:{id:"", nombre:"Sin objetivo asignado", compromiso:""}, inds:inds.filter(i=>!objetivos.some(o=>o.id===i.objetivoId))}]).filter(g=>g.inds.length);
   document.getElementById("objTableroBody").innerHTML = grupos.map(g=>`<tr><td colspan="16" style="background:#f2f4f7;font-weight:700;">${incEsc(g.o.nombre)}${g.o.compromiso?` <span class="kv" style="font-weight:400;">— ${incEsc(g.o.compromiso)}</span>`:""}</td></tr>` + g.inds.map(i=>{
     const celdas = OBJ_MESES.map((_, k)=>{
-      const ym = objYm(anio, k+1), m = objMedicion(i, ym), kpi = objKpi(i, m), est = objEstado(i, kpi);
-      const tip = m ? `P: ${objFmt(m.p)} · R: ${objFmt(m.r)}${m.auto?" · calculado desde la app":""}` : "Sin dato";
+      const ym = objYm(anio, k+1), m = objMedicion(i, ym), kpi = objKpi(i, m);
+      let est = objEstado(i, kpi), tipAcum = "";
+      if(objEsAnual(i) && m){ const ac = objConsolidado(i, anio, k+1), mEf = objMetaEfectiva(i, k+1); est = objEstado(i, ac.kpi, mEf); tipAcum = ` · acumulado ene–${OBJ_MESES[k].toLowerCase()}: ${objFmt(ac.kpi)} vs meta ${objMetaEfectiva(i,k+1)===null?"—":objFmt(mEf)}${mEf!==objNum(i.meta)?" (prorrateada)":""}`; }
+      const tip = (m ? `P: ${objFmt(m.p)} · R: ${objFmt(m.r)}${m.auto?" · calculado desde la app":""}` : "Sin dato") + tipAcum;
       const editable = !(m && m.auto);
       return `<td data-obj-cell="${i.id}|${ym}" title="${incEsc(tip)}" style="text-align:center;white-space:nowrap;${OBJ_ESTADO_BG[est]?`background:${OBJ_ESTADO_BG[est]};`:""}${editable?"cursor:pointer;":""}">${kpi===null?'<span class="kv">·</span>':objFmt(kpi)}${m&&m.auto?'<sup style="color:#1c4e91;"> A</sup>':""}</td>`;
     }).join("");
-    const c = objConsolidado(i, anio), e = objEstado(i, c.kpi);
-    return `<tr><td><strong>${incEsc(i.nombre)}</strong><div class="kv">${incEsc(i.formula||"")}</div></td><td>${objNum(i.meta)===null?"—":objFmt(+i.meta)}<div class="kv">${i.sentido==="menor_mejor"?"menor es mejor":"mayor es mejor"}</div></td>${celdas}<td style="text-align:center;font-weight:700;">${objFmt(c.kpi)}<div class="kv">${c.meses} mes(es)</div></td><td><span class="pill ${OBJ_ESTADO_PILL[e]}">${OBJ_ESTADO_LABEL[e]}</span></td></tr>`;
+    const c = objConsolidado(i, anio), e = objEstadoAnual(i, c), mEfAnual = objMetaEfectiva(i, c.ultimoMes), pctMeta = objCumplimientoPct(i, c.kpi, mEfAnual);
+    const prorr = mEfAnual!==null && mEfAnual!==objNum(i.meta);
+    return `<tr><td><strong>${incEsc(i.nombre)}</strong><div class="kv">${incEsc(i.formula||"")}</div></td><td>${objMetaHtml(i)}</td>${celdas}<td style="text-align:center;font-weight:700;">${objFmt(c.kpi)}<div class="kv">${c.meses} mes(es)</div></td><td><span class="pill ${OBJ_ESTADO_PILL[e]}">${OBJ_ESTADO_LABEL[e]}</span>${pctMeta===null?"":`<div class="kv">${pctMeta} % de la meta</div>`}${prorr?`<div class="kv" title="Meta anual prorrateada por los meses transcurridos">meta a ${OBJ_MESES[c.ultimoMes-1].toLowerCase()}: ≤ ${objFmt(mEfAnual)}</div>`:""}</td></tr>`;
   }).join("")).join("") || `<tr><td class="empty" colspan="16">Todavía no hay indicadores: créelos abajo o impórtelos desde su Excel.</td></tr>`;
   const res = objResumenAnio(anio);
   document.getElementById("objResumenAnio").textContent = res.total ? `${res.enMeta} de ${res.conDatos} indicador(es) con datos y meta están en meta · ${res.fuera} fuera de meta · ${res.total} indicador(es) activo(s)` : "";
@@ -28487,7 +28557,7 @@ function renderObjIndicadoresForm(){
 function renderObjIndicadoresTable(){
   document.getElementById("indTable").innerHTML = objIndicadores().map(i=>{
     const o = (CACHE.objetivosGestion||[]).find(x=>x.id===i.objetivoId);
-    return `<tr><td><strong>${incEsc(i.nombre)}</strong>${i.activo===false?' <span class="pill pendiente">Inactivo</span>':""}<div class="kv">${incEsc(i.formula||"")}</div></td><td>${o?incEsc(o.nombre):"—"}</td><td>${objNum(i.meta)===null?"—":objFmt(+i.meta)}<div class="kv">${i.sentido==="menor_mejor"?"menor es mejor":"mayor es mejor"}</div></td><td>${OBJ_AUTO[i.fuente]?"Automático":"Manual"}</td><td>${incEsc(i.frecuencia||"")}</td><td>${incEsc(i.responsable||"—")}</td><td style="white-space:nowrap;"><button class="btn secondary small" data-ind-edit="${i.id}">Editar</button> <button class="subtle-btn" data-ind-del="${i.id}">Eliminar</button></td></tr>`;
+    return `<tr><td><strong>${incEsc(i.nombre)}</strong>${i.activo===false?' <span class="pill pendiente">Inactivo</span>':""}<div class="kv">${incEsc(i.formula||"")}</div></td><td>${o?incEsc(o.nombre):"—"}</td><td>${objMetaHtml(i)}</td><td>${OBJ_AUTO[i.fuente]?"Automático":"Manual"}</td><td>${incEsc(i.frecuencia||"")}</td><td>${incEsc(i.responsable||"—")}</td><td style="white-space:nowrap;"><button class="btn secondary small" data-ind-edit="${i.id}">Editar</button> <button class="subtle-btn" data-ind-del="${i.id}">Eliminar</button></td></tr>`;
   }).join("") || `<tr><td class="empty" colspan="7">Todavía no hay indicadores</td></tr>`;
 }
 function objResetIndicadorForm(){
@@ -28563,11 +28633,13 @@ async function objImportarExcel(file, anio){
       const cump = objEsCumplimiento(nombre+" "+formula);
       let meta = cMeta>=0 ? objNum(fila[cMeta]) : null;
       if(meta!==null){ if(cump && meta<=1) meta = meta*100; else if(!cump && meta>0 && meta<0.1) meta = meta*100; meta = Math.round(meta*10000)/10000; }
+      let formulaFinal = formula;
+      if(matrizNorm(nombre)==="hh capacitadas"){ meta = 100; formulaFinal = "(N° HH capacitadas / N° HH programadas) x 100"; }
       const frecTxt = matrizNorm(cFrec>=0 ? fila[cFrec] : "");
       const frecuencia = frecTxt.startsWith("anual") ? "anual" : frecTxt.startsWith("semest") ? "semestral" : "mensual";
       let ind = indicadores.find(i=>matrizNorm(i.nombre)===matrizNorm(nombre));
       if(!ind){
-        ind = {id:uid(), objetivoId:obj.id, nombre, formula, meta, sentido: cump?"mayor_mejor":"menor_mejor", frecuencia, fuente:"manual", factor,
+        ind = {id:uid(), objetivoId:obj.id, nombre, formula: formulaFinal, meta, sentido: cump?"mayor_mejor":"menor_mejor", frecuencia, fuente:"manual", factor,
           agregacion: /trabajadores/i.test(formula) ? "promedio" : "suma", responsable:"", activo:true, mediciones:{}};
         indicadores.push(ind); res.indicadores++;
       } else res.actualizados++;
@@ -28612,7 +28684,7 @@ on(document.getElementById("objExcelBtn"), "click", ()=>{
   grupos.forEach(g=>g.inds.forEach(i=>{
     const f = [i.nombre, g.o.nombre, objNum(i.meta)===null?"":+i.meta, i.frecuencia||"", i.formula||""];
     for(let k=1;k<=12;k++){ const m = objMedicion(i, objYm(anio,k)); f.push(m&&m.p!==null?m.p:"", m&&m.r!==null?m.r:"", objKpi(i,m)===null?"":Math.round(objKpi(i,m)*100)/100); }
-    const c = objConsolidado(i, anio); f.push(c.kpi===null?"":Math.round((c.P||0)*100)/100, c.kpi===null?"":Math.round((c.sumR||0)*100)/100, c.kpi===null?"":Math.round(c.kpi*100)/100, OBJ_ESTADO_LABEL[objEstado(i,c.kpi)]);
+    const c = objConsolidado(i, anio); f.push(c.kpi===null?"":Math.round((c.P||0)*100)/100, c.kpi===null?"":Math.round((c.sumR||0)*100)/100, c.kpi===null?"":Math.round(c.kpi*100)/100, OBJ_ESTADO_LABEL[objEstadoAnual(i,c)]);
     filas.push(f);
   }));
   const wb = XLSX.utils.book_new();
@@ -28638,7 +28710,7 @@ on(document.getElementById("objPdfBtn"), "click", ()=>{
     doc.setFontSize(11); doc.text(g.o.nombre.slice(0,90), 14, y); y += 2;
     if(g.o.compromiso){ doc.setFontSize(8); doc.text("Compromiso de la politica: "+g.o.compromiso.slice(0,110), 14, y+3); y += 4; }
     doc.autoTable({ startY:y+1, head:[["Indicador","Meta","Meses con datos","Consolidado","Estado"]],
-      body: g.inds.map(i=>{ const c = objConsolidado(i, anio), e = objEstado(i, c.kpi); return [i.nombre+(i.formula?"\n"+i.formula:""), objNum(i.meta)===null?"-":objFmt(+i.meta)+(i.sentido==="menor_mejor"?" (menor es mejor)":""), c.meses, c.kpi===null?"-":objFmt(c.kpi), OBJ_ESTADO_LABEL[e]]; }),
+      body: g.inds.map(i=>{ const c = objConsolidado(i, anio), e = objEstadoAnual(i, c); return [i.nombre+(i.formula?"\n"+i.formula:""), objMetaTexto(i), c.meses, c.kpi===null?"-":objFmt(c.kpi), OBJ_ESTADO_LABEL[e]]; }),
       styles:{fontSize:8, cellPadding:1.8}, headStyles:{fillColor:[42,120,214]}, columnStyles:{0:{cellWidth:78}, 2:{halign:"center"}, 3:{halign:"center"}},
       didParseCell:(d)=>{ if(d.section==="body" && d.column.index===4){ const k = Object.keys(OBJ_ESTADO_LABEL).find(x=>OBJ_ESTADO_LABEL[x]===String(d.cell.raw)); if(colores[k]) d.cell.styles.textColor = colores[k]; } } });
     y = doc.lastAutoTable.finalY + 8;
