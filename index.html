@@ -364,6 +364,7 @@
         <button class="btn secondary" id="dashboardGerenciaPptBtn" style="background:#fff;color:#1c4e91;">Descargar PPT para gerencia</button>
       </div>
     </div>
+    <div id="dashPdca"></div>
     <div class="card toolbar" style="margin-bottom:16px;">
       <div class="field"><label>Ver información de</label><select id="dashboardPeriodoTipo">
         <option value="todo">Todo el histórico</option>
@@ -1956,6 +1957,7 @@
         <div><button class="btn small secondary" id="objPdfBtn" type="button" style="margin-top:20px;">Descargar informe PDF</button></div>
         <div class="field"><div class="kv" id="objResumenAnio" style="margin-top:22px;"></div></div>
       </div>
+      <div id="objMedBanner"></div>
       <div style="overflow-x:auto;"><table id="objTablero">
         <thead id="objTableroHead"></thead>
         <tbody id="objTableroBody"></tbody>
@@ -1975,6 +1977,24 @@
       </div>
       <div class="toolbar" style="margin-top:10px;"><button class="btn" id="objGuardarBtn" type="button">Agregar objetivo</button><button class="btn secondary" id="objCancelarBtn" type="button" style="display:none;">Cancelar edición</button></div>
       <div style="overflow-x:auto;"><table><thead><tr><th>Objetivo</th><th>Compromiso de la política</th><th>Indicadores</th><th></th></tr></thead><tbody id="objObjetivosTable"></tbody></table></div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrObjMedidas"><h2>Medidas de control de los indicadores</h2><button class="collapse-toggle" id="toggleObjMedidas" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyObjMedidas">
+      <div class="desc">Etapa <strong>Actuar</strong> del ciclo de mejora continua (PHVA / Deming). Cuando un indicador queda <strong>fuera de meta</strong> en un mes cerrado, es obligatorio analizar la causa y registrar una medida de control con responsable y plazo. Mientras no exista, el indicador queda como «Sin medida de control» en el tablero, en el Dashboard y en «Mis pendientes». Una misma medida puede cubrir varios meses.</div>
+      <div class="toolbar">
+        <div class="field"><label>Año</label><select id="objMedAnio"></select></div>
+        <div class="field"><label>Estado de las medidas</label><select id="objMedEstado"><option value="">Todas</option><option value="pendiente">Pendientes</option><option value="en_proceso">En proceso</option><option value="cerrada">Cerradas</option><option value="atrasada">Atrasadas</option></select></div>
+        <div><button class="btn small secondary" id="objPhvaPdfBtn" type="button" style="margin-top:20px;">Descargar informe PHVA (PDF)</button></div>
+      </div>
+      <div id="objMedResumen" style="margin:8px 0;"></div>
+      <h3 style="margin:14px 0 6px;font-size:14px;">Fuera de meta sin medida de control</h3>
+      <div id="objMedPendientes" style="overflow-x:auto;"></div>
+      <h3 style="margin:18px 0 6px;font-size:14px;">Medidas registradas</h3>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Indicador y meses</th><th>Causa</th><th>Medida de control</th><th>Responsable</th><th>Plazo</th><th>Estado</th><th>Eficacia</th><th></th></tr></thead>
+        <tbody id="objMedTabla"></tbody>
+      </table></div>
     </div></div>
 
     <div class="card">
@@ -4342,8 +4362,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 46;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos","matrizVersiones","vsExamenesOcup","objetivosGestion","indicadoresGestion"];
+const DB_VERSION = 47;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos","matrizVersiones","vsExamenesOcup","objetivosGestion","indicadoresGestion","medidasIndicadores"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -11081,6 +11101,7 @@ on(document.getElementById("dashboardPeriodoAnio"), "change", ()=> renderDashboa
 
 function renderDashboard(){
   renderDashboardPeriodoSelectores();
+  try{ renderDashPdca(); }catch(e){}
   const periodo = dashboardPeriodoActual();
   const racha = computeRachas();
   document.getElementById("diasSinAccidentesDash").textContent = racha.actual===null ? "—" : racha.actual;
@@ -12074,11 +12095,12 @@ function renderMisActividadesMensuales(){
    (programa general, capacitaciones como relator y programa por cargo del
    mes en curso: actividades con alguna semana vencida sin cumplir). */
 function misPendientesCalcular(){
-  const r = {hallazgos:0, atrasadas:0, pct:null, capsPorAsistir:0};
+  const r = {hallazgos:0, atrasadas:0, pct:null, capsPorAsistir:0, medidasInd:0, medidasSin:0};
   const usuario = usuarioDeSesion();
   if(!usuario || !usuario.nombre) return r;
   const n = normalizarNombreTexto(usuario.nombre);
   r.hallazgos = misHallazgosDelUsuario().filter(it=>it.f.estado!=="cerrada").length;
+  { const mi = misMedidasIndicadores(n); r.medidasInd = mi.asignadas + mi.sinMedida; r.medidasSin = mi.sinMedida; r.atrasadas += mi.atrasadas; }
   const capsPend = misCapacitacionesDelUsuario();
   r.capsPorAsistir = capsPend.length;
   r.atrasadas += capsPend.filter(c=>c.fechaRealizada || estadoCapacitacion(c)==="atrasada").length;
@@ -12097,7 +12119,7 @@ function misPendientesCalcular(){
   return r;
 }
 function renderMisPendientes(){
-  const r = misPendientesCalcular(), total = r.hallazgos + r.atrasadas;
+  const r = misPendientesCalcular(), total = r.hallazgos + r.atrasadas + (r.medidasSin||0);
   const btn = document.querySelector('#mainNav button[data-view="mis-pendientes"]');
   if(btn){ if(total) btn.setAttribute("data-badge", total>99 ? "99+" : String(total)); else btn.removeAttribute("data-badge"); }
   const tiles = document.getElementById("misPendientesTiles");
@@ -12105,6 +12127,7 @@ function renderMisPendientes(){
     tile("Hallazgos por cerrar", r.hallazgos, "asignados a mi nombre"),
     tile("Actividades atrasadas", r.atrasadas, "programa y capacitaciones"),
     tile("Capacitaciones por asistir", r.capsPorAsistir, "a las que estoy convocado"),
+    tile("Medidas de control de indicadores", r.medidasInd, "asignadas a mí o por registrar (indicadores fuera de meta)", null),
     tile("Cumplimiento del mes", r.pct===null ? "—" : pcPct(r.pct), "mi programa por cargo"),
     ...(function(){
       if(!vsPuedeVer()) return [];
@@ -23564,6 +23587,7 @@ function datosInformeGerencia(){
   );
   if(mn.ext.total) indicadoresBody.push(["Extintores por revisar", (mn.ext.no+mn.ext.inc)+" de "+mn.ext.total+" registrados ("+mn.ext.no+" no cumplen, "+mn.ext.inc+" incompletos)"]);
   indicadoresBody.push(["Planos de emergencia dibujados", mn.planos]);
+  if((CACHE.indicadoresGestion||[]).length){ const anioMc = new Date().getFullYear(), rmc = objResumenMedidas(anioMc); indicadoresBody.push(["Medidas de control de indicadores ("+anioMc+")", rmc.sinMedida+" mes(es) fuera de meta sin medida · "+rmc.abiertas+" abierta(s) ("+rmc.atrasadas+" atrasada(s)) · "+rmc.cerradas+" cerrada(s)"]); }
   { const ro = objResumenAnio(new Date().getFullYear()); if(ro.total) indicadoresBody.push(["Indicadores de gestión en meta ("+new Date().getFullYear()+")", ro.conDatos ? ro.enMeta+" de "+ro.conDatos+" ("+ro.fuera+" fuera de meta)" : "sin datos del año en curso"]); }
 
   const accTipos = ["ctp","stp","trayecto","incidente","enfermedad"];
@@ -28418,6 +28442,279 @@ function objResumenAnio(anio){
   activos.forEach(i=>{ const c = objConsolidado(i, anio); if(c.kpi===null) return; const e = objEstadoAnual(i, c); if(e==="sin_meta") return; conDatos++; if(e==="en_meta") enMeta++; else if(e==="fuera") fuera++; });
   return {total:activos.length, conDatos, enMeta, fuera};
 }
+/* =========================================================
+   MEDIDAS DE CONTROL DE LOS INDICADORES (etapa «Actuar» del ciclo PHVA / Deming)
+   Store "medidasIndicadores": {id, indicadorId, anio, meses:[1..12], analisis, medida, responsable, plazo,
+   estado ("pendiente"|"en_proceso"|"cerrada"), fechaCierre, eficacia (""|"eficaz"|"no_eficaz"), creado}.
+   Un mes CERRADO (anterior al actual) con el indicador FUERA de meta exige una medida de control: mientras no exista
+   queda como «Sin medida de control» en el tablero, el Dashboard y Mis pendientes; al ingresar un dato fuera de meta
+   se abre solo la ventana para registrarla. Una medida puede cubrir varios meses del mismo indicador.
+   ========================================================= */
+function objMedidas(){ return CACHE.medidasIndicadores||[]; }
+function objMesCerrado(anio, mes){ const h = new Date(), a = h.getFullYear(), m = h.getMonth()+1; return anio < a || (anio===a && mes < m); }
+/* Estado de un mes: las metas anuales se evalúan con el acumulado de enero a ese mes (y meta prorrateada si corresponde). */
+function objEstadoMes(ind, anio, mes){
+  const m = objMedicion(ind, objYm(anio, mes));
+  if(!m) return "sin_datos";
+  if(objEsAnual(ind)){ const ac = objConsolidado(ind, anio, mes); return objEstado(ind, ac.kpi, objMetaEfectiva(ind, mes)); }
+  return objEstado(ind, objKpi(ind, m));
+}
+function objMedidaDe(ind, anio, mes){ return objMedidas().find(x=>x.indicadorId===ind.id && x.anio===anio && (x.meses||[]).includes(mes)) || null; }
+function objMedidaAtrasada(x){ return x.estado!=="cerrada" && !!x.plazo && daysUntil(x.plazo) < 0; }
+function objDesviaciones(anio){
+  const out = [];
+  (CACHE.indicadoresGestion||[]).filter(i=>i.activo!==false && objNum(i.meta)!==null).forEach(ind=>{
+    for(let mes=1; mes<=12; mes++){
+      if(!objMesCerrado(anio, mes)) continue;
+      const m = objMedicion(ind, objYm(anio, mes)); if(!m) continue;
+      const kpi = objKpi(ind, m); if(kpi===null) continue;
+      if(objEstadoMes(ind, anio, mes)!=="fuera") continue;
+      out.push({ind, anio, mes, kpi, medida: objMedidaDe(ind, anio, mes)});
+    }
+  });
+  return out;
+}
+function objResumenMedidas(anio){
+  const des = objDesviaciones(anio), sin = des.filter(d=>!d.medida), ms = objMedidas().filter(x=>x.anio===anio);
+  return {desviaciones:des.length, sinMedida:sin.length, indicadoresSinMedida:new Set(sin.map(d=>d.ind.id)).size,
+    total:ms.length, abiertas:ms.filter(x=>x.estado!=="cerrada").length, atrasadas:ms.filter(objMedidaAtrasada).length,
+    cerradas:ms.filter(x=>x.estado==="cerrada").length, eficaces:ms.filter(x=>x.eficacia==="eficaz").length};
+}
+const OBJ_MED_ESTADO = {pendiente:"Pendiente", en_proceso:"En proceso", cerrada:"Cerrada"};
+const OBJ_MED_EFICACIA = {"":"Sin evaluar", eficaz:"Eficaz", no_eficaz:"No eficaz"};
+function objMesesTexto(meses){ return (meses||[]).slice().sort((a,b)=>a-b).map(m=>OBJ_MESES[m-1]).join(", "); }
+
+/* Ventana para registrar (o editar) una medida de control. mesesPre: meses a marcar de entrada. */
+function objAbrirMedida(indId, anio, mesesPre, medidaId){
+  const ind = (CACHE.indicadoresGestion||[]).find(i=>i.id===indId); if(!ind) return;
+  const ex = medidaId ? objMedidas().find(x=>x.id===medidaId) : null;
+  const des = objDesviaciones(anio).filter(d=>d.ind.id===indId);
+  const disp = new Map();
+  des.forEach(d=>{ if(!d.medida || (ex && d.medida.id===ex.id)) disp.set(d.mes, d.kpi); });
+  (mesesPre||[]).forEach(m=>{ if(!disp.has(m)){ const med = objMedicion(ind, objYm(anio,m)); disp.set(m, med ? objKpi(ind, med) : null); } });
+  if(ex) (ex.meses||[]).forEach(m=>{ if(!disp.has(m)){ const med = objMedicion(ind, objYm(anio,m)); disp.set(m, med ? objKpi(ind, med) : null); } });
+  const marcados = new Set(ex ? ex.meses : ((mesesPre && mesesPre.length) ? mesesPre : Array.from(disp.keys())));
+  const metaTxt = objMetaTexto(ind);
+  openModal(`
+    <h3>${ex ? "Editar" : "Registrar"} medida de control — ${incEsc(ind.nombre)} (${anio})</h3>
+    <div class="kv" style="margin-bottom:8px;">Meta: ${incEsc(metaTxt)}. Cuando un indicador queda fuera de meta hay que analizar la causa y tomar una medida de control: es la etapa «Actuar» del ciclo de mejora continua.</div>
+    <label>Meses fuera de meta que cubre esta medida</label>
+    <div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0 10px;">${Array.from(disp.keys()).sort((a,b)=>a-b).map(m=>`<label style="display:inline-flex;align-items:center;gap:6px;font-weight:400;margin:0;"><input type="checkbox" data-med-mes="${m}"${marcados.has(m)?" checked":""} style="width:auto;min-height:auto;"> ${OBJ_MESES[m-1]}${disp.get(m)!==null && disp.get(m)!==undefined ? " ("+objFmt(disp.get(m))+")" : ""}</label>`).join("") || '<span class="kv">Este indicador no tiene meses fuera de meta sin medida.</span>'}</div>
+    <label>Análisis de la causa (¿por qué quedó fuera de meta?)</label>
+    <textarea id="medAnalisis" placeholder="Ej: No se realizaron las inspecciones programadas por falta de disponibilidad del supervisor">${incEsc(ex?ex.analisis||"":"")}</textarea>
+    <label>Medida de control (¿qué se hará para corregirlo?)</label>
+    <textarea id="medMedida" placeholder="Ej: Reasignar las inspecciones a un segundo inspector y programarlas en el calendario del mes">${incEsc(ex?ex.medida||"":"")}</textarea>
+    <div class="form-grid">
+      <div><label>Responsable</label><input id="medResp" list="dlResponsables" value="${incEsc(ex?ex.responsable||"":ind.responsable||"")}" placeholder="Persona responsable"></div>
+      <div><label>Plazo</label><input id="medPlazo" type="date" value="${ex?ex.plazo||"":""}"></div>
+      <div><label>Estado</label><select id="medEstado">${Object.entries(OBJ_MED_ESTADO).map(([k,v])=>`<option value="${k}"${(ex?ex.estado:"pendiente")===k?" selected":""}>${v}</option>`).join("")}</select></div>
+      <div><label>Eficacia de la medida</label><select id="medEficacia">${Object.entries(OBJ_MED_EFICACIA).map(([k,v])=>`<option value="${k}"${(ex?ex.eficacia||"":"")===k?" selected":""}>${v}</option>`).join("")}</select></div>
+    </div>
+    <div class="toolbar" style="margin-top:12px;"><button class="btn" id="medGuardarBtn" type="button">Guardar medida</button><button class="btn secondary" id="medCancelarBtn" type="button">${ex ? "Cancelar" : "Más tarde"}</button></div>`);
+  on(document.getElementById("medCancelarBtn"), "click", closeModal);
+  on(document.getElementById("medGuardarBtn"), "click", async ()=>{
+    const meses = Array.from(document.querySelectorAll("#modalBody [data-med-mes]:checked")).map(c=>+c.dataset.medMes).sort((a,b)=>a-b);
+    const analisis = document.getElementById("medAnalisis").value.trim(), medida = document.getElementById("medMedida").value.trim();
+    const responsable = document.getElementById("medResp").value.trim(), plazo = document.getElementById("medPlazo").value;
+    if(!meses.length){ alert("Marca al menos un mes fuera de meta que cubra la medida."); return; }
+    if(!analisis){ alert("Escribe el análisis de la causa."); return; }
+    if(!medida){ alert("Escribe la medida de control."); return; }
+    if(!responsable){ alert("Indica el responsable de la medida."); return; }
+    if(!plazo){ alert("Indica el plazo de la medida."); return; }
+    const estado = document.getElementById("medEstado").value, eficacia = document.getElementById("medEficacia").value;
+    const rec = Object.assign({}, ex || {id:uid(), creado:new Date().toISOString()}, {indicadorId:indId, anio, meses, analisis, medida, responsable, plazo, estado, eficacia});
+    rec.fechaCierre = estado==="cerrada" ? (rec.fechaCierre || new Date().toISOString().slice(0,10)) : "";
+    await put("medidasIndicadores", rec); await loadCache();
+    closeModal(); renderObjetivos();
+    if(typeof renderMisPendientes === "function") renderMisPendientes();
+  });
+}
+
+/* Sub-pestaña «Medidas de control» */
+function renderObjMedidas(){
+  const selA = document.getElementById("objMedAnio"); if(!selA) return;
+  const anios = objAniosDisponibles(), cur = selA.value || document.getElementById("objAnio").value;
+  selA.innerHTML = anios.map(a=>`<option value="${a}">${a}</option>`).join("");
+  selA.value = anios.map(String).includes(cur) ? cur : String(new Date().getFullYear());
+  const anio = +selA.value, fEst = document.getElementById("objMedEstado").value;
+  const rs = objResumenMedidas(anio);
+  document.getElementById("objMedResumen").innerHTML = `<div class="grid-tiles">${[
+    tile("Meses fuera de meta sin medida", rs.sinMedida, rs.indicadoresSinMedida+" indicador(es)", null, "alert", "var(--s1)"),
+    tile("Medidas abiertas", rs.abiertas, rs.atrasadas+" atrasada(s)", null, "shield", "var(--s1)"),
+    tile("Medidas cerradas", rs.cerradas, rs.eficaces+" evaluada(s) como eficaz(es)", null, "shield", "var(--s1)"),
+  ].join("")}</div>`;
+  // pendientes agrupados por indicador
+  const sin = objDesviaciones(anio).filter(d=>!d.medida), porInd = new Map();
+  sin.forEach(d=>{ if(!porInd.has(d.ind.id)) porInd.set(d.ind.id, {ind:d.ind, filas:[]}); porInd.get(d.ind.id).filas.push(d); });
+  document.getElementById("objMedPendientes").innerHTML = porInd.size ? `<table><thead><tr><th>Indicador</th><th>Meta</th><th>Meses fuera de meta (KPI)</th><th></th></tr></thead><tbody>${Array.from(porInd.values()).map(g=>`<tr style="background:#fdf2f2;"><td><strong>${incEsc(g.ind.nombre)}</strong><div class="kv">${incEsc(g.ind.responsable?"Responsable: "+g.ind.responsable:"")}</div></td><td>${objMetaHtml(g.ind)}</td><td>${g.filas.map(d=>`${OBJ_MESES[d.mes-1]} (${objFmt(d.kpi)})`).join(" · ")}</td><td><button class="btn small" data-obj-med-nueva="${g.ind.id}|${anio}">Registrar medida</button></td></tr>`).join("")}</tbody></table>`
+    : '<div class="empty">No hay indicadores fuera de meta sin medida de control en este año. ✔</div>';
+  const ms = objMedidas().filter(x=>x.anio===anio && (!fEst || (fEst==="atrasada" ? objMedidaAtrasada(x) : x.estado===fEst)))
+    .sort((a,b)=>String(a.plazo||"").localeCompare(String(b.plazo||"")));
+  document.getElementById("objMedTabla").innerHTML = ms.map(x=>{
+    const ind = (CACHE.indicadoresGestion||[]).find(i=>i.id===x.indicadorId), atr = objMedidaAtrasada(x);
+    return `<tr><td><strong>${incEsc(ind?ind.nombre:"(indicador eliminado)")}</strong><div class="kv">${objMesesTexto(x.meses)}</div></td>
+      <td>${incEsc(x.analisis||"")}</td><td>${incEsc(x.medida||"")}</td><td>${incEsc(x.responsable||"—")}</td>
+      <td>${x.plazo?fmtDate(x.plazo):"—"}${atr?' <span class="pill vencido">Atrasada</span>':""}</td>
+      <td><select data-obj-med-estado="${x.id}" style="min-height:auto;padding:4px;">${Object.entries(OBJ_MED_ESTADO).map(([k,v])=>`<option value="${k}"${x.estado===k?" selected":""}>${v}</option>`).join("")}</select></td>
+      <td>${x.estado==="cerrada" ? `<select data-obj-med-eficacia="${x.id}" style="min-height:auto;padding:4px;">${Object.entries(OBJ_MED_EFICACIA).map(([k,v])=>`<option value="${k}"${(x.eficacia||"")===k?" selected":""}>${v}</option>`).join("")}</select>` : '<span class="kv">—</span>'}</td>
+      <td style="white-space:nowrap;"><button class="btn secondary small" data-obj-med-editar="${x.id}">Editar</button> <button class="subtle-btn" data-obj-med-eliminar="${x.id}">Eliminar</button></td></tr>`;
+  }).join("") || '<tr><td class="empty" colspan="8">Todavía no hay medidas de control para este filtro.</td></tr>';
+}
+on(document.getElementById("objMedAnio"), "change", renderObjMedidas);
+on(document.getElementById("objMedEstado"), "change", renderObjMedidas);
+on(document.getElementById("bodyObjMedidas"), "click", async (e)=>{
+  const nueva = e.target.closest("[data-obj-med-nueva]");
+  if(nueva){ const [id, anio] = nueva.dataset.objMedNueva.split("|"); const meses = objDesviaciones(+anio).filter(d=>d.ind.id===id && !d.medida).map(d=>d.mes); objAbrirMedida(id, +anio, meses); return; }
+  const ed = e.target.closest("[data-obj-med-editar]");
+  if(ed){ const x = objMedidas().find(m=>m.id===ed.dataset.objMedEditar); if(x) objAbrirMedida(x.indicadorId, x.anio, x.meses, x.id); return; }
+  const del = e.target.closest("[data-obj-med-eliminar]");
+  if(del){
+    const x = objMedidas().find(m=>m.id===del.dataset.objMedEliminar); if(!x) return;
+    if(!confirm("¿Eliminar esta medida de control? Los meses que cubría volverán a quedar «sin medida de control».")) return;
+    await deleteRecord("medidasIndicadores", x.id); await loadCache(); renderObjetivos(); return;
+  }
+  if(e.target.closest("#objPhvaPdfBtn")) informePhvaPdf(+document.getElementById("objMedAnio").value);
+});
+on(document.getElementById("bodyObjMedidas"), "change", async (e)=>{
+  const se = e.target.closest("[data-obj-med-estado]"), sf = e.target.closest("[data-obj-med-eficacia]");
+  if(!se && !sf) return;
+  const x = objMedidas().find(m=>m.id===(se?se.dataset.objMedEstado:sf.dataset.objMedEficacia)); if(!x) return;
+  const rec = {...x};
+  if(se){ rec.estado = se.value; rec.fechaCierre = rec.estado==="cerrada" ? (rec.fechaCierre || new Date().toISOString().slice(0,10)) : ""; if(rec.estado!=="cerrada") rec.eficacia = ""; }
+  else rec.eficacia = sf.value;
+  await put("medidasIndicadores", rec); await loadCache(); renderObjetivos();
+  if(typeof renderMisPendientes === "function") renderMisPendientes();
+});
+
+/* =========================================================
+   CICLO PHVA (Deming) — datos compartidos por el Dashboard y el informe
+   ========================================================= */
+function dashPdca(){
+  const hoy = new Date(), anio = hoy.getFullYear(), mesIso = hoy.toISOString().slice(0,7);
+  const enAnio = (f)=>String(f||"").slice(0,4)===String(anio);
+  const pgAnio = (CACHE.programa||[]).filter(p=>enAnio(p.fechaProgramada)), capAnio = (CACHE.capacitaciones||[]).filter(c=>enAnio(c.fechaProgramada));
+  const pgReal = pgAnio.filter(p=>p.fechaRealizada).length, capReal = capAnio.filter(c=>c.fechaRealizada).length;
+  const objs = (CACHE.objetivosGestion||[]).length, indsMeta = (CACHE.indicadoresGestion||[]).filter(i=>i.activo!==false && objNum(i.meta)!==null).length;
+  const miper = miperVigente();
+  const pctPg = pgAnio.length ? Math.round(pgReal/pgAnio.length*100) : null, pctCap = capAnio.length ? Math.round(capReal/capAnio.length*100) : null;
+  const pcts = [pctPg, pctCap].filter(v=>v!==null), pctHacer = pcts.length ? Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length) : null;
+  const insMes = (CACHE.inspecciones||[]).filter(i=>String(i.fecha||"").slice(0,7)===mesIso).length;
+  const ro = objResumenAnio(anio), rm = objResumenMedidas(anio);
+  const fufCounts = {cumple:0, no_aplica:0}; FUF_ITEMS.forEach(it=>{ const rec = (CACHE.cumplimientoLegal||[]).find(r=>r.numero===it.numero); const n = (rec&&rec.nivel)||"sin_evaluar"; if(n==="cumple"||n==="no_aplica") fufCounts[n]++; });
+  const fufEval = FUF_ITEMS.length - fufCounts.no_aplica, fufPct = fufEval ? Math.round(fufCounts.cumple/fufEval*100) : null;
+  const sinInvest = (CACHE.accidentes||[]).filter(a=>OBJ_TIPOS_ACC_INVESTIGABLES.includes(a.tipo) && !a.investigado).length;
+  const hallazgos = (CACHE.inspecciones||[]).flatMap(i=>i.findings||[]).filter(f=>f.estado!=="cerrada").length;
+  const semPct = (p)=> p===null ? null : (p>=80 ? "bajo" : (p>=50 ? "medio" : "alto"));
+  const planificarOk = [(CACHE.matriz||[]).length>0, objs>0 && indsMeta>0, pgAnio.length>0].filter(Boolean).length;
+  const verificarPct = ro.conDatos ? Math.round(ro.enMeta/ro.conDatos*100) : null;
+  return {anio, etapas:[
+    {k:"planificar", n:"1 · Planificar", sub:"Política, matriz de riesgos, objetivos y programa", sem: planificarOk===3?"bajo":(planificarOk>=1?"medio":"alto"),
+      items:[`Matriz de riesgos: ${(CACHE.matriz||[]).length} línea(s)${miper?" · MIPER versión "+miper.version:""}`, `Objetivos: ${objs} · indicadores con meta: ${indsMeta}`, `Programa ${anio}: ${pgAnio.length} actividad(es) · capacitaciones: ${capAnio.length}`], vista:"matriz"},
+    {k:"hacer", n:"2 · Hacer", sub:"Programa, capacitaciones e inspecciones", sem: semPct(pctHacer),
+      items:[`Programa de seguridad: ${pctPg===null?"sin actividades":pctPg+"% ("+pgReal+" de "+pgAnio.length+")"}`, `Plan de capacitación: ${pctCap===null?"sin capacitaciones":pctCap+"% ("+capReal+" de "+capAnio.length+")"}`, `Inspecciones del mes: ${insMes}`], vista:"programa"},
+    {k:"verificar", n:"3 · Verificar", sub:"Indicadores, cumplimiento legal e investigaciones", sem: semPct(verificarPct),
+      items:[`Indicadores en meta: ${ro.conDatos?ro.enMeta+" de "+ro.conDatos:"sin datos"}${ro.fuera?" · "+ro.fuera+" fuera de meta":""}`, `Cumplimiento legal DS 44: ${fufPct===null?"—":fufPct+"%"}`, `Accidentes sin investigar: ${sinInvest}`], vista:"objetivos"},
+    {k:"actuar", n:"4 · Actuar", sub:"Medidas de control y acciones correctivas", sem: rm.sinMedida>0||rm.atrasadas>0 ? "alto" : (rm.abiertas>0 ? "medio" : "bajo"),
+      items:[`Fuera de meta SIN medida de control: ${rm.sinMedida} mes(es) en ${rm.indicadoresSinMedida} indicador(es)`, `Medidas abiertas: ${rm.abiertas} (${rm.atrasadas} atrasada(s)) · cerradas: ${rm.cerradas}`, `Hallazgos de inspección con acción abierta: ${hallazgos}`], vista:"objetivos", medidas:true},
+  ], rm, ro};
+}
+const PDCA_COLOR = {bajo:"#0a6b0a", medio:"#c98a00", alto:"#c0392b", null:"#9aa0a6"};
+function renderDashPdca(){
+  const wrap = document.getElementById("dashPdca"); if(!wrap) return;
+  const d = dashPdca();
+  wrap.innerHTML = `<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+      <div><h2 style="margin:0;">Ciclo de mejora continua (PHVA · Deming) — ${d.anio}</h2><div class="desc" style="margin:2px 0 0;">Planificar → Hacer → Verificar → Actuar. Lo que está fuera de meta obliga a registrar una medida de control (etapa Actuar), y lo aprendido vuelve a la planificación.</div></div>
+      <button class="btn small secondary" id="dashPdcaPdfBtn" type="button">Descargar informe PHVA (PDF)</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;">${d.etapas.map(e=>`
+      <div style="border:1px solid var(--grid);border-top:5px solid ${PDCA_COLOR[e.sem]};border-radius:10px;padding:10px 12px;">
+        <div style="font-weight:800;font-size:15px;color:${PDCA_COLOR[e.sem]};">${e.n}</div>
+        <div class="kv" style="margin-bottom:6px;">${e.sub}</div>
+        ${e.items.map(t=>`<div style="font-size:12.5px;margin-bottom:3px;">${incEsc(t)}</div>`).join("")}
+        <button class="btn small secondary" data-pdca-ir="${e.k}" type="button" style="margin-top:8px;">Ver detalle</button>
+      </div>`).join("")}</div>
+    ${d.rm.sinMedida>0 ? `<div class="finding" style="margin-top:10px;background:#fdf2f2;border-left:5px solid #c0392b;"><strong>⚠ Hay ${d.rm.indicadoresSinMedida} indicador(es) fuera de meta sin medida de control.</strong> Regístralas para cerrar el ciclo.</div>` : ""}
+  </div>`;
+}
+on(document.getElementById("dashPdca"), "click", (e)=>{
+  if(e.target.closest("#dashPdcaPdfBtn")){ informePhvaPdf(new Date().getFullYear()); return; }
+  const b = e.target.closest("[data-pdca-ir]"); if(!b) return;
+  const k = b.dataset.pdcaIr;
+  if(k==="actuar"){ irAVista("objetivos"); try{ subpestanasMostrarDe("hdrObjMedidas"); }catch(er){} const h = document.getElementById("hdrObjMedidas"); if(h) h.scrollIntoView({behavior:"smooth", block:"start"}); }
+  else if(k==="verificar"){ irAVista("objetivos"); }
+  else irAVista(k==="planificar" ? "matriz" : "programa");
+});
+
+/* Informe PDF «Revisión del ciclo PHVA — mejora continua» */
+function informePhvaPdf(anio){
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const doc = new JsPDFClass();
+  let y = grdPdfEncabezado(doc, `Revisión del ciclo PHVA — mejora continua ${anio}`);
+  const d = dashPdca(), rm = objResumenMedidas(anio);
+  doc.setFontSize(12); doc.text("1. Resumen del ciclo (Deming)", 14, y); y += 4;
+  doc.autoTable({startY:y, head:[["Etapa","Qué se revisa","Resultado"]], body: d.etapas.map(e=>[e.n, e.sub, e.items.join("\n")]), styles:{fontSize:8.5, valign:"top"}, headStyles:{fillColor:[42,120,214]}, columnStyles:{0:{cellWidth:28}, 1:{cellWidth:48}} });
+  y = doc.lastAutoTable.finalY + 8;
+  if(y > 235){ doc.addPage(); y = 16; }
+  doc.setFontSize(12); doc.text(`2. Indicadores de gestión ${anio} y su medida de control`, 14, y); y += 4;
+  const inds = (CACHE.indicadoresGestion||[]).filter(i=>i.activo!==false).sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
+  const filas = inds.map(i=>{
+    const c = objConsolidado(i, anio), e = objEstadoAnual(i, c), des = objDesviaciones(anio).filter(x=>x.ind.id===i.id);
+    let med = "No requiere";
+    if(des.length){ const sin = des.filter(x=>!x.medida).length; med = sin ? `SIN MEDIDA DE CONTROL (${sin} mes(es))` : (des.every(x=>x.medida.estado==="cerrada") ? "Medida cerrada" : "Medida en curso"); }
+    else if(e==="fuera") med = "Fuera de meta (mes en curso: aún no exige medida)";
+    return [i.nombre, objMetaTexto(i), c.kpi===null?"-":objFmt(c.kpi), OBJ_ESTADO_LABEL[e], med];
+  });
+  doc.autoTable({startY:y, head:[["Indicador","Meta","Consolidado","Estado","Medida de control"]], body: filas.length?filas:[["Sin indicadores","","","",""]], styles:{fontSize:8.5}, headStyles:{fillColor:[236,131,90]},
+    didParseCell:(h)=>{ if(h.section==="body" && h.column.index===4 && /^SIN MEDIDA/.test(String(h.cell.raw))){ h.cell.styles.textColor = [192,57,43]; h.cell.styles.fontStyle = "bold"; } } });
+  y = doc.lastAutoTable.finalY + 8;
+  if(y > 235){ doc.addPage(); y = 16; }
+  doc.setFontSize(12); doc.text("3. Medidas de control registradas", 14, y); y += 4;
+  const ms = objMedidas().filter(x=>x.anio===anio);
+  doc.autoTable({startY:y, head:[["Indicador","Meses","Causa","Medida","Responsable","Plazo","Estado","Eficacia"]],
+    body: ms.length ? ms.map(x=>{ const ind = (CACHE.indicadoresGestion||[]).find(i=>i.id===x.indicadorId); return [ind?ind.nombre:"(eliminado)", objMesesTexto(x.meses), x.analisis||"", x.medida||"", x.responsable||"", x.plazo?fmtDate(x.plazo):"", OBJ_MED_ESTADO[x.estado]+(objMedidaAtrasada(x)?" (atrasada)":""), x.estado==="cerrada"?OBJ_MED_EFICACIA[x.eficacia||""]:"—"]; }) : [["Sin medidas registradas en el año","","","","","","",""]],
+    styles:{fontSize:7.5, valign:"top"}, headStyles:{fillColor:[12,163,12]} });
+  y = doc.lastAutoTable.finalY + 8;
+  if(y > 235){ doc.addPage(); y = 16; }
+  doc.setFontSize(12); doc.text("4. Conclusiones", 14, y); y += 6; doc.setFontSize(9.5);
+  const concl = [
+    `Meses fuera de meta en meses cerrados: ${rm.desviaciones}; con medida de control: ${rm.desviaciones-rm.sinMedida}; SIN medida: ${rm.sinMedida}.`,
+    `Medidas registradas: ${rm.total} (abiertas ${rm.abiertas}, atrasadas ${rm.atrasadas}, cerradas ${rm.cerradas}, evaluadas como eficaces ${rm.eficaces}).`,
+    rm.sinMedida ? "Quedan indicadores fuera de meta sin medida de control: deben registrarse antes de cerrar la revisión." : "Todos los indicadores fuera de meta tienen una medida de control registrada.",
+  ];
+  concl.forEach(t=>{ y = escribirTextoPaginado(doc, "- "+t, 14, y, {maxWidth:182}) + 1; });
+  y += 14; if(y > 250){ doc.addPage(); y = 30; }
+  ["Elaboró","Revisó","Aprobó (Dirección)"].forEach((t,k)=>{ const x = 14 + k*62; doc.line(x, y, x+54, y); doc.setFontSize(9); doc.text(t, x+27, y+5, {align:"center"}); });
+  agregarPiePaginasPdf(doc, "Revisión PHVA");
+  doc.save(`Revision_PHVA_${anio}.pdf`);
+}
+
+/* Aviso en el tablero: indicadores fuera de meta sin medida de control + etiqueta por indicador. */
+function objBannerMedidasHtml(anio){
+  const rs = objResumenMedidas(anio);
+  if(!rs.sinMedida) return "";
+  return `<div class="finding" style="background:#fdf2f2;border-left:5px solid #c0392b;margin-bottom:10px;"><strong>⚠ ${rs.indicadoresSinMedida} indicador(es) fuera de meta sin medida de control (${rs.sinMedida} mes(es)).</strong> Es obligatorio analizar la causa y registrar una medida. <button class="btn small" data-obj-ir-medidas type="button" style="margin-left:8px;">Registrar medidas</button></div>`;
+}
+function objEtiquetaMedidaHtml(ind, desAll){
+  const ds = desAll.filter(d=>d.ind.id===ind.id);
+  if(!ds.length) return "";
+  if(ds.some(d=>!d.medida)) return '<div style="margin-top:4px;"><span class="pill critico">Sin medida de control</span></div>';
+  return ds.every(d=>d.medida.estado==="cerrada") ? '<div style="margin-top:4px;"><span class="pill cerrada">Medida cerrada</span></div>' : '<div style="margin-top:4px;"><span class="pill proceso">Medida en curso</span></div>';
+}
+/* Medidas del usuario para «Mis pendientes»: asignadas sin cerrar + indicadores suyos fuera de meta sin medida. */
+function misMedidasIndicadores(nombreNorm){
+  const anio = new Date().getFullYear();
+  const mias = objMedidas().filter(x=>x.estado!=="cerrada" && x.responsable && normalizarNombreTexto(x.responsable)===nombreNorm);
+  const pend = objDesviaciones(anio).filter(d=>!d.medida && d.ind.responsable && normalizarNombreTexto(d.ind.responsable)===nombreNorm);
+  return {asignadas:mias.length, atrasadas:mias.filter(objMedidaAtrasada).length, sinMedida:new Set(pend.map(d=>d.ind.id)).size};
+}
+
+on(document.getElementById("objMedBanner"), "click", (e)=>{
+  if(!e.target.closest("[data-obj-ir-medidas]")) return;
+  try{ subpestanasMostrarDe("hdrObjMedidas"); }catch(er){}
+  const h = document.getElementById("hdrObjMedidas"); if(h) h.scrollIntoView({behavior:"smooth", block:"start"});
+});
 let objObjEditandoId = null, objIndEditandoId = null, objAnioPreferido = null;
 function objAniosDisponibles(){
   const s = new Set([new Date().getFullYear()]);
@@ -28433,7 +28730,7 @@ function renderObjetivos(){
   const anios = objAniosDisponibles();
   selA.innerHTML = anios.map(a=>`<option value="${a}">${a}</option>`).join("");
   selA.value = anios.map(String).includes(curA) ? curA : String(new Date().getFullYear());
-  renderObjTablero(); renderObjObjetivos(); renderObjIndicadoresForm(); renderObjIndicadoresTable();
+  renderObjTablero(); renderObjObjetivos(); renderObjIndicadoresForm(); renderObjIndicadoresTable(); renderObjMedidas();
 }
 function renderObjTablero(){
   const anio = +document.getElementById("objAnio").value || new Date().getFullYear();
@@ -28441,6 +28738,8 @@ function renderObjTablero(){
   document.getElementById("objTableroHead").innerHTML = `<tr><th style="min-width:200px;">Indicador</th><th>Meta</th>${OBJ_MESES.map(m=>`<th style="text-align:center;">${m}</th>`).join("")}<th>Consolidado</th><th>Estado</th></tr>`;
   const objetivos = objObjetivosOrdenados();
   const grupos = objetivos.map(o=>({o, inds:inds.filter(i=>i.objetivoId===o.id)})).concat([{o:{id:"", nombre:"Sin objetivo asignado", compromiso:""}, inds:inds.filter(i=>!objetivos.some(o=>o.id===i.objetivoId))}]).filter(g=>g.inds.length);
+  const desAll = objDesviaciones(anio);
+  document.getElementById("objMedBanner").innerHTML = objBannerMedidasHtml(anio);
   document.getElementById("objTableroBody").innerHTML = grupos.map(g=>`<tr><td colspan="16" style="background:#f2f4f7;font-weight:700;">${incEsc(g.o.nombre)}${g.o.compromiso?` <span class="kv" style="font-weight:400;">— ${incEsc(g.o.compromiso)}</span>`:""}</td></tr>` + g.inds.map(i=>{
     const celdas = OBJ_MESES.map((_, k)=>{
       const ym = objYm(anio, k+1), m = objMedicion(i, ym), kpi = objKpi(i, m);
@@ -28452,7 +28751,7 @@ function renderObjTablero(){
     }).join("");
     const c = objConsolidado(i, anio), e = objEstadoAnual(i, c), mEfAnual = objMetaEfectiva(i, c.ultimoMes), pctMeta = objCumplimientoPct(i, c.kpi, mEfAnual);
     const prorr = mEfAnual!==null && mEfAnual!==objNum(i.meta);
-    return `<tr><td><strong>${incEsc(i.nombre)}</strong><div class="kv">${incEsc(i.formula||"")}</div></td><td>${objMetaHtml(i)}</td>${celdas}<td style="text-align:center;font-weight:700;">${objFmt(c.kpi)}<div class="kv">${c.meses} mes(es)</div></td><td><span class="pill ${OBJ_ESTADO_PILL[e]}">${OBJ_ESTADO_LABEL[e]}</span>${pctMeta===null?"":`<div class="kv">${pctMeta} % de la meta</div>`}${prorr?`<div class="kv" title="Meta anual prorrateada por los meses transcurridos">meta a ${OBJ_MESES[c.ultimoMes-1].toLowerCase()}: ≤ ${objFmt(mEfAnual)}</div>`:""}</td></tr>`;
+    return `<tr><td><strong>${incEsc(i.nombre)}</strong><div class="kv">${incEsc(i.formula||"")}</div></td><td>${objMetaHtml(i)}</td>${celdas}<td style="text-align:center;font-weight:700;">${objFmt(c.kpi)}<div class="kv">${c.meses} mes(es)</div></td><td><span class="pill ${OBJ_ESTADO_PILL[e]}">${OBJ_ESTADO_LABEL[e]}</span>${objEtiquetaMedidaHtml(i, desAll)}${pctMeta===null?"":`<div class="kv">${pctMeta} % de la meta</div>`}${prorr?`<div class="kv" title="Meta anual prorrateada por los meses transcurridos">meta a ${OBJ_MESES[c.ultimoMes-1].toLowerCase()}: ≤ ${objFmt(mEfAnual)}</div>`:""}</td></tr>`;
   }).join("")).join("") || `<tr><td class="empty" colspan="16">Todavía no hay indicadores: créelos abajo o impórtelos desde su Excel.</td></tr>`;
   const res = objResumenAnio(anio);
   document.getElementById("objResumenAnio").textContent = res.total ? `${res.enMeta} de ${res.conDatos} indicador(es) con datos y meta están en meta · ${res.fuera} fuera de meta · ${res.total} indicador(es) activo(s)` : "";
@@ -28511,6 +28810,10 @@ on(document.getElementById("objTableroBody"), "click", (e)=>{
     const rec = {...ind, mediciones:{...(ind.mediciones||{})}};
     if(quitar) delete rec.mediciones[ym]; else rec.mediciones[ym] = {p, r};
     await put("indicadoresGestion", rec); await loadCache(); closeModal(); renderObjetivos();
+    if(!quitar){
+      const ind2 = (CACHE.indicadoresGestion||[]).find(i=>i.id===ind.id), [a2, m2] = ym.split("-").map(Number);
+      if(ind2 && objEstadoMes(ind2, a2, m2)==="fuera" && !objMedidaDe(ind2, a2, m2)) objAbrirMedida(ind2.id, a2, [m2]);
+    }
   };
   on(document.getElementById("omGuardarBtn"), "click", ()=>guardar(false)); on(document.getElementById("omQuitarBtn"), "click", ()=>guardar(true));
 });
@@ -28724,10 +29027,13 @@ on(document.getElementById("objPdfBtn"), "click", ()=>{
 subpestanasCrear("objetivos", [
   {key:"tablero", icono:"grafico", label:"Tablero de indicadores", desc:"KPI mensual de cada indicador frente a su meta y consolidado del año", hdrs:["hdrObjTablero"]},
   {key:"objetivos", icono:"lista", label:"Política y objetivos", desc:"Objetivos que dan cumplimiento a la política de la empresa", hdrs:["hdrObjObjetivos"]},
+  {key:"medidas", icono:"alerta", label:"Medidas de control", desc:"Qué se hace cuando un indicador queda fuera de meta (Actuar del ciclo PHVA)", hdrs:["hdrObjMedidas"],
+    badge:()=>{ try{ const n = objResumenMedidas(new Date().getFullYear()).sinMedida; return n ? {texto:`${n} sin medida`, nivel:"r"} : null; }catch(e){ return null; } }},
   {key:"indicadores", icono:"registro", label:"Indicadores", desc:"Definir indicadores, fuentes y metas; importar su planilla de Excel", hdrs:["hdrObjIndicadores"]},
 ], "tarjetas");
 setupCollapsible("hdrObjTablero", "bodyObjTablero", "toggleObjTablero", "collapsed_objTablero");
 setupCollapsible("hdrObjObjetivos", "bodyObjObjetivos", "toggleObjObjetivos", "collapsed_objObjetivos");
+setupCollapsible("hdrObjMedidas", "bodyObjMedidas", "toggleObjMedidas", "collapsed_objMedidas");
 setupCollapsible("hdrObjIndicadores", "bodyObjIndicadores", "toggleObjIndicadores", "collapsed_objIndicadores");
 
 async function refreshAll(){
