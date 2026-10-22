@@ -4234,7 +4234,18 @@
       <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin-top:4px;">
         <input type="checkbox" id="importMatrizReplace" style="width:auto;min-height:auto;"> Reemplazar toda la matriz actual antes de importar (si no se marca, las líneas importadas se agregan a las existentes)
       </label>
+      <label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;margin-top:6px;">
+        <input type="checkbox" id="importMatrizProcesoArea" style="width:auto;min-height:auto;margin-top:3px;"> En mi Excel la columna <strong>Proceso</strong> contiene el <strong>Área</strong>: usar sus valores como Área de cada línea (se crean las que falten) y dejar el Proceso vacío. La Actividad se mantiene tal cual.
+      </label>
       <div style="margin-top:14px;"><button class="btn small secondary" id="importMatrizBtn">Importar matriz desde Excel</button></div>
+      <div style="border-top:1px solid var(--grid);margin-top:16px;padding-top:12px;">
+        <h3 style="margin:0 0 6px;font-size:15px;">Corregir líneas ya cargadas</h3>
+        <div class="desc" style="margin-top:0;">Si ya importaste tu matriz y el Área quedó mal porque en tu Excel el área estaba escrita en la columna Proceso, elige el área donde quedaron esas líneas (por ejemplo «General»): el Proceso de cada línea pasa a ser su Área y el Proceso queda vacío. No se pierde nada más; cada cambio queda en el historial de la línea.</div>
+        <div class="toolbar">
+          <div class="field"><label>Líneas que hoy están en el área</label><select id="fixMatrizAreaOrigen"></select></div>
+          <div><button class="btn small secondary" id="fixMatrizProcesoAreaBtn" type="button" style="margin-top:20px;">Mover el Proceso al Área</button></div>
+        </div>
+      </div>
     </div></div>
     <div class="card" id="accesosAdminWrap">
       <div class="card-header-row" id="hdrAccesos"><h2>Gestión de accesos (solo Administrador)</h2><button class="collapse-toggle" id="toggleAccesos" type="button" aria-label="Contraer o expandir">▾</button></div>
@@ -10775,6 +10786,7 @@ function responsableEsGenerico(texto){
   return !t || ["trabajador","trabajadores","el trabajador","los trabajadores","operador","operadores","personal","el personal","colaborador","colaboradores"].includes(t);
 }
 function renderCommonSelects(){
+  try{ fixMatrizLlenarOrigen(); }catch(e){}
   { const dl = document.getElementById("dlResponsables"); if(dl) fillDatalist(dl, responsablesSugeridos()); }
   { const dl = document.getElementById("dlPersonasPrograma"); if(dl) fillDatalist(dl, (CACHE.programaPersonas||[]).map(p=>p.nombre).filter(Boolean).sort((a,b)=>a.localeCompare(b))); }
   fillDatalist(document.getElementById("dlDocumentosProcedimiento"), (CACHE.documentos||[]).filter(d=>d.tipo==="procedimiento").map(d=>d.nombre).filter(Boolean));
@@ -27397,6 +27409,16 @@ on(document.getElementById("importMatrizBtn"), "click", async () => {
     return;
   }
 
+  if(document.getElementById("importMatrizProcesoArea").checked){
+    // El Excel trae el área en la columna Proceso: pasa a ser el Área y el Proceso queda vacío.
+    lineas.forEach(l=>{
+      const txt = String(l.proceso||"").trim();
+      if(!txt) return;
+      const a = matrizAreaPorNombre(txt);
+      if(a){ l.areaId = a.id; l.areaPendiente = ""; } else { l.areaId = defaultAreaId; l.areaPendiente = txt; }
+      l.proceso = "";
+    });
+  }
   if(reemplazar){
     if(!confirm(`Esto eliminará las ${CACHE.matriz.length} línea(s) actuales de la matriz antes de importar ${lineas.length} línea(s) nueva(s). ¿Continuar?`)) return;
     await clearStore("matriz");
@@ -27456,6 +27478,7 @@ on(document.getElementById("importMatrizBtn"), "click", async () => {
   await loadCache();
   fileInput.value = "";
   document.getElementById("importMatrizReplace").checked = false;
+  document.getElementById("importMatrizProcesoArea").checked = false;
   renderMatrizTable(); renderEquidadGenero(); renderMatrizCharts(); renderJerarquiaControles(); renderEppEstudioCobertura(); renderEppEstPeligroOptions(); renderMapaRiesgos(); renderPlanoRiesgos(); renderPlanAccion(); renderTraspasosPendientes(); renderMatrizHistorialTable(); renderCommonSelects(); renderCatList();
   const areaDefaultNombre = (CACHE.areas.find(a=>a.id===defaultAreaId)||{}).nombre || "—";
   const sinAreaPorLinea = lineas.length && lineas.every(l=>l.areaId===defaultAreaId) && !areasCreadas.length;
@@ -27465,6 +27488,35 @@ on(document.getElementById("importMatrizBtn"), "click", async () => {
   alert(`Importación completa (formato ${formato}): ${importadas} línea(s) ${reemplazar? "cargadas":"agregadas"} en la Matriz de riesgos.${areasCreadas.length ? `\n\nSe crearon ${areasCreadas.length} área(s) nueva(s) a partir del archivo: ${areasCreadas.join(", ")}.` : ""}${avisoArea}`);
 });
 
+/* Corregir líneas ya cargadas: el Proceso (que en el Excel era el área) pasa a ser el Área. */
+function fixMatrizLlenarOrigen(){
+  const sel = document.getElementById("fixMatrizAreaOrigen"); if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Elige un área…</option>' + (CACHE.areas||[]).map(a=>`<option value="${a.id}">${incEsc(a.nombre)} (${(CACHE.matriz||[]).filter(m=>m.areaId===a.id && (m.proceso||"").trim()).length} línea(s) con proceso)</option>`).join("");
+  if(cur && Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur;
+}
+on(document.getElementById("fixMatrizProcesoAreaBtn"), "click", async ()=>{
+  const origen = document.getElementById("fixMatrizAreaOrigen").value;
+  if(!origen){ alert("Elige el área donde quedaron las líneas que quieres corregir."); return; }
+  const areaOrigen = (CACHE.areas||[]).find(a=>a.id===origen);
+  const lineas = (CACHE.matriz||[]).filter(m=>m.areaId===origen && (m.proceso||"").trim());
+  if(!lineas.length){ alert("Ninguna línea de esa área tiene un Proceso escrito, así que no hay nada que mover."); return; }
+  const nombres = [], vistos = new Set();
+  lineas.forEach(m=>{ const k = normAreaTxt(m.proceso); if(!vistos.has(k)){ vistos.add(k); nombres.push(String(m.proceso).trim()); } });
+  if(!confirm(`Se cambiarán ${lineas.length} línea(s) del área «${areaOrigen?areaOrigen.nombre:"—"}»: su Proceso pasa a ser el Área (${nombres.slice(0,12).join(", ")}${nombres.length>12?", …":""}) y el Proceso queda vacío.\n\nLas áreas que no existan se crean. ¿Continuar?`)) return;
+  let creadas = 0;
+  for(const nombre of nombres){ if(!matrizAreaPorNombre(nombre)){ await put("areas", {id:uid(), nombre}); creadas++; } }
+  if(creadas) await loadCache();
+  for(const m of lineas){
+    const destino = matrizAreaPorNombre(m.proceso); if(!destino) continue;
+    await put("matriz", {...m, areaId:destino.id, proceso:""});
+    await logHistorial(m.id, matrizLineLabel(m), "Área", areaOrigen?areaOrigen.nombre:"", destino.nombre + " (el Proceso pasó a ser el Área)");
+  }
+  await loadCache();
+  renderMatrizTable(); renderCommonSelects(); fixMatrizLlenarOrigen();
+  try{ renderAreasTable(); renderMapaRiesgos(); renderPlanoRiesgos(); renderMatrizCharts(); }catch(e){}
+  alert(`Listo: ${lineas.length} línea(s) corregida(s)${creadas?` y ${creadas} área(s) creada(s)`:""}.`);
+});
 /* --- Multi-empresa: listar/eliminar empresas (superAdmin), crear empresa nueva, exportar/importar respaldo --- */
 /* Columna «Contacto»: nombre, cargo y correo de los administradores de cada empresa (los entrega el servidor solo al administrador de la plataforma). */
 function empresaContactoHtml(contactos){
