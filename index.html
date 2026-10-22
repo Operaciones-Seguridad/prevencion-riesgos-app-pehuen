@@ -4158,6 +4158,17 @@
         <div class="field"><label>Nueva opción</label><input id="catValor" placeholder="Ej: Nueva situación de riesgo"></div>
         <div><button class="btn small" id="addCatBtn" style="margin-top:20px;">+ Agregar a la lista</button></div>
       </div>
+      <div style="border-top:1px solid var(--grid);margin-top:14px;padding-top:12px;">
+        <h3 style="margin:0 0 6px;font-size:15px;">Importar varias opciones a la vez</h3>
+        <div class="desc" style="margin-top:0;">Para la lista elegida arriba: pega las opciones (una por línea) o sube un archivo Excel (.xlsx), CSV o TXT con una columna de opciones. Antes de cargar ves una revisión: se omiten las repetidas y las que ya existen. También puedes descargar la lista actual en Excel para revisarla o completarla.</div>
+        <textarea id="catPegar" rows="4" placeholder="Una opción por línea..."></textarea>
+        <div class="toolbar" style="margin-top:6px;">
+          <div><button class="btn small" id="catPegarBtn" type="button">Revisar lo pegado</button></div>
+          <div class="field"><label>O sube un archivo</label><input type="file" id="catArchivo" accept=".xlsx,.xls,.csv,.txt"></div>
+          <div><button class="btn small" id="catArchivoBtn" type="button" style="margin-top:20px;">Revisar archivo</button></div>
+          <div><button class="btn small secondary" id="catDescargarBtn" type="button" style="margin-top:20px;">Descargar la lista actual (Excel)</button></div>
+        </div>
+      </div>
       <div id="catListWrap"></div>
     </div></div>
     <div class="card">
@@ -26840,6 +26851,104 @@ on(document.getElementById("catListWrap"), "click", async (e) => {
   renderCommonSelects();
   renderCatList();
 });
+/* --- Importación masiva de opciones de las listas desplegables (pegando texto o subiendo un Excel/CSV/TXT) --- */
+async function addCatalogValues(tipo, valores){
+  const vistos = new Set(getCatalog(tipo).map(v=>v.toLowerCase())), nuevos = [];
+  (valores||[]).forEach(v=>{ const t = String(v||"").trim(); if(t && !vistos.has(t.toLowerCase())){ vistos.add(t.toLowerCase()); nuevos.push(t); } });
+  if(!nuevos.length) return 0;
+  if(storageMode==="api"){
+    let ok = false;
+    try{ await apiFetch("POST", "/api/catalogo-rubro", { tipo, valores: nuevos }); ok = true; }catch(e){ ok = false; }
+    if(!ok){ for(const v of nuevos) await apiFetch("POST", "/api/catalogo-rubro", { tipo, valor: v }); } // servidor sin importación masiva
+    CACHE_RUBRO_SUCIO = true;
+  } else {
+    let rec = (CACHE.catalogosExtra||[]).find(c=>c.id===tipo) || { id: tipo, valores: [] };
+    rec.valores = (rec.valores||[]).concat(nuevos);
+    await put("catalogosExtra", rec);
+  }
+  await loadCache();
+  return nuevos.length;
+}
+/* Limpia una lista de textos: espacios, vacíos, repetidos (sin importar mayúsculas) y un posible encabezado en la primera fila. */
+function catLimpiarValores(lista, tipo){
+  const etiqueta = normHdr(CATALOG_LABELS[tipo] || tipo), vistos = new Set(), out = [];
+  let primero = true;
+  (lista||[]).forEach(x=>{
+    let t = String(x==null ? "" : x).replace(/\s+/g, " ").trim();
+    if(!t) return;
+    if(primero){
+      primero = false;
+      const n = normHdr(t);
+      if(n===etiqueta || n===normHdr(tipo) || ["LISTA","NOMBRE","OPCION","OPCIONES","DESCRIPCION"].includes(n) || (n.length>=5 && etiqueta.startsWith(n))) return;
+    }
+    if(t.length > 200) t = t.slice(0, 200);
+    const k = t.toLowerCase(); if(vistos.has(k)) return;
+    vistos.add(k); out.push(t);
+  });
+  return out.slice(0, 3000);
+}
+async function catLeerValoresDeArchivo(file, tipo){
+  const nombre = (file.name||"").toLowerCase();
+  if(/\.(txt|csv)$/.test(nombre)){
+    const txt = await file.text();
+    return { valores: catLimpiarValores(txt.split(/\r?\n/), tipo), origen: "líneas del archivo" };
+  }
+  if(typeof XLSX === "undefined") throw new Error("No se pudo cargar el lector de Excel (revisa tu conexión a internet e intenta de nuevo).");
+  const wb = XLSX.read(await file.arrayBuffer(), {type:"array"});
+  const hoja = wb.SheetNames[0], aoa = XLSX.utils.sheet_to_json(wb.Sheets[hoja], {header:1, raw:false, defval:""});
+  const cols = new Map();
+  aoa.forEach(r=>r.forEach((c,i)=>{ if(String(c).trim()) cols.set(i, (cols.get(i)||0)+1); }));
+  if(!cols.size) return { valores: [], origen: "" };
+  let col = Array.from(cols.keys())[0];
+  if(cols.size > 1){
+    // Varias columnas con datos: se elige la que se llama como la lista; si no, la que tiene más filas.
+    const etiqueta = normHdr(CATALOG_LABELS[tipo] || tipo);
+    let cand = null;
+    for(const i of cols.keys()){ const primero = aoa.map(r=>String(r[i]||"").trim()).find(Boolean); const n = normHdr(primero||""); if(n && (n===etiqueta || (n.length>=5 && etiqueta.startsWith(n)))){ cand = i; break; } }
+    col = cand!==null ? cand : Array.from(cols.entries()).sort((a,b)=>b[1]-a[1])[0][0];
+  }
+  return { valores: catLimpiarValores(aoa.map(r=>r[col]), tipo), origen: `columna ${XLSX.utils.encode_col(col)} de la hoja «${hoja}»` };
+}
+function catRevisarImportacion(valores, origen){
+  const tipo = document.getElementById("catTipo").value, etiqueta = CATALOG_LABELS[tipo];
+  if(!valores.length){ alert("No se encontraron opciones para importar. Revisa que el archivo o el texto tengan una opción por línea."); return; }
+  const existentes = new Set(getCatalog(tipo).map(v=>v.toLowerCase())), nuevos = valores.filter(v=>!existentes.has(v.toLowerCase()));
+  openModal(`
+    <h3>Importar opciones a «${incEsc(etiqueta)}»</h3>
+    <div class="kv" style="margin-bottom:8px;">Se leyeron <strong>${valores.length}</strong> valor(es) (${incEsc(origen)}): <strong>${nuevos.length}</strong> nuevo(s) y ${valores.length-nuevos.length} que ya existen en la lista (se omiten).</div>
+    ${storageMode==="api" && nuevos.length ? '<div class="kv" style="background:#fff4de;border:1px solid #e8c875;border-radius:8px;padding:6px 10px;margin-bottom:8px;">Las opciones nuevas también quedan disponibles para otras empresas de tu mismo rubro, como ocurre con todas las opciones agregadas a estas listas.</div>' : ""}
+    ${nuevos.length ? `<div style="max-height:240px;overflow:auto;border:1px solid var(--grid);border-radius:8px;padding:6px 10px;">${nuevos.slice(0,80).map(v=>`<div>• ${incEsc(v)}</div>`).join("")}${nuevos.length>80?`<div class="kv">… y ${nuevos.length-80} más</div>`:""}</div>` : '<div class="empty">No hay opciones nuevas: todas ya estaban en la lista.</div>'}
+    <div class="toolbar" style="margin-top:12px;">${nuevos.length ? `<button class="btn" id="catImpConfirmarBtn" type="button">Importar ${nuevos.length} opción(es)</button>` : ""}<button class="btn secondary" id="catImpCancelarBtn" type="button">${nuevos.length ? "Cancelar" : "Cerrar"}</button></div>`);
+  on(document.getElementById("catImpCancelarBtn"), "click", closeModal);
+  const ok = document.getElementById("catImpConfirmarBtn");
+  if(ok) on(ok, "click", async ()=>{
+    ok.disabled = true; ok.textContent = "Importando…";
+    try{
+      const n = await addCatalogValues(tipo, nuevos);
+      closeModal(); renderCommonSelects(); renderCatList();
+      alert(`${n} opción(es) agregada(s) a la lista de ${etiqueta}.`);
+    }catch(e){ ok.disabled = false; ok.textContent = "Reintentar"; alert("No se pudo importar: " + (e.message||e)); }
+  });
+}
+on(document.getElementById("catPegarBtn"), "click", ()=>{
+  const tipo = document.getElementById("catTipo").value;
+  catRevisarImportacion(catLimpiarValores(document.getElementById("catPegar").value.split(/\r?\n/), tipo), "texto pegado");
+});
+on(document.getElementById("catArchivoBtn"), "click", async ()=>{
+  const f = document.getElementById("catArchivo").files[0];
+  if(!f){ alert("Elige primero un archivo Excel (.xlsx), CSV o TXT."); return; }
+  try{ const r = await catLeerValoresDeArchivo(f, document.getElementById("catTipo").value); catRevisarImportacion(r.valores, r.origen); }
+  catch(e){ alert("No se pudo leer el archivo: " + (e.message||e)); }
+});
+on(document.getElementById("catDescargarBtn"), "click", ()=>{
+  if(typeof XLSX === "undefined"){ alert("No se pudo cargar el generador de Excel (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const tipo = document.getElementById("catTipo").value, etiqueta = CATALOG_LABELS[tipo];
+  const ws = XLSX.utils.aoa_to_sheet([[etiqueta]].concat(getCatalog(tipo).map(v=>[v])));
+  ws["!cols"] = [{wch:70}];
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Lista");
+  XLSX.writeFile(wb, "Lista_" + etiqueta.replace(/[^a-zA-Z0-9]+/g,"_") + ".xlsx");
+});
+
 const TRAB_ROLES_CHECKS = { comite_paritario:"newTrabRolComite", delegado:"newTrabRolDelegado", prevencionista:"newTrabRolPrevencionista" };
 function leerRolesTrabForm(){
   return Object.keys(TRAB_ROLES_CHECKS).filter(r=>document.getElementById(TRAB_ROLES_CHECKS[r]).checked);
