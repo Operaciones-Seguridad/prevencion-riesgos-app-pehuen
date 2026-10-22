@@ -27052,6 +27052,9 @@ const PROCESO_TO_AREA_IMPORT = {
   "LIMPIEZA Y ASEO": "area-limpieza",
   "OBRAS Y OPERACIONES": "area-obra",
 };
+/* Área escrita en el Excel -> área ya creada de la empresa (sin importar mayúsculas, tildes, espacios o signos). */
+function normAreaTxt(t){ return normHdr(t).replace(/[^A-Z0-9 ]/g," ").replace(/\s+/g," ").trim(); }
+function matrizAreaPorNombre(txt){ const k = normAreaTxt(txt); return k ? (CACHE.areas||[]).find(a=>normAreaTxt(a.nombre)===k) || null : null; }
 function mrTextoAPC(mr){
   const m = { "BAJO":[1,2], "MEDIO":[2,3], "ALTO":[3,4], "MUY ALTO":[4,5], "CRITICO":[4,5], "CRÍTICO":[4,5] }[normHdr(mr)];
   return m || [2,3];
@@ -27063,7 +27066,7 @@ function parseMatrizPlana(sheet, defaultAreaId){
   if(!rows.length) return null;
   const keys = Object.keys(rows[0]);
   const find = (...alts) => keys.find(k => alts.some(a => normHdr(k)===normHdr(a)));
-  const kArea = find("Área","Area");
+  const kArea = find("Área","Area","Área de trabajo","Area de trabajo","Sector","Zona");
   const kProceso = find("Proceso");
   const kActividad = find("Actividad");
   const kCategoria = find("Categoría","Categoria");
@@ -27087,17 +27090,18 @@ function parseMatrizPlana(sheet, defaultAreaId){
 
   const estadoInverso = {"pendiente":"pendiente","en proceso":"proceso","cerrada":"cerrada"};
   const out = [];
+  let lastAreaTxt = "";
   for(const row of rows){
     const peligro = kPeligro? String(row[kPeligro]||"").trim() : "";
     if(!peligro) continue;
-    let areaId = defaultAreaId;
+    let areaId = defaultAreaId, areaPendiente = "";
     if(kArea){
-      const areaTxt = String(row[kArea]||"").trim();
-      const match = CACHE.areas.find(a=>normHdr(a.nombre)===normHdr(areaTxt));
-      if(match) areaId = match.id;
+      let areaTxt = String(row[kArea]||"").trim();
+      if(areaTxt) lastAreaTxt = areaTxt; else areaTxt = lastAreaTxt; // celdas combinadas hacia abajo
+      if(areaTxt){ const match = matrizAreaPorNombre(areaTxt); if(match) areaId = match.id; else areaPendiente = areaTxt; }
     }
     out.push({
-      areaId,
+      areaId, areaPendiente,
       proceso: kProceso? String(row[kProceso]||"").trim() : "",
       actividad: kActividad? String(row[kActividad]||"").trim() : "",
       categoria: kCategoria? String(row[kCategoria]||"").trim() : "",
@@ -27172,7 +27176,8 @@ function parseMatrizIperCorporativa(sheet, defaultAreaId){
   if(colControles===-1) colControles = findFirst(c=>c.includes("MEDIDAS DE CONTROL"));
   const colResponsableReal = h2.findIndex(c=>c.trim()==="RESPONSABLE");
   const colFecha = findFirst(c=>c.includes("FECHA DE IMPLEMENTACION"));
-  const colArea = h1.findIndex(c=>c.trim()==="AREA");
+  let colArea = h1.findIndex(c=>/^(AREA|AREA DE TRABAJO|AREA ?\/ ?PROCESO|SECTOR|ZONA)$/.test(c.trim()));
+  if(colArea===-1) colArea = combo.findIndex(c=>/^AREA\b/.test(c.trim()) && !c.includes("RIESGO"));
 
   if(colPeligro===-1) return null;
   // La matriz nativa distingue riesgo puro (primera evaluación) de residual
@@ -27187,7 +27192,7 @@ function parseMatrizIperCorporativa(sheet, defaultAreaId){
   const colMRPuro = colsMR.length? colsMR[0] : -1;
 
   const dataStart = headerRow + 2;
-  let lastProceso = "", lastActividad = "";
+  let lastProceso = "", lastActividad = "", lastAreaTxt = "";
   const out = [];
   for(let r=dataStart; r<aoa.length; r++){
     const row = aoa[r] || [];
@@ -27223,13 +27228,15 @@ function parseMatrizIperCorporativa(sheet, defaultAreaId){
     const probabilidadResidual = hayResidualSeparado && typeof pRes==="number" ? Math.min(5,Math.max(1, Math.round(pRes))) : undefined;
     const consecuenciaResidual = hayResidualSeparado && typeof cRes==="number" ? Math.min(5,Math.max(1, Math.round(cRes))) : undefined;
 
-    let areaId = defaultAreaId;
-    const areaTxt = colArea>=0 && row[colArea]!=null ? String(row[colArea]).trim() : "";
+    let areaId = defaultAreaId, areaPendiente = "";
+    let areaTxt = colArea>=0 && row[colArea]!=null ? String(row[colArea]).trim() : "";
+    if(areaTxt) lastAreaTxt = areaTxt; else if(colArea>=0) areaTxt = lastAreaTxt; // celdas combinadas hacia abajo
     if(areaTxt){
-      const match = CACHE.areas.find(a=>normHdr(a.nombre)===normHdr(areaTxt));
-      if(match) areaId = match.id;
+      const match = matrizAreaPorNombre(areaTxt);
+      if(match) areaId = match.id; else areaPendiente = areaTxt;
     } else if(PROCESO_TO_AREA_IMPORT[normHdr(lastProceso).replace(/\s+/g," ")]){
-      areaId = PROCESO_TO_AREA_IMPORT[lastProceso.trim().toUpperCase()] || defaultAreaId;
+      const idProc = PROCESO_TO_AREA_IMPORT[lastProceso.trim().toUpperCase()];
+      if(idProc && CACHE.areas.some(a=>a.id===idProc)) areaId = idProc;
     }
 
     let plazo = "";
@@ -27238,7 +27245,7 @@ function parseMatrizIperCorporativa(sheet, defaultAreaId){
 
     const controles = colControles>=0 && row[colControles]!=null ? String(row[colControles]).trim() : "";
     out.push({
-      areaId,
+      areaId, areaPendiente,
       proceso: lastProceso,
       actividad: lastActividad,
       categoria: colCategoria>=0 && row[colCategoria]!=null ? String(row[colCategoria]).trim() : "",
@@ -27297,6 +27304,18 @@ on(document.getElementById("importMatrizBtn"), "click", async () => {
     }
   }
 
+  // Áreas que trae el Excel y que todavía no existen en la empresa: se ofrece crearlas para no perder el área de cada línea.
+  const areasNuevas = [];
+  { const vistas = new Set(); lineas.forEach(l=>{ if(l.areaPendiente){ const k = normAreaTxt(l.areaPendiente); if(!vistas.has(k)){ vistas.add(k); areasNuevas.push(l.areaPendiente); } } }); }
+  let areasCreadas = [];
+  if(areasNuevas.length){
+    if(confirm(`El archivo trae ${areasNuevas.length} área(s) que todavía no existen en tu empresa:\n\n• ${areasNuevas.slice(0,15).join("\n• ")}${areasNuevas.length>15?"\n• …":""}\n\nAceptar: crearlas ahora y asignar cada línea a su área.\nCancelar: no crear áreas y dejar esas líneas en el área por defecto que elegiste.`)){
+      for(const nombre of areasNuevas){ await put("areas", {id:uid(), nombre:nombre.trim()}); }
+      await loadCache();
+      areasCreadas = areasNuevas.slice();
+      lineas.forEach(l=>{ if(l.areaPendiente){ const a = matrizAreaPorNombre(l.areaPendiente); if(a){ l.areaId = a.id; l.areaPendiente = ""; } } });
+    }
+  }
   for(const l of lineas){
     if(l.proceso) await addCatalogValue("proceso", l.proceso);
     if(l.actividad) await addCatalogValue("actividad", l.actividad);
@@ -27330,11 +27349,11 @@ on(document.getElementById("importMatrizBtn"), "click", async () => {
   document.getElementById("importMatrizReplace").checked = false;
   renderMatrizTable(); renderEquidadGenero(); renderMatrizCharts(); renderJerarquiaControles(); renderEppEstudioCobertura(); renderEppEstPeligroOptions(); renderMapaRiesgos(); renderPlanoRiesgos(); renderPlanAccion(); renderTraspasosPendientes(); renderMatrizHistorialTable(); renderCommonSelects(); renderCatList();
   const areaDefaultNombre = (CACHE.areas.find(a=>a.id===defaultAreaId)||{}).nombre || "—";
-  const sinAreaPorLinea = lineas.length && lineas.every(l=>l.areaId===defaultAreaId);
+  const sinAreaPorLinea = lineas.length && lineas.every(l=>l.areaId===defaultAreaId) && !areasCreadas.length;
   const avisoArea = sinAreaPorLinea
     ? `\n\nNo se encontró una columna de Área con datos propios por línea en el archivo (o no coincidió el texto con ninguna área ya creada) -- las ${importadas} línea(s) se asignaron a la Área por defecto que elegiste: "${areaDefaultNombre}". Si el archivo tenía distintas áreas por fila, revisa que el nombre de esa columna sea "Área" y que el texto coincida exactamente con el de un área ya creada en Configuración → Áreas.`
     : "";
-  alert(`Importación completa (formato ${formato}): ${importadas} línea(s) ${reemplazar? "cargadas":"agregadas"} en la Matriz de riesgos.${avisoArea}`);
+  alert(`Importación completa (formato ${formato}): ${importadas} línea(s) ${reemplazar? "cargadas":"agregadas"} en la Matriz de riesgos.${areasCreadas.length ? `\n\nSe crearon ${areasCreadas.length} área(s) nueva(s) a partir del archivo: ${areasCreadas.join(", ")}.` : ""}${avisoArea}`);
 });
 
 /* --- Multi-empresa: listar/eliminar empresas (superAdmin), crear empresa nueva, exportar/importar respaldo --- */
