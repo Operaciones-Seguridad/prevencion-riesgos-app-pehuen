@@ -485,6 +485,12 @@
       <div id="misCapacitacionesWrap"></div>
     </div></div>
 
+    <div class="card" id="cardMisCompromisosCphys">
+      <div class="card-header-row" id="hdrMisCompromisosCphys"><h2>Mis compromisos del Comité</h2><button class="collapse-toggle" id="toggleMisCompromisosCphys" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMisCompromisosCphys">
+      <div class="desc">Compromisos del Comité Paritario asignados a tu nombre y todavía sin cumplir. Desde aquí puedes registrar avances y marcarlos como cumplidos.</div>
+      <div id="misCompromisosWrap"></div>
+    </div></div>
+
     <div class="card" id="cardMisHallazgos">
       <div class="card-header-row" id="hdrMisHallazgos"><h2>Mis hallazgos asignados</h2><button class="collapse-toggle" id="toggleMisHallazgos" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMisHallazgos">
       <div class="desc">Hallazgos de inspecciones y observaciones cuyo responsable coincide con el usuario que inició sesión, para que pueda cerrar sus propias acciones directamente desde aquí.</div>
@@ -3486,6 +3492,36 @@
     </div>
 
     <div class="card">
+      <div class="card-header-row" id="hdrCphysComisiones"><h2 id="cphysComisionFormTitle">Comisiones de trabajo del Comité</h2><button class="collapse-toggle" id="toggleCphysComisiones" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyCphysComisiones">
+      <div class="desc">Las comisiones reparten el trabajo del Comité (por ejemplo inspección, investigación de accidentes, difusión y capacitación). Define quiénes las integran y quién es el responsable de cada una; después puedes asignarles compromisos.</div>
+      <div class="form-grid">
+        <div><label>Nombre de la comisión</label><input id="cphysComisionNombre" placeholder="Ej: Comisión N°1 – Inspección y Observaciones"></div>
+        <div><label>Responsable de la comisión</label><select id="cphysComisionResponsable"></select></div>
+        <div style="grid-column:1/-1;"><label>Función</label><textarea id="cphysComisionFuncion" rows="2" placeholder="Qué hace esta comisión"></textarea></div>
+      </div>
+      <label style="margin-top:8px;">Integrantes</label>
+      <div id="cphysComisionIntegrantesWrap"></div>
+      <div class="toolbar" style="margin-top:10px;">
+        <button class="btn" id="saveCphysComisionBtn" type="button">Guardar comisión</button>
+        <button class="btn secondary" id="cancelEditCphysComisionBtn" type="button" style="display:none;">Cancelar edición</button>
+        <button class="btn small secondary" id="crearComisionesHabitualesBtn" type="button">Crear las 3 comisiones habituales</button>
+      </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrCphysComisionesListado"><h2>Listado de comisiones</h2><button class="collapse-toggle" id="toggleCphysComisionesListado" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyCphysComisionesListado">
+      <table>
+        <thead><tr><th>Comisión</th><th>Integrantes</th><th>Responsable</th><th>Compromisos abiertos</th><th>Acciones</th></tr></thead>
+        <tbody id="cphysComisionesTable"></tbody>
+      </table>
+      <div id="cphysComisionesAviso"></div>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-header-row" id="hdrCphysReuniones"><h2 id="cphysReunionFormTitle">Registrar reunión del Comité Paritario</h2><button class="collapse-toggle" id="toggleCphysReuniones" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyCphysReuniones">
       <div class="desc">El DS 44 exige reuniones ordinarias mensuales, y extraordinarias ante accidente grave/fatal, riesgo grave e inminente o a petición de sus miembros (art. 39), dejando acta con las materias tratadas, acuerdos y plazos de cumplimiento (art. 39, inc. 4).</div>
@@ -3498,24 +3534,36 @@
           </select>
         </div>
         <div><label>Motivo (si es extraordinaria)</label><input id="cphysReunionMotivo" placeholder="Ej: accidente grave, riesgo grave e inminente..."></div>
-        <div><label>Responsable de seguimiento</label><input id="cphysReunionResponsable"></div>
+        <div><label>Responsable de seguimiento</label><input id="cphysReunionResponsable" list="dlResponsables"></div>
+        <div><label>Hora de inicio</label><input type="time" id="cphysReunionHoraInicio"></div>
+        <div><label>Hora de término</label><input type="time" id="cphysReunionHoraTermino"></div>
+        <div><label>Lugar</label><input id="cphysReunionLugar" placeholder="Ej: Sala de reuniones"></div>
+        <div><label>Preside</label><input id="cphysReunionPreside" list="dlResponsables"></div>
+        <div><label>Secretario(a)</label><input id="cphysReunionSecretario" list="dlResponsables"></div>
         <div style="grid-column:1/-1;"><label>Materias / temas tratados</label><textarea id="cphysReunionTemas" rows="2"></textarea></div>
         <div style="grid-column:1/-1;"><label>Observaciones</label><textarea id="cphysReunionObservaciones" rows="2"></textarea></div>
+        <div style="grid-column:1/-1;"><label>Acta firmada (foto o PDF del libro de actas)</label>
+          <div class="desc" style="margin-top:0;">El acta firmada en papel es el documento con validez legal: adjunta aquí su foto o escaneo como respaldo. Las fotos se reducen solas; los PDF pueden pesar hasta 4 MB.</div>
+          <input type="file" id="cphysReunionActaFile" accept="image/*,.pdf">
+          <div id="cphysReunionActaInfo"></div>
+        </div>
       </div>
       <div class="toolbar" style="margin-top:6px;">
         <div class="field"><label>Asistente</label><select id="cphysReunionAsistenteSel"></select></div>
         <div><button class="btn small secondary" id="addCphysAsistenteBtn" style="margin-top:20px;">+ Agregar asistente</button></div>
+        <div><button class="btn small secondary" id="cphysCopiarAsistentesBtn" type="button" style="margin-top:20px;">Copiar asistentes y datos de la última reunión</button></div>
       </div>
       <div id="cphysReunionAsistentesWrap"></div>
       <label style="margin-top:14px;">Inasistentes</label>
       <div class="desc">Miembros vigentes que no fueron agregados como asistentes. Podés dejar la justificación de su inasistencia.</div>
       <div id="cphysReunionInasistentesWrap"></div>
       <label style="margin-top:14px;">Acuerdos</label>
-      <div class="desc">Cada acuerdo queda con seguimiento propio hasta su cierre (ver la card "Seguimiento de acuerdos" más abajo).</div>
+      <div class="desc">Cada acuerdo queda como compromiso con seguimiento propio hasta su cierre (ver la pestaña «Compromisos»).</div>
       <div class="form-grid">
         <div style="grid-column:1/-1;"><label>Acuerdo</label><input id="cphysAcuerdoTexto" placeholder="Ej: Instalar señalética en bodega"></div>
-        <div><label>Responsable</label><input id="cphysAcuerdoResponsable"></div>
+        <div><label>Responsable</label><input id="cphysAcuerdoResponsable" list="dlResponsables"></div>
         <div><label>Plazo</label><input type="date" id="cphysAcuerdoPlazo"></div>
+        <div><label>Comisión (opcional)</label><select id="cphysAcuerdoComision"></select></div>
       </div>
       <div class="toolbar" style="margin-top:6px;">
         <div><button class="btn small secondary" id="addCphysAcuerdoBtn">+ Agregar acuerdo</button></div>
@@ -3540,12 +3588,38 @@
     </div>
 
     <div class="card">
-      <div class="card-header-row" id="hdrCphysAcuerdosSeguimiento"><h2>Seguimiento de acuerdos del Comité Paritario</h2><button class="collapse-toggle" id="toggleCphysAcuerdosSeguimiento" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="card-header-row" id="hdrCphysAcuerdosSeguimiento"><h2>Compromisos del Comité</h2><button class="collapse-toggle" id="toggleCphysAcuerdosSeguimiento" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyCphysAcuerdosSeguimiento">
-      <div class="desc">Acuerdos tomados en las reuniones del Comité, con seguimiento hasta su cierre (DS 44, art. 39).</div>
+      <div class="desc">Compromisos que nacen de las reuniones del Comité o de cualquier otro origen (una visita, una inspección, un accidente). Cada uno tiene responsable, plazo, avances y cierre con respaldo. Los que están a tu nombre también aparecen en «Mis pendientes».</div>
       <div class="grid-tiles" id="cphysAcuerdosTiles"></div>
+      <div class="toolbar" style="margin-top:10px;">
+        <div><button class="btn" id="cphysNuevoCompromisoBtn" type="button">+ Nuevo compromiso</button></div>
+        <div class="field"><label>Estado</label>
+          <select id="cphysCompFiltroEstado">
+            <option value="abiertos">Abiertos (sin cumplir)</option>
+            <option value="todos">Todos</option>
+            <option value="pendiente">Pendientes</option>
+            <option value="proceso">En proceso</option>
+            <option value="vencido">Vencidos</option>
+            <option value="cumplido">Cumplidos</option>
+          </select>
+        </div>
+        <div class="field"><label>Responsable</label><select id="cphysCompFiltroResp"></select></div>
+        <div class="field"><label>Comisión</label><select id="cphysCompFiltroComision"></select></div>
+        <div class="field"><label>Origen</label>
+          <select id="cphysCompFiltroOrigen">
+            <option value="">Todos los orígenes</option>
+            <option value="reunion">Reunión del Comité</option>
+            <option value="visita">Visita / asesoría</option>
+            <option value="inspeccion">Inspección</option>
+            <option value="accidente">Accidente / incidente</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div><button class="btn small secondary" id="cphysCompromisosPdfBtn" type="button" style="margin-top:20px;">Informe PDF</button></div>
+      </div>
       <table>
-        <thead><tr><th>Reunión</th><th>Acuerdo</th><th>Responsable</th><th>Plazo</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>Origen</th><th>Compromiso</th><th>Responsable</th><th>Comisión</th><th>Plazo</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody id="cphysAcuerdosTable"></tbody>
       </table>
       </div>
@@ -4390,8 +4464,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 47;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos","matrizVersiones","vsExamenesOcup","objetivosGestion","indicadoresGestion","medidasIndicadores"];
+const DB_VERSION = 48;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos","matrizVersiones","vsExamenesOcup","objetivosGestion","indicadoresGestion","medidasIndicadores","cphysComisiones"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -4842,6 +4916,9 @@ setupCollapsible("hdrDocumento", "bodyDocumento", "toggleDocumento", "collapsed_
 setupCollapsible("hdrDocumentosListado", "bodyDocumentosListado", "toggleDocumentosListado", "collapsed_documentosListado");
 setupCollapsible("hdrCphysMiembros", "bodyCphysMiembros", "toggleCphysMiembros", "collapsed_cphysMiembros");
 setupCollapsible("hdrCphysMiembrosListado", "bodyCphysMiembrosListado", "toggleCphysMiembrosListado", "collapsed_cphysMiembrosListado");
+setupCollapsible("hdrCphysComisiones", "bodyCphysComisiones", "toggleCphysComisiones", "collapsed_cphysComisiones");
+setupCollapsible("hdrCphysComisionesListado", "bodyCphysComisionesListado", "toggleCphysComisionesListado", "collapsed_cphysComisionesListado");
+setupCollapsible("hdrMisCompromisosCphys", "bodyMisCompromisosCphys", "toggleMisCompromisosCphys", "collapsed_misCompromisosCphys");
 setupCollapsible("hdrCphysReuniones", "bodyCphysReuniones", "toggleCphysReuniones", "collapsed_cphysReuniones");
 setupCollapsible("hdrCphysReunionesListado", "bodyCphysReunionesListado", "toggleCphysReunionesListado", "collapsed_cphysReunionesListado");
 setupCollapsible("hdrCphysAcuerdosSeguimiento", "bodyCphysAcuerdosSeguimiento", "toggleCphysAcuerdosSeguimiento", "collapsed_cphysAcuerdosSeguimiento");
@@ -8327,7 +8404,8 @@ function renderCphysMiembrosTiles(){
 let cphysReunionEditingId = null;
 let cphysReunionAsistentes = [];
 let cphysReunionJustificaciones = {}; // {miembroId: texto de la justificación}
-let cphysReunionAcuerdosNuevos = []; // [{id, texto, responsable, plazo, estado, fechaCierre, observacionCierre}]
+let cphysReunionAcuerdosNuevos = []; // [{id, texto, responsable, plazo, comisionId, estado, fechaCierre, observacionCierre}]
+let cphysReunionActa = null; // {data, nombre} del acta firmada adjunta
 function renderCphysAsistenteOptions(){
   const sel = document.getElementById("cphysReunionAsistenteSel");
   fillSelect(sel, (CACHE.cphysMiembros||[]).filter(cphysMiembroVigente).map(m=>({id:m.id, label:m.nombre+" ("+(CPHYS_REPRESENTACION_LABEL[m.representacion]||m.representacion)+")"})), true);
@@ -8380,7 +8458,7 @@ document.getElementById("cphysReunionAsistentesWrap").addEventListener("click",(
 function drawCphysAcuerdosComposer(){
   document.getElementById("cphysReunionAcuerdosWrap").innerHTML = cphysReunionAcuerdosNuevos.length
     ? cphysReunionAcuerdosNuevos.map((a,idx)=>`<div class="kv" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:4px 0;">
-        <span>${a.texto}${a.responsable?" — "+a.responsable:""}${a.plazo?" (plazo "+fmtDate(a.plazo)+")":""}${a.estado==="cerrado"?' <span class="pill vigente">Cumplido</span>':""}</span>
+        <span>${incEsc(a.texto)}${a.responsable?" — "+incEsc(a.responsable):""}${a.plazo?" (plazo "+fmtDate(a.plazo)+")":""}${a.comisionId&&cphysComisionNombre(a.comisionId)?" · "+incEsc(cphysComisionNombre(a.comisionId)):""}${a.estado==="cerrado"?' <span class="pill vigente">Cumplido</span>':""}</span>
         <button class="subtle-btn" data-cphys-acuerdo-quitar="${idx}">Quitar</button>
       </div>`).join("")
     : `<div class="empty">Sin acuerdos agregados</div>`;
@@ -8393,6 +8471,10 @@ on(document.getElementById("addCphysAcuerdoBtn"), "click", ()=>{
     texto,
     responsable: document.getElementById("cphysAcuerdoResponsable").value.trim(),
     plazo: document.getElementById("cphysAcuerdoPlazo").value,
+    comisionId: document.getElementById("cphysAcuerdoComision").value,
+    origen: "reunion",
+    seguimiento: [],
+    fechaCreacion: cphysHoy(),
     estado: "pendiente",
     fechaCierre: null,
     observacionCierre: "",
@@ -8400,6 +8482,7 @@ on(document.getElementById("addCphysAcuerdoBtn"), "click", ()=>{
   document.getElementById("cphysAcuerdoTexto").value = "";
   document.getElementById("cphysAcuerdoResponsable").value = "";
   document.getElementById("cphysAcuerdoPlazo").value = "";
+  document.getElementById("cphysAcuerdoComision").value = "";
   drawCphysAcuerdosComposer();
 });
 document.getElementById("cphysReunionAcuerdosWrap").addEventListener("click",(e)=>{
@@ -8408,8 +8491,40 @@ document.getElementById("cphysReunionAcuerdosWrap").addEventListener("click",(e)
   cphysReunionAcuerdosNuevos.splice(+btn.dataset.cphysAcuerdoQuitar,1);
   drawCphysAcuerdosComposer();
 });
+/* Acta firmada de la reunión (foto o PDF del acta del libro, que es el documento con validez legal) y copia rápida de asistentes. */
+function drawCphysActaInfo(){
+  const info = document.getElementById("cphysReunionActaInfo"); if(!info) return;
+  if(!cphysReunionActa){ info.innerHTML = '<div class="kv">Sin acta firmada adjunta.</div>'; return; }
+  const esImg = String(cphysReunionActa.data||"").startsWith("data:image");
+  info.innerHTML = `<div class="kv" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      ${esImg ? `<img src="${cphysReunionActa.data}" alt="Acta firmada" style="width:96px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--grid);">` : ""}
+      <span>Acta firmada adjunta: <strong>${incEsc(cphysReunionActa.nombre||"archivo")}</strong></span>
+      <button type="button" class="subtle-btn" id="cphysActaQuitarBtn">Quitar</button>
+    </div>`;
+  on(document.getElementById("cphysActaQuitarBtn"), "click", ()=>{ cphysReunionActa = null; drawCphysActaInfo(); });
+}
+on(document.getElementById("cphysReunionActaFile"), "change", async (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = await cphysLeerAdjunto(f);
+  if(r) cphysReunionActa = r;
+  e.target.value = "";
+  drawCphysActaInfo();
+});
+on(document.getElementById("cphysCopiarAsistentesBtn"), "click", ()=>{
+  const otras = (CACHE.cphysReuniones||[]).filter(r=>r.id!==cphysReunionEditingId).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const ult = otras[0];
+  if(!ult){ alert("Todavía no hay reuniones registradas para copiar."); return; }
+  cphysReunionAsistentes = (ult.asistentesIds||[]).filter(id=>(CACHE.cphysMiembros||[]).some(m=>m.id===id));
+  const rellena = (id, v)=>{ const el = document.getElementById(id); if(el && !el.value && v) el.value = v; };
+  rellena("cphysReunionLugar", ult.lugar); rellena("cphysReunionPreside", ult.preside); rellena("cphysReunionSecretario", ult.secretario);
+  rellena("cphysReunionHoraInicio", ult.horaInicio); rellena("cphysReunionHoraTermino", ult.horaTermino);
+  drawCphysAsistentes();
+  alert(`Se copiaron ${cphysReunionAsistentes.length} asistente(s) y los datos de lugar, hora, preside y secretario de la reunión del ${fmtDate(ult.fecha)}. Revisa y quita a quien no asistió.`);
+});
 function resetCphysReunionForm(){
   cphysReunionEditingId = null;
+  cphysReunionActa = null;
+  ["cphysReunionHoraInicio","cphysReunionHoraTermino","cphysReunionLugar","cphysReunionPreside","cphysReunionSecretario"].forEach(id=>{ document.getElementById(id).value = ""; });
   cphysReunionAsistentes = [];
   cphysReunionJustificaciones = {};
   cphysReunionAcuerdosNuevos = [];
@@ -8427,6 +8542,7 @@ function resetCphysReunionForm(){
   renderCphysAsistenteOptions();
   drawCphysAsistentes();
   drawCphysAcuerdosComposer();
+  drawCphysActaInfo();
 }
 function startEditCphysReunion(id){
   const rec = CACHE.cphysReuniones.find(r=>r.id===id);
@@ -8441,11 +8557,18 @@ function startEditCphysReunion(id){
   document.getElementById("cphysReunionResponsable").value = rec.responsableSeguimiento || "";
   document.getElementById("cphysReunionTemas").value = rec.temasTratados || "";
   document.getElementById("cphysReunionObservaciones").value = rec.observaciones || "";
+  document.getElementById("cphysReunionHoraInicio").value = rec.horaInicio || "";
+  document.getElementById("cphysReunionHoraTermino").value = rec.horaTermino || "";
+  document.getElementById("cphysReunionLugar").value = rec.lugar || "";
+  document.getElementById("cphysReunionPreside").value = rec.preside || "";
+  document.getElementById("cphysReunionSecretario").value = rec.secretario || "";
+  cphysReunionActa = rec.actaData ? {data:rec.actaData, nombre:rec.actaNombre||"Acta firmada"} : null;
   document.getElementById("cphysReunionFormTitle").textContent = "Editando reunión del "+fmtDate(rec.fecha);
   document.getElementById("cancelEditCphysReunionBtn").style.display = "";
   renderCphysAsistenteOptions();
   drawCphysAsistentes();
   drawCphysAcuerdosComposer();
+  drawCphysActaInfo();
   document.getElementById("hdrCphysReuniones").scrollIntoView({behavior:"smooth", block:"start"});
 }
 on(document.getElementById("cancelEditCphysReunionBtn"), "click", ()=> resetCphysReunionForm());
@@ -8470,13 +8593,16 @@ on(document.getElementById("saveCphysReunionBtn"), "click", async ()=>{
     responsableSeguimiento: document.getElementById("cphysReunionResponsable").value.trim(),
     temasTratados: document.getElementById("cphysReunionTemas").value.trim(),
     observaciones: document.getElementById("cphysReunionObservaciones").value.trim(),
+    horaInicio: document.getElementById("cphysReunionHoraInicio").value,
+    horaTermino: document.getElementById("cphysReunionHoraTermino").value,
+    lugar: document.getElementById("cphysReunionLugar").value.trim(),
+    preside: document.getElementById("cphysReunionPreside").value.trim(),
+    secretario: document.getElementById("cphysReunionSecretario").value.trim(),
     asistentesIds: cphysReunionAsistentes.slice(),
     justificaciones: justificacionesLimpias,
-    // El acta ahora se genera en PDF (ver descargarActaCphysPdf); solo se
-    // conserva un acta subida de antes de este cambio, si la reunión ya
-    // tenía una -- ya no se puede subir una nueva.
-    actaNombre: (anterior && anterior.actaNombre) || null,
-    actaData: (anterior && anterior.actaData) || null,
+    // Acta firmada (foto o PDF del libro de actas) adjunta como respaldo; el PDF de la app se genera aparte.
+    actaNombre: cphysReunionActa ? cphysReunionActa.nombre : null,
+    actaData: cphysReunionActa ? cphysReunionActa.data : null,
   };
   await put("cphysReuniones", rec);
   // Sincroniza los acuerdos: guarda los que quedaron en el compositor y
@@ -8516,7 +8642,7 @@ function renderCphysReunionesTable(){
       <td>${acuerdosTxt}</td>
       <td>
         <button class="subtle-btn" data-cphys-reunion-acta-pdf="${r.id}">Imprimir PDF</button>
-        ${r.actaData? `<div class="kv" style="margin-top:4px;"><a href="${r.actaData}" download="${r.actaNombre||('Acta_CPHyS_'+r.fecha)}">Acta subida (versión anterior)</a></div>` : ""}
+        ${r.actaData? `<div class="kv" style="margin-top:4px;"><a href="${r.actaData}" download="${r.actaNombre||('Acta_CPHyS_'+r.fecha)}">Descargar acta firmada</a></div>` : ""}
       </td>
       <td>
         <button class="subtle-btn" data-cphys-reunion-editar="${r.id}">Editar</button>
@@ -8532,7 +8658,8 @@ on(document.getElementById("cphysReunionesTable"), "click", async (e) => {
   if(delBtn){
     const rec = CACHE.cphysReuniones.find(r=>r.id===delBtn.dataset.cphysReunionEliminar);
     if(!rec) return;
-    if(!confirm(`¿Eliminar el registro de la reunión del ${fmtDate(rec.fecha)}? Esta acción no se puede deshacer.`)) return;
+    const nCompr = (CACHE.cphysAcuerdos||[]).filter(a=>a.reunionId===rec.id).length;
+    if(!confirm(`¿Eliminar el registro de la reunión del ${fmtDate(rec.fecha)}?${nCompr ? `\n\nTambién se eliminarán sus ${nCompr} compromiso(s) asociado(s).` : ""}\n\nEsta acción no se puede deshacer.`)) return;
     await deleteRecord("cphysReuniones", rec.id);
     const acuerdosDe = (CACHE.cphysAcuerdos||[]).filter(a=>a.reunionId===rec.id);
     for(const a of acuerdosDe){ await deleteRecord("cphysAcuerdos", a.id); }
@@ -8562,63 +8689,393 @@ function renderCphysReunionesTiles(){
   ].join("");
 }
 
-/* --- Seguimiento de acuerdos del Comité Paritario ---
-   Store "cphysAcuerdos": {id, reunionId, texto, responsable, plazo,
-   estado:"pendiente"|"cerrado", fechaCierre, observacionCierre}. Cada
-   acuerdo se compone dentro del formulario de la reunión (mismo patrón
-   que los asistentes) pero vive como su propio registro para poder
-   hacerle seguimiento y cerrarlo después, tal como exige el DS 44 (art.
-   39) para las materias tratadas en el Comité Paritario. */
-function renderCphysAcuerdosSeguimiento(){
-  const rows = (CACHE.cphysAcuerdos||[]).slice().sort((a,b)=>{
-    const aAbierto = a.estado!=="cerrado", bAbierto = b.estado!=="cerrado";
-    if(aAbierto!==bAbierto) return aAbierto ? -1 : 1;
+/* --- Archivos adjuntos del Comité (acta firmada, respaldo de cierre de compromisos) --- */
+function cphysHoy(){ const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+async function cphysImagenReducir(file, max, calidad){
+  let bmp;
+  try{ bmp = await createImageBitmap(file, {imageOrientation:"from-image"}); }
+  catch(e){ bmp = await createImageBitmap(file); }
+  const esc = Math.min(1, max/Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width*esc)), h = Math.max(1, Math.round(bmp.height*esc));
+  const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+  const ctx = cv.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h); ctx.drawImage(bmp, 0, 0, w, h);
+  if(bmp.close) bmp.close();
+  return cv.toDataURL("image/jpeg", calidad);
+}
+/* Lee un adjunto: las fotos se reducen solas; los demás archivos (PDF) tienen un tope de 4 MB. Devuelve {data, nombre} o null. */
+async function cphysLeerAdjunto(file){
+  if(!file) return null;
+  if(/^image\//.test(file.type)){
+    try{ return {data: await cphysImagenReducir(file, 1800, 0.78), nombre: file.name}; }catch(e){ /* si no se puede reducir, se intenta como archivo normal */ }
+  }
+  if(file.size > 4*1024*1024){ alert("El archivo pesa más de 4 MB. Sube una foto (se reduce sola) o un PDF más liviano."); return null; }
+  return {data: await readFileAsDataUrl(file), nombre: file.name};
+}
+function cphysMiembroNombre(id){ const m = (CACHE.cphysMiembros||[]).find(x=>x.id===id); return m ? m.nombre : ""; }
+
+/* --- Comisiones de trabajo del Comité ---
+   Store "cphysComisiones": {id, nombre, funcion, integrantesIds:[id de miembro], responsableId}. */
+const CPHYS_COMISIONES_HABITUALES = [
+  {nombre:"Comisión N°1 – Inspección y Observaciones", funcion:"Recorrer los puestos de trabajo, revisar los procesos operativos, detectar condiciones o acciones inseguras y proponer medidas correctivas."},
+  {nombre:"Comisión N°2 – Investigación de Accidentes", funcion:"Recopilar datos con víctimas y testigos, determinar las causas de accidentes o enfermedades profesionales y definir acciones para evitar que se repitan."},
+  {nombre:"Comisión N°3 – Difusión y Capacitación", funcion:"Identificar las necesidades de instrucción del personal, diseñar programas educativos y difundir normas de seguridad mediante carteles, correos, internet o reuniones informativas."},
+];
+let cphysComisionEditingId = null;
+let cphysComisionIntegrantes = [];
+let cphysComisionResp = "";
+function cphysComisionNombre(id){ const c = id ? (CACHE.cphysComisiones||[]).find(x=>x.id===id) : null; return c ? c.nombre : ""; }
+function drawCphysComisionIntegrantes(){
+  const wrap = document.getElementById("cphysComisionIntegrantesWrap"); if(!wrap) return;
+  const miembros = (CACHE.cphysMiembros||[]).filter(m=>cphysMiembroVigente(m) || cphysComisionIntegrantes.includes(m.id));
+  wrap.innerHTML = miembros.length
+    ? miembros.map(m=>`<label style="display:flex;align-items:center;gap:6px;font-weight:400;margin:2px 0;"><input type="checkbox" data-cphys-com-integrante="${m.id}" style="width:auto;min-height:auto;" ${cphysComisionIntegrantes.includes(m.id)?"checked":""}> ${incEsc(m.nombre)} <span class="kv">(${incEsc(CPHYS_REPRESENTACION_LABEL[m.representacion]||m.representacion||"")})</span></label>`).join("")
+    : `<div class="empty">Primero registra a los miembros del Comité (card «Miembros»).</div>`;
+  const sel = document.getElementById("cphysComisionResponsable");
+  const opts = cphysComisionIntegrantes.map(id=>({id, label:cphysMiembroNombre(id)})).filter(o=>o.label);
+  sel.innerHTML = '<option value="">Sin responsable definido</option>' + opts.map(o=>`<option value="${o.id}">${incEsc(o.label)}</option>`).join("");
+  sel.value = opts.some(o=>o.id===cphysComisionResp) ? cphysComisionResp : "";
+}
+function resetCphysComisionForm(){
+  cphysComisionEditingId = null; cphysComisionIntegrantes = []; cphysComisionResp = "";
+  document.getElementById("cphysComisionNombre").value = "";
+  document.getElementById("cphysComisionFuncion").value = "";
+  document.getElementById("cphysComisionFormTitle").textContent = "Comisiones de trabajo del Comité";
+  document.getElementById("cancelEditCphysComisionBtn").style.display = "none";
+  drawCphysComisionIntegrantes();
+}
+function startEditCphysComision(id){
+  const rec = (CACHE.cphysComisiones||[]).find(c=>c.id===id); if(!rec) return;
+  cphysComisionEditingId = id;
+  cphysComisionIntegrantes = (rec.integrantesIds||[]).slice();
+  cphysComisionResp = rec.responsableId || "";
+  document.getElementById("cphysComisionNombre").value = rec.nombre || "";
+  document.getElementById("cphysComisionFuncion").value = rec.funcion || "";
+  document.getElementById("cphysComisionFormTitle").textContent = "Editando: "+(rec.nombre||"comisión");
+  document.getElementById("cancelEditCphysComisionBtn").style.display = "";
+  drawCphysComisionIntegrantes();
+  document.getElementById("hdrCphysComisiones").scrollIntoView({behavior:"smooth", block:"start"});
+}
+on(document.getElementById("cphysComisionIntegrantesWrap"), "change", (e)=>{
+  const cb = e.target.closest("input[data-cphys-com-integrante]"); if(!cb) return;
+  cphysComisionResp = document.getElementById("cphysComisionResponsable").value;
+  const id = cb.dataset.cphysComIntegrante;
+  if(cb.checked){ if(!cphysComisionIntegrantes.includes(id)) cphysComisionIntegrantes.push(id); }
+  else cphysComisionIntegrantes = cphysComisionIntegrantes.filter(x=>x!==id);
+  drawCphysComisionIntegrantes();
+});
+on(document.getElementById("cphysComisionResponsable"), "change", (e)=>{ cphysComisionResp = e.target.value; });
+on(document.getElementById("cancelEditCphysComisionBtn"), "click", ()=> resetCphysComisionForm());
+on(document.getElementById("saveCphysComisionBtn"), "click", async ()=>{
+  const nombre = document.getElementById("cphysComisionNombre").value.trim();
+  if(!nombre){ alert("Indica el nombre de la comisión."); return; }
+  const resp = document.getElementById("cphysComisionResponsable").value;
+  await put("cphysComisiones", {
+    id: cphysComisionEditingId || uid(),
+    nombre,
+    funcion: document.getElementById("cphysComisionFuncion").value.trim(),
+    integrantesIds: cphysComisionIntegrantes.slice(),
+    responsableId: cphysComisionIntegrantes.includes(resp) ? resp : "",
+  });
+  await loadCache();
+  resetCphysComisionForm();
+  renderCphys();
+});
+on(document.getElementById("crearComisionesHabitualesBtn"), "click", async ()=>{
+  const existentes = (CACHE.cphysComisiones||[]).map(c=>normalizarNombreTexto(c.nombre));
+  const faltan = CPHYS_COMISIONES_HABITUALES.filter(h=>!existentes.includes(normalizarNombreTexto(h.nombre)));
+  if(!faltan.length){ alert("Ya están creadas las 3 comisiones habituales."); return; }
+  if(!confirm(`Se crearán ${faltan.length} comisión(es) sin integrantes:\n\n• ${faltan.map(f=>f.nombre).join("\n• ")}\n\nDespués eliges sus integrantes y su responsable (botón Editar). Puedes cambiar el nombre y la función de cada una. ¿Continuar?`)) return;
+  for(const f of faltan) await put("cphysComisiones", {id:uid(), nombre:f.nombre, funcion:f.funcion, integrantesIds:[], responsableId:""});
+  await loadCache();
+  renderCphys();
+});
+on(document.getElementById("cphysComisionesTable"), "click", async (e)=>{
+  const ed = e.target.closest("[data-cphys-com-editar]");
+  if(ed){ startEditCphysComision(ed.dataset.cphysComEditar); return; }
+  const del = e.target.closest("[data-cphys-com-eliminar]");
+  if(del){
+    const rec = (CACHE.cphysComisiones||[]).find(c=>c.id===del.dataset.cphysComEliminar); if(!rec) return;
+    const ligados = (CACHE.cphysAcuerdos||[]).filter(a=>a.comisionId===rec.id);
+    if(!confirm(`¿Eliminar la comisión «${rec.nombre}»?${ligados.length ? `\n\nSus ${ligados.length} compromiso(s) se mantienen, pero quedan sin comisión.` : ""}`)) return;
+    for(const a of ligados) await put("cphysAcuerdos", {...a, comisionId:""});
+    await deleteRecord("cphysComisiones", rec.id);
+    await loadCache();
+    if(cphysComisionEditingId===rec.id) resetCphysComisionForm();
+    renderCphys();
+  }
+});
+function renderCphysComisiones(){
+  drawCphysComisionIntegrantes();
+  const rows = (CACHE.cphysComisiones||[]).slice().sort((a,b)=>(a.nombre||"").localeCompare(b.nombre||""));
+  document.getElementById("cphysComisionesTable").innerHTML = rows.length ? rows.map(c=>{
+    const integrantes = (c.integrantesIds||[]).map(cphysMiembroNombre).filter(Boolean);
+    const abiertos = (CACHE.cphysAcuerdos||[]).filter(a=>a.comisionId===c.id && a.estado!=="cerrado").length;
+    return `<tr>
+      <td><strong>${incEsc(c.nombre)}</strong>${c.funcion?`<div class="kv">${incEsc(c.funcion)}</div>`:""}</td>
+      <td>${integrantes.length ? integrantes.map(incEsc).join(", ") : '<span class="kv">Sin integrantes</span>'}</td>
+      <td>${incEsc(cphysMiembroNombre(c.responsableId)) || "—"}</td>
+      <td>${abiertos}</td>
+      <td><button class="subtle-btn" data-cphys-com-editar="${c.id}">Editar</button> <button class="subtle-btn" data-cphys-com-eliminar="${c.id}">Eliminar</button></td>
+    </tr>`;
+  }).join("") : `<tr><td class="empty" colspan="5">Todavía no hay comisiones. Usa «Crear las 3 comisiones habituales» o agrega una arriba.</td></tr>`;
+  const enComision = new Set(); (CACHE.cphysComisiones||[]).forEach(c=>(c.integrantesIds||[]).forEach(id=>enComision.add(id)));
+  const sin = (CACHE.cphysMiembros||[]).filter(m=>cphysMiembroVigente(m) && !enComision.has(m.id));
+  const av = document.getElementById("cphysComisionesAviso");
+  av.innerHTML = rows.length && sin.length
+    ? `<div class="kv" style="background:#fff4de;border:1px solid #e8c875;border-radius:8px;padding:6px 10px;margin-top:8px;">Miembros vigentes sin comisión asignada: <strong>${sin.map(m=>incEsc(m.nombre)).join(", ")}</strong>. Verifica si corresponde dejarlos así.</div>`
+    : "";
+  // Opciones de comisión en el formulario de acuerdos de la reunión.
+  const sel = document.getElementById("cphysAcuerdoComision");
+  if(sel){ const cur = sel.value; sel.innerHTML = '<option value="">Sin comisión</option>' + rows.map(c=>`<option value="${c.id}">${incEsc(c.nombre)}</option>`).join(""); sel.value = rows.some(c=>c.id===cur) ? cur : ""; }
+}
+
+/* --- Compromisos del Comité ---
+   Store "cphysAcuerdos": {id, texto, responsable, plazo, estado:"pendiente"|"cerrado", fechaCierre, observacionCierre,
+   origen:"reunion"|"visita"|"inspeccion"|"accidente"|"otro", origenDetalle, reunionId (opcional), comisionId (opcional),
+   seguimiento:[{fecha,texto,por}], respaldoData, respaldoNombre, fechaCreacion}.
+   Nacen en una reunión (compositor de acuerdos) o sueltos con «+ Nuevo compromiso» (visitas, inspecciones, accidentes...).
+   Los acuerdos guardados antes de este cambio no traen los campos nuevos y siguen funcionando (origen = reunión). */
+const CPHYS_ORIGEN_LABEL = {reunion:"Reunión del Comité", visita:"Visita / asesoría", inspeccion:"Inspección", accidente:"Accidente / incidente", otro:"Otro"};
+const CPHYS_ESTADO_LABEL = {pendiente:"Pendiente", proceso:"En proceso", vencido:"Vencido", cumplido:"Cumplido"};
+function cphysCompromisoEstado(a){
+  if(a.estado==="cerrado") return "cumplido";
+  if(a.plazo && daysUntil(a.plazo)<0) return "vencido";
+  return (a.seguimiento||[]).length ? "proceso" : "pendiente";
+}
+function cphysEstadoPill(a){
+  const est = cphysCompromisoEstado(a);
+  const clase = est==="cumplido" ? "vigente" : est==="vencido" ? "vencido" : est==="proceso" ? "medio" : "pendiente";
+  return `<span class="pill ${clase}">${CPHYS_ESTADO_LABEL[est]}${est==="cumplido" && a.fechaCierre ? " el "+fmtDate(a.fechaCierre) : ""}</span>`;
+}
+function cphysCompromisoOrigenTxt(a){
+  const re = a.reunionId ? (CACHE.cphysReuniones||[]).find(r=>r.id===a.reunionId) : null;
+  if(re) return "Reunión del "+fmtDate(re.fecha);
+  const base = CPHYS_ORIGEN_LABEL[a.origen||"reunion"] || "Reunión del Comité";
+  return base + (a.origenDetalle ? " · "+a.origenDetalle : "");
+}
+function cphysCompromisosFiltrados(){
+  const val = id => { const el = document.getElementById(id); return el ? el.value : ""; };
+  const fe = val("cphysCompFiltroEstado") || "abiertos", fc = val("cphysCompFiltroComision"), fo = val("cphysCompFiltroOrigen"), fr = val("cphysCompFiltroResp");
+  return (CACHE.cphysAcuerdos||[]).filter(a=>{
+    const est = cphysCompromisoEstado(a);
+    if(fe==="abiertos"){ if(est==="cumplido") return false; }
+    else if(fe!=="todos" && est!==fe) return false;
+    if(fc==="__sin"){ if(a.comisionId) return false; } else if(fc && (a.comisionId||"")!==fc) return false;
+    if(fo && (a.origen||"reunion")!==fo) return false;
+    if(fr && (a.responsable||"").trim()!==fr) return false;
+    return true;
+  }).sort((a,b)=>{
+    const aAb = a.estado!=="cerrado", bAb = b.estado!=="cerrado";
+    if(aAb!==bAb) return aAb ? -1 : 1;
     return new Date(a.plazo||"9999-12-31") - new Date(b.plazo||"9999-12-31");
   });
-  const pendientes = rows.filter(a=>a.estado!=="cerrado");
-  const vencidos = pendientes.filter(a=>a.plazo && daysUntil(a.plazo)<0);
-  document.getElementById("cphysAcuerdosTiles").innerHTML = [
-    tile("Acuerdos registrados", rows.length, "histórico de todas las reuniones"),
-    tile("Pendientes", pendientes.length, "requieren seguimiento", pendientes.length>0?"medio":"bajo"),
-    tile("Vencidos", vencidos.length, "plazo cumplido y sin cerrar", vencidos.length>0?"alto":"bajo"),
-  ].join("");
-  document.getElementById("cphysAcuerdosTable").innerHTML = rows.length ? rows.map(a=>{
-    const reunion = (CACHE.cphysReuniones||[]).find(r=>r.id===a.reunionId);
-    const vencido = a.estado!=="cerrado" && a.plazo && daysUntil(a.plazo)<0;
-    const estadoHtml = a.estado==="cerrado"
-      ? `<span class="pill vigente">Cumplido${a.fechaCierre?" el "+fmtDate(a.fechaCierre):""}</span>`
-      : (vencido ? `<span class="pill vencido">Vencido</span>` : `<span class="pill pendiente">Pendiente</span>`);
-    return `<tr>
-      <td>${reunion? fmtDate(reunion.fecha) : "—"}</td>
-      <td>${a.texto}</td>
-      <td>${a.responsable || "—"}</td>
-      <td>${a.plazo? fmtDate(a.plazo) : "—"}</td>
-      <td>${estadoHtml}</td>
-      <td>${a.estado==="cerrado"
-        ? `<button class="subtle-btn" data-cphys-acuerdo-reabrir="${a.id}">Reabrir</button>`
-        : `<button class="subtle-btn" data-cphys-acuerdo-cumplir="${a.id}">Marcar cumplido</button>`}</td>
-    </tr>`;
-  }).join("") : `<tr><td class="empty" colspan="6">Sin acuerdos registrados todavía</td></tr>`;
 }
+function cphysCompromisoDetalleHtml(a){
+  const seg = a.seguimiento||[], ult = seg[seg.length-1];
+  return (ult ? `<div class="kv">Último avance (${fmtDate(ult.fecha)}${ult.por?", "+incEsc(ult.por):""}): ${incEsc(ult.texto)}${seg.length>1?` · ${seg.length} avances`:""}</div>` : "")
+    + (a.estado==="cerrado" && a.observacionCierre ? `<div class="kv">Cierre: ${incEsc(a.observacionCierre)}</div>` : "")
+    + (a.respaldoData ? `<div class="kv"><a href="${a.respaldoData}" download="${incEsc(a.respaldoNombre||"Respaldo_compromiso")}">Descargar respaldo</a></div>` : "");
+}
+function renderCphysAcuerdosSeguimiento(){
+  const all = CACHE.cphysAcuerdos||[];
+  const cuenta = {pendiente:0, proceso:0, vencido:0, cumplido:0};
+  all.forEach(a=>{ cuenta[cphysCompromisoEstado(a)]++; });
+  const abiertos = cuenta.pendiente + cuenta.proceso + cuenta.vencido;
+  document.getElementById("cphysAcuerdosTiles").innerHTML = [
+    tile("Compromisos registrados", all.length, "reuniones, visitas y otros orígenes"),
+    tile("Abiertos", abiertos, cuenta.proceso+" en proceso · "+cuenta.pendiente+" sin avance", abiertos>0?"medio":"bajo"),
+    tile("Vencidos", cuenta.vencido, "plazo cumplido y sin cerrar", cuenta.vencido>0?"alto":"bajo"),
+    tile("Cumplidos", cuenta.cumplido, all.length ? Math.round(cuenta.cumplido/all.length*100)+"% del total" : "—"),
+  ].join("");
+  // Filtros: se repueblan conservando la selección.
+  const selCom = document.getElementById("cphysCompFiltroComision");
+  { const cur = selCom.value; selCom.innerHTML = '<option value="">Todas las comisiones</option><option value="__sin">Sin comisión</option>' + (CACHE.cphysComisiones||[]).map(c=>`<option value="${c.id}">${incEsc(c.nombre)}</option>`).join(""); selCom.value = Array.from(selCom.options).some(o=>o.value===cur) ? cur : ""; }
+  fillTextFilter(document.getElementById("cphysCompFiltroResp"), all.map(a=>a.responsable), "Todos los responsables");
+  const rows = cphysCompromisosFiltrados();
+  document.getElementById("cphysAcuerdosTable").innerHTML = rows.length ? rows.map(a=>{
+    const cerrado = a.estado==="cerrado";
+    return `<tr>
+      <td>${incEsc(cphysCompromisoOrigenTxt(a))}</td>
+      <td>${incEsc(a.texto)}${cphysCompromisoDetalleHtml(a)}</td>
+      <td>${incEsc(a.responsable||"—")}</td>
+      <td>${incEsc(cphysComisionNombre(a.comisionId)||"—")}</td>
+      <td>${a.plazo? fmtDate(a.plazo) : "—"}</td>
+      <td>${cphysEstadoPill(a)}</td>
+      <td>
+        ${cerrado ? `<button class="subtle-btn" data-cphys-comp-reabrir="${a.id}">Reabrir</button>` : `<button class="subtle-btn" data-cphys-comp-avance="${a.id}">Registrar avance</button> <button class="subtle-btn" data-cphys-comp-cumplir="${a.id}">Marcar cumplido</button>`}
+        <button class="subtle-btn" data-cphys-comp-editar="${a.id}">Editar</button>
+        <button class="subtle-btn" data-cphys-comp-eliminar="${a.id}">Eliminar</button>
+      </td>
+    </tr>`;
+  }).join("") : `<tr><td class="empty" colspan="7">${all.length ? "Ningún compromiso coincide con los filtros." : "Sin compromisos registrados todavía. Usa «+ Nuevo compromiso» o agrégalos al registrar una reunión."}</td></tr>`;
+}
+function cphysRefrescarTodo(){
+  renderCphys();
+  try{ renderMisCompromisosCphys(); renderMisPendientes(); }catch(e){}
+}
+["cphysCompFiltroEstado","cphysCompFiltroComision","cphysCompFiltroOrigen","cphysCompFiltroResp"].forEach(id=>{
+  on(document.getElementById(id), "change", ()=> renderCphysAcuerdosSeguimiento());
+});
+
+function cphysCompromisoAbrirForm(id){
+  const a = id ? (CACHE.cphysAcuerdos||[]).find(x=>x.id===id) : null;
+  if(id && !a) return;
+  const reuniones = (CACHE.cphysReuniones||[]).slice().sort((x,y)=>new Date(y.fecha)-new Date(x.fecha));
+  openModal(`
+    <h3>${a?"Editar compromiso":"Nuevo compromiso del Comité"}</h3>
+    <div class="form-grid">
+      <div style="grid-column:1/-1;"><label>Compromiso</label><textarea id="cpmTexto" rows="2" placeholder="Ej: Reponer papel higiénico y jabón en los baños">${incEsc(a?a.texto:"")}</textarea></div>
+      <div><label>Responsable</label><input id="cpmResp" list="dlResponsables" value="${incEsc(a?a.responsable:"")}" placeholder="Elige o escribe un nombre"></div>
+      <div><label>Plazo</label><input type="date" id="cpmPlazo" value="${a&&a.plazo?a.plazo:""}"></div>
+      <div><label>Origen</label><select id="cpmOrigen">${Object.keys(CPHYS_ORIGEN_LABEL).map(k=>`<option value="${k}" ${((a&&a.origen)||"visita")===k?"selected":""}>${CPHYS_ORIGEN_LABEL[k]}</option>`).join("")}</select></div>
+      <div><label>Detalle del origen (opcional)</label><input id="cpmDetalle" value="${incEsc(a?a.origenDetalle:"")}" placeholder="Ej: visita del 05-11-2026"></div>
+      <div><label>Reunión relacionada (opcional)</label><select id="cpmReunion"><option value="">Ninguna</option>${reuniones.map(r=>`<option value="${r.id}" ${a&&a.reunionId===r.id?"selected":""}>${fmtDate(r.fecha)} · ${r.tipo==="extraordinaria"?"Extraordinaria":"Ordinaria"}</option>`).join("")}</select></div>
+      <div><label>Comisión (opcional)</label><select id="cpmComision">${'<option value="">Sin comisión</option>' + (CACHE.cphysComisiones||[]).map(c=>`<option value="${c.id}" ${a&&a.comisionId===c.id?"selected":""}>${incEsc(c.nombre)}</option>`).join("")}</select></div>
+    </div>
+    <div class="toolbar" style="margin-top:12px;"><button class="btn" id="cpmGuardarBtn" type="button">Guardar</button><button class="btn secondary" id="cpmCancelarBtn" type="button">Cancelar</button></div>`);
+  on(document.getElementById("cpmCancelarBtn"), "click", closeModal);
+  on(document.getElementById("cpmGuardarBtn"), "click", async ()=>{
+    const texto = document.getElementById("cpmTexto").value.trim();
+    if(!texto){ alert("Escribe el compromiso."); return; }
+    const reunionId = document.getElementById("cpmReunion").value;
+    let origen = document.getElementById("cpmOrigen").value;
+    if(reunionId) origen = "reunion";
+    await put("cphysAcuerdos", {
+      ...(a||{}),
+      id: a ? a.id : uid(),
+      texto, origen,
+      origenDetalle: document.getElementById("cpmDetalle").value.trim(),
+      reunionId,
+      comisionId: document.getElementById("cpmComision").value,
+      responsable: document.getElementById("cpmResp").value.trim(),
+      plazo: document.getElementById("cpmPlazo").value,
+      estado: a ? (a.estado||"pendiente") : "pendiente",
+      fechaCierre: a ? (a.fechaCierre||null) : null,
+      observacionCierre: a ? (a.observacionCierre||"") : "",
+      seguimiento: a ? (a.seguimiento||[]) : [],
+      fechaCreacion: a ? (a.fechaCreacion||cphysHoy()) : cphysHoy(),
+    });
+    await loadCache();
+    closeModal();
+    cphysRefrescarTodo();
+  });
+}
+function cphysCompromisoAvanceAbrir(id){
+  const a = (CACHE.cphysAcuerdos||[]).find(x=>x.id===id); if(!a) return;
+  openModal(`
+    <h3>Registrar avance</h3>
+    <div class="kv" style="margin-bottom:8px;">${incEsc(a.texto)}</div>
+    <div class="form-grid">
+      <div><label>Fecha</label><input type="date" id="cpaFecha" value="${cphysHoy()}"></div>
+      <div style="grid-column:1/-1;"><label>Avance</label><textarea id="cpaTexto" rows="3" placeholder="Ej: ya se repuso el papel; falta evaluar los baños"></textarea></div>
+    </div>
+    <div class="toolbar" style="margin-top:12px;"><button class="btn" id="cpaGuardarBtn" type="button">Guardar avance</button><button class="btn secondary" id="cpaCancelarBtn" type="button">Cancelar</button></div>`);
+  on(document.getElementById("cpaCancelarBtn"), "click", closeModal);
+  on(document.getElementById("cpaGuardarBtn"), "click", async ()=>{
+    const texto = document.getElementById("cpaTexto").value.trim();
+    if(!texto){ alert("Escribe en qué va el compromiso."); return; }
+    const u = usuarioDeSesion();
+    await put("cphysAcuerdos", {...a, seguimiento:(a.seguimiento||[]).concat([{fecha:document.getElementById("cpaFecha").value||cphysHoy(), texto, por:(u&&u.nombre)||""}])});
+    await loadCache();
+    closeModal();
+    cphysRefrescarTodo();
+  });
+}
+function cphysCompromisoCumplirAbrir(id){
+  const a = (CACHE.cphysAcuerdos||[]).find(x=>x.id===id); if(!a) return;
+  openModal(`
+    <h3>Marcar compromiso como cumplido</h3>
+    <div class="kv" style="margin-bottom:8px;">${incEsc(a.texto)}</div>
+    <div class="form-grid">
+      <div><label>Fecha de cumplimiento</label><input type="date" id="cpcFecha" value="${cphysHoy()}"></div>
+      <div style="grid-column:1/-1;"><label>Observación (qué se hizo)</label><textarea id="cpcObs" rows="2" placeholder="Opcional">${incEsc(a.observacionCierre||"")}</textarea></div>
+      <div style="grid-column:1/-1;"><label>Respaldo (foto o PDF, opcional)</label><input type="file" id="cpcArchivo" accept="image/*,.pdf"></div>
+    </div>
+    <div class="toolbar" style="margin-top:12px;"><button class="btn" id="cpcGuardarBtn" type="button">Marcar cumplido</button><button class="btn secondary" id="cpcCancelarBtn" type="button">Cancelar</button></div>`);
+  on(document.getElementById("cpcCancelarBtn"), "click", closeModal);
+  on(document.getElementById("cpcGuardarBtn"), "click", async ()=>{
+    const archivo = document.getElementById("cpcArchivo").files[0];
+    let resp = null;
+    if(archivo){ resp = await cphysLeerAdjunto(archivo); if(!resp) return; }
+    await put("cphysAcuerdos", {...a, estado:"cerrado", fechaCierre: document.getElementById("cpcFecha").value || cphysHoy(), observacionCierre: document.getElementById("cpcObs").value.trim(), ...(resp ? {respaldoData:resp.data, respaldoNombre:resp.nombre} : {})});
+    await loadCache();
+    closeModal();
+    cphysRefrescarTodo();
+  });
+}
+on(document.getElementById("cphysNuevoCompromisoBtn"), "click", ()=> cphysCompromisoAbrirForm(null));
 on(document.getElementById("cphysAcuerdosTable"), "click", async (e)=>{
-  const cumplirBtn = e.target.closest("[data-cphys-acuerdo-cumplir]");
-  if(cumplirBtn){
-    const a = CACHE.cphysAcuerdos.find(x=>x.id===cumplirBtn.dataset.cphysAcuerdoCumplir);
-    if(!a) return;
-    await put("cphysAcuerdos", {...a, estado:"cerrado", fechaCierre: new Date().toISOString().slice(0,10)});
-    await loadCache();
-    renderCphys();
-    return;
-  }
-  const reabrirBtn = e.target.closest("[data-cphys-acuerdo-reabrir]");
-  if(reabrirBtn){
-    const a = CACHE.cphysAcuerdos.find(x=>x.id===reabrirBtn.dataset.cphysAcuerdoReabrir);
-    if(!a) return;
+  const b = e.target.closest("button"); if(!b) return;
+  const d = b.dataset;
+  if(d.cphysCompAvance){ cphysCompromisoAvanceAbrir(d.cphysCompAvance); return; }
+  if(d.cphysCompCumplir){ cphysCompromisoCumplirAbrir(d.cphysCompCumplir); return; }
+  if(d.cphysCompEditar){ cphysCompromisoAbrirForm(d.cphysCompEditar); return; }
+  if(d.cphysCompReabrir){
+    const a = (CACHE.cphysAcuerdos||[]).find(x=>x.id===d.cphysCompReabrir); if(!a) return;
     await put("cphysAcuerdos", {...a, estado:"pendiente", fechaCierre:null});
-    await loadCache();
-    renderCphys();
-    return;
+    await loadCache(); cphysRefrescarTodo(); return;
   }
+  if(d.cphysCompEliminar){
+    const a = (CACHE.cphysAcuerdos||[]).find(x=>x.id===d.cphysCompEliminar); if(!a) return;
+    if(!confirm(`¿Eliminar este compromiso?\n\n«${a.texto}»\n\nEsta acción no se puede deshacer.`)) return;
+    await deleteRecord("cphysAcuerdos", a.id);
+    await loadCache(); cphysRefrescarTodo();
+  }
+});
+/* Informe PDF de compromisos (según los filtros elegidos), agrupado por responsable. */
+function descargarCphysCompromisosPdf(){
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const filas = cphysCompromisosFiltrados();
+  if(!filas.length){ alert("No hay compromisos para el informe con los filtros elegidos."); return; }
+  const doc = new JsPDFClass();
+  let y = grdPdfEncabezado(doc, "Compromisos del Comité Paritario de Higiene y Seguridad");
+  const selEst = document.getElementById("cphysCompFiltroEstado");
+  const cuenta = {pendiente:0, proceso:0, vencido:0, cumplido:0}; filas.forEach(a=>{ cuenta[cphysCompromisoEstado(a)]++; });
+  doc.setFontSize(9);
+  doc.text(`Filtro: ${selEst.options[selEst.selectedIndex].text}   ·   ${filas.length} compromiso(s): ${cuenta.pendiente} pendiente(s), ${cuenta.proceso} en proceso, ${cuenta.vencido} vencido(s), ${cuenta.cumplido} cumplido(s)`, 14, y, {maxWidth:182}); y += 8;
+  const porResp = new Map();
+  filas.forEach(a=>{ const k = (a.responsable||"").trim() || "Sin responsable"; if(!porResp.has(k)) porResp.set(k, []); porResp.get(k).push(a); });
+  Array.from(porResp.keys()).sort((a,b)=>a.localeCompare(b)).forEach(k=>{
+    if(y > 245){ doc.addPage(); y = 16; }
+    doc.setFontSize(11); doc.text(`${k} (${porResp.get(k).length})`, 14, y); y += 2;
+    doc.autoTable({ startY:y,
+      head:[["Compromiso","Origen","Comisión","Plazo","Estado","Último avance / cierre"]],
+      body: porResp.get(k).map(a=>{
+        const seg = a.seguimiento||[], ult = seg[seg.length-1];
+        const nota = a.estado==="cerrado" ? (a.observacionCierre||"—") : (ult ? `${fmtDate(ult.fecha)}: ${ult.texto}` : "—");
+        return [a.texto, cphysCompromisoOrigenTxt(a), cphysComisionNombre(a.comisionId)||"—", a.plazo?fmtDate(a.plazo):"—", CPHYS_ESTADO_LABEL[cphysCompromisoEstado(a)]+(a.fechaCierre&&a.estado==="cerrado"?" ("+fmtDate(a.fechaCierre)+")":""), nota];
+      }),
+      styles:{fontSize:8}, headStyles:{fillColor:[42,120,214]}, columnStyles:{0:{cellWidth:50}, 5:{cellWidth:40}} });
+    y = doc.lastAutoTable.finalY + 8;
+  });
+  agregarPiePaginasPdf(doc, "Compromisos CPHyS");
+  doc.save(`Compromisos_CPHyS_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}.pdf`);
+}
+on(document.getElementById("cphysCompromisosPdfBtn"), "click", ()=> descargarCphysCompromisosPdf());
+/* «Mis pendientes»: compromisos del Comité asignados al usuario que inició sesión. */
+function renderMisCompromisosCphys(){
+  const wrap = document.getElementById("misCompromisosWrap"); if(!wrap) return;
+  const card = document.getElementById("cardMisCompromisosCphys");
+  if(card) card.style.display = (CACHE.cphysAcuerdos||[]).length ? "" : "none";
+  const u = usuarioDeSesion();
+  if(!u || !u.nombre){ wrap.innerHTML = '<div class="empty">Inicia sesión para ver tus compromisos del Comité.</div>'; return; }
+  const n = normalizarNombreTexto(u.nombre);
+  const mis = (CACHE.cphysAcuerdos||[]).filter(a=>a.estado!=="cerrado" && a.responsable && normalizarNombreTexto(a.responsable)===n)
+    .sort((a,b)=>new Date(a.plazo||"9999-12-31")-new Date(b.plazo||"9999-12-31"));
+  wrap.innerHTML = mis.length
+    ? `<table><thead><tr><th>Compromiso</th><th>Origen</th><th>Plazo</th><th>Estado</th><th></th></tr></thead><tbody>${mis.map(a=>`<tr>
+        <td>${incEsc(a.texto)}${cphysCompromisoDetalleHtml(a)}</td>
+        <td>${incEsc(cphysCompromisoOrigenTxt(a))}</td>
+        <td>${a.plazo?fmtDate(a.plazo):"—"}</td>
+        <td>${cphysEstadoPill(a)}</td>
+        <td><button class="subtle-btn" data-cphys-mis-avance="${a.id}">Registrar avance</button> <button class="subtle-btn" data-cphys-mis-cumplir="${a.id}">Marcar cumplido</button></td>
+      </tr>`).join("")}</tbody></table>`
+    : '<div class="empty">No tienes compromisos del Comité pendientes.</div>';
+}
+on(document.getElementById("misCompromisosWrap"), "click", (e)=>{
+  const av = e.target.closest("[data-cphys-mis-avance]"); if(av){ cphysCompromisoAvanceAbrir(av.dataset.cphysMisAvance); return; }
+  const cu = e.target.closest("[data-cphys-mis-cumplir]"); if(cu){ cphysCompromisoCumplirAbrir(cu.dataset.cphysMisCumplir); }
 });
 /* Genera el acta de la reunión en PDF -- reemplaza la subida de archivo:
    la reunión registrada en la app ES el acta. */
@@ -8639,6 +9096,10 @@ function descargarActaCphysPdf(reunionId){
   doc.text(`Fecha de la reunión: ${fmtDate(rec.fecha)}   ·   Tipo: ${rec.tipo==="extraordinaria"?"Extraordinaria":"Ordinaria"}`, 14, y); y += 6;
   if(rec.tipo==="extraordinaria" && rec.motivo){ doc.text(`Motivo: ${rec.motivo}`, 14, y); y += 6; }
   if(rec.responsableSeguimiento){ doc.text(`Responsable de seguimiento: ${rec.responsableSeguimiento}`, 14, y); y += 6; }
+  { const l1 = [rec.horaInicio ? "Hora: "+rec.horaInicio+(rec.horaTermino?" a "+rec.horaTermino:"") : "", rec.lugar ? "Lugar: "+rec.lugar : ""].filter(Boolean).join("   ·   ");
+    const l2 = [rec.preside ? "Preside: "+rec.preside : "", rec.secretario ? "Secretario(a): "+rec.secretario : ""].filter(Boolean).join("   ·   ");
+    if(l1){ doc.text(l1, 14, y); y += 6; }
+    if(l2){ doc.text(l2, 14, y); y += 6; } }
   y += 2;
 
   const asistentes = (rec.asistentesIds||[]).map(mid=>{
@@ -8659,6 +9120,15 @@ function descargarActaCphysPdf(reunionId){
     y = doc.lastAutoTable.finalY + 8;
   }
 
+  const comisionesActa = CACHE.cphysComisiones||[];
+  if(comisionesActa.length){
+    if(y > 230){ doc.addPage(); y = 16; }
+    doc.setFontSize(11); doc.text("Comisiones de trabajo", 14, y); y += 2;
+    doc.autoTable({ startY:y, head:[["Comisión","Función","Integrantes"]],
+      body: comisionesActa.map(c=>[c.nombre, c.funcion||"—", (c.integrantesIds||[]).map(id=>{ const nm = cphysMiembroNombre(id); return nm ? nm+(id===c.responsableId?" (responsable)":"") : ""; }).filter(Boolean).join(", ") || "—"]),
+      styles:{fontSize:8}, headStyles:{fillColor:[42,120,214]} });
+    y = doc.lastAutoTable.finalY + 8;
+  }
   if(y > 250){ doc.addPage(); y = 16; }
   doc.setFontSize(11); doc.text("Materias / temas tratados", 14, y); y += 6;
   doc.setFontSize(10);
@@ -8668,8 +9138,8 @@ function descargarActaCphysPdf(reunionId){
   if(y > 240){ doc.addPage(); y = 16; }
   doc.setFontSize(11); doc.text("Acuerdos", 14, y); y += 2;
   doc.autoTable({ startY:y,
-    head:[["Acuerdo","Responsable","Plazo","Estado"]],
-    body: acuerdos.length ? acuerdos.map(a=>[a.texto, a.responsable||"—", a.plazo?fmtDate(a.plazo):"—", a.estado==="cerrado"?("Cumplido"+(a.fechaCierre?" ("+fmtDate(a.fechaCierre)+")":"")):"Pendiente"]) : [["Sin acuerdos registrados","—","—","—"]],
+    head:[["Acuerdo","Responsable","Comisión","Plazo","Estado"]],
+    body: acuerdos.length ? acuerdos.map(a=>[a.texto, a.responsable||"—", cphysComisionNombre(a.comisionId)||"—", a.plazo?fmtDate(a.plazo):"—", a.estado==="cerrado"?("Cumplido"+(a.fechaCierre?" ("+fmtDate(a.fechaCierre)+")":"")):"Pendiente"]) : [["Sin acuerdos registrados","—","—","—","—"]],
     styles:{fontSize:8.5}, headStyles:{fillColor:[42,120,214]} });
   y = doc.lastAutoTable.finalY + 8;
 
@@ -8680,6 +9150,10 @@ function descargarActaCphysPdf(reunionId){
     y = escribirTextoPaginado(doc, rec.observaciones, 14, y, {maxWidth:180});
   }
 
+  if(rec.actaData){
+    if(y > 262){ doc.addPage(); y = 16; }
+    doc.setFontSize(9); doc.text(`Respaldo: el acta firmada (${rec.actaNombre||"archivo adjunto"}) está adjunta en la plataforma. El acta firmada en papel es el documento con validez legal.`, 14, y + 6, {maxWidth:182});
+  }
   agregarPiePaginasPdf(doc, "Acta CPHyS");
   doc.save(`Acta_CPHyS_${rec.fecha}_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}.pdf`);
 }
@@ -8908,6 +9382,7 @@ on(document.getElementById("cphysInvestigacionesTable"), "click", (e)=>{
 function renderCphys(){
   renderCphysMiembrosTable();
   renderCphysMiembrosTiles();
+  renderCphysComisiones();
   if(!cphysReunionEditingId){ renderCphysAsistenteOptions(); drawCphysAsistentes(); drawCphysAcuerdosComposer(); }
   renderCphysReunionesTable();
   renderCphysReunionesTiles();
@@ -8915,6 +9390,7 @@ function renderCphys(){
   renderCphysPrograma();
   renderCphysCapacitacion();
   renderCphysInvestigaciones();
+  try{ subpestanasAplicar("cphys"); }catch(e){}
 }
 
 /* =========================================================
@@ -10467,6 +10943,14 @@ subpestanasCrear("capacitacion", [
   {key:"cursos", icono:"curso", label:"Cursos DS 44", desc:"Cursos obligatorios, completados y alertas", hdrs:["hdrCursosDs44","hdrRegistroDeCursosCompletados","hdrAlertasDeVencimiento","hdrReporteDeCumplimientoCursosDS44"]},
 ], "tarjetas");
 
+subpestanasCrear("cphys", [
+  {key:"miembros", icono:"personas", label:"Miembros y comisiones", desc:"Quiénes integran el Comité y cómo se reparte el trabajo", hdrs:["hdrCphysMiembros","hdrCphysMiembrosListado","hdrCphysComisiones","hdrCphysComisionesListado"]},
+  {key:"reuniones", icono:"registro", label:"Reuniones y actas", desc:"Registrar reuniones, adjuntar el acta firmada y sacar el PDF", hdrs:["hdrCphysReuniones","hdrCphysReunionesListado"]},
+  {key:"compromisos", icono:"lista", label:"Compromisos", desc:"Seguimiento de compromisos de reuniones, visitas y más", hdrs:["hdrCphysAcuerdosSeguimiento"],
+    badge:()=>{ const n = (CACHE.cphysAcuerdos||[]).filter(a=>cphysCompromisoEstado(a)==="vencido").length; return n ? {texto:`${n} vencido${n===1?"":"s"}`, nivel:"r"} : null; }},
+  {key:"programa", icono:"grafico", label:"Programa y capacitación", desc:"Programa de seguridad y de capacitación del Comité", hdrs:["hdrCphysPrograma","hdrCphysCapacitacion"]},
+  {key:"investigaciones", icono:"buscar", label:"Investigaciones", desc:"Control de investigación de accidentes e incidentes", hdrs:["hdrCphysInvestigaciones"]},
+], "tarjetas");
 subpestanasCrear("emergencia", [
   {key:"resumen", icono:"resumen", label:"Resumen", desc:"Estado general del plan de gestión del riesgo", hdrs:["hdrGrdResumen"]},
   {key:"diagnostico", icono:"buscar", label:"Diagnóstico y vulnerabilidad", desc:"Amenazas, calificación y matriz de vulnerabilidad", hdrs:["hdrGrdAmenazas"]},
@@ -11242,6 +11726,9 @@ function renderDashboard(){
   const cphysAccidentesAll = CACHE.accidentes || [];
   const cphysInvestigados = cphysAccidentesAll.filter(a=>investigacionDeAccidente(a.id));
   const cphysPendientesInvestigar = cphysAccidentesAll.length - cphysInvestigados.length;
+  const cphysCompTotal = (CACHE.cphysAcuerdos||[]).length;
+  const cphysCompAbiertos = (CACHE.cphysAcuerdos||[]).filter(a=>a.estado!=="cerrado").length;
+  const cphysCompVencidos = (CACHE.cphysAcuerdos||[]).filter(a=>cphysCompromisoEstado(a)==="vencido").length;
 
   // GRD — cumplimiento global (ya ponderado por etapa en la propia pestaña GRD).
   const grdPct = grdCumplimientoGlobal();
@@ -11293,6 +11780,7 @@ function renderDashboard(){
     ]) +
     tileSection("Comité paritario, emergencias, EPP y vehículos", "var(--s1)", [
       tile("CPHyS — días desde última reunión ordinaria", cphysDiasDesdeOrdinaria===null?"—":cphysDiasDesdeOrdinaria, cphysDiasDesdeOrdinaria===null?"sin reuniones ordinarias registradas":(cphysDiasDesdeOrdinaria<=31?"dentro del plazo mensual":"sobre el plazo mensual"), cphysSemaforoReunion, "people", "var(--s1)"),
+      ...(cphysCompTotal ? [tile("CPHyS — compromisos abiertos", cphysCompAbiertos, cphysCompVencidos+" vencido(s) de "+cphysCompTotal+" registrados", cphysCompVencidos>0?"alto":(cphysCompAbiertos>0?"medio":"bajo"), "people", "var(--s1)")] : []),
       tile("CPHyS — investigaciones pendientes", cphysPendientesInvestigar, "de "+cphysAccidentesAll.length+" accidentes/incidentes", cphysPendientesInvestigar>0?"alto":"bajo", "people", "var(--s1)"),
       tile("GRD — cumplimiento global", grdPct+"%", "diagnóstico, plan de respuesta y simulacros", grdEtapaSemaforo(grdPct), "people", "var(--s1)"),
       ...(mn.ext.total ? [tile("Extintores por revisar", mn.ext.no+mn.ext.inc, "de "+mn.ext.total+" registrados · "+mn.ext.no+" no cumple · "+mn.ext.inc+" incompleto(s)", mn.ext.no>0?"alto":(mn.ext.inc>0?"medio":"bajo"), "people", "var(--s1)")] : []),
@@ -12124,11 +12612,12 @@ function renderMisActividadesMensuales(){
    (programa general, capacitaciones como relator y programa por cargo del
    mes en curso: actividades con alguna semana vencida sin cumplir). */
 function misPendientesCalcular(){
-  const r = {hallazgos:0, atrasadas:0, pct:null, capsPorAsistir:0, medidasInd:0, medidasSin:0};
+  const r = {hallazgos:0, atrasadas:0, pct:null, capsPorAsistir:0, medidasInd:0, medidasSin:0, compromisos:0};
   const usuario = usuarioDeSesion();
   if(!usuario || !usuario.nombre) return r;
   const n = normalizarNombreTexto(usuario.nombre);
   r.hallazgos = misHallazgosDelUsuario().filter(it=>it.f.estado!=="cerrada").length;
+  (CACHE.cphysAcuerdos||[]).forEach(c=>{ if(c.estado!=="cerrado" && c.responsable && normalizarNombreTexto(c.responsable)===n){ r.compromisos++; if(c.plazo && daysUntil(c.plazo)<0) r.atrasadas++; } });
   { const mi = misMedidasIndicadores(n); r.medidasInd = mi.asignadas + mi.sinMedida; r.medidasSin = mi.sinMedida; r.atrasadas += mi.atrasadas; }
   const capsPend = misCapacitacionesDelUsuario();
   r.capsPorAsistir = capsPend.length;
@@ -12157,6 +12646,7 @@ function renderMisPendientes(){
     tile("Actividades atrasadas", r.atrasadas, "programa y capacitaciones"),
     tile("Capacitaciones por asistir", r.capsPorAsistir, "a las que estoy convocado"),
     tile("Medidas de control de indicadores", r.medidasInd, "asignadas a mí o por registrar (indicadores fuera de meta)", null),
+    tile("Compromisos del Comité", r.compromisos, "asignados a mi nombre y sin cumplir"),
     tile("Cumplimiento del mes", r.pct===null ? "—" : pcPct(r.pct), "mi programa por cargo"),
     ...(function(){
       if(!vsPuedeVer()) return [];
@@ -12165,6 +12655,7 @@ function renderMisPendientes(){
     })(),
   ].join("");
   renderMisCapacitaciones();
+  renderMisCompromisosCphys();
 }
 
 const MIS_HALLAZGOS_EVIDENCIA = {};
