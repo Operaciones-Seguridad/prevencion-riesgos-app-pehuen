@@ -3472,6 +3472,10 @@
         <div><label>Cargo</label><input id="cphysMiembroCargo" placeholder="Ej: Presidente, Secretario, Miembro..."></div>
         <div><label>Fecha inicio del mandato</label><input type="date" id="cphysMiembroFechaInicio"></div>
         <div><label>Fecha término del mandato</label><input type="date" id="cphysMiembroFechaTermino"></div>
+        <div><label>¿Tiene fuero?</label><select id="cphysMiembroFuero"><option value="no">No</option><option value="si">Sí</option></select></div>
+        <div><label>Fuero desde</label><input type="date" id="cphysMiembroFueroDesde"></div>
+        <div><label>Fuero hasta</label><input type="date" id="cphysMiembroFueroHasta"></div>
+        <div style="grid-column:1/-1;" class="kv">Las fechas del fuero las defines tú según la normativa vigente: la app no las calcula, solo avisa cuando se acercan.</div>
       </div>
       <div class="toolbar" style="margin-top:10px;">
         <button class="btn" id="saveCphysMiembroBtn">Guardar</button>
@@ -3485,7 +3489,7 @@
       <div class="collapsible-body" id="bodyCphysMiembrosListado">
       <div class="grid-tiles" id="cphysMiembrosTiles"></div>
       <table>
-        <thead><tr><th>Nombre</th><th>Representación</th><th>Calidad</th><th>Cargo</th><th>Inicio</th><th>Término</th><th>Vigencia</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>Nombre</th><th>Representación</th><th>Calidad</th><th>Cargo</th><th>Inicio</th><th>Término</th><th>Vigencia</th><th>Fuero</th><th>Curso de orientación</th><th>Acciones</th></tr></thead>
         <tbody id="cphysMiembrosTable"></tbody>
       </table>
       </div>
@@ -3680,6 +3684,89 @@
       <table>
         <thead><tr><th>Fecha</th><th>Tipo</th><th>Área</th><th>Causa</th><th>Investigación del Comité</th><th>Análisis de la empresa</th><th>Acciones</th></tr></thead>
         <tbody id="cphysInvestigacionesTable"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrCphysDocumentos"><h2>Documentos del Comité</h2><button class="collapse-toggle" id="toggleCphysDocumentos" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyCphysDocumentos">
+      <div class="desc">Sube aquí los documentos que respaldan al Comité: el acta de constitución, el acta de elecciones y la constancia o nómina de miembros con fuero. Los miembros con fuero y sus fechas se registran en el listado de miembros.</div>
+      <div class="grid-tiles" id="cphysDocTiles"></div>
+      <div class="form-grid" style="margin-top:10px;">
+        <div><label>Tipo de documento</label>
+          <select id="cphysDocTipo">
+            <option value="constitucion">Acta de constitución</option>
+            <option value="elecciones">Acta de elecciones</option>
+            <option value="fuero">Fuero / nómina de aforados</option>
+            <option value="otro">Otro documento</option>
+          </select>
+        </div>
+        <div><label>Nombre (opcional)</label><input id="cphysDocNombre" placeholder="Si lo dejas vacío se usa el tipo"></div>
+        <div><label>Fecha del documento</label><input type="date" id="cphysDocFecha"></div>
+        <div><label>Observación</label><input id="cphysDocObs"></div>
+        <div style="grid-column:1/-1;"><label>Archivo (foto o PDF)</label><input type="file" id="cphysDocArchivo" accept="image/*,.pdf"><div id="cphysDocArchivoInfo"></div></div>
+      </div>
+      <div class="toolbar" style="margin-top:10px;">
+        <button class="btn" id="saveCphysDocBtn" type="button">Guardar documento</button>
+        <button class="btn secondary" id="cancelEditCphysDocBtn" type="button" style="display:none;">Cancelar edición</button>
+      </div>
+      <table>
+        <thead><tr><th>Tipo</th><th>Nombre</th><th>Fecha</th><th>Observación</th><th>Archivo</th><th>Acciones</th></tr></thead>
+        <tbody id="cphysDocTable"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrCphysElecciones"><h2>Formatos para elecciones</h2><button class="collapse-toggle" id="toggleCphysElecciones" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyCphysElecciones">
+      <div class="desc">Genera en un solo PDF los formatos del proceso de elección, con los datos de la empresa y espacios para completar a mano. Son formatos de apoyo: verifica los requisitos y plazos vigentes antes de usarlos. No se envía nada automáticamente; descargas el PDF y lo envías tú.</div>
+      <div class="form-grid">
+        <div><label>Fecha de la elección</label><input type="date" id="cphysElecFecha"></div>
+        <div><label>Hora</label><input type="time" id="cphysElecHora"></div>
+        <div><label>Lugar</label><input id="cphysElecLugar" placeholder="Ej: Comedor de la empresa"></div>
+        <div><label>Representantes por elegir</label><input id="cphysElecCargos" placeholder="Ej: 3 titulares y 3 suplentes"></div>
+        <div style="grid-column:1/-1;"><label>Comisión electoral (opcional)</label><textarea id="cphysElecComision" rows="2" placeholder="Nombres de quienes integran la comisión electoral"></textarea></div>
+        <div style="grid-column:1/-1;"><label>Candidatos (opcional, uno por línea)</label><textarea id="cphysElecCandidatos" rows="3" placeholder="Si los dejas vacíos, los formatos salen con líneas en blanco"></textarea></div>
+      </div>
+      <label style="margin-top:10px;">Formatos a incluir</label>
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="checkbox" data-elec-fmt="conv" checked style="width:auto;min-height:auto;"> Convocatoria a elecciones</label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="checkbox" data-elec-fmt="insc" checked style="width:auto;min-height:auto;"> Inscripción de candidatos</label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="checkbox" data-elec-fmt="pap" checked style="width:auto;min-height:auto;"> Papeleta de votación</label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="checkbox" data-elec-fmt="escr" checked style="width:auto;min-height:auto;"> Acta de escrutinio</label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="checkbox" data-elec-fmt="acta" checked style="width:auto;min-height:auto;"> Acta de elección y proclamación</label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;"><input type="checkbox" data-elec-fmt="const" checked style="width:auto;min-height:auto;"> Acta de constitución del Comité</label>
+      </div>
+      <div class="toolbar" style="margin-top:10px;"><button class="btn" id="cphysElecPdfBtn" type="button">Descargar formatos (PDF)</button></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrCphysChequeo"><h2>Lista de chequeo de cumplimiento del Comité</h2><button class="collapse-toggle" id="toggleCphysChequeo" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyCphysChequeo">
+      <div class="desc">Evalúa cuánto cumple el Comité. Parte de los datos que ya registraste (miembros, reuniones, actas, comisiones, compromisos, investigaciones, documentos y cursos) y suma ítems que marcas tú. Cada evaluación queda guardada con su porcentaje para ver la evolución, y se puede bajar en PDF. Los ítems son una propuesta: revísalos y agrega los tuyos más abajo.</div>
+      <div class="grid-tiles" id="cphysChequeoTiles"></div>
+      <div class="toolbar" style="margin-top:10px;"><button class="btn" id="cphysChequeoNuevaBtn" type="button">+ Nueva evaluación</button></div>
+      <table>
+        <thead><tr><th>Fecha</th><th>Responsable</th><th>Cumple</th><th>No cumple</th><th>No aplica</th><th>Cumplimiento</th><th>Acciones</th></tr></thead>
+        <tbody id="cphysChequeoTable"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrCphysChequeoItems"><h2>Ítems propios de la lista de chequeo</h2><button class="collapse-toggle" id="toggleCphysChequeoItems" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyCphysChequeoItems">
+      <div class="desc">Agrega ítems que quieras revisar en cada evaluación, además de los de la lista. Aparecen en las evaluaciones nuevas.</div>
+      <div class="toolbar">
+        <div class="field" style="flex:2;min-width:260px;"><label>Ítem</label><input id="cphysChequeoItemTexto" placeholder="Ej: Registro de asistencia de los miembros archivado"></div>
+        <div><button class="btn small" id="cphysChequeoItemAddBtn" type="button" style="margin-top:20px;">+ Agregar ítem</button></div>
+      </div>
+      <table>
+        <thead><tr><th>Ítem</th><th></th></tr></thead>
+        <tbody id="cphysChequeoItemsTable"></tbody>
       </table>
       </div>
     </div>
@@ -4492,8 +4579,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 49;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos","matrizVersiones","vsExamenesOcup","objetivosGestion","indicadoresGestion","medidasIndicadores","cphysComisiones","compromisosAsesoria","cphysInvestigaciones"];
+const DB_VERSION = 50;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos","matrizVersiones","vsExamenesOcup","objetivosGestion","indicadoresGestion","medidasIndicadores","cphysComisiones","compromisosAsesoria","cphysInvestigaciones","cphysDocumentos","cphysChequeos","cphysChequeoItems"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -4946,6 +5033,10 @@ setupCollapsible("hdrCphysMiembros", "bodyCphysMiembros", "toggleCphysMiembros",
 setupCollapsible("hdrCphysMiembrosListado", "bodyCphysMiembrosListado", "toggleCphysMiembrosListado", "collapsed_cphysMiembrosListado");
 setupCollapsible("hdrCphysComisiones", "bodyCphysComisiones", "toggleCphysComisiones", "collapsed_cphysComisiones");
 setupCollapsible("hdrCphysComisionesListado", "bodyCphysComisionesListado", "toggleCphysComisionesListado", "collapsed_cphysComisionesListado");
+setupCollapsible("hdrCphysDocumentos", "bodyCphysDocumentos", "toggleCphysDocumentos", "collapsed_cphysDocumentos");
+setupCollapsible("hdrCphysElecciones", "bodyCphysElecciones", "toggleCphysElecciones", "collapsed_cphysElecciones");
+setupCollapsible("hdrCphysChequeo", "bodyCphysChequeo", "toggleCphysChequeo", "collapsed_cphysChequeo");
+setupCollapsible("hdrCphysChequeoItems", "bodyCphysChequeoItems", "toggleCphysChequeoItems", "collapsed_cphysChequeoItems");
 setupCollapsible("hdrMisCompromisosCphys", "bodyMisCompromisosCphys", "toggleMisCompromisosCphys", "collapsed_misCompromisosCphys");
 setupCollapsible("hdrCphysReuniones", "bodyCphysReuniones", "toggleCphysReuniones", "collapsed_cphysReuniones");
 setupCollapsible("hdrCphysReunionesListado", "bodyCphysReunionesListado", "toggleCphysReunionesListado", "collapsed_cphysReunionesListado");
@@ -8338,8 +8429,18 @@ function cphysMiembroVigente(m){
   return new Date(m.fechaTermino) >= new Date(new Date().toDateString());
 }
 
-/* --- Miembros --- */
+/* --- Miembros (con fuero y curso de orientación) ---
+   Cada miembro puede traer: fuero (fuero:true, fueroDesde, fueroHasta -- fechas que define el usuario, la app no calcula plazos legales) y
+   cursoOrientacion {estado:"pendiente"|"inscrito"|"aprobado", fechaInscripcion, organismo, fechaAprobacion, certificadoNombre, certificadoData}. */
 let cphysMiembroEditingId = null;
+const CPHYS_CURSO_ESTADO_LABEL = {pendiente:"Sin inscribir", inscrito:"Inscrito", aprobado:"Aprobado"};
+function cphysFueroEstado(m){
+  if(!m.fuero) return null;
+  if(!m.fueroHasta) return "vigente";
+  const d = daysUntil(m.fueroHasta);
+  return d<0 ? "vencido" : (d<=60 ? "porvencer" : "vigente");
+}
+function cphysCursoEstado(m){ return (m.cursoOrientacion && m.cursoOrientacion.estado) || "pendiente"; }
 function resetCphysMiembroForm(){
   cphysMiembroEditingId = null;
   document.getElementById("cphysMiembroNombre").value = "";
@@ -8348,6 +8449,9 @@ function resetCphysMiembroForm(){
   document.getElementById("cphysMiembroCargo").value = "";
   document.getElementById("cphysMiembroFechaInicio").value = "";
   document.getElementById("cphysMiembroFechaTermino").value = "";
+  document.getElementById("cphysMiembroFuero").value = "no";
+  document.getElementById("cphysMiembroFueroDesde").value = "";
+  document.getElementById("cphysMiembroFueroHasta").value = "";
   document.getElementById("cphysMiembroFormTitle").textContent = "Miembros del Comité Paritario de Higiene y Seguridad";
   document.getElementById("cancelEditCphysMiembroBtn").style.display = "none";
 }
@@ -8361,6 +8465,9 @@ function startEditCphysMiembro(id){
   document.getElementById("cphysMiembroCargo").value = rec.cargo || "";
   document.getElementById("cphysMiembroFechaInicio").value = rec.fechaInicio || "";
   document.getElementById("cphysMiembroFechaTermino").value = rec.fechaTermino || "";
+  document.getElementById("cphysMiembroFuero").value = rec.fuero ? "si" : "no";
+  document.getElementById("cphysMiembroFueroDesde").value = rec.fueroDesde || "";
+  document.getElementById("cphysMiembroFueroHasta").value = rec.fueroHasta || "";
   document.getElementById("cphysMiembroFormTitle").textContent = "Editando a "+(rec.nombre||"miembro");
   document.getElementById("cancelEditCphysMiembroBtn").style.display = "";
   document.getElementById("hdrCphysMiembros").scrollIntoView({behavior:"smooth", block:"start"});
@@ -8369,7 +8476,10 @@ on(document.getElementById("cancelEditCphysMiembroBtn"), "click", ()=> resetCphy
 on(document.getElementById("saveCphysMiembroBtn"), "click", async ()=>{
   const nombre = document.getElementById("cphysMiembroNombre").value.trim();
   if(!nombre){ alert("Indica el nombre del miembro del Comité Paritario."); return; }
+  const anterior = cphysMiembroEditingId ? CACHE.cphysMiembros.find(m=>m.id===cphysMiembroEditingId) : null;
+  const conFuero = document.getElementById("cphysMiembroFuero").value==="si";
   const rec = {
+    ...(anterior||{}),
     id: cphysMiembroEditingId || uid(),
     nombre,
     representacion: document.getElementById("cphysMiembroRepresentacion").value,
@@ -8377,6 +8487,9 @@ on(document.getElementById("saveCphysMiembroBtn"), "click", async ()=>{
     cargo: document.getElementById("cphysMiembroCargo").value.trim(),
     fechaInicio: document.getElementById("cphysMiembroFechaInicio").value,
     fechaTermino: document.getElementById("cphysMiembroFechaTermino").value,
+    fuero: conFuero,
+    fueroDesde: conFuero ? document.getElementById("cphysMiembroFueroDesde").value : "",
+    fueroHasta: conFuero ? document.getElementById("cphysMiembroFueroHasta").value : "",
   };
   await put("cphysMiembros", rec);
   await loadCache();
@@ -8387,22 +8500,35 @@ function renderCphysMiembrosTable(){
   const rows = (CACHE.cphysMiembros||[]).slice().sort((a,b)=> (a.representacion||"").localeCompare(b.representacion||"") || (a.nombre||"").localeCompare(b.nombre||""));
   document.getElementById("cphysMiembrosTable").innerHTML = rows.length ? rows.map(m=>{
     const vigente = cphysMiembroVigente(m);
+    const fe = cphysFueroEstado(m), ce = cphysCursoEstado(m), cur = m.cursoOrientacion || {};
+    const fueroHtml = !fe ? "—"
+      : fe==="vencido" ? `<span class="pill vencido">Fuero vencido</span>`
+      : fe==="porvencer" ? `<span class="pill medio">Fuero hasta ${fmtDate(m.fueroHasta)}</span>`
+      : `<span class="pill vigente">Con fuero${m.fueroHasta?" hasta "+fmtDate(m.fueroHasta):""}</span>`;
+    const cursoHtml = `<span class="pill ${ce==="aprobado"?"vigente":ce==="inscrito"?"medio":"pendiente"}">${CPHYS_CURSO_ESTADO_LABEL[ce]}</span>`
+      + (ce==="inscrito" && cur.fechaInscripcion ? `<div class="kv">Inscrito el ${fmtDate(cur.fechaInscripcion)}${cur.organismo?" · "+incEsc(cur.organismo):""}</div>` : "")
+      + (ce==="aprobado" && cur.fechaAprobacion ? `<div class="kv">Aprobado el ${fmtDate(cur.fechaAprobacion)}${cur.organismo?" · "+incEsc(cur.organismo):""}${cur.certificadoData?` · <a href="${cur.certificadoData}" download="${incEsc(cur.certificadoNombre||"Certificado")}">Certificado</a>`:""}</div>` : "");
     return `<tr>
-      <td>${m.nombre}</td>
+      <td>${incEsc(m.nombre)}</td>
       <td>${CPHYS_REPRESENTACION_LABEL[m.representacion]||m.representacion}</td>
       <td>${CPHYS_CALIDAD_LABEL[m.calidad]||m.calidad}</td>
-      <td>${m.cargo || "—"}</td>
+      <td>${incEsc(m.cargo || "—")}</td>
       <td>${m.fechaInicio? fmtDate(m.fechaInicio) : "—"}</td>
       <td>${m.fechaTermino? fmtDate(m.fechaTermino) : "—"}</td>
       <td><span class="pill ${vigente?'vigente':'vencido'}">${vigente?'Vigente':'Mandato vencido'}</span></td>
+      <td>${fueroHtml}</td>
+      <td>${cursoHtml}</td>
       <td>
+        <button class="subtle-btn" data-cphys-miembro-curso="${m.id}">Inscripción al curso</button>
         <button class="subtle-btn" data-cphys-miembro-editar="${m.id}">Editar</button>
         <button class="subtle-btn" data-cphys-miembro-eliminar="${m.id}">Eliminar</button>
       </td>
     </tr>`;
-  }).join("") : `<tr><td class="empty" colspan="8">Sin miembros registrados todavía</td></tr>`;
+  }).join("") : `<tr><td class="empty" colspan="10">Sin miembros registrados todavía</td></tr>`;
 }
 on(document.getElementById("cphysMiembrosTable"), "click", async (e) => {
+  const cursoBtn = e.target.closest("[data-cphys-miembro-curso]");
+  if(cursoBtn){ cphysCursoAbrir(cursoBtn.dataset.cphysMiembroCurso); return; }
   const editBtn = e.target.closest("[data-cphys-miembro-editar]");
   if(editBtn){ startEditCphysMiembro(editBtn.dataset.cphysMiembroEditar); return; }
   const delBtn = e.target.closest("[data-cphys-miembro-eliminar]");
@@ -8417,16 +8543,411 @@ on(document.getElementById("cphysMiembrosTable"), "click", async (e) => {
   }
 });
 function renderCphysMiembrosTiles(){
-  const vigentes = (CACHE.cphysMiembros||[]).filter(cphysMiembroVigente);
+  const todos = CACHE.cphysMiembros||[];
+  const vigentes = todos.filter(cphysMiembroVigente);
   const empresaVig = vigentes.filter(m=>m.representacion==="empresa").length;
   const trabVig = vigentes.filter(m=>m.representacion==="trabajadores").length;
   const proximosVencer = vigentes.filter(m=> m.fechaTermino && daysUntil(m.fechaTermino) >= 0 && daysUntil(m.fechaTermino) <= 60).length;
+  const fueroVig = todos.filter(m=>{ const f = cphysFueroEstado(m); return f==="vigente" || f==="porvencer"; }).length;
+  const fueroPorVencer = todos.filter(m=>cphysFueroEstado(m)==="porvencer").length;
+  const aprobados = vigentes.filter(m=>cphysCursoEstado(m)==="aprobado").length;
+  const sinInscribir = vigentes.filter(m=>cphysCursoEstado(m)==="pendiente").length;
   document.getElementById("cphysMiembrosTiles").innerHTML = [
-    tile("Miembros vigentes", vigentes.length, "de "+(CACHE.cphysMiembros||[]).length+" registrados en total"),
+    tile("Miembros vigentes", vigentes.length, "de "+todos.length+" registrados en total"),
     tile("Representantes de la empresa (vigentes)", empresaVig, ""),
     tile("Representantes de los trabajadores (vigentes)", trabVig, ""),
     tile("Mandatos próximos a vencer", proximosVencer, "dentro de 60 días"),
+    tile("Miembros con fuero", fueroVig, fueroPorVencer ? fueroPorVencer+" por vencer en 60 días" : "según las fechas que registraste"),
+    tile("Curso de orientación aprobado", aprobados+" de "+vigentes.length, sinInscribir+" sin inscribir", sinInscribir>0?"medio":(vigentes.length?"bajo":null)),
   ].join("");
+}
+/* Inscripción y aprobación del curso de Orientación en Prevención de Riesgos de un miembro. */
+function cphysCursoAbrir(id){
+  const m = (CACHE.cphysMiembros||[]).find(x=>x.id===id); if(!m) return;
+  const c = m.cursoOrientacion || {};
+  openModal(`
+    <h3>Curso de Orientación en Prevención de Riesgos</h3>
+    <div class="kv" style="margin-bottom:8px;">${incEsc(m.nombre)}</div>
+    <div class="form-grid">
+      <div><label>Estado</label><select id="cpcuEstado"><option value="pendiente" ${(c.estado||"pendiente")==="pendiente"?"selected":""}>Sin inscribir</option><option value="inscrito" ${c.estado==="inscrito"?"selected":""}>Inscrito</option><option value="aprobado" ${c.estado==="aprobado"?"selected":""}>Aprobado</option></select></div>
+      <div><label>Organismo que lo imparte</label><input id="cpcuOrganismo" value="${incEsc(c.organismo||"")}" placeholder="Ej: organismo administrador"></div>
+      <div><label>Fecha de inscripción</label><input type="date" id="cpcuInscripcion" value="${c.fechaInscripcion||""}"></div>
+      <div><label>Fecha de aprobación</label><input type="date" id="cpcuAprobacion" value="${c.fechaAprobacion||""}"></div>
+      <div style="grid-column:1/-1;"><label>Certificado (foto o PDF, opcional)</label><input type="file" id="cpcuArchivo" accept="image/*,.pdf">${c.certificadoNombre?`<div class="kv">Certificado actual: ${incEsc(c.certificadoNombre)} (se conserva si no subes otro)</div>`:""}</div>
+    </div>
+    <div class="toolbar" style="margin-top:12px;"><button class="btn" id="cpcuGuardarBtn" type="button">Guardar</button><button class="btn secondary" id="cpcuCancelarBtn" type="button">Cancelar</button></div>`);
+  on(document.getElementById("cpcuCancelarBtn"), "click", closeModal);
+  on(document.getElementById("cpcuGuardarBtn"), "click", async ()=>{
+    const estado = document.getElementById("cpcuEstado").value;
+    const archivo = document.getElementById("cpcuArchivo").files[0];
+    let cert = null;
+    if(archivo){ cert = await cphysLeerAdjunto(archivo); if(!cert) return; }
+    await put("cphysMiembros", {...m, cursoOrientacion:{
+      estado,
+      organismo: document.getElementById("cpcuOrganismo").value.trim(),
+      fechaInscripcion: document.getElementById("cpcuInscripcion").value,
+      fechaAprobacion: estado==="aprobado" ? document.getElementById("cpcuAprobacion").value : "",
+      certificadoNombre: cert ? cert.nombre : (c.certificadoNombre||null),
+      certificadoData: cert ? cert.data : (c.certificadoData||null),
+    }});
+    await loadCache();
+    closeModal();
+    renderCphys();
+  });
+}
+
+/* --- Documentos del Comité (constitución, elecciones, fuero) ---
+   Store "cphysDocumentos": {id, tipo:"constitucion"|"elecciones"|"fuero"|"otro", nombre, fecha, observacion, archivoNombre, archivoData}. */
+const CPHYS_DOC_TIPO_LABEL = {constitucion:"Acta de constitución", elecciones:"Acta de elecciones", fuero:"Fuero / nómina de aforados", otro:"Otro documento"};
+let cphysDocEditingId = null;
+let cphysDocArchivo = null;
+function drawCphysDocArchivoInfo(){
+  const el = document.getElementById("cphysDocArchivoInfo"); if(!el) return;
+  el.innerHTML = cphysDocArchivo ? `<div class="kv">Archivo adjunto: <strong>${incEsc(cphysDocArchivo.nombre||"archivo")}</strong></div>` : '<div class="kv">Sin archivo adjunto.</div>';
+}
+function resetCphysDocForm(){
+  cphysDocEditingId = null; cphysDocArchivo = null;
+  document.getElementById("cphysDocTipo").value = "constitucion";
+  document.getElementById("cphysDocNombre").value = "";
+  document.getElementById("cphysDocFecha").value = "";
+  document.getElementById("cphysDocObs").value = "";
+  document.getElementById("cphysDocArchivo").value = "";
+  document.getElementById("saveCphysDocBtn").textContent = "Guardar documento";
+  document.getElementById("cancelEditCphysDocBtn").style.display = "none";
+  drawCphysDocArchivoInfo();
+}
+on(document.getElementById("cphysDocArchivo"), "change", async (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = await cphysLeerAdjunto(f);
+  if(r) cphysDocArchivo = r;
+  e.target.value = "";
+  drawCphysDocArchivoInfo();
+});
+on(document.getElementById("cancelEditCphysDocBtn"), "click", ()=> resetCphysDocForm());
+on(document.getElementById("saveCphysDocBtn"), "click", async ()=>{
+  const tipo = document.getElementById("cphysDocTipo").value;
+  if(!cphysDocArchivo){ alert("Adjunta el archivo del documento (foto o PDF)."); return; }
+  await put("cphysDocumentos", {
+    id: cphysDocEditingId || uid(),
+    tipo,
+    nombre: document.getElementById("cphysDocNombre").value.trim() || CPHYS_DOC_TIPO_LABEL[tipo],
+    fecha: document.getElementById("cphysDocFecha").value,
+    observacion: document.getElementById("cphysDocObs").value.trim(),
+    archivoNombre: cphysDocArchivo.nombre,
+    archivoData: cphysDocArchivo.data,
+  });
+  await loadCache();
+  resetCphysDocForm();
+  renderCphys();
+});
+function renderCphysDocumentos(){
+  const docs = (CACHE.cphysDocumentos||[]).slice().sort((a,b)=>String(b.fecha||"").localeCompare(String(a.fecha||"")));
+  const tiene = t => docs.some(d=>d.tipo===t);
+  document.getElementById("cphysDocTiles").innerHTML = [
+    tile("Documentos cargados", docs.length, ""),
+    tile("Acta de constitución", tiene("constitucion")?"Cargada":"Falta", "", tiene("constitucion")?"bajo":"alto"),
+    tile("Acta de elecciones", tiene("elecciones")?"Cargada":"Falta", "", tiene("elecciones")?"bajo":"alto"),
+    tile("Fuero / nómina de aforados", tiene("fuero")?"Cargado":"Sin documento", "las fechas se registran en cada miembro", tiene("fuero")?"bajo":"medio"),
+  ].join("");
+  document.getElementById("cphysDocTable").innerHTML = docs.length ? docs.map(d=>`<tr>
+    <td>${CPHYS_DOC_TIPO_LABEL[d.tipo]||d.tipo}</td>
+    <td>${incEsc(d.nombre||"—")}</td>
+    <td>${d.fecha?fmtDate(d.fecha):"—"}</td>
+    <td>${incEsc(d.observacion||"—")}</td>
+    <td>${d.archivoData?`<a href="${d.archivoData}" download="${incEsc(d.archivoNombre||"Documento")}">Descargar</a>`:"—"}</td>
+    <td><button class="subtle-btn" data-cphys-doc-editar="${d.id}">Editar</button> <button class="subtle-btn" data-cphys-doc-eliminar="${d.id}">Eliminar</button></td>
+  </tr>`).join("") : `<tr><td class="empty" colspan="6">Sin documentos cargados todavía</td></tr>`;
+}
+on(document.getElementById("cphysDocTable"), "click", async (e)=>{
+  const ed = e.target.closest("[data-cphys-doc-editar]");
+  if(ed){
+    const d = (CACHE.cphysDocumentos||[]).find(x=>x.id===ed.dataset.cphysDocEditar); if(!d) return;
+    cphysDocEditingId = d.id; cphysDocArchivo = d.archivoData ? {data:d.archivoData, nombre:d.archivoNombre} : null;
+    document.getElementById("cphysDocTipo").value = d.tipo || "otro";
+    document.getElementById("cphysDocNombre").value = d.nombre || "";
+    document.getElementById("cphysDocFecha").value = d.fecha || "";
+    document.getElementById("cphysDocObs").value = d.observacion || "";
+    document.getElementById("saveCphysDocBtn").textContent = "Guardar cambios";
+    document.getElementById("cancelEditCphysDocBtn").style.display = "";
+    drawCphysDocArchivoInfo();
+    document.getElementById("hdrCphysDocumentos").scrollIntoView({behavior:"smooth", block:"start"});
+    return;
+  }
+  const del = e.target.closest("[data-cphys-doc-eliminar]");
+  if(del){
+    const d = (CACHE.cphysDocumentos||[]).find(x=>x.id===del.dataset.cphysDocEliminar); if(!d) return;
+    if(!confirm(`¿Eliminar el documento «${d.nombre}»? Esta acción no se puede deshacer.`)) return;
+    await deleteRecord("cphysDocumentos", d.id);
+    await loadCache();
+    if(cphysDocEditingId===d.id) resetCphysDocForm();
+    renderCphys();
+  }
+});
+
+/* --- Formatos para elecciones (PDF) ---
+   Documentos de apoyo con los datos de la empresa y espacios en blanco; no traen cifras ni plazos legales: el usuario verifica los requisitos vigentes. */
+function eleccionesFormatoPie(doc){
+  doc.setFontSize(8); doc.setTextColor(110);
+  doc.text("Formato de apoyo. Verifica los requisitos y plazos vigentes antes de usarlo.", 14, 288);
+  doc.setTextColor(0);
+}
+function eleccionesFirmas(doc, y, etiquetas){
+  if(y > 255){ doc.addPage(); y = 30; }
+  y += 14;
+  const n = etiquetas.length, ancho = 182/n;
+  etiquetas.forEach((et, i)=>{
+    const x0 = 14 + i*ancho + 4, x1 = 14 + (i+1)*ancho - 4;
+    doc.line(x0, y, x1, y);
+    doc.setFontSize(9); doc.text(et, (x0+x1)/2, y+5, {align:"center"});
+  });
+  return y + 12;
+}
+function eleccionesFilas(candidatos, total, extra){
+  const filas = candidatos.map((c,i)=>[String(i+1), c].concat(extra));
+  for(let i=filas.length; i<total; i++) filas.push([String(i+1), ""].concat(extra));
+  return filas;
+}
+function descargarFormatosEleccionesPdf(){
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const elegidos = Array.from(document.querySelectorAll("[data-elec-fmt]")).filter(c=>c.checked).map(c=>c.dataset.elecFmt);
+  if(!elegidos.length){ alert("Marca al menos un formato para descargar."); return; }
+  const v = id => document.getElementById(id).value.trim();
+  const emp = (CACHE.empresa&&CACHE.empresa.razonSocial) || "la empresa";
+  const fecha = v("cphysElecFecha") ? fmtDate(v("cphysElecFecha")) : "____ / ____ / ________";
+  const hora = v("cphysElecHora") || "________";
+  const lugar = v("cphysElecLugar") || "______________________________";
+  const cargos = v("cphysElecCargos") || "______________________________";
+  const comision = v("cphysElecComision") || "______________________________";
+  const candidatos = asesoriaLimpiarLista(document.getElementById("cphysElecCandidatos").value);
+  const doc = new JsPDFClass();
+  let primero = true;
+  const nueva = (titulo)=>{ if(!primero) doc.addPage(); primero = false; return grdPdfEncabezado(doc, titulo); };
+  const tabla = (y, head, body, anchos)=>{ doc.autoTable({startY:y, head:[head], body, theme:"grid", styles:{fontSize:9, minCellHeight:8}, headStyles:{fillColor:[42,120,214]}, columnStyles:anchos||{}}); return doc.lastAutoTable.finalY + 6; };
+  const orden = ["conv","insc","pap","escr","acta","const"];
+  orden.filter(k=>elegidos.includes(k)).forEach(k=>{
+    let y;
+    if(k==="conv"){
+      y = nueva("Convocatoria a elecciones del Comité Paritario");
+      doc.setFontSize(10);
+      y = escribirTextoPaginado(doc, `Se convoca a las trabajadoras y los trabajadores de ${emp} a participar en la elección de sus representantes ante el Comité Paritario de Higiene y Seguridad.`, 14, y, {maxWidth:182}) + 4;
+      doc.autoTable({startY:y, theme:"grid", styles:{fontSize:10, minCellHeight:9}, columnStyles:{0:{cellWidth:56, fontStyle:"bold"}}, body:[
+        ["Fecha de la elección", fecha], ["Hora", hora], ["Lugar", lugar], ["Representantes por elegir", cargos], ["Comisión electoral", comision], ["Inscripción de candidatos hasta", "____ / ____ / ________"]]});
+      y = doc.lastAutoTable.finalY + 6;
+      y = eleccionesFirmas(doc, y, ["Representante de la empresa", "Fecha de publicación"]);
+    } else if(k==="insc"){
+      y = nueva("Inscripción de candidatos");
+      doc.setFontSize(10);
+      y = escribirTextoPaginado(doc, `Elección de representantes de los trabajadores ante el Comité Paritario de Higiene y Seguridad de ${emp}. Fecha de la elección: ${fecha}.`, 14, y, {maxWidth:182}) + 2;
+      y = tabla(y, ["N°","Nombre completo","RUT","Cargo / área","Firma"], eleccionesFilas(candidatos, 12, ["","",""]), {0:{cellWidth:10}});
+    } else if(k==="pap"){
+      y = nueva("Papeleta de votación");
+      doc.setFontSize(10);
+      y = escribirTextoPaginado(doc, `Elección de representantes de los trabajadores ante el Comité Paritario de Higiene y Seguridad de ${emp}. Fecha: ${fecha}. Marca con una X al candidato de tu preferencia.`, 14, y, {maxWidth:182}) + 4;
+      const opciones = candidatos.length ? candidatos : Array(8).fill("__________________________________________");
+      const alto = 16 + opciones.length*4.6;
+      doc.rect(14, y-2, 182, alto);
+      dibujarCasillasPdf(doc, 24, y+8, opciones, [], 160);
+      y += alto + 4;
+    } else if(k==="escr"){
+      y = nueva("Acta de escrutinio");
+      doc.setFontSize(10);
+      y = escribirTextoPaginado(doc, `Escrutinio de la elección de representantes de los trabajadores ante el Comité Paritario de Higiene y Seguridad de ${emp}, realizada el ${fecha}, en ${lugar}.`, 14, y, {maxWidth:182}) + 2;
+      y = tabla(y, ["N°","Candidato","Votos"], eleccionesFilas(candidatos, 12, [""]), {0:{cellWidth:10}, 2:{cellWidth:30}});
+      doc.autoTable({startY:y, theme:"grid", styles:{fontSize:10, minCellHeight:9}, columnStyles:{0:{cellWidth:80, fontStyle:"bold"}}, body:[["Total de votos emitidos",""],["Votos nulos",""],["Votos en blanco",""]]});
+      y = doc.lastAutoTable.finalY + 4;
+      y = eleccionesFirmas(doc, y, ["Comisión electoral", "Comisión electoral", "Comisión electoral"]);
+    } else if(k==="acta"){
+      y = nueva("Acta de elección y proclamación");
+      doc.setFontSize(10);
+      y = escribirTextoPaginado(doc, `En ${lugar}, el ${fecha}, concluido el escrutinio de la elección de representantes de los trabajadores ante el Comité Paritario de Higiene y Seguridad de ${emp}, la comisión electoral proclama a las siguientes personas:`, 14, y, {maxWidth:182}) + 2;
+      y = tabla(y, ["N°","Nombre completo","RUT","Votos","Titular / suplente"], eleccionesFilas(candidatos, 12, ["","",""]), {0:{cellWidth:10}});
+      y = eleccionesFirmas(doc, y, ["Comisión electoral", "Comisión electoral", "Representante de la empresa"]);
+    } else if(k==="const"){
+      y = nueva("Acta de constitución del Comité Paritario");
+      doc.setFontSize(10);
+      y = escribirTextoPaginado(doc, `En ${lugar}, el ${fecha}, se constituye el Comité Paritario de Higiene y Seguridad de ${emp}, con las siguientes personas:`, 14, y, {maxWidth:182}) + 2;
+      const miembros = (CACHE.cphysMiembros||[]).filter(cphysMiembroVigente);
+      const lista = rep => { const l = miembros.filter(m=>m.representacion===rep).map((m,i)=>[String(i+1), m.nombre, CPHYS_CALIDAD_LABEL[m.calidad]||"", ""]); for(let i=l.length;i<6;i++) l.push([String(i+1),"","",""]); return l; };
+      doc.setFontSize(10); doc.text("Representantes de la empresa", 14, y+2);
+      y = tabla(y+4, ["N°","Nombre completo","Titular / suplente","Firma"], lista("empresa"), {0:{cellWidth:10}});
+      if(y > 200){ doc.addPage(); y = 20; }
+      doc.setFontSize(10); doc.text("Representantes de los trabajadores", 14, y+2);
+      y = tabla(y+4, ["N°","Nombre completo","Titular / suplente","Firma"], lista("trabajadores"), {0:{cellWidth:10}});
+      doc.setFontSize(10);
+      if(y > 250){ doc.addPage(); y = 20; }
+      doc.text("Presidente(a): ______________________________    Secretario(a): ______________________________", 14, y+4);
+      y = eleccionesFirmas(doc, y+6, ["Representante de la empresa", "Representante de los trabajadores"]);
+    }
+    eleccionesFormatoPie(doc);
+  });
+  agregarPiePaginasPdf(doc, "Formatos de elecciones CPHyS");
+  doc.save(`Formatos_elecciones_CPHyS_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}.pdf`);
+}
+on(document.getElementById("cphysElecPdfBtn"), "click", ()=> descargarFormatosEleccionesPdf());
+
+/* --- Lista de chequeo de cumplimiento del Comité ---
+   Store "cphysChequeos": {id, fecha, responsable, items:[{id, texto, origen:"auto"|"manual", estado:"cumple"|"no_cumple"|"na", detalle, obs}], pct, cumple, noCumple, na}.
+   Store "cphysChequeoItems": {id, texto} -- ítems propios del usuario, que se suman a los de la lista. Los ítems automáticos se calculan con los datos de la app al evaluar y quedan congelados en la evaluación. */
+const CPHYS_CHEQUEO_MANUALES = [
+  {id:"m1", texto:"Libro de actas del Comité al día y disponible"},
+  {id:"m2", texto:"Acuerdos del Comité difundidos a los trabajadores"},
+  {id:"m3", texto:"Constitución y elecciones comunicadas a quienes corresponde, según la normativa vigente"},
+];
+const CPHYS_CHEQUEO_ESTADO_LABEL = {cumple:"Cumple", no_cumple:"No cumple", na:"No aplica"};
+function cphysChequeoAuto(){
+  const ok = (id, texto, cumple, detalle)=>({id, texto, origen:"auto", estado:cumple?"cumple":"no_cumple", detalle:detalle||""});
+  const miembros = CACHE.cphysMiembros||[], vigentes = miembros.filter(cphysMiembroVigente);
+  const emp = vigentes.filter(m=>m.representacion==="empresa").length, trab = vigentes.filter(m=>m.representacion==="trabajadores").length;
+  const vencidos = miembros.length - vigentes.length;
+  const porVencer = vigentes.filter(m=>m.fechaTermino && daysUntil(m.fechaTermino)>=0 && daysUntil(m.fechaTermino)<=60).length;
+  const reuniones = CACHE.cphysReuniones||[];
+  const ult = reuniones.filter(r=>r.tipo==="ordinaria").sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+  const dias = ult ? Math.round((new Date(new Date().toDateString()) - new Date(ult.fecha))/86400000) : null;
+  const sinActa = reuniones.filter(r=>!r.actaData).length;
+  const coms = CACHE.cphysComisiones||[];
+  const comsMal = coms.filter(c=>!(c.integrantesIds||[]).length || !c.responsableId).length;
+  const compVenc = (CACHE.cphysAcuerdos||[]).filter(a=>cphysCompromisoEstado(a)==="vencido").length;
+  const accs = CACHE.accidentes||[];
+  const accSin = accs.filter(a=>{ const i = cphysInvestigacionDe(a.id); return !i || i.estado!=="cerrada"; }).length;
+  const docs = CACHE.cphysDocumentos||[];
+  const sinCurso = vigentes.filter(m=>cphysCursoEstado(m)!=="aprobado").length;
+  return [
+    ok("a1","Hay miembros del Comité registrados y vigentes", vigentes.length>0, vigentes.length+" vigente(s)"),
+    ok("a2","Hay representantes de la empresa y de los trabajadores, en igual cantidad", emp>0 && trab>0 && emp===trab, `Empresa: ${emp} · Trabajadores: ${trab}`),
+    ok("a3","Ningún mandato vencido ni por vencer en 60 días", vencidos===0 && porVencer===0, `${vencidos} vencido(s) · ${porVencer} por vencer`),
+    ok("a4","Reunión ordinaria realizada en los últimos 31 días", dias!==null && dias<=31, dias===null ? "sin reuniones ordinarias registradas" : `última hace ${dias} día(s)`),
+    ok("a5","Todas las reuniones registradas tienen el acta firmada adjunta", reuniones.length>0 && sinActa===0, reuniones.length ? `${sinActa} sin acta adjunta de ${reuniones.length}` : "sin reuniones registradas"),
+    ok("a6","Comisiones creadas, con integrantes y responsable", coms.length>0 && comsMal===0, coms.length ? `${comsMal} incompleta(s) de ${coms.length}` : "sin comisiones"),
+    ok("a7","Sin compromisos del Comité vencidos", compVenc===0, compVenc+" vencido(s)"),
+    ok("a8","Todos los accidentes e incidentes tienen investigación del Comité cerrada", accSin===0, accs.length ? `${accSin} pendiente(s) de ${accs.length}` : "sin accidentes registrados"),
+    ok("a9","Programa de seguridad del Comité con actividades", (CACHE.cphysPrograma||[]).length>0, (CACHE.cphysPrograma||[]).length+" actividad(es)"),
+    ok("a10","Programa de capacitación del Comité con actividades", (CACHE.cphysCapacitaciones||[]).length>0, (CACHE.cphysCapacitaciones||[]).length+" actividad(es)"),
+    ok("a11","Acta de constitución y acta de elecciones cargadas", docs.some(d=>d.tipo==="constitucion") && docs.some(d=>d.tipo==="elecciones"), `constitución: ${docs.some(d=>d.tipo==="constitucion")?"sí":"falta"} · elecciones: ${docs.some(d=>d.tipo==="elecciones")?"sí":"falta"}`),
+    ok("a12","Todos los miembros vigentes con el curso de orientación aprobado", vigentes.length>0 && sinCurso===0, `${sinCurso} sin aprobar de ${vigentes.length}`),
+  ];
+}
+function cphysChequeoCalc(items){
+  const cumple = items.filter(i=>i.estado==="cumple").length, noCumple = items.filter(i=>i.estado==="no_cumple").length, na = items.filter(i=>i.estado==="na").length;
+  return {cumple, noCumple, na, pct: (cumple+noCumple)>0 ? Math.round(cumple/(cumple+noCumple)*100) : null};
+}
+function cphysPctSemaforo(p){ return p===null ? null : (p>=80 ? "bajo" : (p>=50 ? "medio" : "alto")); }
+let cphysChequeoEdit = null; // {id, fecha, responsable, items}
+function cphysChequeoAbrir(id){
+  const ex = id ? (CACHE.cphysChequeos||[]).find(c=>c.id===id) : null;
+  if(id && !ex) return;
+  const u = usuarioDeSesion();
+  const items = ex ? ex.items.map(i=>({...i})) : [].concat(
+    cphysChequeoAuto(),
+    CPHYS_CHEQUEO_MANUALES.map(m=>({id:m.id, texto:m.texto, origen:"manual", estado:"no_cumple", detalle:"", obs:""})),
+    (CACHE.cphysChequeoItems||[]).map(c=>({id:"c"+c.id, texto:c.texto, origen:"manual", estado:"no_cumple", detalle:"", obs:""}))
+  );
+  items.forEach(i=>{ if(i.origen==="auto" && !i.calc) i.calc = i.estado==="na" ? "no_cumple" : i.estado; });
+  cphysChequeoEdit = {id: ex ? ex.id : uid(), items, creacion: ex ? ex.fechaCreacion : null};
+  openModal(`
+    <h3>${ex?"Evaluación del "+fmtDate(ex.fecha):"Nueva evaluación de cumplimiento del Comité"}</h3>
+    <div class="desc">Los ítems marcados «según datos» se calculan solos con lo registrado en la app (puedes marcarlos «No aplica»). Los demás los marcas tú.</div>
+    <div class="form-grid">
+      <div><label>Fecha de la evaluación</label><input type="date" id="cqFecha" value="${ex?ex.fecha:cphysHoy()}"></div>
+      <div><label>Responsable de la evaluación</label><input id="cqResp" list="dlResponsables" value="${incEsc(ex?ex.responsable:((u&&u.nombre)||""))}"></div>
+    </div>
+    <div class="kv" id="cqResumen" style="margin:8px 0;font-weight:600;"></div>
+    <div style="max-height:52vh;overflow:auto;"><table><thead><tr><th>Ítem</th><th>Resultado</th><th>Detalle</th><th>Observación</th></tr></thead><tbody id="cqItems"></tbody></table></div>
+    <div class="toolbar" style="margin-top:12px;"><button class="btn" id="cqGuardarBtn" type="button">Guardar evaluación</button><button class="btn secondary" id="cqGuardarPdfBtn" type="button">Guardar y descargar PDF</button><button class="btn secondary" id="cqCancelarBtn" type="button">Cancelar</button></div>`, {wide:true});
+  const dibujar = ()=>{
+    document.getElementById("cqItems").innerHTML = cphysChequeoEdit.items.map((i,idx)=>{
+      const sel = i.origen==="auto"
+        ? `<select data-cq-est="${idx}"><option value="${i.calc}" ${i.estado!=="na"?"selected":""}>${CPHYS_CHEQUEO_ESTADO_LABEL[i.calc]} (según datos)</option><option value="na" ${i.estado==="na"?"selected":""}>No aplica</option></select>`
+        : `<select data-cq-est="${idx}">${["cumple","no_cumple","na"].map(k=>`<option value="${k}" ${i.estado===k?"selected":""}>${CPHYS_CHEQUEO_ESTADO_LABEL[k]}</option>`).join("")}</select>`;
+      return `<tr><td>${incEsc(i.texto)}</td><td>${sel}</td><td class="kv">${incEsc(i.detalle||"")}</td><td><input data-cq-obs="${idx}" value="${incEsc(i.obs||"")}"></td></tr>`;
+    }).join("");
+    const c = cphysChequeoCalc(cphysChequeoEdit.items);
+    document.getElementById("cqResumen").textContent = `Cumplimiento: ${c.pct===null?"—":c.pct+"%"}  ·  ${c.cumple} cumple · ${c.noCumple} no cumple · ${c.na} no aplica`;
+  };
+  dibujar();
+  on(document.getElementById("cqItems"), "change", (e)=>{
+    const s = e.target.closest("[data-cq-est]"); if(!s) return;
+    cphysChequeoEdit.items[+s.dataset.cqEst].estado = s.value;
+    const c = cphysChequeoCalc(cphysChequeoEdit.items);
+    document.getElementById("cqResumen").textContent = `Cumplimiento: ${c.pct===null?"—":c.pct+"%"}  ·  ${c.cumple} cumple · ${c.noCumple} no cumple · ${c.na} no aplica`;
+  });
+  on(document.getElementById("cqItems"), "input", (e)=>{
+    const o = e.target.closest("[data-cq-obs]"); if(o) cphysChequeoEdit.items[+o.dataset.cqObs].obs = o.value;
+  });
+  on(document.getElementById("cqCancelarBtn"), "click", closeModal);
+  const guardar = async (conPdf)=>{
+    const items = cphysChequeoEdit.items.map(i=>({id:i.id, texto:i.texto, origen:i.origen, estado:i.estado, detalle:i.detalle||"", obs:(i.obs||"").trim(), ...(i.origen==="auto" ? {calc:i.calc} : {})}));
+    const c = cphysChequeoCalc(items);
+    const rec = {id:cphysChequeoEdit.id, fecha:document.getElementById("cqFecha").value || cphysHoy(), responsable:document.getElementById("cqResp").value.trim(), items, pct:c.pct, cumple:c.cumple, noCumple:c.noCumple, na:c.na, fechaCreacion:cphysChequeoEdit.creacion || new Date().toISOString(), fechaModificacion:new Date().toISOString()};
+    await put("cphysChequeos", rec);
+    await loadCache();
+    closeModal();
+    renderCphys();
+    if(conPdf) descargarCphysChequeoPdf(rec.id);
+  };
+  on(document.getElementById("cqGuardarBtn"), "click", ()=> guardar(false));
+  on(document.getElementById("cqGuardarPdfBtn"), "click", ()=> guardar(true));
+}
+function descargarCphysChequeoPdf(id){
+  const rec = (CACHE.cphysChequeos||[]).find(c=>c.id===id);
+  if(!rec){ alert("No se encontró la evaluación."); return; }
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const doc = new JsPDFClass();
+  let y = grdPdfEncabezado(doc, "Lista de chequeo de cumplimiento del Comité Paritario");
+  doc.setFontSize(10);
+  doc.text(`Fecha de la evaluación: ${fmtDate(rec.fecha)}   ·   Responsable: ${rec.responsable||"—"}`, 14, y); y += 6;
+  doc.text(`Cumplimiento: ${rec.pct===null?"—":rec.pct+"%"}   (${rec.cumple} cumple · ${rec.noCumple} no cumple · ${rec.na} no aplica)`, 14, y); y += 4;
+  doc.autoTable({ startY:y, head:[["Ítem","Origen","Resultado","Detalle / observación"]],
+    body: rec.items.map(i=>[i.texto, i.origen==="auto"?"Según datos":"Manual", CPHYS_CHEQUEO_ESTADO_LABEL[i.estado]||i.estado, [i.detalle, i.obs].filter(Boolean).join(" · ") || "—"]),
+    styles:{fontSize:8.5}, headStyles:{fillColor:[42,120,214]}, columnStyles:{0:{cellWidth:72}, 1:{cellWidth:24}, 2:{cellWidth:24}} });
+  y = doc.lastAutoTable.finalY;
+  eleccionesFirmas(doc, y, ["Responsable de la evaluación", "Presidente(a) del Comité"]);
+  agregarPiePaginasPdf(doc, "Lista de chequeo CPHyS");
+  doc.save(`Lista_chequeo_CPHyS_${rec.fecha}_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}.pdf`);
+}
+on(document.getElementById("cphysChequeoNuevaBtn"), "click", ()=> cphysChequeoAbrir(null));
+on(document.getElementById("cphysChequeoTable"), "click", async (e)=>{
+  const ver = e.target.closest("[data-cq-ver]"); if(ver){ cphysChequeoAbrir(ver.dataset.cqVer); return; }
+  const pdf = e.target.closest("[data-cq-pdf]"); if(pdf){ descargarCphysChequeoPdf(pdf.dataset.cqPdf); return; }
+  const del = e.target.closest("[data-cq-del]");
+  if(del){
+    const r = (CACHE.cphysChequeos||[]).find(x=>x.id===del.dataset.cqDel); if(!r) return;
+    if(!confirm(`¿Eliminar la evaluación del ${fmtDate(r.fecha)}? Esta acción no se puede deshacer.`)) return;
+    await deleteRecord("cphysChequeos", r.id);
+    await loadCache(); renderCphys();
+  }
+});
+on(document.getElementById("cphysChequeoItemAddBtn"), "click", async ()=>{
+  const t = document.getElementById("cphysChequeoItemTexto").value.trim();
+  if(!t){ alert("Escribe el ítem."); return; }
+  await put("cphysChequeoItems", {id:uid(), texto:t});
+  document.getElementById("cphysChequeoItemTexto").value = "";
+  await loadCache(); renderCphys();
+});
+on(document.getElementById("cphysChequeoItemsTable"), "click", async (e)=>{
+  const del = e.target.closest("[data-cqi-del]"); if(!del) return;
+  const it = (CACHE.cphysChequeoItems||[]).find(x=>x.id===del.dataset.cqiDel); if(!it) return;
+  if(!confirm(`¿Quitar el ítem «${it.texto}» de la lista? Las evaluaciones ya guardadas lo conservan.`)) return;
+  await deleteRecord("cphysChequeoItems", it.id);
+  await loadCache(); renderCphys();
+});
+function cphysChequeoOrden(a,b){ return String(b.fecha||"").localeCompare(String(a.fecha||"")) || String(b.fechaCreacion||"").localeCompare(String(a.fechaCreacion||"")); }
+function cphysUltimoChequeo(){ return (CACHE.cphysChequeos||[]).slice().sort(cphysChequeoOrden)[0] || null; }
+function renderCphysChequeo(){
+  const rows = (CACHE.cphysChequeos||[]).slice().sort(cphysChequeoOrden);
+  const ult = rows[0];
+  document.getElementById("cphysChequeoTiles").innerHTML = [
+    tile("Última evaluación", ult ? (ult.pct===null?"—":ult.pct+"%") : "—", ult ? fmtDate(ult.fecha) : "sin evaluaciones todavía", ult ? cphysPctSemaforo(ult.pct) : null),
+    tile("Evaluaciones realizadas", rows.length, ""),
+  ].join("");
+  document.getElementById("cphysChequeoTable").innerHTML = rows.length ? rows.map(r=>`<tr>
+    <td>${fmtDate(r.fecha)}</td><td>${incEsc(r.responsable||"—")}</td><td>${r.cumple}</td><td>${r.noCumple}</td><td>${r.na}</td>
+    <td><span class="pill ${cphysPctSemaforo(r.pct)||"pendiente"}">${r.pct===null?"—":r.pct+"%"}</span></td>
+    <td><button class="subtle-btn" data-cq-ver="${r.id}">Ver / editar</button> <button class="subtle-btn" data-cq-pdf="${r.id}">PDF</button> <button class="subtle-btn" data-cq-del="${r.id}">Eliminar</button></td>
+  </tr>`).join("") : `<tr><td class="empty" colspan="7">Todavía no hay evaluaciones. Usa «Nueva evaluación».</td></tr>`;
+  const items = CACHE.cphysChequeoItems||[];
+  document.getElementById("cphysChequeoItemsTable").innerHTML = items.length ? items.map(i=>`<tr><td>${incEsc(i.texto)}</td><td><button class="subtle-btn" data-cqi-del="${i.id}">Quitar</button></td></tr>`).join("") : `<tr><td class="empty" colspan="2">Sin ítems propios todavía</td></tr>`;
 }
 
 /* --- Reuniones --- */
@@ -9636,6 +10157,8 @@ function renderCphys(){
   renderCphysPrograma();
   renderCphysCapacitacion();
   renderCphysInvestigaciones();
+  renderCphysDocumentos();
+  renderCphysChequeo();
   try{ subpestanasAplicar("cphys"); }catch(e){}
 }
 
@@ -11195,12 +11718,16 @@ subpestanasCrear("compromisos", [
     badge:()=>{ const n = (CACHE.compromisosAsesoria||[]).filter(a=>cphysCompromisoEstado(a)==="vencido").length; return n ? {texto:`${n} vencida${n===1?"":"s"}`, nivel:"r"} : null; }},
 ], "tarjetas");
 subpestanasCrear("cphys", [
-  {key:"miembros", icono:"personas", label:"Miembros y comisiones", desc:"Quiénes integran el Comité y cómo se reparte el trabajo", hdrs:["hdrCphysMiembros","hdrCphysMiembrosListado","hdrCphysComisiones","hdrCphysComisionesListado"]},
+  {key:"miembros", icono:"personas", label:"Miembros y comisiones", desc:"Quiénes integran el Comité, fuero, curso y comisiones", hdrs:["hdrCphysMiembros","hdrCphysMiembrosListado","hdrCphysComisiones","hdrCphysComisionesListado"],
+    badge:()=>{ const n = (CACHE.cphysMiembros||[]).filter(m=>cphysMiembroVigente(m) && cphysCursoEstado(m)==="pendiente").length; return n ? {texto:`${n} sin curso`, nivel:"y"} : null; }},
+  {key:"constitucion", icono:"documento", label:"Constitución y elecciones", desc:"Actas de constitución y elecciones, fuero y formatos para elecciones", hdrs:["hdrCphysDocumentos","hdrCphysElecciones"],
+    badge:()=>{ const d = CACHE.cphysDocumentos||[]; const f = ["constitucion","elecciones"].filter(t=>!d.some(x=>x.tipo===t)).length; return f ? {texto:`faltan ${f} acta${f===1?"":"s"}`, nivel:"y"} : null; }},
   {key:"reuniones", icono:"registro", label:"Reuniones y actas", desc:"Registrar reuniones, adjuntar el acta firmada y sacar el PDF", hdrs:["hdrCphysReuniones","hdrCphysReunionesListado"]},
   {key:"compromisos", icono:"lista", label:"Compromisos", desc:"Seguimiento de compromisos de reuniones, visitas y más", hdrs:["hdrCphysAcuerdosSeguimiento"],
     badge:()=>{ const n = (CACHE.cphysAcuerdos||[]).filter(a=>cphysCompromisoEstado(a)==="vencido").length; return n ? {texto:`${n} vencido${n===1?"":"s"}`, nivel:"r"} : null; }},
   {key:"programa", icono:"grafico", label:"Programa y capacitación", desc:"Programa de seguridad y de capacitación del Comité", hdrs:["hdrCphysPrograma","hdrCphysCapacitacion"]},
-  {key:"investigaciones", icono:"buscar", label:"Investigaciones", desc:"Control de investigación de accidentes e incidentes", hdrs:["hdrCphysInvestigaciones"]},
+  {key:"investigaciones", icono:"buscar", label:"Investigaciones", desc:"Investigación del Comité de cada accidente e incidente", hdrs:["hdrCphysInvestigaciones"]},
+  {key:"chequeo", icono:"pulso", label:"Lista de chequeo", desc:"Evaluación de cumplimiento del Comité, con su evolución", hdrs:["hdrCphysChequeo","hdrCphysChequeoItems"]},
 ], "tarjetas");
 subpestanasCrear("emergencia", [
   {key:"resumen", icono:"resumen", label:"Resumen", desc:"Estado general del plan de gestión del riesgo", hdrs:["hdrGrdResumen"]},
@@ -11980,6 +12507,7 @@ function renderDashboard(){
   const cphysCompTotal = (CACHE.cphysAcuerdos||[]).length;
   const cphysCompAbiertos = (CACHE.cphysAcuerdos||[]).filter(a=>a.estado!=="cerrado").length;
   const cphysCompVencidos = (CACHE.cphysAcuerdos||[]).filter(a=>cphysCompromisoEstado(a)==="vencido").length;
+  const cphysChq = cphysUltimoChequeo();
 
   // GRD — cumplimiento global (ya ponderado por etapa en la propia pestaña GRD).
   const grdPct = grdCumplimientoGlobal();
@@ -12031,6 +12559,7 @@ function renderDashboard(){
     ]) +
     tileSection("Comité paritario, emergencias, EPP y vehículos", "var(--s1)", [
       tile("CPHyS — días desde última reunión ordinaria", cphysDiasDesdeOrdinaria===null?"—":cphysDiasDesdeOrdinaria, cphysDiasDesdeOrdinaria===null?"sin reuniones ordinarias registradas":(cphysDiasDesdeOrdinaria<=31?"dentro del plazo mensual":"sobre el plazo mensual"), cphysSemaforoReunion, "people", "var(--s1)"),
+      ...(cphysChq ? [tile("CPHyS — lista de chequeo", cphysChq.pct===null?"—":cphysChq.pct+"%", "última evaluación: "+fmtDate(cphysChq.fecha), cphysPctSemaforo(cphysChq.pct), "people", "var(--s1)")] : []),
       ...(cphysCompTotal ? [tile("CPHyS — compromisos abiertos", cphysCompAbiertos, cphysCompVencidos+" vencido(s) de "+cphysCompTotal+" registrados", cphysCompVencidos>0?"alto":(cphysCompAbiertos>0?"medio":"bajo"), "people", "var(--s1)")] : []),
       tile("CPHyS — investigaciones pendientes", cphysPendientesInvestigar, "de "+cphysAccidentesAll.length+" accidentes/incidentes", cphysPendientesInvestigar>0?"alto":"bajo", "people", "var(--s1)"),
       tile("GRD — cumplimiento global", grdPct+"%", "diagnóstico, plan de respuesta y simulacros", grdEtapaSemaforo(grdPct), "people", "var(--s1)"),
