@@ -486,8 +486,8 @@
     </div></div>
 
     <div class="card" id="cardMisCompromisosCphys">
-      <div class="card-header-row" id="hdrMisCompromisosCphys"><h2>Mis compromisos del Comité</h2><button class="collapse-toggle" id="toggleMisCompromisosCphys" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMisCompromisosCphys">
-      <div class="desc">Compromisos del Comité Paritario asignados a tu nombre y todavía sin cumplir. Desde aquí puedes registrar avances y marcarlos como cumplidos.</div>
+      <div class="card-header-row" id="hdrMisCompromisosCphys"><h2>Mis compromisos y tareas</h2><button class="collapse-toggle" id="toggleMisCompromisosCphys" type="button" aria-label="Contraer o expandir">▾</button></div><div class="collapsible-body" id="bodyMisCompromisosCphys">
+      <div class="desc">Compromisos del Comité Paritario y tareas de la asesoría asignados a tu nombre y todavía sin cumplir. Desde aquí puedes registrar avances y marcarlos como cumplidos.</div>
       <div id="misCompromisosWrap"></div>
     </div></div>
 
@@ -3675,10 +3675,10 @@
     <div class="card">
       <div class="card-header-row" id="hdrCphysInvestigaciones"><h2>Control de investigaciones de accidentes</h2><button class="collapse-toggle" id="toggleCphysInvestigaciones" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyCphysInvestigaciones">
-      <div class="desc">El Comité Paritario debe investigar las causas de los accidentes del trabajo y enfermedades profesionales (DS 44, art. 47 letra c). Se cruza cada accidente/incidente registrado con el análisis de causa raíz (árbol causal) de Accidentabilidad: si existe un análisis asociado, se considera investigado.</div>
+      <div class="desc">El Comité Paritario debe investigar las causas de los accidentes del trabajo y enfermedades profesionales (DS 44, art. 47 letra c). Cada accidente o incidente registrado tiene aquí su <strong>investigación propia del Comité</strong> (comisión que investiga, hechos, causas, medidas propuestas que pasan a «Compromisos», conclusiones e informe PDF). Es independiente del árbol causal y de la investigación formal que hace la empresa en Accidentabilidad, a los que puedes apoyarte: el botón «Ver análisis de la empresa» te lleva allá.</div>
       <div class="grid-tiles" id="cphysInvestigacionesTiles"></div>
       <table>
-        <thead><tr><th>Fecha</th><th>Tipo</th><th>Área</th><th>Causa</th><th>Estado</th><th>Responsable investigación</th><th>Acción</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Área</th><th>Causa</th><th>Investigación del Comité</th><th>Análisis de la empresa</th><th>Acciones</th></tr></thead>
         <tbody id="cphysInvestigacionesTable"></tbody>
       </table>
       </div>
@@ -4171,6 +4171,34 @@
         <div><button class="btn small secondary" id="compInformeDescargarBtn" style="margin-top:20px;">⬇ Descargar informe PDF</button></div>
       </div>
     </div></div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrCompAsesoria"><h2>Compromisos de la asesoría</h2><button class="collapse-toggle" id="toggleCompAsesoria" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyCompAsesoria">
+      <div class="desc">Tus tareas y compromisos como asesor con esta empresa: lo que acuerdas o queda pendiente al visitarla. Cada tarea tiene responsable, plazo, avances y cierre con respaldo. Son independientes de los compromisos del Comité Paritario. Con «Pegar lista» cargas varias de una vez.</div>
+      <div class="grid-tiles" id="asesoriaTiles"></div>
+      <div class="toolbar" style="margin-top:10px;">
+        <div><button class="btn" id="asesoriaNuevaBtn" type="button">+ Nueva tarea</button></div>
+        <div><button class="btn secondary" id="asesoriaPegarBtn" type="button">Pegar lista</button></div>
+        <div class="field"><label>Estado</label>
+          <select id="asesoriaFiltroEstado">
+            <option value="abiertos">Abiertas (sin cumplir)</option>
+            <option value="todos">Todas</option>
+            <option value="pendiente">Pendientes</option>
+            <option value="proceso">En proceso</option>
+            <option value="vencido">Vencidas</option>
+            <option value="cumplido">Cumplidas</option>
+          </select>
+        </div>
+        <div class="field"><label>Responsable</label><select id="asesoriaFiltroResp"></select></div>
+        <div><button class="btn small secondary" id="asesoriaPdfBtn" type="button" style="margin-top:20px;">Informe PDF</button></div>
+      </div>
+      <table>
+        <thead><tr><th>Tarea</th><th>Responsable</th><th>Origen</th><th>Plazo</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody id="asesoriaTable"></tbody>
+      </table>
+      </div>
+    </div>
   </div>
 
   <!-- CONFIG -->
@@ -4464,8 +4492,8 @@
    servidor, en algunas configuraciones de Chrome/Edge).
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
-const DB_VERSION = 48;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos","matrizVersiones","vsExamenesOcup","objetivosGestion","indicadoresGestion","medidasIndicadores","cphysComisiones"];
+const DB_VERSION = 49;
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos","matrizVersiones","vsExamenesOcup","objetivosGestion","indicadoresGestion","medidasIndicadores","cphysComisiones","compromisosAsesoria","cphysInvestigaciones"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -5015,6 +5043,7 @@ setupCollapsible("hdrObligacionesDS44", "bodyObligacionesDS44", "toggleObligacio
 setupCollapsible("hdrControlDeCompromisosReunionesYOtros", "bodyControlDeCompromisosReunionesYOtros", "toggleControlDeCompromisosReunionesYOtros", "collapsed_controlDeCompromisosReunionesYOtros");
 setupCollapsible("hdrCumplimientoMensual", "bodyCumplimientoMensual", "toggleCumplimientoMensual", "collapsed_cumplimientoMensual");
 setupCollapsible("hdrInformeDeCumplimiento", "bodyInformeDeCumplimiento", "toggleInformeDeCumplimiento", "collapsed_informeDeCumplimiento");
+setupCollapsible("hdrCompAsesoria", "bodyCompAsesoria", "toggleCompAsesoria", "collapsed_compAsesoria");
 setupCollapsible("hdrEmpresa", "bodyEmpresa", "toggleEmpresa", "collapsed_empresa");
 setupCollapsible("hdrMetasDeIndicadoresDeAccidentabilidad", "bodyMetasDeIndicadoresDeAccidentabilidad", "toggleMetasDeIndicadoresDeAccidentabilidad", "collapsed_metasDeIndicadoresDeAccidentabilidad");
 setupCollapsible("hdrGestionarListasDesplegables", "bodyGestionarListasDesplegables", "toggleGestionarListasDesplegables", "collapsed_gestionarListasDesplegables");
@@ -8909,7 +8938,8 @@ function renderCphysAcuerdosSeguimiento(){
     </tr>`;
   }).join("") : `<tr><td class="empty" colspan="7">${all.length ? "Ningún compromiso coincide con los filtros." : "Sin compromisos registrados todavía. Usa «+ Nuevo compromiso» o agrégalos al registrar una reunión."}</td></tr>`;
 }
-function cphysRefrescarTodo(){
+function cphysRefrescarTodo(store){
+  if(store==="compromisosAsesoria"){ asesoriaRefrescar(); return; }
   renderCphys();
   try{ renderMisCompromisosCphys(); renderMisPendientes(); }catch(e){}
 }
@@ -8960,8 +8990,9 @@ function cphysCompromisoAbrirForm(id){
     cphysRefrescarTodo();
   });
 }
-function cphysCompromisoAvanceAbrir(id){
-  const a = (CACHE.cphysAcuerdos||[]).find(x=>x.id===id); if(!a) return;
+function cphysCompromisoAvanceAbrir(id, store){
+  const st = store || "cphysAcuerdos";
+  const a = (CACHE[st]||[]).find(x=>x.id===id); if(!a) return;
   openModal(`
     <h3>Registrar avance</h3>
     <div class="kv" style="margin-bottom:8px;">${incEsc(a.texto)}</div>
@@ -8975,14 +9006,15 @@ function cphysCompromisoAvanceAbrir(id){
     const texto = document.getElementById("cpaTexto").value.trim();
     if(!texto){ alert("Escribe en qué va el compromiso."); return; }
     const u = usuarioDeSesion();
-    await put("cphysAcuerdos", {...a, seguimiento:(a.seguimiento||[]).concat([{fecha:document.getElementById("cpaFecha").value||cphysHoy(), texto, por:(u&&u.nombre)||""}])});
+    await put(st, {...a, seguimiento:(a.seguimiento||[]).concat([{fecha:document.getElementById("cpaFecha").value||cphysHoy(), texto, por:(u&&u.nombre)||""}])});
     await loadCache();
     closeModal();
-    cphysRefrescarTodo();
+    cphysRefrescarTodo(st);
   });
 }
-function cphysCompromisoCumplirAbrir(id){
-  const a = (CACHE.cphysAcuerdos||[]).find(x=>x.id===id); if(!a) return;
+function cphysCompromisoCumplirAbrir(id, store){
+  const st = store || "cphysAcuerdos";
+  const a = (CACHE[st]||[]).find(x=>x.id===id); if(!a) return;
   openModal(`
     <h3>Marcar compromiso como cumplido</h3>
     <div class="kv" style="margin-bottom:8px;">${incEsc(a.texto)}</div>
@@ -8997,10 +9029,10 @@ function cphysCompromisoCumplirAbrir(id){
     const archivo = document.getElementById("cpcArchivo").files[0];
     let resp = null;
     if(archivo){ resp = await cphysLeerAdjunto(archivo); if(!resp) return; }
-    await put("cphysAcuerdos", {...a, estado:"cerrado", fechaCierre: document.getElementById("cpcFecha").value || cphysHoy(), observacionCierre: document.getElementById("cpcObs").value.trim(), ...(resp ? {respaldoData:resp.data, respaldoNombre:resp.nombre} : {})});
+    await put(st, {...a, estado:"cerrado", fechaCierre: document.getElementById("cpcFecha").value || cphysHoy(), observacionCierre: document.getElementById("cpcObs").value.trim(), ...(resp ? {respaldoData:resp.data, respaldoNombre:resp.nombre} : {})});
     await loadCache();
     closeModal();
-    cphysRefrescarTodo();
+    cphysRefrescarTodo(st);
   });
 }
 on(document.getElementById("cphysNuevoCompromisoBtn"), "click", ()=> cphysCompromisoAbrirForm(null));
@@ -9053,29 +9085,34 @@ function descargarCphysCompromisosPdf(){
   doc.save(`Compromisos_CPHyS_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}.pdf`);
 }
 on(document.getElementById("cphysCompromisosPdfBtn"), "click", ()=> descargarCphysCompromisosPdf());
-/* «Mis pendientes»: compromisos del Comité asignados al usuario que inició sesión. */
+/* «Mis pendientes»: compromisos del Comité y tareas de la asesoría asignados al usuario que inició sesión. */
+function misCompromisosDelUsuario(){
+  const u = usuarioDeSesion(); if(!u || !u.nombre) return null;
+  const n = normalizarNombreTexto(u.nombre), lista = [];
+  const mio = a => a.estado!=="cerrado" && a.responsable && normalizarNombreTexto(a.responsable)===n;
+  (CACHE.cphysAcuerdos||[]).filter(mio).forEach(a=>lista.push({a, store:"cphysAcuerdos", origen:cphysCompromisoOrigenTxt(a)}));
+  (CACHE.compromisosAsesoria||[]).filter(mio).forEach(a=>lista.push({a, store:"compromisosAsesoria", origen:"Asesoría"+(a.origenDetalle?" · "+a.origenDetalle:"")}));
+  return lista.sort((x,y)=>new Date(x.a.plazo||"9999-12-31")-new Date(y.a.plazo||"9999-12-31"));
+}
 function renderMisCompromisosCphys(){
   const wrap = document.getElementById("misCompromisosWrap"); if(!wrap) return;
   const card = document.getElementById("cardMisCompromisosCphys");
-  if(card) card.style.display = (CACHE.cphysAcuerdos||[]).length ? "" : "none";
-  const u = usuarioDeSesion();
-  if(!u || !u.nombre){ wrap.innerHTML = '<div class="empty">Inicia sesión para ver tus compromisos del Comité.</div>'; return; }
-  const n = normalizarNombreTexto(u.nombre);
-  const mis = (CACHE.cphysAcuerdos||[]).filter(a=>a.estado!=="cerrado" && a.responsable && normalizarNombreTexto(a.responsable)===n)
-    .sort((a,b)=>new Date(a.plazo||"9999-12-31")-new Date(b.plazo||"9999-12-31"));
+  if(card) card.style.display = ((CACHE.cphysAcuerdos||[]).length || (CACHE.compromisosAsesoria||[]).length) ? "" : "none";
+  const mis = misCompromisosDelUsuario();
+  if(!mis){ wrap.innerHTML = '<div class="empty">Inicia sesión para ver tus compromisos.</div>'; return; }
   wrap.innerHTML = mis.length
-    ? `<table><thead><tr><th>Compromiso</th><th>Origen</th><th>Plazo</th><th>Estado</th><th></th></tr></thead><tbody>${mis.map(a=>`<tr>
+    ? `<table><thead><tr><th>Compromiso</th><th>Origen</th><th>Plazo</th><th>Estado</th><th></th></tr></thead><tbody>${mis.map(({a, store, origen})=>`<tr>
         <td>${incEsc(a.texto)}${cphysCompromisoDetalleHtml(a)}</td>
-        <td>${incEsc(cphysCompromisoOrigenTxt(a))}</td>
+        <td>${incEsc(origen)}</td>
         <td>${a.plazo?fmtDate(a.plazo):"—"}</td>
         <td>${cphysEstadoPill(a)}</td>
-        <td><button class="subtle-btn" data-cphys-mis-avance="${a.id}">Registrar avance</button> <button class="subtle-btn" data-cphys-mis-cumplir="${a.id}">Marcar cumplido</button></td>
+        <td><button class="subtle-btn" data-cphys-mis-avance="${a.id}" data-store="${store}">Registrar avance</button> <button class="subtle-btn" data-cphys-mis-cumplir="${a.id}" data-store="${store}">Marcar cumplido</button></td>
       </tr>`).join("")}</tbody></table>`
-    : '<div class="empty">No tienes compromisos del Comité pendientes.</div>';
+    : '<div class="empty">No tienes compromisos pendientes.</div>';
 }
 on(document.getElementById("misCompromisosWrap"), "click", (e)=>{
-  const av = e.target.closest("[data-cphys-mis-avance]"); if(av){ cphysCompromisoAvanceAbrir(av.dataset.cphysMisAvance); return; }
-  const cu = e.target.closest("[data-cphys-mis-cumplir]"); if(cu){ cphysCompromisoCumplirAbrir(cu.dataset.cphysMisCumplir); }
+  const av = e.target.closest("[data-cphys-mis-avance]"); if(av){ cphysCompromisoAvanceAbrir(av.dataset.cphysMisAvance, av.dataset.store); return; }
+  const cu = e.target.closest("[data-cphys-mis-cumplir]"); if(cu){ cphysCompromisoCumplirAbrir(cu.dataset.cphysMisCumplir, cu.dataset.store); }
 });
 /* Genera el acta de la reunión en PDF -- reemplaza la subida de archivo:
    la reunión registrada en la app ES el acta. */
@@ -9339,36 +9376,56 @@ function renderCphysCapacitacion(){
   `).join("") : `<tr><td class="empty" colspan="8">Sin capacitaciones registradas todavía en el Programa de Capacitación del Comité</td></tr>`;
 }
 
-/* --- Control de investigaciones de accidentes --- */
+/* --- Control de investigaciones de accidentes ---
+   El Comité hace su PROPIA investigación de cada accidente (store "cphysInvestigaciones", 1 por accidente), distinta del árbol causal y
+   de la investigación formal de la empresa (Accidentabilidad), a las que enlaza. Las medidas propuestas se convierten en compromisos
+   del Comité (store "cphysAcuerdos", origen "accidente"). */
 function investigacionDeAccidente(accidenteId){
   const analisis = (CACHE.arbolesCausales||[]).filter(a=>a.accidenteId===accidenteId);
   if(!analisis.length) return null;
   return analisis.slice().sort((a,b)=> new Date(b.fechaAnalisis||0)-new Date(a.fechaAnalisis||0))[0];
 }
+function cphysInvestigacionDe(accidenteId){ return (CACHE.cphysInvestigaciones||[]).find(i=>i.accidenteId===accidenteId) || null; }
+const CPHYS_INV_ESTADO_LABEL = {en_curso:"En curso", cerrada:"Cerrada"};
 function renderCphysInvestigaciones(){
   const accidentes = (CACHE.accidentes||[]).slice().sort((a,b)=> new Date(b.fecha)-new Date(a.fecha));
-  const investigados = accidentes.filter(a=>investigacionDeAccidente(a.id));
+  const invs = accidentes.map(a=>cphysInvestigacionDe(a.id));
+  const cerradas = invs.filter(i=>i && i.estado==="cerrada").length, enCurso = invs.filter(i=>i && i.estado!=="cerrada").length;
+  const pendientes = accidentes.length - cerradas - enCurso;
   document.getElementById("cphysInvestigacionesTiles").innerHTML = [
     tile("Accidentes e incidentes registrados", accidentes.length, ""),
-    tile("Investigados (con análisis de causa raíz)", investigados.length, ""),
-    tile("Pendientes de investigar", accidentes.length-investigados.length, "requieren análisis de causa raíz", (accidentes.length-investigados.length)>0?"alto":"bajo"),
+    tile("Investigaciones del Comité cerradas", cerradas, ""),
+    tile("En curso", enCurso, "abiertas, falta cerrarlas", enCurso>0?"medio":"bajo"),
+    tile("Sin investigación del Comité", pendientes, "requieren que el Comité investigue", pendientes>0?"alto":"bajo"),
   ].join("");
   document.getElementById("cphysInvestigacionesTable").innerHTML = accidentes.length ? accidentes.map(a=>{
-    const inv = investigacionDeAccidente(a.id);
+    const inv = cphysInvestigacionDe(a.id);
+    const arbol = investigacionDeAccidente(a.id), formal = (CACHE.accInvestigaciones||[]).some(x=>x.accidenteId===a.id);
+    const estadoHtml = !inv ? '<span class="pill pendiente">Sin investigar</span>'
+      : inv.estado==="cerrada" ? `<span class="pill vigente">Cerrada${inv.fechaCierre?" el "+fmtDate(inv.fechaCierre):""}</span>`
+      : '<span class="pill medio">En curso</span>';
+    const empresa = [arbol?"Árbol causal ✓":"", formal?"Investigación formal ✓":""].filter(Boolean).join(" · ");
     return `<tr>
       <td>${fmtDate(a.fecha)}</td>
       <td>${ACC_TIPO_LABEL[a.tipo]||a.tipo}</td>
       <td>${areaName(a.areaId)}</td>
-      <td>${a.causa || "—"}</td>
-      <td>${inv? '<span class="pill vigente">Investigado</span>' : '<span class="pill pendiente">Pendiente de investigar</span>'}</td>
-      <td>${inv? (inv.responsable||"—") : "—"}</td>
-      <td><button class="subtle-btn" data-cphys-investigar="${a.id}">${inv?"Ver investigación":"Investigar"}</button></td>
+      <td>${incEsc(a.causa || "—")}</td>
+      <td>${estadoHtml}</td>
+      <td>${empresa || "—"}</td>
+      <td>
+        <button class="subtle-btn" data-cphys-inv-abrir="${a.id}">${inv?"Ver investigación":"Investigar"}</button>
+        ${inv ? `<button class="subtle-btn" data-cphys-inv-pdf="${a.id}">PDF</button>` : ""}
+        <button class="subtle-btn" data-cphys-investigar="${a.id}">Ver análisis de la empresa →</button>
+      </td>
     </tr>`;
   }).join("") : `<tr><td class="empty" colspan="7">Sin accidentes/incidentes registrados todavía</td></tr>`;
 }
 on(document.getElementById("cphysInvestigacionesTable"), "click", (e)=>{
+  const ab = e.target.closest("[data-cphys-inv-abrir]"); if(ab){ cphysInvAbrir(ab.dataset.cphysInvAbrir); return; }
+  const pf = e.target.closest("[data-cphys-inv-pdf]"); if(pf){ descargarCphysInvPdf(pf.dataset.cphysInvPdf); return; }
   const btn = e.target.closest("[data-cphys-investigar]");
   if(!btn) return;
+  // Salto al análisis de la empresa (árbol causal) en Accidentabilidad.
   const accidenteId = btn.dataset.cphysInvestigar;
   irAVista("accidentabilidad");
   const sel = document.getElementById("arbolAccidenteSel");
@@ -9378,6 +9435,195 @@ on(document.getElementById("cphysInvestigacionesTable"), "click", (e)=>{
   const hdr = document.getElementById("hdrArbolCausal");
   if(hdr) hdr.scrollIntoView({behavior:"smooth", block:"start"});
 });
+
+let cphysInvMedidas = [];
+let cphysInvInvestigadores = [];
+function cphysInvDrawInvestigadores(){
+  const wrap = document.getElementById("cpiInvestWrap"); if(!wrap) return;
+  const miembros = (CACHE.cphysMiembros||[]).filter(m=>cphysMiembroVigente(m) || cphysInvInvestigadores.includes(m.id));
+  wrap.innerHTML = miembros.length
+    ? miembros.map(m=>`<label style="display:flex;align-items:center;gap:6px;font-weight:400;margin:2px 0;"><input type="checkbox" data-cpi-invest="${m.id}" style="width:auto;min-height:auto;" ${cphysInvInvestigadores.includes(m.id)?"checked":""}> ${incEsc(m.nombre)} <span class="kv">(${incEsc(CPHYS_REPRESENTACION_LABEL[m.representacion]||m.representacion||"")})</span></label>`).join("")
+    : '<div class="empty">Primero registra a los miembros del Comité.</div>';
+}
+function cphysInvDrawMedidas(){
+  const wrap = document.getElementById("cpiMedidasWrap"); if(!wrap) return;
+  wrap.innerHTML = `<table><thead><tr><th>Medida propuesta</th><th>Responsable</th><th>Plazo</th><th></th></tr></thead><tbody>
+    ${cphysInvMedidas.map((m,idx)=>`<tr>
+      <td><input data-cpi-m-accion="${idx}" value="${incEsc(m.accion||"")}">${m.compromisoId?'<div class="kv">Ya es un compromiso (se actualiza al guardar mientras esté abierto)</div>':""}</td>
+      <td><input data-cpi-m-resp="${idx}" list="dlResponsables" value="${incEsc(m.responsable||"")}"></td>
+      <td><input type="date" data-cpi-m-plazo="${idx}" value="${m.plazo||""}"></td>
+      <td><button type="button" class="subtle-btn" data-cpi-m-quitar="${idx}">Quitar</button></td>
+    </tr>`).join("") || `<tr><td class="empty" colspan="4">Sin medidas propuestas</td></tr>`}
+  </tbody></table>
+  <button class="btn small secondary" id="cpiMedAgregarBtn" type="button">+ Agregar medida</button>`;
+  on(document.getElementById("cpiMedAgregarBtn"), "click", ()=>{ cphysInvMedidas.push({id:uid(), accion:"", responsable:"", plazo:""}); cphysInvDrawMedidas(); });
+}
+function cphysInvAbrir(accidenteId){
+  const acc = (CACHE.accidentes||[]).find(a=>a.id===accidenteId); if(!acc) return;
+  const ex = cphysInvestigacionDe(accidenteId), rec = ex || {};
+  const comPref = rec.comisionId || ((CACHE.cphysComisiones||[]).find(c=>/investig/i.test(c.nombre))||{}).id || "";
+  cphysInvMedidas = (rec.medidasPropuestas||[]).map(m=>({...m}));
+  cphysInvInvestigadores = ex ? (rec.investigadoresIds||[]).slice() : ((((CACHE.cphysComisiones||[]).find(c=>c.id===comPref)||{}).integrantesIds)||[]).slice();
+  const reuniones = (CACHE.cphysReuniones||[]).slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const formal = (CACHE.accInvestigaciones||[]).find(x=>x.accidenteId===accidenteId);
+  openModal(`
+    <h3>Investigación del Comité Paritario</h3>
+    <div class="desc">${fmtDate(acc.fecha)} — ${ACC_TIPO_LABEL[acc.tipo]||acc.tipo} — ${areaName(acc.areaId)}. Descripción registrada: «${incEsc(acc.descripcion||"—")}»</div>
+    <div class="kv" style="margin-bottom:8px;">Análisis de la empresa: ${[investigacionDeAccidente(accidenteId)?"árbol causal ✓":"", formal?"investigación formal ✓":""].filter(Boolean).join(" · ") || "ninguno todavía"}. La investigación del Comité es propia; puedes apoyarte en esos análisis.</div>
+    <div class="form-grid">
+      <div><label>Estado</label><select id="cpiEstado"><option value="en_curso" ${rec.estado!=="cerrada"?"selected":""}>En curso</option><option value="cerrada" ${rec.estado==="cerrada"?"selected":""}>Cerrada</option></select></div>
+      <div><label>Fecha de investigación</label><input type="date" id="cpiFecha" value="${rec.fechaInvestigacion||cphysHoy()}"></div>
+      <div><label>Fecha de cierre</label><input type="date" id="cpiFechaCierre" value="${rec.fechaCierre||""}"></div>
+      <div><label>Comisión que investiga</label><select id="cpiComision"><option value="">Sin comisión</option>${(CACHE.cphysComisiones||[]).map(c=>`<option value="${c.id}" ${c.id===comPref?"selected":""}>${incEsc(c.nombre)}</option>`).join("")}</select></div>
+      <div style="grid-column:1/-1;"><label>Quiénes investigaron</label><div id="cpiInvestWrap"></div></div>
+      <div><label>Reunión relacionada (opcional)</label><select id="cpiReunion"><option value="">Ninguna</option>${reuniones.map(r=>`<option value="${r.id}" ${rec.reunionId===r.id?"selected":""}>${fmtDate(r.fecha)} · ${r.tipo==="extraordinaria"?"Extraordinaria":"Ordinaria"}</option>`).join("")}</select></div>
+      <div><button class="btn small secondary" id="cpiReunionExtraBtn" type="button" style="margin-top:20px;">Registrar reunión extraordinaria por este accidente</button></div>
+      <div style="grid-column:1/-1;"><label>Hechos</label><textarea id="cpiHechos" rows="3">${incEsc(rec.hechos!==undefined ? rec.hechos : (acc.descripcion||""))}</textarea></div>
+      ${formal ? `<div style="grid-column:1/-1;"><button class="btn small secondary" id="cpiTraerCausasBtn" type="button">Traer las causas de la investigación formal de la empresa</button></div>` : ""}
+      <div style="grid-column:1/-1;"><label>Causas inmediatas</label><textarea id="cpiCausasInm" rows="3" placeholder="Acciones o condiciones subestándar">${incEsc(rec.causasInmediatas||"")}</textarea></div>
+      <div style="grid-column:1/-1;"><label>Causas básicas (causa raíz)</label><textarea id="cpiCausasBas" rows="3" placeholder="Factores personales y del trabajo">${incEsc(rec.causasBasicas||"")}</textarea></div>
+    </div>
+    <label style="margin-top:10px;">Medidas propuestas</label>
+    <div class="desc" style="margin-top:0;">Al guardar, cada medida pasa a «Compromisos» del Comité con su responsable y plazo.</div>
+    <div id="cpiMedidasWrap"></div>
+    <label style="margin-top:10px;">Conclusiones</label>
+    <textarea id="cpiConclusiones" rows="3">${incEsc(rec.conclusiones||"")}</textarea>
+    <div class="toolbar" style="margin-top:14px;">
+      <button class="btn" id="cpiGuardarBtn" type="button">Guardar investigación</button>
+      <button class="btn secondary" id="cpiGuardarPdfBtn" type="button">Guardar y descargar PDF</button>
+      <button class="btn secondary" id="cpiCancelarBtn" type="button">Cancelar</button>
+    </div>`, {wide:true});
+  cphysInvDrawInvestigadores(); cphysInvDrawMedidas();
+  on(document.getElementById("cpiInvestWrap"), "change", (e)=>{
+    const cb = e.target.closest("input[data-cpi-invest]"); if(!cb) return;
+    const id = cb.dataset.cpiInvest;
+    if(cb.checked){ if(!cphysInvInvestigadores.includes(id)) cphysInvInvestigadores.push(id); } else cphysInvInvestigadores = cphysInvInvestigadores.filter(x=>x!==id);
+  });
+  on(document.getElementById("cpiComision"), "change", (e)=>{
+    const c = (CACHE.cphysComisiones||[]).find(x=>x.id===e.target.value);
+    if(c && (c.integrantesIds||[]).length){ cphysInvInvestigadores = c.integrantesIds.slice(); cphysInvDrawInvestigadores(); }
+  });
+  on(document.getElementById("cpiMedidasWrap"), "input", (e)=>{
+    const t = e.target, d = t.dataset;
+    if(d.cpiMAccion!==undefined) cphysInvMedidas[+d.cpiMAccion].accion = t.value;
+    else if(d.cpiMResp!==undefined) cphysInvMedidas[+d.cpiMResp].responsable = t.value;
+    else if(d.cpiMPlazo!==undefined) cphysInvMedidas[+d.cpiMPlazo].plazo = t.value;
+  });
+  on(document.getElementById("cpiMedidasWrap"), "click", (e)=>{
+    const q = e.target.closest("[data-cpi-m-quitar]"); if(!q) return;
+    cphysInvMedidas.splice(+q.dataset.cpiMQuitar, 1); cphysInvDrawMedidas();
+  });
+  on(document.getElementById("cpiTraerCausasBtn"), "click", ()=>{
+    const f = formal; if(!f) return;
+    const lista = arr => (arr||[]).filter(x=>x && !/^No se detectó/i.test(x)).map(x=>"• "+x).join("\n");
+    const inm = lista([].concat(f.accionSubestandar||[], f.condicionSubestandar||[])), bas = lista([].concat(f.factoresPersonales||[], f.factoresTrabajo||[]));
+    const a = document.getElementById("cpiCausasInm"), b = document.getElementById("cpiCausasBas");
+    if((a.value.trim() || b.value.trim()) && !confirm("Ya escribiste causas. ¿Reemplazarlas por las de la investigación formal de la empresa?")) return;
+    a.value = inm; b.value = bas;
+  });
+  on(document.getElementById("cpiReunionExtraBtn"), "click", ()=>{
+    if(!confirm("Se cerrará esta ventana sin guardar lo que hayas escrito (guarda primero si quieres conservarlo) y se abrirá el formulario de reunión con los datos del accidente. ¿Continuar?")) return;
+    closeModal();
+    resetCphysReunionForm();
+    document.getElementById("cphysReunionFecha").value = cphysHoy();
+    document.getElementById("cphysReunionTipo").value = "extraordinaria";
+    document.getElementById("cphysReunionMotivo").value = `Accidente del ${fmtDate(acc.fecha)} (${ACC_TIPO_LABEL[acc.tipo]||acc.tipo})`;
+    subpestanasMostrarDe("hdrCphysReuniones");
+    document.getElementById("hdrCphysReuniones").scrollIntoView({behavior:"smooth", block:"start"});
+  });
+  on(document.getElementById("cpiCancelarBtn"), "click", closeModal);
+  const guardar = async (conPdf)=>{
+    const estado = document.getElementById("cpiEstado").value;
+    const hoy = cphysHoy();
+    const id = ex ? ex.id : uid();
+    const comisionId = document.getElementById("cpiComision").value;
+    const detalle = `Accidente del ${fmtDate(acc.fecha)} · ${ACC_TIPO_LABEL[acc.tipo]||acc.tipo}`;
+    const medidas = cphysInvMedidas.map(m=>({...m, accion:String(m.accion||"").trim()})).filter(m=>m.accion);
+    for(const m of medidas){
+      if(!m.id) m.id = uid();
+      if(!m.compromisoId){
+        const cid = uid();
+        await put("cphysAcuerdos", {id:cid, texto:m.accion, responsable:(m.responsable||"").trim(), plazo:m.plazo||"", estado:"pendiente", fechaCierre:null, observacionCierre:"", origen:"accidente", origenDetalle:detalle, reunionId:"", comisionId, investigacionId:id, seguimiento:[], fechaCreacion:hoy});
+        m.compromisoId = cid;
+      } else {
+        const c = (CACHE.cphysAcuerdos||[]).find(x=>x.id===m.compromisoId);
+        if(c && c.estado!=="cerrado") await put("cphysAcuerdos", {...c, texto:m.accion, responsable:(m.responsable||"").trim(), plazo:m.plazo||""});
+      }
+    }
+    await put("cphysInvestigaciones", {
+      id, accidenteId,
+      estado,
+      fechaInvestigacion: document.getElementById("cpiFecha").value || hoy,
+      fechaCierre: estado==="cerrada" ? (document.getElementById("cpiFechaCierre").value || hoy) : "",
+      comisionId,
+      investigadoresIds: cphysInvInvestigadores.slice(),
+      reunionId: document.getElementById("cpiReunion").value,
+      hechos: document.getElementById("cpiHechos").value.trim(),
+      causasInmediatas: document.getElementById("cpiCausasInm").value.trim(),
+      causasBasicas: document.getElementById("cpiCausasBas").value.trim(),
+      medidasPropuestas: medidas,
+      conclusiones: document.getElementById("cpiConclusiones").value.trim(),
+      fechaCreacion: ex ? (ex.fechaCreacion||new Date().toISOString()) : new Date().toISOString(),
+      fechaModificacion: new Date().toISOString(),
+    });
+    await loadCache();
+    closeModal();
+    cphysRefrescarTodo();
+    if(conPdf) descargarCphysInvPdf(accidenteId);
+  };
+  on(document.getElementById("cpiGuardarBtn"), "click", ()=> guardar(false));
+  on(document.getElementById("cpiGuardarPdfBtn"), "click", ()=> guardar(true));
+}
+/* Informe PDF de la investigación del Comité. */
+function descargarCphysInvPdf(accidenteId){
+  const acc = (CACHE.accidentes||[]).find(a=>a.id===accidenteId), inv = cphysInvestigacionDe(accidenteId);
+  if(!acc || !inv){ alert("No se encontró la investigación del Comité."); return; }
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const doc = new JsPDFClass();
+  let y = grdPdfEncabezado(doc, "Informe de investigación del Comité Paritario");
+  const reunion = inv.reunionId ? (CACHE.cphysReuniones||[]).find(r=>r.id===inv.reunionId) : null;
+  const investigadores = (inv.investigadoresIds||[]).map(cphysMiembroNombre).filter(Boolean);
+  doc.autoTable({ startY:y, theme:"grid", styles:{fontSize:9}, columnStyles:{0:{cellWidth:48, fontStyle:"bold"}},
+    body:[
+      ["Fecha del accidente", fmtDate(acc.fecha)],
+      ["Tipo", ACC_TIPO_LABEL[acc.tipo]||acc.tipo||"—"],
+      ["Área", areaName(acc.areaId)],
+      ["Descripción registrada", acc.descripcion||"—"],
+      ["Estado de la investigación", CPHYS_INV_ESTADO_LABEL[inv.estado]||"—"],
+      ["Fecha de investigación", fmtDate(inv.fechaInvestigacion)],
+      ["Fecha de cierre", inv.fechaCierre ? fmtDate(inv.fechaCierre) : "—"],
+      ["Comisión que investiga", cphysComisionNombre(inv.comisionId)||"—"],
+      ["Investigaron", investigadores.length ? investigadores.join(", ") : "—"],
+      ["Reunión relacionada", reunion ? `${fmtDate(reunion.fecha)} (${reunion.tipo==="extraordinaria"?"Extraordinaria":"Ordinaria"})` : "—"],
+    ] });
+  y = doc.lastAutoTable.finalY + 8;
+  const bloque = (titulo, texto)=>{
+    if(y > 245){ doc.addPage(); y = 16; }
+    doc.setFontSize(11); doc.text(titulo, 14, y); y += 6;
+    doc.setFontSize(10);
+    y = escribirTextoPaginado(doc, texto || "—", 14, y, {maxWidth:180}) + 6;
+  };
+  bloque("Hechos", inv.hechos);
+  bloque("Causas inmediatas", inv.causasInmediatas);
+  bloque("Causas básicas (causa raíz)", inv.causasBasicas);
+  if(y > 235){ doc.addPage(); y = 16; }
+  doc.setFontSize(11); doc.text("Medidas propuestas", 14, y); y += 2;
+  doc.autoTable({ startY:y, head:[["Medida","Responsable","Plazo","Estado del compromiso"]],
+    body: (inv.medidasPropuestas||[]).length ? inv.medidasPropuestas.map(m=>{
+      const c = m.compromisoId ? (CACHE.cphysAcuerdos||[]).find(x=>x.id===m.compromisoId) : null;
+      return [m.accion, m.responsable||"—", m.plazo?fmtDate(m.plazo):"—", c ? CPHYS_ESTADO_LABEL[cphysCompromisoEstado(c)] : "—"];
+    }) : [["Sin medidas propuestas","—","—","—"]],
+    styles:{fontSize:8.5}, headStyles:{fillColor:[42,120,214]} });
+  y = doc.lastAutoTable.finalY + 8;
+  bloque("Conclusiones", inv.conclusiones);
+  if(y > 245){ doc.addPage(); y = 16; }
+  y += 18;
+  doc.line(20, y, 90, y); doc.line(120, y, 190, y);
+  doc.setFontSize(9); doc.text("Presidente(a) del Comité", 55, y+5, {align:"center"}); doc.text("Secretario(a) del Comité", 155, y+5, {align:"center"});
+  agregarPiePaginasPdf(doc, "Investigación CPHyS");
+  doc.save(`Investigacion_Comite_${acc.fecha}_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}.pdf`);
+}
 
 function renderCphys(){
   renderCphysMiembrosTable();
@@ -10943,6 +11189,11 @@ subpestanasCrear("capacitacion", [
   {key:"cursos", icono:"curso", label:"Cursos DS 44", desc:"Cursos obligatorios, completados y alertas", hdrs:["hdrCursosDs44","hdrRegistroDeCursosCompletados","hdrAlertasDeVencimiento","hdrReporteDeCumplimientoCursosDS44"]},
 ], "tarjetas");
 
+subpestanasCrear("compromisos", [
+  {key:"mensual", icono:"grafico", label:"Control mensual", desc:"Cumplimiento mensual de reuniones, reportes y otras instancias", hdrs:["hdrControlDeCompromisosReunionesYOtros","hdrCompromisosItems","hdrCumplimientoMensual","hdrInformeDeCumplimiento"]},
+  {key:"asesoria", icono:"lista", label:"Compromisos de la asesoría", desc:"Tus tareas y compromisos con la empresa, con avances y cierre", hdrs:["hdrCompAsesoria"],
+    badge:()=>{ const n = (CACHE.compromisosAsesoria||[]).filter(a=>cphysCompromisoEstado(a)==="vencido").length; return n ? {texto:`${n} vencida${n===1?"":"s"}`, nivel:"r"} : null; }},
+], "tarjetas");
 subpestanasCrear("cphys", [
   {key:"miembros", icono:"personas", label:"Miembros y comisiones", desc:"Quiénes integran el Comité y cómo se reparte el trabajo", hdrs:["hdrCphysMiembros","hdrCphysMiembrosListado","hdrCphysComisiones","hdrCphysComisionesListado"]},
   {key:"reuniones", icono:"registro", label:"Reuniones y actas", desc:"Registrar reuniones, adjuntar el acta firmada y sacar el PDF", hdrs:["hdrCphysReuniones","hdrCphysReunionesListado"]},
@@ -11724,7 +11975,7 @@ function renderDashboard(){
 
   // CPHyS — investigaciones pendientes (accidentes/incidentes sin árbol causal).
   const cphysAccidentesAll = CACHE.accidentes || [];
-  const cphysInvestigados = cphysAccidentesAll.filter(a=>investigacionDeAccidente(a.id));
+  const cphysInvestigados = cphysAccidentesAll.filter(a=>cphysInvestigacionDe(a.id));
   const cphysPendientesInvestigar = cphysAccidentesAll.length - cphysInvestigados.length;
   const cphysCompTotal = (CACHE.cphysAcuerdos||[]).length;
   const cphysCompAbiertos = (CACHE.cphysAcuerdos||[]).filter(a=>a.estado!=="cerrado").length;
@@ -12617,7 +12868,7 @@ function misPendientesCalcular(){
   if(!usuario || !usuario.nombre) return r;
   const n = normalizarNombreTexto(usuario.nombre);
   r.hallazgos = misHallazgosDelUsuario().filter(it=>it.f.estado!=="cerrada").length;
-  (CACHE.cphysAcuerdos||[]).forEach(c=>{ if(c.estado!=="cerrado" && c.responsable && normalizarNombreTexto(c.responsable)===n){ r.compromisos++; if(c.plazo && daysUntil(c.plazo)<0) r.atrasadas++; } });
+  (CACHE.cphysAcuerdos||[]).concat(CACHE.compromisosAsesoria||[]).forEach(c=>{ if(c.estado!=="cerrado" && c.responsable && normalizarNombreTexto(c.responsable)===n){ r.compromisos++; if(c.plazo && daysUntil(c.plazo)<0) r.atrasadas++; } });
   { const mi = misMedidasIndicadores(n); r.medidasInd = mi.asignadas + mi.sinMedida; r.medidasSin = mi.sinMedida; r.atrasadas += mi.atrasadas; }
   const capsPend = misCapacitacionesDelUsuario();
   r.capsPorAsistir = capsPend.length;
@@ -12646,7 +12897,7 @@ function renderMisPendientes(){
     tile("Actividades atrasadas", r.atrasadas, "programa y capacitaciones"),
     tile("Capacitaciones por asistir", r.capsPorAsistir, "a las que estoy convocado"),
     tile("Medidas de control de indicadores", r.medidasInd, "asignadas a mí o por registrar (indicadores fuera de meta)", null),
-    tile("Compromisos del Comité", r.compromisos, "asignados a mi nombre y sin cumplir"),
+    tile("Compromisos y tareas", r.compromisos, "del Comité y de la asesoría, a mi nombre y sin cumplir"),
     tile("Cumplimiento del mes", r.pct===null ? "—" : pcPct(r.pct), "mi programa por cargo"),
     ...(function(){
       if(!vsPuedeVer()) return [];
@@ -28969,12 +29220,200 @@ function renderCompromisosInformeSelects(){
   const esMensual = document.getElementById("compInformeTipo").value === "mensual";
   document.getElementById("compInformeMesWrap").style.display = esMensual ? "" : "none";
 }
+/* --- Compromisos de la asesoría (Control de compromisos) ---
+   Store "compromisosAsesoria": tareas y compromisos del asesor con la empresa (lo que se acuerda o queda pendiente al visitarla),
+   separados de los del Comité. {id, texto, responsable, plazo, estado:"pendiente"|"cerrado", fechaCierre, observacionCierre,
+   origenDetalle, seguimiento:[{fecha,texto,por}], respaldoData, respaldoNombre, fechaCreacion}. Reutiliza los modales de avance y cierre del Comité. */
+function asesoriaFiltrados(){
+  const val = id => { const el = document.getElementById(id); return el ? el.value : ""; };
+  const fe = val("asesoriaFiltroEstado") || "abiertos", fr = val("asesoriaFiltroResp");
+  return (CACHE.compromisosAsesoria||[]).filter(a=>{
+    const est = cphysCompromisoEstado(a);
+    if(fe==="abiertos"){ if(est==="cumplido") return false; }
+    else if(fe!=="todos" && est!==fe) return false;
+    if(fr && (a.responsable||"").trim()!==fr) return false;
+    return true;
+  }).sort((a,b)=>{
+    const aAb = a.estado!=="cerrado", bAb = b.estado!=="cerrado";
+    if(aAb!==bAb) return aAb ? -1 : 1;
+    return new Date(a.plazo||"9999-12-31") - new Date(b.plazo||"9999-12-31");
+  });
+}
+function renderAsesoria(){
+  const tbl = document.getElementById("asesoriaTable"); if(!tbl) return;
+  const all = CACHE.compromisosAsesoria||[];
+  const cuenta = {pendiente:0, proceso:0, vencido:0, cumplido:0};
+  all.forEach(a=>{ cuenta[cphysCompromisoEstado(a)]++; });
+  const abiertos = cuenta.pendiente + cuenta.proceso + cuenta.vencido;
+  document.getElementById("asesoriaTiles").innerHTML = [
+    tile("Tareas registradas", all.length, "compromisos y pendientes de la asesoría"),
+    tile("Abiertas", abiertos, cuenta.proceso+" en proceso · "+cuenta.pendiente+" sin avance", abiertos>0?"medio":"bajo"),
+    tile("Vencidas", cuenta.vencido, "plazo cumplido y sin cerrar", cuenta.vencido>0?"alto":"bajo"),
+    tile("Cumplidas", cuenta.cumplido, all.length ? Math.round(cuenta.cumplido/all.length*100)+"% del total" : "—"),
+  ].join("");
+  fillTextFilter(document.getElementById("asesoriaFiltroResp"), all.map(a=>a.responsable), "Todos los responsables");
+  const rows = asesoriaFiltrados();
+  tbl.innerHTML = rows.length ? rows.map(a=>{
+    const cerrado = a.estado==="cerrado";
+    return `<tr>
+      <td>${incEsc(a.texto)}${cphysCompromisoDetalleHtml(a)}</td>
+      <td>${incEsc(a.responsable||"—")}</td>
+      <td>${incEsc(a.origenDetalle||"—")}</td>
+      <td>${a.plazo? fmtDate(a.plazo) : "—"}</td>
+      <td>${cphysEstadoPill(a)}</td>
+      <td>
+        ${cerrado ? `<button class="subtle-btn" data-ases-reabrir="${a.id}">Reabrir</button>` : `<button class="subtle-btn" data-ases-avance="${a.id}">Registrar avance</button> <button class="subtle-btn" data-ases-cumplir="${a.id}">Marcar cumplido</button>`}
+        <button class="subtle-btn" data-ases-editar="${a.id}">Editar</button>
+        <button class="subtle-btn" data-ases-eliminar="${a.id}">Eliminar</button>
+      </td>
+    </tr>`;
+  }).join("") : `<tr><td class="empty" colspan="6">${all.length ? "Ninguna tarea coincide con los filtros." : "Sin tareas todavía. Usa «+ Nueva tarea» o «Pegar lista» para cargar tus pendientes de una vez."}</td></tr>`;
+  try{ subpestanasAplicar("compromisos"); }catch(e){}
+}
+function asesoriaRefrescar(){
+  renderAsesoria();
+  try{ renderMisCompromisosCphys(); renderMisPendientes(); }catch(e){}
+}
+["asesoriaFiltroEstado","asesoriaFiltroResp"].forEach(id=>{ on(document.getElementById(id), "change", ()=> renderAsesoria()); });
+/* Limpia una lista pegada: viñetas, numeración, casillas, líneas vacías y repetidas. */
+function asesoriaLimpiarLista(txt){
+  const vistos = new Set(), out = [];
+  String(txt||"").split(/\r?\n/).forEach(l=>{
+    const t = l.replace(/^\s*(?:[-*•·▪◦–—]+\s*|\(?\d{1,3}[.)]\s+|\[\s?[xX]?\s?\]\s*)/, "").replace(/\s+/g, " ").trim();
+    if(!t) return;
+    const k = t.toLowerCase(); if(vistos.has(k)) return;
+    vistos.add(k); out.push(t.slice(0, 300));
+  });
+  return out.slice(0, 200);
+}
+function asesoriaAbrirForm(id){
+  const a = id ? (CACHE.compromisosAsesoria||[]).find(x=>x.id===id) : null;
+  if(id && !a) return;
+  const u = usuarioDeSesion();
+  openModal(`
+    <h3>${a?"Editar tarea":"Nueva tarea de la asesoría"}</h3>
+    <div class="form-grid">
+      <div style="grid-column:1/-1;"><label>Tarea o compromiso</label><textarea id="aseTexto" rows="2" placeholder="Ej: Subir el acta de constitución del Comité a la plataforma">${incEsc(a?a.texto:"")}</textarea></div>
+      <div><label>Responsable</label><input id="aseResp" list="dlResponsables" value="${incEsc(a?a.responsable:((u&&u.nombre)||""))}" placeholder="Elige o escribe un nombre"></div>
+      <div><label>Plazo</label><input type="date" id="asePlazo" value="${a&&a.plazo?a.plazo:""}"></div>
+      <div style="grid-column:1/-1;"><label>Origen o detalle (opcional)</label><input id="aseDetalle" value="${incEsc(a?a.origenDetalle:("Visita del "+fmtDate(cphysHoy())))}" placeholder="Ej: visita del 05-11-2026"></div>
+    </div>
+    <div class="toolbar" style="margin-top:12px;"><button class="btn" id="aseGuardarBtn" type="button">Guardar</button><button class="btn secondary" id="aseCancelarBtn" type="button">Cancelar</button></div>`);
+  on(document.getElementById("aseCancelarBtn"), "click", closeModal);
+  on(document.getElementById("aseGuardarBtn"), "click", async ()=>{
+    const texto = document.getElementById("aseTexto").value.trim();
+    if(!texto){ alert("Escribe la tarea."); return; }
+    await put("compromisosAsesoria", {
+      ...(a||{}),
+      id: a ? a.id : uid(),
+      texto,
+      responsable: document.getElementById("aseResp").value.trim(),
+      plazo: document.getElementById("asePlazo").value,
+      origenDetalle: document.getElementById("aseDetalle").value.trim(),
+      estado: a ? (a.estado||"pendiente") : "pendiente",
+      fechaCierre: a ? (a.fechaCierre||null) : null,
+      observacionCierre: a ? (a.observacionCierre||"") : "",
+      seguimiento: a ? (a.seguimiento||[]) : [],
+      fechaCreacion: a ? (a.fechaCreacion||cphysHoy()) : cphysHoy(),
+    });
+    await loadCache();
+    closeModal();
+    asesoriaRefrescar();
+  });
+}
+function asesoriaAbrirPegar(){
+  const u = usuarioDeSesion();
+  openModal(`
+    <h3>Pegar lista de tareas de la asesoría</h3>
+    <div class="desc">Pega tu lista con una tarea por línea. Se ignoran las viñetas, la numeración, las líneas vacías y las repetidas. Todas quedarán con el responsable, el plazo y el origen que indiques abajo (después puedes editar cada una).</div>
+    <textarea id="aspTexto" rows="9" placeholder="Realizar las 7 reuniones del Comité pendientes&#10;Subir el acta de constitución y de elecciones&#10;Crear las comisiones&#10;..."></textarea>
+    <div class="kv" id="aspPrev" style="margin:6px 0;">0 tareas detectadas.</div>
+    <div class="form-grid">
+      <div><label>Responsable de todas</label><input id="aspResp" list="dlResponsables" value="${incEsc((u&&u.nombre)||"")}" placeholder="Elige o escribe un nombre"></div>
+      <div><label>Plazo (opcional)</label><input type="date" id="aspPlazo"></div>
+      <div style="grid-column:1/-1;"><label>Origen o detalle</label><input id="aspDetalle" value="${incEsc("Visita del "+fmtDate(cphysHoy()))}"></div>
+    </div>
+    <div class="toolbar" style="margin-top:12px;"><button class="btn" id="aspCrearBtn" type="button">Crear tareas</button><button class="btn secondary" id="aspCancelarBtn" type="button">Cancelar</button></div>`);
+  on(document.getElementById("aspTexto"), "input", ()=>{
+    const n = asesoriaLimpiarLista(document.getElementById("aspTexto").value).length;
+    document.getElementById("aspPrev").textContent = n + (n===1 ? " tarea detectada." : " tareas detectadas.");
+  });
+  on(document.getElementById("aspCancelarBtn"), "click", closeModal);
+  on(document.getElementById("aspCrearBtn"), "click", async ()=>{
+    const lineas = asesoriaLimpiarLista(document.getElementById("aspTexto").value);
+    if(!lineas.length){ alert("Pega al menos una tarea (una por línea)."); return; }
+    const resp = document.getElementById("aspResp").value.trim(), plazo = document.getElementById("aspPlazo").value, detalle = document.getElementById("aspDetalle").value.trim();
+    const existentes = new Set((CACHE.compromisosAsesoria||[]).map(a=>String(a.texto||"").trim().toLowerCase()));
+    const nuevas = lineas.filter(t=>!existentes.has(t.toLowerCase()));
+    if(!nuevas.length){ alert("Todas esas tareas ya estaban registradas."); return; }
+    if(nuevas.length < lineas.length && !confirm(`${lineas.length-nuevas.length} tarea(s) ya existían y se omitirán. Se crearán ${nuevas.length}. ¿Continuar?`)) return;
+    for(const t of nuevas){
+      await put("compromisosAsesoria", {id:uid(), texto:t, responsable:resp, plazo, origenDetalle:detalle, estado:"pendiente", fechaCierre:null, observacionCierre:"", seguimiento:[], fechaCreacion:cphysHoy()});
+    }
+    await loadCache();
+    closeModal();
+    asesoriaRefrescar();
+    alert(`Se crearon ${nuevas.length} tarea(s).`);
+  });
+}
+on(document.getElementById("asesoriaNuevaBtn"), "click", ()=> asesoriaAbrirForm(null));
+on(document.getElementById("asesoriaPegarBtn"), "click", ()=> asesoriaAbrirPegar());
+on(document.getElementById("asesoriaTable"), "click", async (e)=>{
+  const b = e.target.closest("button"); if(!b) return;
+  const d = b.dataset;
+  if(d.asesAvance){ cphysCompromisoAvanceAbrir(d.asesAvance, "compromisosAsesoria"); return; }
+  if(d.asesCumplir){ cphysCompromisoCumplirAbrir(d.asesCumplir, "compromisosAsesoria"); return; }
+  if(d.asesEditar){ asesoriaAbrirForm(d.asesEditar); return; }
+  if(d.asesReabrir){
+    const a = (CACHE.compromisosAsesoria||[]).find(x=>x.id===d.asesReabrir); if(!a) return;
+    await put("compromisosAsesoria", {...a, estado:"pendiente", fechaCierre:null});
+    await loadCache(); asesoriaRefrescar(); return;
+  }
+  if(d.asesEliminar){
+    const a = (CACHE.compromisosAsesoria||[]).find(x=>x.id===d.asesEliminar); if(!a) return;
+    if(!confirm(`¿Eliminar esta tarea?\n\n«${a.texto}»\n\nEsta acción no se puede deshacer.`)) return;
+    await deleteRecord("compromisosAsesoria", a.id);
+    await loadCache(); asesoriaRefrescar();
+  }
+});
+/* Informe PDF de la asesoría (según los filtros elegidos), agrupado por responsable. */
+function descargarAsesoriaPdf(){
+  const JsPDFClass = getJsPDF();
+  if(!JsPDFClass){ alert("No se pudo cargar el generador de PDF (revisa tu conexión a internet e intenta de nuevo)."); return; }
+  const filas = asesoriaFiltrados();
+  if(!filas.length){ alert("No hay tareas para el informe con los filtros elegidos."); return; }
+  const doc = new JsPDFClass();
+  let y = grdPdfEncabezado(doc, "Compromisos y tareas de la asesoría");
+  const selEst = document.getElementById("asesoriaFiltroEstado");
+  const cuenta = {pendiente:0, proceso:0, vencido:0, cumplido:0}; filas.forEach(a=>{ cuenta[cphysCompromisoEstado(a)]++; });
+  doc.setFontSize(9);
+  doc.text(`Filtro: ${selEst.options[selEst.selectedIndex].text}   ·   ${filas.length} tarea(s): ${cuenta.pendiente} pendiente(s), ${cuenta.proceso} en proceso, ${cuenta.vencido} vencida(s), ${cuenta.cumplido} cumplida(s)`, 14, y, {maxWidth:182}); y += 8;
+  const porResp = new Map();
+  filas.forEach(a=>{ const k = (a.responsable||"").trim() || "Sin responsable"; if(!porResp.has(k)) porResp.set(k, []); porResp.get(k).push(a); });
+  Array.from(porResp.keys()).sort((a,b)=>a.localeCompare(b)).forEach(k=>{
+    if(y > 245){ doc.addPage(); y = 16; }
+    doc.setFontSize(11); doc.text(`${k} (${porResp.get(k).length})`, 14, y); y += 2;
+    doc.autoTable({ startY:y,
+      head:[["Tarea","Origen","Plazo","Estado","Último avance / cierre"]],
+      body: porResp.get(k).map(a=>{
+        const seg = a.seguimiento||[], ult = seg[seg.length-1];
+        const nota = a.estado==="cerrado" ? (a.observacionCierre||"—") : (ult ? `${fmtDate(ult.fecha)}: ${ult.texto}` : "—");
+        return [a.texto, a.origenDetalle||"—", a.plazo?fmtDate(a.plazo):"—", CPHYS_ESTADO_LABEL[cphysCompromisoEstado(a)]+(a.fechaCierre&&a.estado==="cerrado"?" ("+fmtDate(a.fechaCierre)+")":""), nota];
+      }),
+      styles:{fontSize:8}, headStyles:{fillColor:[42,120,214]}, columnStyles:{0:{cellWidth:60}, 4:{cellWidth:42}} });
+    y = doc.lastAutoTable.finalY + 8;
+  });
+  agregarPiePaginasPdf(doc, "Compromisos de la asesoría");
+  doc.save(`Compromisos_asesoria_${(CACHE.empresa&&CACHE.empresa.razonSocial||"Empresa").replace(/[^a-zA-Z0-9]+/g,"_")}.pdf`);
+}
+on(document.getElementById("asesoriaPdfBtn"), "click", ()=> descargarAsesoriaPdf());
 function renderCompromisos(){
   renderCompromisosAnioSelect();
   renderCompromisosItemsTable();
   renderCompromisosMesesTable();
   renderCompromisosTiles();
   renderCompromisosInformeSelects();
+  renderAsesoria();
 }
 document.getElementById("compInformeTipo").addEventListener("change", renderCompromisosInformeSelects);
 function descargarInformeCompromisos(){
