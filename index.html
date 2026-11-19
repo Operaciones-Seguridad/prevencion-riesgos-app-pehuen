@@ -3320,12 +3320,44 @@
     <div class="card">
       <div class="card-header-row" id="hdrCumplimientoTrabajadores"><h2>Cumplimiento de trabajadores</h2><button class="collapse-toggle" id="toggleCumplimientoTrabajadores" type="button" aria-label="Contraer o expandir">▾</button></div>
       <div class="collapsible-body" id="bodyCumplimientoTrabajadores">
-      <div class="desc">Estado de entrega de EPP, RIOHyS e IRL por trabajador, y cumplimiento de cursos obligatorios DS 44.</div>
+      <div class="desc">Estado de entrega de EPP, RIOHyS e IRL por trabajador, cumplimiento de cursos obligatorios DS 44 y vigencia de sus documentos personales (ver «Documentos del trabajador»).</div>
       <div class="grid-tiles" id="cumplimientoTrabTiles"></div>
       <table>
-        <thead><tr><th>Trabajador</th><th>Cargo</th><th>EPP</th><th>RIOHyS</th><th>IRL</th><th>Cursos DS 44</th></tr></thead>
+        <thead><tr><th>Trabajador</th><th>Cargo</th><th>EPP</th><th>RIOHyS</th><th>IRL</th><th>Cursos DS 44</th><th>Documentos</th></tr></thead>
         <tbody id="cumplimientoTrabTable"></tbody>
       </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row" id="hdrDocsTrabajador"><h2>Documentos del trabajador</h2><button class="collapse-toggle" id="toggleDocsTrabajador" type="button" aria-label="Contraer o expandir">▾</button></div>
+      <div class="collapsible-body" id="bodyDocsTrabajador">
+      <div class="desc">Carpeta personal de cada trabajador para los documentos que pide una acreditación o un mandante y que no aplican a todos: licencia de conducir, INIVIP, manejo defensivo, examen ocupacional, ficha de acreditación, etc. El nombre es libre. Si indicas la fecha de vencimiento, la app avisa 60 días antes y cuando vence; si la dejas vacía, el documento no vence. Al <strong>renovar</strong> un documento, la versión anterior queda en el historial.</div>
+      <div class="form-grid">
+        <div><label>Trabajador</label><select id="docTrabTrabajador"></select></div>
+        <div><label>Nombre del documento</label><input id="docTrabNombre" list="dlDocTrabNombres" maxlength="200" placeholder="Ej: Licencia de conducir A3/A5"><datalist id="dlDocTrabNombres"></datalist></div>
+        <div><label>Entidad o mandante (opcional)</label><input id="docTrabEntidad" list="dlDocTrabEntidades" maxlength="120" placeholder="Ej: ENEX"><datalist id="dlDocTrabEntidades"></datalist></div>
+        <div><label>Fecha de control o emisión</label><input id="docTrabFechaControl" type="date"></div>
+        <div><label>Fecha de vencimiento (vacía = no vence)</label><input id="docTrabFechaVenc" type="date"></div>
+        <div><label>Archivo (PDF o foto)</label><input id="docTrabArchivo" type="file" accept="application/pdf,image/*"><div class="kv" id="docTrabArchivoActual"></div></div>
+        <div style="grid-column:1/-1;"><label>Observación (opcional)</label><input id="docTrabObs" maxlength="500" placeholder="Ej: Clase A3/A5 sin restricciones"></div>
+      </div>
+      <div class="toolbar" style="margin-top:10px;">
+        <button class="btn small" id="docTrabGuardarBtn" type="button">+ Agregar documento</button>
+        <button class="btn small secondary" id="docTrabCancelarBtn" type="button" style="display:none;">Cancelar</button>
+        <span class="kv" id="docTrabModo"></span>
+      </div>
+      <div class="grid-tiles" id="docsTrabTiles" style="margin-top:14px;"></div>
+      <div class="toolbar" style="margin-top:10px;">
+        <div class="field"><label>Trabajador</label><select id="filterDocTrabTrabajador"></select></div>
+        <div class="field"><label>Entidad</label><select id="filterDocTrabEntidad"></select></div>
+        <div class="field"><label>Estado</label><select id="filterDocTrabEstado"><option value="">Todos</option><option value="vencido">Vencidos</option><option value="proximo">Próximos a vencer</option><option value="vigente">Vigentes</option><option value="sinvenc">No vencen</option></select></div>
+        <div class="field" style="flex:2;min-width:200px;"><label>Buscar</label><input id="filterDocTrabTexto" placeholder="Nombre del documento u observación"></div>
+      </div>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Trabajador</th><th>Documento</th><th>Entidad</th><th>Control / emisión</th><th>Vencimiento</th><th>Archivo</th><th></th></tr></thead>
+        <tbody id="docsTrabTable"></tbody>
+      </table></div>
       </div>
     </div>
   </div>
@@ -4580,7 +4612,7 @@
    ========================================================= */
 const DB_NAME = "prevencion_riesgos_db";
 const DB_VERSION = 50;
-const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos","matrizVersiones","vsExamenesOcup","objetivosGestion","indicadoresGestion","medidasIndicadores","cphysComisiones","compromisosAsesoria","cphysInvestigaciones","cphysDocumentos","cphysChequeos","cphysChequeoItems"];
+const STORES = ["empresa","areas","trabajadores","protocolos","inspecciones","matriz","examenes","checklists","programa","capacitaciones","accidentes","horasHombre","matrizHistorial","catalogosExtra","epp","planoRiesgos","estudioEpp","medidasControlVS","cumplimientoLegal","bitacoraProtocolo","ganttProtocolo","infractores","rankingVelocidad","astRegistros","tmertRegistros","arbolesCausales","riohys","documentos","cphysMiembros","cphysReuniones","correosResponsables","cphysPrograma","cphysCapacitaciones","grdAmenazas","grdComite","grdPlanRespuesta","grdSimulacros","grdPlanAccion","grdPlanEmergencia","grdExtintores","registroExtintores","iapRegistros","accesoPerfiles","accesoUsuarios","levantamientos","compromisosItems","compromisosRegistros","planAccionMatriz","eppStock","accInvestigaciones","ds44Obligaciones","ds44Cumplimiento","cursosObligatorios","trabajadorCursos","ds67Evaluaciones","cphysAcuerdos","irlCargos","irlEntregas","riohysEntregas","diagnosticos","izajeCarga","transitoInvestigaciones","programaPlantillas","programaCargo","programaPersonas","programaConductual","vsExpuestos","vsCda","vsEvaluaciones","vsMovimientos","matrizVersiones","vsExamenesOcup","objetivosGestion","indicadoresGestion","medidasIndicadores","cphysComisiones","compromisosAsesoria","cphysInvestigaciones","cphysDocumentos","cphysChequeos","cphysChequeoItems","trabajadorDocumentos"];
 let db;
 let storageMode = "indexeddb"; // "indexeddb" | "localstorage" | "memory" | "api"
 let memStore = {};
@@ -5026,6 +5058,7 @@ setupCollapsible("hdrRiohysListado", "bodyRiohysListado", "toggleRiohysListado",
 setupCollapsible("hdrIrl", "bodyIrl", "toggleIrl", "collapsed_irl");
 setupCollapsible("hdrIrlListado", "bodyIrlListado", "toggleIrlListado", "collapsed_irlListado");
 setupCollapsible("hdrCumplimientoTrabajadores", "bodyCumplimientoTrabajadores", "toggleCumplimientoTrabajadores", "collapsed_cumplimientoTrabajadores");
+setupCollapsible("hdrDocsTrabajador", "bodyDocsTrabajador", "toggleDocsTrabajador", "collapsed_docsTrabajador");
 setupCollapsible("hdrProcMatriz", "bodyProcMatriz", "toggleProcMatriz", "collapsed_procMatriz");
 setupCollapsible("hdrDocumento", "bodyDocumento", "toggleDocumento", "collapsed_documento");
 setupCollapsible("hdrDocumentosListado", "bodyDocumentosListado", "toggleDocumentosListado", "collapsed_documentosListado");
@@ -6805,6 +6838,7 @@ function renderCumplimientoTrabajadores(){
       <td>${riohysHtml}</td>
       <td>${irlHtml}</td>
       <td>${cursosPct===null ? "—" : cursosPct+"% ("+cursosVigentes+"/"+aplicables.length+")"}</td>
+      <td>${docsTrabResumenHtml(t.id)}</td>
     </tr>`;
   }).join("");
   document.getElementById("cumplimientoTrabTiles").innerHTML = [
@@ -6813,7 +6847,7 @@ function renderCumplimientoTrabajadores(){
     tile("Con RIOHyS entregado", conRiohys, "de "+trabs.length, conRiohys<trabs.length?"medio":"bajo"),
     tile("Con IRL entregado", conIrl, "de "+trabs.length, conIrl<trabs.length?"medio":"bajo"),
   ].join("");
-  document.getElementById("cumplimientoTrabTable").innerHTML = filas || `<tr><td class="empty" colspan="6">Sin trabajadores registrados todavía</td></tr>`;
+  document.getElementById("cumplimientoTrabTable").innerHTML = filas || `<tr><td class="empty" colspan="7">Sin trabajadores registrados todavía</td></tr>`;
 }
 on(document.getElementById("cumplimientoTrabTable"), "click", (e)=>{
   const riohysBtn = e.target.closest("[data-entrega-riohys]");
@@ -6824,6 +6858,211 @@ on(document.getElementById("cumplimientoTrabTable"), "click", (e)=>{
     abrirModalEntregaIrl(trabajadorId, irlCargoId);
   }
 });
+/* =========================================================
+   DOCUMENTOS DEL TRABAJADOR (carpeta personal / acreditaciones)
+   Store "trabajadorDocumentos": {id, trabajadorId, nombre (libre),
+   entidad (mandante, opcional), fechaControl, fechaVencimiento (vacía =
+   no vence), observacion, archivoNombre, archivoData, reemplazaA (id de la
+   versión anterior), reemplazadoPor (id de la versión que la renovó),
+   fechaCreacion}. La versión "actual" de un documento es la que no tiene
+   reemplazadoPor; las anteriores forman el historial. A diferencia de los
+   cursos obligatorios, aquí no hay catálogo: solo se controla lo que se
+   registró para cada trabajador (no genera pendientes para quien no lo
+   tiene). El conector MCP replica estas reglas (mcp/dominio/otros.js).
+   ========================================================= */
+const DOC_TRAB_DIAS_AVISO = 60;
+const DOC_TRAB_ESTADO_LABEL = { vencido:"Vencido", proximo:"Próximo a vencer", vigente:"Vigente", sinvenc:"No vence" };
+const DOC_TRAB_ESTADO_PILL = { vencido:"vencido", proximo:"proximo", vigente:"vigente", sinvenc:"vigente" };
+const DOC_TRAB_ESTADO_ORDEN = { vencido:0, proximo:1, vigente:2, sinvenc:3 };
+function docTrabEstado(r){
+  if(!r || !r.fechaVencimiento) return "sinvenc";
+  const d = daysUntil(r.fechaVencimiento);
+  if(d < 0) return "vencido";
+  if(d <= DOC_TRAB_DIAS_AVISO) return "proximo";
+  return "vigente";
+}
+function docsTrabActuales(trabajadorId){
+  return (CACHE.trabajadorDocumentos||[]).filter(r=>!r.reemplazadoPor && (!trabajadorId || r.trabajadorId===trabajadorId));
+}
+function docTrabHistorial(r){
+  const todos = CACHE.trabajadorDocumentos||[], out = [], vistos = new Set([r.id]);
+  let p = r.reemplazaA ? todos.find(x=>x.id===r.reemplazaA) : null;
+  while(p && !vistos.has(p.id)){ out.push(p); vistos.add(p.id); p = p.reemplazaA ? todos.find(x=>x.id===p.reemplazaA) : null; }
+  return out;
+}
+function docsTrabResumenHtml(trabajadorId){
+  const act = docsTrabActuales(trabajadorId);
+  if(!act.length) return "—";
+  const venc = act.filter(r=>docTrabEstado(r)==="vencido").length, prox = act.filter(r=>docTrabEstado(r)==="proximo").length;
+  return `${act.length} doc.` + (venc? ` <span class="pill vencido">${venc} vencido(s)</span>` : "") + (prox? ` <span class="pill proximo">${prox} por vencer</span>` : "") + (!venc && !prox ? ` <span class="pill vigente">Al día</span>` : "");
+}
+function abrirAdjuntoDataUrl(nombre, data){
+  if(!data) return;
+  const w = window.open();
+  if(w) w.document.write(`<title>${incEsc(nombre||"Documento")}</title><body style="margin:0;background:#222;display:flex;align-items:center;justify-content:center;height:100vh;">${/^data:application\/pdf/.test(data) ? `<embed src="${data}" style="width:100%;height:100%;">` : `<img src="${data}" style="max-width:100%;max-height:100%;">`}</body>`);
+}
+function descargarAdjuntoDataUrl(nombre, data){
+  if(!data) return;
+  const a = document.createElement("a"); a.href = data; a.download = nombre || "documento"; document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* --- Formulario: agregar, editar o renovar --- */
+let docTrabEditingId = null, docTrabRenovandoId = null, docTrabArchivoPendiente = null;
+const docTrabEl = id => document.getElementById(id);
+function resetDocTrabForm(){
+  docTrabEditingId = null; docTrabRenovandoId = null; docTrabArchivoPendiente = null;
+  ["docTrabNombre","docTrabEntidad","docTrabFechaControl","docTrabFechaVenc","docTrabObs","docTrabArchivo"].forEach(id=>{ docTrabEl(id).value = ""; });
+  docTrabEl("docTrabTrabajador").value = "";
+  docTrabEl("docTrabTrabajador").disabled = false;
+  docTrabEl("docTrabArchivoActual").textContent = "";
+  docTrabEl("docTrabModo").textContent = "";
+  docTrabEl("docTrabGuardarBtn").textContent = "+ Agregar documento";
+  docTrabEl("docTrabCancelarBtn").style.display = "none";
+}
+function docTrabCargarEnForm(r, modo){
+  docTrabEl("docTrabTrabajador").value = r.trabajadorId;
+  docTrabEl("docTrabTrabajador").disabled = true;
+  docTrabEl("docTrabNombre").value = r.nombre || "";
+  docTrabEl("docTrabEntidad").value = r.entidad || "";
+  docTrabEl("docTrabObs").value = modo==="editar" ? (r.observacion||"") : "";
+  docTrabEl("docTrabFechaControl").value = modo==="editar" ? (r.fechaControl||"") : "";
+  docTrabEl("docTrabFechaVenc").value = modo==="editar" ? (r.fechaVencimiento||"") : "";
+  docTrabEl("docTrabArchivo").value = ""; docTrabArchivoPendiente = null;
+  docTrabEl("docTrabArchivoActual").textContent = modo==="editar" ? (r.archivoNombre ? `Archivo actual: ${r.archivoNombre} (elige otro solo si quieres reemplazarlo)` : "Sin archivo adjunto todavía") : "";
+  docTrabEl("docTrabModo").textContent = modo==="editar" ? `Editando «${r.nombre}» de ${trabName(r.trabajadorId)}` : `Renovando «${r.nombre}» de ${trabName(r.trabajadorId)}: ingresa las fechas y el archivo nuevos; el anterior queda en el historial.`;
+  docTrabEl("docTrabGuardarBtn").textContent = modo==="editar" ? "Guardar cambios" : "Guardar renovación";
+  docTrabEl("docTrabCancelarBtn").style.display = "";
+  docTrabEl("hdrDocsTrabajador").scrollIntoView({behavior:"smooth", block:"start"});
+}
+docTrabEl("docTrabArchivo").addEventListener("change", async (e)=>{
+  const file = e.target.files[0];
+  docTrabArchivoPendiente = file ? await cphysLeerAdjunto(file) : null;
+  if(file && !docTrabArchivoPendiente) e.target.value = "";
+});
+on(docTrabEl("docTrabCancelarBtn"), "click", ()=> resetDocTrabForm());
+on(docTrabEl("docTrabGuardarBtn"), "click", async ()=>{
+  const trabajadorId = docTrabEl("docTrabTrabajador").value;
+  const nombre = docTrabEl("docTrabNombre").value.trim().replace(/\s+/g," ");
+  const entidad = docTrabEl("docTrabEntidad").value.trim().replace(/\s+/g," ");
+  const fechaControl = docTrabEl("docTrabFechaControl").value || null;
+  const fechaVencimiento = docTrabEl("docTrabFechaVenc").value || null;
+  const observacion = docTrabEl("docTrabObs").value.trim();
+  if(!trabajadorId || !nombre){ alert("Selecciona el trabajador y escribe el nombre del documento."); return; }
+  if(fechaControl && fechaVencimiento && fechaVencimiento < fechaControl){ alert("La fecha de vencimiento no puede ser anterior a la fecha de control o emisión."); return; }
+  const todos = CACHE.trabajadorDocumentos || [];
+  if(docTrabEditingId){
+    const ant = todos.find(x=>x.id===docTrabEditingId);
+    if(!ant){ alert("El documento que estabas editando ya no existe."); resetDocTrabForm(); renderDocsTrabajador(); return; }
+    const rec = Object.assign({}, ant, {nombre, entidad, fechaControl, fechaVencimiento, observacion});
+    if(docTrabArchivoPendiente){ rec.archivoNombre = docTrabArchivoPendiente.nombre; rec.archivoData = docTrabArchivoPendiente.data; }
+    await put("trabajadorDocumentos", rec);
+  } else {
+    let anteriorId = docTrabRenovandoId;
+    if(!anteriorId){
+      const dup = todos.find(x=>!x.reemplazadoPor && x.trabajadorId===trabajadorId && matrizNorm(x.nombre)===matrizNorm(nombre));
+      if(dup){
+        if(!confirm(`${trabName(trabajadorId)} ya tiene el documento «${dup.nombre}».\n\nAceptar: guardarlo como renovación (el anterior pasa al historial).\nCancelar: no guardar.`)) return;
+        anteriorId = dup.id;
+      }
+    }
+    const rec = {id: uid(), trabajadorId, nombre, entidad, fechaControl, fechaVencimiento, observacion,
+      archivoNombre: docTrabArchivoPendiente ? docTrabArchivoPendiente.nombre : null,
+      archivoData: docTrabArchivoPendiente ? docTrabArchivoPendiente.data : null,
+      reemplazaA: anteriorId || null, reemplazadoPor: null, fechaCreacion: new Date().toISOString()};
+    await put("trabajadorDocumentos", rec);
+    if(anteriorId){
+      const ant = todos.find(x=>x.id===anteriorId);
+      if(ant) await put("trabajadorDocumentos", Object.assign({}, ant, {reemplazadoPor: rec.id}));
+    }
+  }
+  const msg = docTrabEditingId ? "Documento actualizado." : (docTrabRenovandoId ? "Documento renovado; la versión anterior quedó en el historial." : "Documento agregado.");
+  await loadCache();
+  resetDocTrabForm();
+  renderDocsTrabajador();
+  renderCumplimientoTrabajadores();
+  alert(msg);
+});
+
+/* --- Listado, filtros e historial --- */
+let docTrabHistAbiertos = new Set();
+function renderDocsTrabajador(){
+  const tbody = docTrabEl("docsTrabTable");
+  if(!tbody) return;
+  const trabOpts = (CACHE.trabajadores||[]).slice().sort((a,b)=>(a.nombre||"").localeCompare(b.nombre||"")).map(t=>({id:t.id,label:incEsc(t.nombre)}));
+  const selForm = docTrabEl("docTrabTrabajador"), curForm = selForm.value;
+  fillSelect(selForm, trabOpts, true); selForm.value = curForm || "";
+  const fTrabSel = docTrabEl("filterDocTrabTrabajador"), fTrabCur = fTrabSel.value;
+  fillSelect(fTrabSel, trabOpts, false); fTrabSel.insertAdjacentHTML("afterbegin",'<option value="">Todos</option>'); fTrabSel.value = fTrabCur || "";
+  const todos = CACHE.trabajadorDocumentos || [];
+  const entidades = Array.from(new Set(todos.map(r=>(r.entidad||"").trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+  const fEntSel = docTrabEl("filterDocTrabEntidad"), fEntCur = fEntSel.value;
+  fEntSel.innerHTML = '<option value="">Todas</option>' + entidades.map(e=>`<option value="${incEsc(e)}">${incEsc(e)}</option>`).join("");
+  fEntSel.value = entidades.includes(fEntCur) ? fEntCur : "";
+  fillDatalist(docTrabEl("dlDocTrabNombres"), Array.from(new Set(todos.map(r=>(r.nombre||"").trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b)));
+  fillDatalist(docTrabEl("dlDocTrabEntidades"), entidades);
+
+  const actuales = docsTrabActuales();
+  const cuenta = e => actuales.filter(r=>docTrabEstado(r)===e).length;
+  docTrabEl("docsTrabTiles").innerHTML = [
+    tile("Documentos registrados", actuales.length, "versión actual de cada uno"),
+    tile("Trabajadores con documentos", new Set(actuales.map(r=>r.trabajadorId)).size, "de "+(CACHE.trabajadores||[]).length),
+    tile("Próximos a vencer", cuenta("proximo"), `en los próximos ${DOC_TRAB_DIAS_AVISO} días`),
+    tile("Vencidos", cuenta("vencido"), "renovar cuanto antes"),
+  ].join("");
+
+  const fTrab = fTrabSel.value, fEnt = fEntSel.value, fEst = docTrabEl("filterDocTrabEstado").value, q = matrizNorm(docTrabEl("filterDocTrabTexto").value);
+  const filas = actuales
+    .filter(r=> !fTrab || r.trabajadorId===fTrab)
+    .filter(r=> !fEnt || (r.entidad||"").trim()===fEnt)
+    .filter(r=> !fEst || docTrabEstado(r)===fEst)
+    .filter(r=> !q || matrizNorm([r.nombre, r.observacion, r.entidad].join(" ")).includes(q))
+    .sort((a,b)=> DOC_TRAB_ESTADO_ORDEN[docTrabEstado(a)]-DOC_TRAB_ESTADO_ORDEN[docTrabEstado(b)] || trabName(a.trabajadorId).localeCompare(trabName(b.trabajadorId)) || (a.nombre||"").localeCompare(b.nombre||""));
+  const archivoBtns = r => r.archivoData ? `<button class="subtle-btn" data-doctrab-ver="${r.id}">📎 Ver</button> <button class="subtle-btn" data-doctrab-bajar="${r.id}" title="Descargar">⬇</button>` : `<span class="empty">Sin archivo</span>`;
+  tbody.innerHTML = filas.length ? filas.map(r=>{
+    const est = docTrabEstado(r), hist = docTrabHistorial(r), abierto = docTrabHistAbiertos.has(r.id);
+    const venc = r.fechaVencimiento ? `${fmtDate(r.fechaVencimiento)} <span class="pill ${DOC_TRAB_ESTADO_PILL[est]}">${DOC_TRAB_ESTADO_LABEL[est]}</span>` : `<span class="pill vigente">No vence</span>`;
+    const histFilas = abierto ? hist.map(h=>`<tr class="kv" style="background:#f7f7f7;">
+      <td></td><td>↳ Versión anterior${h.observacion?`<div class="kv">${incEsc(h.observacion)}</div>`:""}</td><td>${incEsc(h.entidad||"—")}</td>
+      <td>${fmtDate(h.fechaControl)}</td><td>${h.fechaVencimiento?fmtDate(h.fechaVencimiento):"No vence"} <span class="pill pendiente">Reemplazado</span></td>
+      <td>${archivoBtns(h)}</td><td></td></tr>`).join("") : "";
+    return `<tr>
+      <td>${incEsc(trabName(r.trabajadorId))}</td>
+      <td><strong>${incEsc(r.nombre)}</strong>${r.observacion?`<div class="kv">${incEsc(r.observacion)}</div>`:""}</td>
+      <td>${incEsc(r.entidad||"—")}</td>
+      <td>${fmtDate(r.fechaControl)}</td>
+      <td>${venc}</td>
+      <td>${archivoBtns(r)}</td>
+      <td style="white-space:nowrap;">
+        <button class="subtle-btn" data-doctrab-editar="${r.id}">Editar</button>
+        <button class="subtle-btn" data-doctrab-renovar="${r.id}">Renovar</button>
+        ${hist.length ? `<button class="subtle-btn" data-doctrab-hist="${r.id}">${abierto?"Ocultar":"Historial"} (${hist.length})</button>` : ""}
+        <button class="subtle-btn" data-doctrab-eliminar="${r.id}">Eliminar</button>
+      </td>
+    </tr>${histFilas}`;
+  }).join("") : `<tr><td class="empty" colspan="7">${actuales.length ? "Ningún documento coincide con los filtros" : "Sin documentos registrados todavía"}</td></tr>`;
+}
+["filterDocTrabTrabajador","filterDocTrabEntidad","filterDocTrabEstado"].forEach(id=> docTrabEl(id).addEventListener("change", renderDocsTrabajador));
+docTrabEl("filterDocTrabTexto").addEventListener("input", renderDocsTrabajador);
+on(docTrabEl("docsTrabTable"), "click", async (e)=>{
+  const buscar = attr => { const b = e.target.closest(`[${attr}]`); return b ? (CACHE.trabajadorDocumentos||[]).find(x=>x.id===b.getAttribute(attr)) : null; };
+  let r;
+  if((r = buscar("data-doctrab-ver"))){ abrirAdjuntoDataUrl(r.archivoNombre, r.archivoData); return; }
+  if((r = buscar("data-doctrab-bajar"))){ descargarAdjuntoDataUrl(r.archivoNombre, r.archivoData); return; }
+  if((r = buscar("data-doctrab-editar"))){ resetDocTrabForm(); docTrabEditingId = r.id; docTrabCargarEnForm(r, "editar"); return; }
+  if((r = buscar("data-doctrab-renovar"))){ resetDocTrabForm(); docTrabRenovandoId = r.id; docTrabCargarEnForm(r, "renovar"); return; }
+  if((r = buscar("data-doctrab-hist"))){ docTrabHistAbiertos.has(r.id) ? docTrabHistAbiertos.delete(r.id) : docTrabHistAbiertos.add(r.id); renderDocsTrabajador(); return; }
+  if((r = buscar("data-doctrab-eliminar"))){
+    const ant = r.reemplazaA ? (CACHE.trabajadorDocumentos||[]).find(x=>x.id===r.reemplazaA) : null;
+    if(!confirm(`¿Eliminar «${r.nombre}» de ${trabName(r.trabajadorId)}?` + (ant ? "\n\nLa versión anterior del historial volverá a quedar como la actual." : "\n\nSe elimina también su archivo adjunto."))) return;
+    await deleteRecord("trabajadorDocumentos", r.id);
+    if(ant) await put("trabajadorDocumentos", Object.assign({}, ant, {reemplazadoPor: null}));
+    if(docTrabEditingId===r.id || docTrabRenovandoId===r.id) resetDocTrabForm();
+    await loadCache();
+    renderDocsTrabajador();
+    renderCumplimientoTrabajadores();
+  }
+});
+
 function abrirModalEntregaRiohys(trabajadorId){
   const t = CACHE.trabajadores.find(x=>x.id===trabajadorId);
   const vigente = riohysVigente();
@@ -30936,6 +31175,7 @@ async function refreshAll(){
   renderRiohys();
   renderIrl();
   renderCumplimientoTrabajadores();
+  renderDocsTrabajador();
   renderDiagnostico();
   renderControlDocumental();
   renderCphys();
